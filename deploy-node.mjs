@@ -82,7 +82,8 @@ const manualFiles = [
   "src/modules/store/components/StoreLanding.tsx",
   "src/components/public/UniversalHeroCarousel.tsx",
   "src/app/admin/hero-destacados/page.tsx",
-  "src/app/[slug]/promo/[promotionId]/PromoShareClient.tsx"
+  "src/app/[slug]/promo/[promotionId]/PromoShareClient.tsx",
+  "src/components/public/HeroMobileDemoViewer.tsx"
 ];
 
 function collectAllFilesAndDirs(roots, extraFiles) {

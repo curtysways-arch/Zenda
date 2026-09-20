@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import HeroMobileDemoViewer from '@/components/public/HeroMobileDemoViewer';
 import { 
     Check, 
     ArrowRight, 
@@ -108,19 +109,19 @@ export default function LandingPage() {
             </nav>
 
             {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* 2. HERO PRINCIPAL CON LOS 4 TELÉFONOS EN PERSPECTIVA            */}
+            {/* 2. HERO PRINCIPAL CON MOCKUPS INTERACTIVOS Y RESPONSIVOS        */}
             {/* ═══════════════════════════════════════════════════════════════ */}
-            <header className="relative pt-12 md:pt-16 pb-20 md:pb-28 overflow-hidden bg-gradient-to-b from-[#EEF5FF]/80 via-[#F7FAFF]/50 to-[#FAFCFF]">
+            <header className="relative pt-8 sm:pt-12 md:pt-16 pb-14 md:pb-24 overflow-hidden bg-gradient-to-b from-[#EEF5FF]/80 via-[#F7FAFF]/50 to-[#FAFCFF]">
                 
                 {/* Resplandores de fondo */}
                 <div className="absolute top-1/4 right-10 w-[550px] h-[550px] bg-gradient-to-tr from-blue-200/40 via-sky-200/40 to-indigo-100/30 rounded-full blur-3xl -z-10 pointer-events-none" />
                 <div className="absolute top-10 left-1/3 w-[300px] h-[300px] bg-blue-100/30 rounded-full blur-2xl -z-10 pointer-events-none" />
 
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
                         
                         {/* Columna Izquierda: Mensaje y CTA */}
-                        <div className="lg:col-span-5 space-y-6 text-left z-10">
+                        <div className="lg:col-span-5 space-y-6 text-center lg:text-left z-20 flex flex-col items-center lg:items-start">
                             
                             {/* Tag Badge */}
                             <div className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-[#E8F1FF] text-[#0066FF] text-[11px] font-black uppercase tracking-wider">
@@ -128,13 +129,13 @@ export default function LandingPage() {
                             </div>
                             
                             {/* Titular */}
-                            <h1 className="text-5xl sm:text-6xl lg:text-[62px] font-black text-slate-950 tracking-tight leading-[1.08]">
+                            <h1 className="text-4xl sm:text-5xl lg:text-[44px] xl:text-[54px] font-black text-slate-950 tracking-tight leading-[1.08]">
                                 Tu negocio.<br />
                                 <span className="text-[#0066FF]">Tu propia app.</span>
                             </h1>
                             
                             {/* Subtítulo */}
-                            <div className="space-y-2 text-slate-600 text-base md:text-lg leading-relaxed max-w-lg font-medium">
+                            <div className="space-y-2 text-slate-600 text-base md:text-lg leading-relaxed max-w-lg font-medium mx-auto lg:mx-0">
                                 <p className="font-bold text-slate-900">
                                     No importa qué tipo de negocio tengas.
                                 </p>
@@ -144,7 +145,7 @@ export default function LandingPage() {
                             </div>
 
                             {/* Botón Principal */}
-                            <div className="pt-2">
+                            <div className="pt-2 w-full flex justify-center lg:justify-start">
                                 <Link
                                     href="/register"
                                     className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[#0066FF] hover:bg-[#0052cc] text-white font-extrabold text-sm shadow-xl shadow-blue-500/30 hover:shadow-blue-500/40 active:scale-95 transition-all"
@@ -155,7 +156,7 @@ export default function LandingPage() {
                             </div>
 
                             {/* Checks de Confianza */}
-                            <div className="flex flex-wrap items-center gap-y-2 gap-x-5 text-xs font-semibold text-slate-600 pt-2">
+                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-y-2 gap-x-5 text-xs font-semibold text-slate-600 pt-2">
                                 <span className="flex items-center gap-1.5">
                                     <Check size={14} className="text-[#0066FF] stroke-[3]" />
                                     Sin complicaciones
@@ -171,136 +172,143 @@ export default function LandingPage() {
                             </div>
                         </div>
 
-                        {/* Columna Derecha: Mockups Realistas de los 4 Smartphones */}
-                        <div className="lg:col-span-7 relative flex justify-center items-center py-4 lg:py-0">
+                        {/* Columna Derecha: Mockups Realistas (Móvil y Desktop diferenciados) */}
+                        <div className="lg:col-span-7 relative flex justify-center lg:justify-end items-center py-2 lg:py-0 w-full">
                             
-                            <div className="relative w-full max-w-[620px] flex items-center justify-center -space-x-10 sm:-space-x-12 select-none">
-                                
-                                {/* ─── TELÉFONO 1: LA PARRILLA (Restaurante Demo en Vivo) ─── */}
-                                <div className="w-[195px] sm:w-[215px] h-[410px] sm:h-[450px] bg-white rounded-[2.5rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform -rotate-6 translate-y-6 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 hidden sm:block group/phone1">
-                                    {/* Barra superior con Isla Dinámica y botón de pantalla completa */}
-                                    <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
-                                        <div className="w-14 h-3 bg-slate-900 rounded-full mx-auto" />
-                                        <a 
-                                            href="/parrilla-citiox-demo" 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-[#0066FF] transition-colors"
-                                            title="Abrir app en pantalla completa"
-                                        >
-                                            <ExternalLink size={10} />
-                                        </a>
-                                    </div>
+                            {/* ─── VISTA MÓVIL: Visor Interactivo y Organizado (Predeterminado: Lavandería) ─── */}
+                            <div className="w-full lg:hidden">
+                                <HeroMobileDemoViewer />
+                            </div>
+
+                            {/* ─── VISTA DESKTOP: Los 4 Teléfonos en Abanico Perspectiva (Restaurante, Gimnasio, Dentista, Tienda) ─── */}
+                            <div className="hidden lg:flex w-full justify-end items-center select-none">
+                                <div className="relative flex items-center justify-end -space-x-8 xl:-space-x-10 max-w-[620px] xl:max-w-[680px]">
                                     
-                                    {/* Pantalla con Iframe de la App Real */}
-                                    <div className="h-[calc(100%-24px)] bg-white rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                        {/* Badge flotante en vivo */}
-                                        <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-slate-900/80 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
-                                            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                            <span>Restaurante</span>
+                                    {/* ─── TELÉFONO 1: LA PARRILLA (Restaurante Demo en Vivo) ─── */}
+                                    <div className="w-[175px] xl:w-[195px] h-[375px] xl:h-[415px] bg-white rounded-[2.3rem] xl:rounded-[2.5rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform -rotate-6 translate-y-6 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 group/phone1">
+                                        {/* Barra superior con Isla Dinámica y botón de pantalla completa */}
+                                        <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
+                                            <div className="w-12 xl:w-14 h-3 bg-slate-900 rounded-full mx-auto" />
+                                            <a 
+                                                href="/parrilla-citiox-demo" 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-[#0066FF] transition-colors"
+                                                title="Abrir app en pantalla completa"
+                                            >
+                                                <ExternalLink size={10} />
+                                            </a>
                                         </div>
-                                        <iframe 
-                                            src="/parrilla-citiox-demo" 
-                                            title="La Parrilla Demo"
-                                            className="w-[375px] h-[780px] origin-top-left scale-[0.52] border-0 select-none pointer-events-auto"
-                                            loading="lazy"
-                                        />
+                                        
+                                        {/* Pantalla con Iframe de la App Real */}
+                                        <div className="h-[calc(100%-24px)] bg-white rounded-[1.6rem] xl:rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                            <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-slate-900/85 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
+                                                <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                <span>Restaurante</span>
+                                            </div>
+                                            <iframe 
+                                                src="/parrilla-citiox-demo" 
+                                                title="La Parrilla Demo"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.46] xl:scale-[0.52] border-0 select-none pointer-events-auto"
+                                                loading="lazy"
+                                            />
+                                        </div>
                                     </div>
+
+                                    {/* ─── TELÉFONO 2: FITZONE / VORTEX (Gimnasio Demo en Vivo - Central) ─── */}
+                                    <div className="w-[195px] xl:w-[220px] h-[415px] xl:h-[460px] bg-white rounded-[2.5rem] xl:rounded-[2.8rem] p-2 shadow-2xl shadow-blue-500/25 border-[6px] border-slate-950 shrink-0 z-30 transform hover:scale-105 hover:z-40 transition-all duration-300 group/phone2">
+                                        {/* Isla Dinámica con acceso a pantalla completa */}
+                                        <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
+                                            <div className="w-16 xl:w-18 h-3.5 bg-slate-950 rounded-full mx-auto flex items-center justify-center">
+                                                <div className="size-1.5 rounded-full bg-slate-800 ml-auto mr-1.5" />
+                                            </div>
+                                            <a 
+                                                href="/vortex-fitness" 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="absolute right-1 top-0 size-5 rounded-full bg-slate-950 text-white flex items-center justify-center text-[8px] hover:bg-[#0066FF] transition-colors"
+                                                title="Abrir app en pantalla completa"
+                                            >
+                                                <ExternalLink size={10} />
+                                            </a>
+                                        </div>
+
+                                        {/* Pantalla con Iframe de la App Real */}
+                                        <div className="h-[calc(100%-26px)] bg-slate-950 rounded-[1.8rem] xl:rounded-[2rem] overflow-hidden relative border border-slate-900 shadow-inner">
+                                            <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-blue-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[7.5px] font-black">
+                                                <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                                                <span>Gimnasio & Fitness</span>
+                                            </div>
+                                            <iframe 
+                                                src="/vortex-fitness" 
+                                                title="FitZone Vortex Demo"
+                                                className="w-[390px] h-[800px] origin-top-left scale-[0.50] xl:scale-[0.56] border-0 select-none pointer-events-auto"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* ─── TELÉFONO 3: DENTAL CHIP (Clínica Dental Demo en Vivo - Reemplazó Lavandería) ─── */}
+                                    <div className="w-[180px] xl:w-[200px] h-[385px] xl:h-[425px] bg-white rounded-[2.4rem] xl:rounded-[2.6rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-3 translate-y-4 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-20 group/phone3">
+                                        <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
+                                            <div className="w-12 xl:w-14 h-3 bg-slate-900 rounded-full mx-auto" />
+                                            <a 
+                                                href="/dental-chip" 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-sky-600 transition-colors"
+                                                title="Abrir app en pantalla completa"
+                                            >
+                                                <ExternalLink size={10} />
+                                            </a>
+                                        </div>
+
+                                        {/* Pantalla con Iframe de la App Real */}
+                                        <div className="h-[calc(100%-24px)] bg-slate-50 rounded-[1.7rem] xl:rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                            <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-sky-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
+                                                <ToothIcon className="w-2 h-2 text-white" />
+                                                <span>Clínica Dental</span>
+                                            </div>
+                                            <iframe 
+                                                src="/dental-chip" 
+                                                title="Dental Chip Demo"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.47] xl:scale-[0.52] border-0 select-none pointer-events-auto"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* ─── TELÉFONO 4: MI TIENDA (E-commerce Retail Demo en Vivo) ─── */}
+                                    <div className="w-[168px] xl:w-[190px] h-[360px] xl:h-[400px] bg-white rounded-[2.2rem] xl:rounded-[2.4rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-8 translate-y-8 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 group/phone4">
+                                        <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
+                                            <div className="w-10 xl:w-12 h-2.5 bg-slate-900 rounded-full mx-auto" />
+                                            <a 
+                                                href="/tienda" 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-purple-600 transition-colors"
+                                                title="Abrir app en pantalla completa"
+                                            >
+                                                <ExternalLink size={10} />
+                                            </a>
+                                        </div>
+
+                                        {/* Pantalla con Iframe de la App Real */}
+                                        <div className="h-[calc(100%-22px)] bg-white rounded-[1.5rem] xl:rounded-[1.6rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                            <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-purple-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
+                                                <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                                                <span>Tienda & Retail</span>
+                                            </div>
+                                            <iframe 
+                                                src="/tienda" 
+                                                title="Citiox Store Demo"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.44] xl:scale-[0.50] border-0 select-none pointer-events-auto"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                    </div>
+
                                 </div>
-
-                                {/* ─── TELÉFONO 2: FITZONE / VORTEX (Gimnasio Demo en Vivo - Central) ─── */}
-                                <div className="w-[215px] sm:w-[240px] h-[450px] sm:h-[490px] bg-white rounded-[2.8rem] p-2 shadow-2xl shadow-blue-500/25 border-[6px] border-slate-950 shrink-0 z-30 transform hover:scale-105 hover:z-40 transition-all duration-300 group/phone2">
-                                    {/* Isla Dinámica con acceso a pantalla completa */}
-                                    <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
-                                        <div className="w-18 h-3.5 bg-slate-950 rounded-full mx-auto flex items-center justify-center">
-                                            <div className="size-1.5 rounded-full bg-slate-800 ml-auto mr-1.5" />
-                                        </div>
-                                        <a 
-                                            href="/vortex-fitness" 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            className="absolute right-1 top-0 size-5 rounded-full bg-slate-950 text-white flex items-center justify-center text-[8px] hover:bg-[#0066FF] transition-colors"
-                                            title="Abrir app en pantalla completa"
-                                        >
-                                            <ExternalLink size={10} />
-                                        </a>
-                                    </div>
-
-                                    {/* Pantalla con Iframe de la App Real */}
-                                    <div className="h-[calc(100%-26px)] bg-slate-950 rounded-[2rem] overflow-hidden relative border border-slate-900 shadow-inner">
-                                        <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-blue-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[7.5px] font-black">
-                                            <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                                            <span>Gimnasio & Fitness</span>
-                                        </div>
-                                        <iframe 
-                                            src="/vortex-fitness" 
-                                            title="FitZone Vortex Demo"
-                                            className="w-[390px] h-[800px] origin-top-left scale-[0.57] border-0 select-none pointer-events-auto"
-                                            loading="lazy"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* ─── TELÉFONO 3: LAVAYA (Lavandería Demo en Vivo) ─── */}
-                                <div className="w-[195px] sm:w-[215px] h-[415px] sm:h-[450px] bg-white rounded-[2.6rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-3 translate-y-4 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-20 group/phone3">
-                                    <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
-                                        <div className="w-14 h-3 bg-slate-900 rounded-full mx-auto" />
-                                        <a 
-                                            href="/lavado" 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-sky-600 transition-colors"
-                                            title="Abrir app en pantalla completa"
-                                        >
-                                            <ExternalLink size={10} />
-                                        </a>
-                                    </div>
-
-                                    {/* Pantalla con Iframe de la App Real */}
-                                    <div className="h-[calc(100%-24px)] bg-slate-50 rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                        <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-sky-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
-                                            <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                                            <span>Lavandería</span>
-                                        </div>
-                                        <iframe 
-                                            src="/lavado" 
-                                            title="LavaYa Demo"
-                                            className="w-[375px] h-[780px] origin-top-left scale-[0.52] border-0 select-none pointer-events-auto"
-                                            loading="lazy"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* ─── TELÉFONO 4: MI TIENDA (E-commerce Retail Demo en Vivo) ─── */}
-                                <div className="w-[185px] sm:w-[205px] h-[395px] sm:h-[430px] bg-white rounded-[2.4rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-8 translate-y-10 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 hidden md:block group/phone4">
-                                    <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
-                                        <div className="w-12 h-2.5 bg-slate-900 rounded-full mx-auto" />
-                                        <a 
-                                            href="/tienda" 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-purple-600 transition-colors"
-                                            title="Abrir app en pantalla completa"
-                                        >
-                                            <ExternalLink size={10} />
-                                        </a>
-                                    </div>
-
-                                    {/* Pantalla con Iframe de la App Real */}
-                                    <div className="h-[calc(100%-22px)] bg-white rounded-[1.6rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                        <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-purple-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
-                                            <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                                            <span>Tienda & Retail</span>
-                                        </div>
-                                        <iframe 
-                                            src="/tienda" 
-                                            title="Citiox Store Demo"
-                                            className="w-[375px] h-[780px] origin-top-left scale-[0.50] border-0 select-none pointer-events-auto"
-                                            loading="lazy"
-                                        />
-                                    </div>
-                                </div>
-
                             </div>
                         </div>
 
