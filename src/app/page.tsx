@@ -117,10 +117,10 @@ export default function LandingPage() {
                 <div className="absolute top-10 left-1/3 w-[300px] h-[300px] bg-blue-100/30 rounded-full blur-2xl -z-10 pointer-events-none" />
 
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex flex-col lg:flex-row items-center justify-start gap-8 lg:gap-8 xl:gap-10">
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-6 xl:gap-8">
                         
                         {/* Columna Izquierda: Mensaje y CTA */}
-                        <div className="w-full lg:w-[420px] xl:w-[460px] shrink-0 space-y-6 text-center lg:text-left z-20 flex flex-col items-center lg:items-start">
+                        <div className="w-full lg:w-[390px] xl:w-[430px] shrink-0 space-y-6 text-center lg:text-left z-20 flex flex-col items-center lg:items-start">
                             
                             {/* Tag Badge */}
                             <div className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-[#E8F1FF] text-[#0066FF] text-[11px] font-black uppercase tracking-wider">
@@ -244,14 +244,14 @@ export default function LandingPage() {
                                 </div>
                             </div>
 
-                            {/* ─── VISTA DESKTOP: LOS 4 TELÉFONOS DESBORDÁNDOSE POR LA DERECHA (BLEED-OFF-SCREEN) ─── */}
-                            <div className="hidden lg:flex w-full justify-start items-center select-none overflow-visible lg:pl-1 xl:pl-3">
-                                <div className="relative flex items-center -space-x-7 lg:-space-x-8 xl:-space-x-9 shrink-0">
+                            {/* ─── VISTA DESKTOP: LOS 4 DEMOS CLAROS, COMPLETOS Y VISIBLES SIMULTÁNEAMENTE ─── */}
+                            <div className="hidden lg:flex w-full justify-center items-center select-none overflow-visible">
+                                <div className="relative flex items-center -space-x-3 lg:-space-x-3.5 xl:-space-x-4 shrink-0">
                                     
-                                    {/* TELÉFONO 1: LA PARRILLA (Restaurante Demo en Vivo) */}
-                                    <div className="w-[185px] xl:w-[210px] h-[390px] xl:h-[440px] bg-white rounded-[2.4rem] xl:rounded-[2.7rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform -rotate-6 translate-y-6 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 group/phone1">
-                                        <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
-                                            <div className="w-12 xl:w-14 h-3 bg-slate-900 rounded-full mx-auto" />
+                                    {/* TELÉFONO 1: RESTAURANTE (La Parrilla Citiox) */}
+                                    <div className="w-[162px] lg:w-[172px] xl:w-[192px] h-[348px] lg:h-[372px] xl:h-[415px] bg-white rounded-[2.2rem] xl:rounded-[2.6rem] p-1.5 xl:p-2 shadow-2xl shadow-slate-900/10 border-[4.5px] xl:border-[5px] border-slate-900/95 shrink-0 transform -rotate-2 translate-y-3 hover:rotate-0 hover:scale-105 hover:-translate-y-2 hover:z-30 transition-all duration-300 z-10 group/phone1 cursor-pointer">
+                                        <div className="relative flex items-center justify-between px-2 mb-1 pt-0.5">
+                                            <div className="w-10 xl:w-12 h-2.5 xl:h-3 bg-slate-900 rounded-full mx-auto" />
                                             <a 
                                                 href="/parrilla-citiox-demo" 
                                                 target="_blank" 
@@ -262,25 +262,25 @@ export default function LandingPage() {
                                                 <ExternalLink size={10} />
                                             </a>
                                         </div>
-                                        <div className="h-[calc(100%-24px)] bg-white rounded-[1.6rem] xl:rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                            <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-slate-900/85 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
-                                                <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                                <span>Restaurante</span>
+                                        <div className="h-[calc(100%-20px)] xl:h-[calc(100%-24px)] bg-white rounded-[1.5rem] xl:rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-amber-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6.5px] xl:text-[7.5px] font-bold">
+                                                <span className="size-1 rounded-full bg-amber-300 animate-pulse" />
+                                                <span>🍔 Restaurante</span>
                                             </div>
                                             <iframe 
                                                 src="/parrilla-citiox-demo" 
                                                 title="La Parrilla Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.49] xl:scale-[0.55] border-0 select-none pointer-events-auto"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.43] lg:scale-[0.46] xl:scale-[0.51] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* TELÉFONO 2: FITZONE / VORTEX (Gimnasio Demo en Vivo - Central) */}
-                                    <div className="w-[205px] xl:w-[235px] h-[430px] xl:h-[485px] bg-white rounded-[2.6rem] xl:rounded-[2.9rem] p-2 shadow-2xl shadow-blue-500/25 border-[6px] border-slate-950 shrink-0 z-30 transform hover:scale-105 hover:z-40 transition-all duration-300 group/phone2">
+                                    {/* TELÉFONO 2: GIMNASIO & FITNESS (Vortex Club - Central Destacado) */}
+                                    <div className="w-[172px] lg:w-[184px] xl:w-[206px] h-[368px] lg:h-[394px] xl:h-[442px] bg-white rounded-[2.4rem] xl:rounded-[2.8rem] p-1.5 xl:p-2 shadow-2xl shadow-blue-500/20 border-[5.5px] xl:border-[6px] border-slate-950 shrink-0 z-20 transform -translate-y-1 hover:scale-105 hover:-translate-y-3 hover:z-30 transition-all duration-300 group/phone2 cursor-pointer">
                                         <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
-                                            <div className="w-16 xl:w-18 h-3.5 bg-slate-950 rounded-full mx-auto flex items-center justify-center">
-                                                <div className="size-1.5 rounded-full bg-slate-800 ml-auto mr-1.5" />
+                                            <div className="w-14 xl:w-16 h-3 xl:h-3.5 bg-slate-950 rounded-full mx-auto flex items-center justify-center">
+                                                <div className="size-1 xl:size-1.5 rounded-full bg-slate-800 ml-auto mr-1" />
                                             </div>
                                             <a 
                                                 href="/vortex-fitness" 
@@ -292,24 +292,24 @@ export default function LandingPage() {
                                                 <ExternalLink size={10} />
                                             </a>
                                         </div>
-                                        <div className="h-[calc(100%-26px)] bg-slate-950 rounded-[1.8rem] xl:rounded-[2rem] overflow-hidden relative border border-slate-900 shadow-inner">
-                                            <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-blue-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[7.5px] font-black">
-                                                <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                                                <span>Gimnasio & Fitness</span>
+                                        <div className="h-[calc(100%-22px)] xl:h-[calc(100%-26px)] bg-slate-950 rounded-[1.7rem] xl:rounded-[2rem] overflow-hidden relative border border-slate-900 shadow-inner">
+                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-blue-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] xl:text-[8px] font-black">
+                                                <span className="size-1 rounded-full bg-emerald-300 animate-pulse" />
+                                                <span>⚡ Gimnasio</span>
                                             </div>
                                             <iframe 
                                                 src="/vortex-fitness" 
                                                 title="FitZone Vortex Demo"
-                                                className="w-[390px] h-[800px] origin-top-left scale-[0.53] xl:scale-[0.60] border-0 select-none pointer-events-auto"
+                                                className="w-[390px] h-[800px] origin-top-left scale-[0.44] lg:scale-[0.47] xl:scale-[0.53] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* TELÉFONO 3: DENTAL CHIP (Clínica Dental Demo en Vivo - Reemplazó Lavandería) */}
-                                    <div className="w-[190px] xl:w-[215px] h-[400px] xl:h-[450px] bg-white rounded-[2.4rem] xl:rounded-[2.7rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-3 translate-y-4 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-20 group/phone3">
+                                    {/* TELÉFONO 3: CLÍNICA DENTAL (Dental Chip - Citas y Servicios) */}
+                                    <div className="w-[170px] lg:w-[182px] xl:w-[204px] h-[364px] lg:h-[390px] xl:h-[438px] bg-white rounded-[2.3rem] xl:rounded-[2.7rem] p-1.5 xl:p-2 shadow-2xl shadow-sky-500/15 border-[5px] xl:border-[5.5px] border-slate-900/95 shrink-0 z-20 transform translate-y-0 hover:scale-105 hover:-translate-y-3 hover:z-30 transition-all duration-300 group/phone3 cursor-pointer">
                                         <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
-                                            <div className="w-12 xl:w-14 h-3 bg-slate-900 rounded-full mx-auto" />
+                                            <div className="w-12 xl:w-14 h-2.5 xl:h-3 bg-slate-900 rounded-full mx-auto" />
                                             <a 
                                                 href="/dental-chip" 
                                                 target="_blank" 
@@ -320,24 +320,24 @@ export default function LandingPage() {
                                                 <ExternalLink size={10} />
                                             </a>
                                         </div>
-                                        <div className="h-[calc(100%-24px)] bg-slate-50 rounded-[1.7rem] xl:rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                            <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-sky-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
+                                        <div className="h-[calc(100%-22px)] xl:h-[calc(100%-24px)] bg-slate-50 rounded-[1.6rem] xl:rounded-[1.9rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-sky-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6.5px] xl:text-[7.5px] font-bold">
                                                 <ToothIcon className="w-2 h-2 text-white" />
-                                                <span>Clínica Dental</span>
+                                                <span>🦷 Clínica Dental</span>
                                             </div>
                                             <iframe 
                                                 src="/dental-chip" 
                                                 title="Dental Chip Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.50] xl:scale-[0.56] border-0 select-none pointer-events-auto"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.45] lg:scale-[0.48] xl:scale-[0.54] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* TELÉFONO 4: MI TIENDA (E-commerce Retail Demo en Vivo - Se asoma y desborda por la derecha) */}
-                                    <div className="w-[180px] xl:w-[205px] h-[380px] xl:h-[430px] bg-white rounded-[2.3rem] xl:rounded-[2.6rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-8 translate-y-8 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 group/phone4">
-                                        <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
-                                            <div className="w-10 xl:w-12 h-2.5 bg-slate-900 rounded-full mx-auto" />
+                                    {/* TELÉFONO 4: TIENDA & RETAIL (E-commerce - Productos y Compras) */}
+                                    <div className="w-[162px] lg:w-[172px] xl:w-[192px] h-[348px] lg:h-[372px] xl:h-[415px] bg-white rounded-[2.2rem] xl:rounded-[2.6rem] p-1.5 xl:p-2 shadow-2xl shadow-purple-500/15 border-[4.5px] xl:border-[5px] border-slate-900/95 shrink-0 transform rotate-2 translate-y-3 hover:rotate-0 hover:scale-105 hover:-translate-y-2 hover:z-30 transition-all duration-300 z-10 group/phone4 cursor-pointer">
+                                        <div className="relative flex items-center justify-between px-2 mb-1 pt-0.5">
+                                            <div className="w-10 xl:w-12 h-2.5 xl:h-3 bg-slate-900 rounded-full mx-auto" />
                                             <a 
                                                 href="/tienda" 
                                                 target="_blank" 
@@ -348,15 +348,15 @@ export default function LandingPage() {
                                                 <ExternalLink size={10} />
                                             </a>
                                         </div>
-                                        <div className="h-[calc(100%-22px)] bg-white rounded-[1.5rem] xl:rounded-[1.6rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                            <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-purple-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
-                                                <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                                                <span>Tienda & Retail</span>
+                                        <div className="h-[calc(100%-20px)] xl:h-[calc(100%-22px)] bg-white rounded-[1.5rem] xl:rounded-[1.7rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-purple-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6.5px] xl:text-[7.5px] font-bold">
+                                                <span className="size-1 rounded-full bg-emerald-300 animate-pulse" />
+                                                <span>🛍️ Tienda & Retail</span>
                                             </div>
                                             <iframe 
                                                 src="/tienda" 
                                                 title="Citiox Store Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.47] xl:scale-[0.53] border-0 select-none pointer-events-auto"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.43] lg:scale-[0.46] xl:scale-[0.51] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
