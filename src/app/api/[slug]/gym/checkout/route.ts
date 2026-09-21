@@ -3,6 +3,52 @@ import prisma from '@/lib/prisma';
 import crypto from 'crypto';
 import { publishBusinessEvent } from '@/lib/growth/eventBus';
 
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params;
+  try {
+    const negocio = await prisma.negocio.findUnique({
+      where: { slug },
+      include: {
+        paymentMethods: {
+          where: { enabled: true },
+          include: { provider: true }
+        }
+      }
+    });
+
+    if (!negocio) {
+      return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+    }
+
+    const bankMethod = (negocio as any).paymentMethods?.find((m: any) => m.provider?.code === 'BANK_TRANSFER' || m.banco);
+
+    return NextResponse.json({
+      success: true,
+      bankTransfer: bankMethod ? {
+        banco: bankMethod.banco,
+        titular: bankMethod.titular,
+        numeroCuenta: bankMethod.numeroCuenta,
+        tipoCuenta: bankMethod.tipoCuenta,
+        identificacion: bankMethod.identificacion,
+        instructions: bankMethod.instructions,
+        qrImageUrl: bankMethod.qrImageUrl
+      } : {
+        banco: 'Banco Pichincha / Guayaquil',
+        titular: negocio.nombre,
+        numeroCuenta: 'Consultar por WhatsApp',
+        tipoCuenta: 'Corriente / Ahorros',
+        identificacion: '',
+        instructions: 'Realiza la transferencia e ingresa el número de comprobante.'
+      }
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ slug: string }> }
@@ -19,7 +65,15 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { planId, nombre, telefono, email, paymentMethod = 'TARJETA_ONLINE' } = body;
+    const { 
+      planId, 
+      nombre, 
+      telefono, 
+      email, 
+      paymentMethod = 'TARJETA_ONLINE',
+      paymentReference: clientRef,
+      cardLast4
+    } = body;
 
     if (!planId || !nombre || !telefono) {
       return NextResponse.json({ error: 'Plan, nombre y teléfono son obligatorios' }, { status: 400 });
@@ -66,6 +120,18 @@ export async function POST(
     const durationDays = plan.durationDays || 30;
     const endAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
 
+    const refCode = clientRef 
+      ? clientRef.trim() 
+      : cardLast4 
+        ? `CARD-****${cardLast4}-${Date.now().toString(36).toUpperCase()}`
+        : `TX-${paymentMethod}-${Date.now().toString(36).toUpperCase()}`;
+
+    const paymentStatus = paymentMethod === 'TARJETA_ONLINE' 
+      ? 'PAID' 
+      : paymentMethod === 'TRANSFERENCIA' 
+        ? 'PAID_REPORTED' 
+        : 'PENDING_ON_SITE';
+
     const membership = await (prisma as any).membership.create({
       data: {
         businessId: negocio.id,
@@ -76,9 +142,9 @@ export async function POST(
         endAt,
         price: plan.price,
         currency: plan.currency || 'USD',
-        paymentStatus: 'PAID',
+        paymentStatus,
         paymentMethod,
-        paymentReference: `TX-ONLINE-${Date.now().toString(36).toUpperCase()}`
+        paymentReference: refCode
       },
       include: {
         membershipPlan: true,

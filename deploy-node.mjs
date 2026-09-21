@@ -147,14 +147,17 @@ function uploadFile(sftp, localPath, remotePath) {
       console.warn(`  ⚠️ SKIP  ${localPath} (no existe localmente)`);
       return resolve();
     }
-    sftp.fastPut(localFull, remotePath, (err) => {
-      if (err) { 
-        console.error(`  ❌ ERROR ${localPath}: ${err.message}`); 
-        reject(err); 
-      } else { 
-        console.log(`  ✅ OK    ${localPath}`); 
-        resolve(); 
-      }
+    // Borrar archivo remoto previo para evitar residuos si el nuevo archivo es más corto
+    sftp.unlink(remotePath, () => {
+      sftp.fastPut(localFull, remotePath, (err) => {
+        if (err) { 
+          console.error(`  ❌ ERROR ${localPath}: ${err.message}`); 
+          reject(err); 
+        } else { 
+          console.log(`  ✅ OK    ${localPath}`); 
+          resolve(); 
+        }
+      });
     });
   });
 }
@@ -217,11 +220,12 @@ conn.on("ready", async () => {
 
   // 5. Build de producción Next.js
   console.log("\n🏗️ Compilando aplicación Next.js en VPS (npm run build)...");
-  await execCommand(conn, `cd ${REMOTE_BASE} && rm -rf .next && npm run build`, "Next.js Clean Build");
+  await execCommand(conn, `cd ${REMOTE_BASE} && pm2 stop zenda-app || true`, "PM2 Stop");
+  await execCommand(conn, `cd ${REMOTE_BASE} && npm run build`, "Next.js Build");
 
   // 6. Reiniciar PM2
   console.log("\n🔄 Reiniciando proceso PM2 zenda-app...");
-  await execCommand(conn, "pm2 restart zenda-app && pm2 status zenda-app", "PM2 Restart");
+  await execCommand(conn, `cd ${REMOTE_BASE} && pm2 start zenda-app || pm2 restart zenda-app`, "PM2 Start");
 
   console.log("\n🎉 ¡Despliegue y configuración completados con éxito!");
   conn.end();
