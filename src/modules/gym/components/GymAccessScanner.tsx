@@ -18,9 +18,11 @@ import {
   Sparkles,
   Zap,
   Tv,
-  Users
+  Users,
+  Settings
 } from 'lucide-react';
 import Link from 'next/link';
+import { GymAccessConfig, DEFAULT_GYM_ACCESS_CONFIG } from '@/modules/gym/types/gymAccessConfig';
 
 interface ScanResult {
   access: 'GRANTED' | 'DENIED';
@@ -51,8 +53,24 @@ export default function GymAccessScanner() {
   const [autoClearTimer, setAutoClearTimer] = useState<NodeJS.Timeout | null>(null);
   const [stats, setStats] = useState({ grantedToday: 0, deniedToday: 0 });
   const [insideCount, setInsideCount] = useState<number>(0);
+  const [accessConfig, setAccessConfig] = useState<GymAccessConfig>(DEFAULT_GYM_ACCESS_CONFIG);
 
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Consultar configuración de métodos de acceso
+  const fetchAccessConfig = async () => {
+    try {
+      const res = await fetch('/api/admin/gym/access/config');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.config) {
+          setAccessConfig(data.config);
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching gym access config in scanner:', e);
+    }
+  };
 
   // Consultar conteo en vivo
   const fetchLiveStats = async () => {
@@ -74,6 +92,7 @@ export default function GymAccessScanner() {
   };
 
   useEffect(() => {
+    fetchAccessConfig();
     fetchLiveStats();
     const interval = setInterval(fetchLiveStats, 15000);
     return () => clearInterval(interval);
@@ -152,10 +171,19 @@ export default function GymAccessScanner() {
     setInputCode('');
 
     try {
+      // Determinar si es QR o búsqueda manual
+      const looksLikeQr = code.startsWith('CITIOX_GYM:') || code.startsWith('CITIOX_TOTEM:') || code.length > 28;
+      const isManual = !looksLikeQr && accessConfig.primaryMethod === 'MANUAL';
+      const methodToSend = isManual ? 'MANUAL_DESK' : 'DESK_SCANNER';
+
       const res = await fetch('/api/admin/gym/access/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qrCode: code, method: 'DESK_SCANNER' })
+        body: JSON.stringify(
+          isManual 
+            ? { identifier: code, method: methodToSend } 
+            : { qrCode: code, method: methodToSend }
+        )
       });
 
       const data = await res.json();
@@ -247,6 +275,16 @@ export default function GymAccessScanner() {
             </div>
           </div>
 
+          {/* Botón Configurar Métodos de Acceso */}
+          <Link
+            href="/admin/config"
+            className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl border border-slate-700 flex items-center gap-2 text-xs font-bold transition-all shadow-sm"
+            title="Ir a Configuración de Métodos de Acceso"
+          >
+            <Settings className="w-4 h-4 text-purple-400" />
+            <span className="hidden sm:inline">Configuración</span>
+          </Link>
+
           {/* Botón Abrir Pantalla Tótem */}
           <Link
             href="/admin/accesos/pantalla"
@@ -281,7 +319,11 @@ export default function GymAccessScanner() {
             type="text"
             value={inputCode}
             onChange={(e) => setInputCode(e.target.value)}
-            placeholder="Pase el carnet QR por el lector o ingrese teléfono/cédula/ID..."
+            placeholder={
+              accessConfig.primaryMethod === 'MANUAL'
+                ? 'Ingrese cédula, número de identificación o nombre del socio...'
+                : 'Pase el carnet QR por el lector o ingrese teléfono/cédula...'
+            }
             disabled={loading}
             className="w-full text-lg md:text-xl font-medium px-5 py-4 pl-14 pr-36 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 focus:border-emerald-500 dark:focus:border-emerald-500 shadow-lg focus:outline-none transition-all placeholder:text-slate-400"
           />

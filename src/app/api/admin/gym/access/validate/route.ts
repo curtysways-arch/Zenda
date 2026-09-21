@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { publishBusinessEvent } from '@/lib/growth/eventBus';
+import { getGymAccessConfig } from '@/modules/gym/types/gymAccessConfig';
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -18,6 +19,35 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { qrCode, customerId, identifier, branchId, method = 'QR' } = body;
+
+    // Verificar permisos según la configuración de métodos de acceso del gimnasio
+    const negocioConfig = await prisma.negocio.findUnique({
+      where: { id: negocioId },
+      select: { configuracion: true }
+    });
+    const accessConfig = getGymAccessConfig(negocioConfig?.configuracion);
+
+    const isQrAttempt = Boolean(qrCode) || method === 'QR' || method === 'DESK_SCANNER';
+    const isManualAttempt = method === 'MANUAL_DESK' || (!qrCode && Boolean(identifier || customerId));
+
+    const isQrAllowed = accessConfig.primaryMethod === 'QR' || accessConfig.backupMethods.qr;
+    const isManualAllowed = accessConfig.primaryMethod === 'MANUAL' || accessConfig.backupMethods.manual;
+
+    if (isQrAttempt && !isQrAllowed) {
+      return NextResponse.json({
+        access: 'DENIED',
+        reason: 'El acceso por código QR está deshabilitado por el administrador en este gimnasio.',
+        member: null
+      }, { status: 403 });
+    }
+
+    if (isManualAttempt && !isManualAllowed) {
+      return NextResponse.json({
+        access: 'DENIED',
+        reason: 'El registro manual de socios está deshabilitado por el administrador.',
+        member: null
+      }, { status: 403 });
+    }
 
     let targetCustomerId = customerId;
 

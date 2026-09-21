@@ -4,6 +4,7 @@ import { jwtVerify } from 'jose';
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
 import { publishBusinessEvent } from '@/lib/growth/eventBus';
+import { getGymAccessConfig, verifyStaticTotemToken } from '@/modules/gym/types/gymAccessConfig';
 
 /**
  * POST /api/[slug]/gym/attendance/self-scan
@@ -31,44 +32,70 @@ export async function POST(
       return NextResponse.json({ error: 'Gimnasio no encontrado' }, { status: 404 });
     }
 
-    // 1. Validar el token del tótem del gimnasio
-    // Formato esperado: CITIOX_TOTEM:businessId:timestamp:signature
-    const parts = totemToken.split(':');
-    if (parts.length < 4 || parts[0] !== 'CITIOX_TOTEM') {
+    // 1. Validar el token del tótem del gimnasio (Dinámico o Fijo para Imprimir)
+    const accessConfig = getGymAccessConfig(negocio.configuracion);
+
+    if (totemToken.startsWith('CITIOX_TOTEM_STATIC:')) {
+      // Validar si el gimnasio tiene habilitado el modo de QR fijo para imprimir
+      if (accessConfig.adminQr.mode !== 'STATIC_PRINTABLE') {
+        return NextResponse.json({
+          access: 'DENIED',
+          reason: 'Este gimnasio utiliza pantalla de QR dinámico. Por favor enfoca la pantalla de recepción.'
+        }, { status: 403 });
+      }
+
+      const isValidStatic = verifyStaticTotemToken(totemToken, negocio.id);
+      if (!isValidStatic) {
+        return NextResponse.json({
+          access: 'DENIED',
+          reason: 'Código QR de mostrador inválido o no corresponde a este gimnasio.'
+        }, { status: 403 });
+      }
+    } else if (totemToken.startsWith('CITIOX_TOTEM:')) {
+      // Formato esperado: CITIOX_TOTEM:businessId:timestamp:signature
+      const parts = totemToken.split(':');
+      if (parts.length < 4) {
+        return NextResponse.json({
+          access: 'DENIED',
+          reason: 'Código QR no reconocido. Asegúrate de escanear el QR oficial del gimnasio.'
+        }, { status: 400 });
+      }
+
+      const [_, tokenBusinessId, timestampStr, signature] = parts;
+      if (tokenBusinessId !== negocio.id) {
+        return NextResponse.json({
+          access: 'DENIED',
+          reason: 'Este código QR pertenece a otro gimnasio.'
+        }, { status: 403 });
+      }
+
+      const tokenTimestamp = parseInt(timestampStr, 10);
+      const nowMs = Date.now();
+      const intervalMs = (accessConfig.adminQr.dynamicIntervalSeconds || 90) * 1000;
+      const toleranceMs = Math.max(intervalMs * 1.5, 60 * 1000); // Tolerancia proporcional al intervalo
+
+      if (isNaN(tokenTimestamp) || Math.abs(nowMs - tokenTimestamp) > toleranceMs) {
+        return NextResponse.json({
+          access: 'DENIED',
+          reason: 'El código QR ha expirado. Por favor enfoca el QR actualizado en la pantalla.'
+        }, { status: 400 });
+      }
+
+      // Verificar firma criptográfica
+      const secret = process.env.NEXTAUTH_SECRET || 'citiox_totem_secret_key_2026';
+      const expectedSignature = crypto.createHmac('sha256', secret).update(`${negocio.id}:${tokenTimestamp}`).digest('hex').slice(0, 16);
+
+      if (signature !== expectedSignature) {
+        return NextResponse.json({
+          access: 'DENIED',
+          reason: 'Código QR adulterado o inválido.'
+        }, { status: 403 });
+      }
+    } else {
       return NextResponse.json({
         access: 'DENIED',
         reason: 'Código QR no reconocido. Asegúrate de escanear el QR oficial del gimnasio.'
       }, { status: 400 });
-    }
-
-    const [_, tokenBusinessId, timestampStr, signature] = parts;
-    if (tokenBusinessId !== negocio.id) {
-      return NextResponse.json({
-        access: 'DENIED',
-        reason: 'Este código QR pertenece a otro gimnasio.'
-      }, { status: 403 });
-    }
-
-    const tokenTimestamp = parseInt(timestampStr, 10);
-    const nowMs = Date.now();
-    const TOKEN_MAX_AGE_MS = 180 * 1000; // 3 minutos de tolerancia
-
-    if (isNaN(tokenTimestamp) || Math.abs(nowMs - tokenTimestamp) > TOKEN_MAX_AGE_MS) {
-      return NextResponse.json({
-        access: 'DENIED',
-        reason: 'El código QR ha expirado. Por favor enfoca el QR actualizado en la pantalla.'
-      }, { status: 400 });
-    }
-
-    // Verificar firma criptográfica
-    const secret = process.env.NEXTAUTH_SECRET || 'citiox_totem_secret_key_2026';
-    const expectedSignature = crypto.createHmac('sha256', secret).update(`${negocio.id}:${tokenTimestamp}`).digest('hex').slice(0, 16);
-
-    if (signature !== expectedSignature) {
-      return NextResponse.json({
-        access: 'DENIED',
-        reason: 'Código QR adulterado o inválido.'
-      }, { status: 403 });
     }
 
     // 2. Identificar al Socio autenticado (vía customer_token o fallbackPhone)

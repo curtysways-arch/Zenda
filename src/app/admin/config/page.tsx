@@ -11,6 +11,8 @@ import ProductsConfig from '@/components/admin/ProductsConfig';
 
 import { DEFAULT_CONFIGS } from '@/lib/constants/defaultConfigs';
 import BusinessLocationPicker from '@/components/admin/BusinessLocationPicker';
+import { isGymBusiness } from '@/modules/gym/utils/gymHelper';
+import GymAccessConfigSection from '@/components/admin/gym/GymAccessConfigSection';
 
 export default function ConfigMensajesPage() {
     const { data: session } = useSession();
@@ -158,10 +160,17 @@ export default function ConfigMensajesPage() {
         );
     }
 
+    const isGym = isGymBusiness(negocio);
+
     return (
         <>
             {/* VISTA MÓVIL */}
-            <div className="md:hidden -mx-5 -mt-5">
+            <div className="md:hidden -mx-5 -mt-5 space-y-4">
+                {isGym && (
+                    <div className="p-4">
+                        <GymAccessConfigSection negocio={negocio} primaryColor={primaryColor} />
+                    </div>
+                )}
                 <MobileBusiness 
                     configs={configs}
                     negocio={negocio}
@@ -188,7 +197,9 @@ export default function ConfigMensajesPage() {
             <div className="hidden md:block space-y-8 animate-in fade-in duration-500">
                 <div>
                     <h1 className="text-3xl font-black text-gray-900 tracking-tight">Configuración de Negocio</h1>
-                    <p className="text-gray-500 text-sm font-medium">Personaliza los mensajes y parámetros operativos de tu Spa.</p>
+                    <p className="text-gray-500 text-sm font-medium">
+                        {isGym ? 'Personaliza los mensajes, métodos de acceso y parámetros operativos de tu Gimnasio.' : 'Personaliza los mensajes y parámetros operativos de tu Spa.'}
+                    </p>
                 </div>
 
                 {message && (
@@ -388,7 +399,12 @@ export default function ConfigMensajesPage() {
                     />
                 </FeatureGate>
 
-
+                {isGym && (
+                    <GymAccessConfigSection 
+                        negocio={negocio} 
+                        primaryColor={primaryColor} 
+                    />
+                )}
 
                 <DeliveryLogisticsConfigSection 
                     configs={configs}
