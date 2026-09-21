@@ -115,7 +115,8 @@ const manualFiles = [
   "src/components/admin/gym/GymPromotionForm.tsx",
   "src/app/admin/marketing/conoce-el-gym/page.tsx",
   "src/components/public/PromotionsSection.tsx",
-  "src/components/ui/PhoneInput.tsx"
+  "src/components/ui/PhoneInput.tsx",
+  "src/app/api/shoe-care/orders/[id]/inspect/route.ts"
 ];
 
 function collectAllFilesAndDirs(roots, extraFiles) {
