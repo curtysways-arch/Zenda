@@ -1308,6 +1308,40 @@ export default async function PublicNegocioPage({
                 </section>
             )}
 
+            {/* GYM — CONOCE EL GIMNASIO */}
+            {isGymModule && (gymAreas.length > 0 || gymEquipment.length > 0) && (
+                <section id="conoce-el-gym" className="mb-6 px-4 sm:px-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <span className="text-[10px] font-black uppercase tracking-widest block mb-1" style={{ color: primaryColor }}>INSTALACIONES</span>
+                            <h3 className="text-2xl font-black leading-none text-slate-900">Conoce el Gimnasio</h3>
+                        </div>
+                    </div>
+                    {gymAreas.length > 0 && (
+                        <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-none">
+                            {gymAreas.map((area: any) => (
+                                <div key={area.id} className="relative shrink-0 w-44 rounded-2xl overflow-hidden border border-slate-100 shadow-sm group">
+                                    <div className="aspect-[3/4] bg-slate-100">
+                                        {area.imageUrl ? (
+                                            <img src={area.imageUrl} alt={area.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-slate-50">
+                                                <Dumbbell className="text-slate-200" size={32} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                                        <p className="text-xs font-black text-white uppercase tracking-wide leading-tight">{area.name}</p>
+                                        {area.description && <p className="text-[10px] text-white/70 mt-0.5 line-clamp-2">{area.description}</p>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+            )}
+
             {/* GYM — PROMOCIÓN DESTACADA */}
             {isGymModule && gymPromotions.length > 0 && (() => {
                 const activePromo = gymPromotions.find((p: any) => {
@@ -1353,40 +1387,6 @@ export default async function PublicNegocioPage({
                     </section>
                 );
             })()}
-
-            {/* GYM — CONOCE EL GIMNASIO */}
-            {isGymModule && (gymAreas.length > 0 || gymEquipment.length > 0) && (
-                <section id="conoce-el-gym" className="mb-6 px-4 sm:px-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <span className="text-[10px] font-black uppercase tracking-widest block mb-1" style={{ color: primaryColor }}>INSTALACIONES</span>
-                            <h3 className="text-2xl font-black leading-none text-slate-900">Conoce el Gimnasio</h3>
-                        </div>
-                    </div>
-                    {gymAreas.length > 0 && (
-                        <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-none">
-                            {gymAreas.map((area: any) => (
-                                <div key={area.id} className="relative shrink-0 w-44 rounded-2xl overflow-hidden border border-slate-100 shadow-sm group">
-                                    <div className="aspect-[3/4] bg-slate-100">
-                                        {area.imageUrl ? (
-                                            <img src={area.imageUrl} alt={area.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-slate-50">
-                                                <Dumbbell className="text-slate-200" size={32} />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                                        <p className="text-xs font-black text-white uppercase tracking-wide leading-tight">{area.name}</p>
-                                        {area.description && <p className="text-[10px] text-white/70 mt-0.5 line-clamp-2">{area.description}</p>}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </section>
-            )}
 
             {/* CURSOS Y TALLERES */}
             {coursesModuleEnabled && cursosActivos.length > 0 && (

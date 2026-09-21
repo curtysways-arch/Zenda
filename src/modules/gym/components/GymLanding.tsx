@@ -535,82 +535,6 @@ export default function GymLanding({
         )}
       </section>
 
-      {/* ── PROMO DESTACADA (si hay una activa vigente) ─────────────────────── */}
-      {activePromo && (() => {
-        // Parsear metadata CITIOX_META de la descripción
-        let promoDesc = activePromo.descripcion || '';
-        let promoMeta: any = {};
-        if (promoDesc.includes('<!-- CITIOX_META:')) {
-          try {
-            const parts = promoDesc.split('<!-- CITIOX_META:');
-            promoDesc = parts[0].trim();
-            promoMeta = JSON.parse(parts[1].split('-->')[0].trim());
-          } catch (_) {}
-        }
-
-        return (
-          <section className="py-12 max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="relative overflow-hidden rounded-3xl border border-orange-500/40 bg-gradient-to-r from-slate-900 via-orange-950/30 to-slate-900 p-8 sm:p-10 shadow-2xl shadow-orange-500/10">
-              {/* Glow decorativo */}
-              <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none" style={{ backgroundColor: primaryColor }} />
-
-              <div className="relative z-10 flex flex-col sm:flex-row gap-8 items-center">
-                {/* Imagen */}
-                {activePromo.imagenUrl && (
-                  <div className="shrink-0 w-full sm:w-52 aspect-square rounded-2xl overflow-hidden border border-slate-700">
-                    <img src={activePromo.imagenUrl} alt={activePromo.titulo} className="w-full h-full object-cover" />
-                  </div>
-                )}
-
-                {/* Contenido */}
-                <div className="flex-1">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-black uppercase tracking-widest mb-3 border border-orange-500/25">
-                    <Flame size={12} />
-                    Oferta Especial
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl font-black uppercase text-white mb-2 leading-tight">
-                    {activePromo.titulo}
-                  </h2>
-                  {promoDesc && (
-                    <p className="text-slate-300 text-sm mb-4 leading-relaxed">{promoDesc}</p>
-                  )}
-
-                  {/* Precio */}
-                  <div className="flex items-baseline gap-3 mb-5">
-                    <span className="text-4xl font-black text-white">
-                      ${activePromo.precioPromo}
-                    </span>
-                    {activePromo.precioAnterior && activePromo.precioAnterior > activePromo.precioPromo && (
-                      <span className="text-xl text-slate-500 line-through">
-                        ${activePromo.precioAnterior}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Validez */}
-                  {activePromo.fechaFin && (
-                    <p className="text-xs text-slate-400 mb-4">
-                      Válido hasta: <span className="font-semibold text-slate-300">
-                        {new Date(activePromo.fechaFin).toLocaleDateString('es', { day: '2-digit', month: 'long', year: 'numeric' })}
-                      </span>
-                    </p>
-                  )}
-
-                  <a
-                    href="#planes"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-lg transition-all hover:scale-105 active:scale-95"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    <Dumbbell size={16} />
-                    Ver Membresías
-                  </a>
-                </div>
-              </div>
-            </div>
-          </section>
-        );
-      })()}
-
       {/* ── 3.5 CONOCE NUESTRO GIMNASIO (solo si hay contenido activo) ─── */}
       {!loadingGym && (gymAreas.length > 0 || gymEquipment.length > 0) && (
         <section id="conoce-el-gym" className="py-20 max-w-6xl mx-auto px-4 sm:px-6 scroll-mt-20">
@@ -723,6 +647,82 @@ export default function GymLanding({
           )}
         </section>
       )}
+
+      {/* ── PROMO DESTACADA (si hay una activa vigente) ─────────────────────── */}
+      {activePromo && (() => {
+        // Parsear metadata CITIOX_META de la descripción
+        let promoDesc = activePromo.descripcion || '';
+        let promoMeta: any = {};
+        if (promoDesc.includes('<!-- CITIOX_META:')) {
+          try {
+            const parts = promoDesc.split('<!-- CITIOX_META:');
+            promoDesc = parts[0].trim();
+            promoMeta = JSON.parse(parts[1].split('-->')[0].trim());
+          } catch (_) {}
+        }
+
+        return (
+          <section className="py-12 max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="relative overflow-hidden rounded-3xl border border-orange-500/40 bg-gradient-to-r from-slate-900 via-orange-950/30 to-slate-900 p-8 sm:p-10 shadow-2xl shadow-orange-500/10">
+              {/* Glow decorativo */}
+              <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none" style={{ backgroundColor: primaryColor }} />
+
+              <div className="relative z-10 flex flex-col sm:flex-row gap-8 items-center">
+                {/* Imagen */}
+                {activePromo.imagenUrl && (
+                  <div className="shrink-0 w-full sm:w-52 aspect-square rounded-2xl overflow-hidden border border-slate-700">
+                    <img src={activePromo.imagenUrl} alt={activePromo.titulo} className="w-full h-full object-cover" />
+                  </div>
+                )}
+
+                {/* Contenido */}
+                <div className="flex-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-black uppercase tracking-widest mb-3 border border-orange-500/25">
+                    <Flame size={12} />
+                    Oferta Especial
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black uppercase text-white mb-2 leading-tight">
+                    {activePromo.titulo}
+                  </h2>
+                  {promoDesc && (
+                    <p className="text-slate-300 text-sm mb-4 leading-relaxed">{promoDesc}</p>
+                  )}
+
+                  {/* Precio */}
+                  <div className="flex items-baseline gap-3 mb-5">
+                    <span className="text-4xl font-black text-white">
+                      ${activePromo.precioPromo}
+                    </span>
+                    {activePromo.precioAnterior && activePromo.precioAnterior > activePromo.precioPromo && (
+                      <span className="text-xl text-slate-500 line-through">
+                        ${activePromo.precioAnterior}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Validez */}
+                  {activePromo.fechaFin && (
+                    <p className="text-xs text-slate-400 mb-4">
+                      Válido hasta: <span className="font-semibold text-slate-300">
+                        {new Date(activePromo.fechaFin).toLocaleDateString('es', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      </span>
+                    </p>
+                  )}
+
+                  <a
+                    href="#planes"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-lg transition-all hover:scale-105 active:scale-95"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <Dumbbell size={16} />
+                    Ver Membresías
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ── 4. BENEFICIOS E INSTALACIONES (100% CONFIGURABLE DESDE ADMIN) ─ */}
       <section id="instalaciones" className="py-20 bg-slate-900/40 border-y border-slate-800/80 scroll-mt-20">

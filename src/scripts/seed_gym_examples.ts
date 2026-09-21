@@ -185,7 +185,143 @@ export async function seedGymExamples() {
     }
   }
 
-  console.log('🎉 [SEED GYM EXAMPLES] Finalizado con 5 áreas y 5 equipos.');
+  // 3. Promociones de Membresía de Ejemplo (5 promociones completas y variadas)
+  console.log('--- Creando 5 promociones de membresía ---');
+  const plans = await (prisma as any).membershipPlan.findMany({
+    where: { businessId: vortex.id },
+    orderBy: { displayOrder: 'asc' }
+  });
+
+  const planMensual = plans.find((p: any) => p.durationDays === 30 || p.name.toLowerCase().includes('mensual')) || plans[0];
+  const planTrimestral = plans.find((p: any) => p.durationDays === 90 || p.name.toLowerCase().includes('trimestral')) || plans[1] || plans[0];
+  const planAnual = plans.find((p: any) => p.durationDays === 365 || p.name.toLowerCase().includes('anual')) || plans[2] || plans[0];
+
+  const now = new Date();
+  const in30Days = new Date();
+  in30Days.setDate(now.getDate() + 30);
+  const in60Days = new Date();
+  in60Days.setDate(now.getDate() + 60);
+
+  const promosData = [
+    {
+      titulo: 'Black Fitness: 30% OFF en Plan Anual VIP',
+      userDescription: 'Transforma tu estilo de vida todo el año. Acceso total a todas las sedes, clases ilimitadas, casillero privado y toalla.',
+      benefitType: 'DESCUENTO_PORCENTAJE',
+      discountValue: 30,
+      planId: planAnual?.id || null,
+      precioAnterior: planAnual?.price || 280,
+      precioPromo: planAnual ? Number((planAnual.price * 0.7).toFixed(2)) : 196,
+      imagenUrl: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=800&auto=format&fit=crop',
+      estado: 'publicado',
+      fechaInicio: now,
+      fechaFin: in30Days
+    },
+    {
+      titulo: 'Matrícula 100% Gratis en Plan Trimestral',
+      userDescription: 'Inscríbete hoy sin costo de activación ni matrícula administrativa en tu membresía trimestral de alto rendimiento.',
+      benefitType: 'MATRICULA_GRATIS',
+      discountValue: 0,
+      planId: planTrimestral?.id || null,
+      precioAnterior: planTrimestral ? planTrimestral.price + 25 : 105,
+      precioPromo: planTrimestral?.price || 80,
+      imagenUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=800&auto=format&fit=crop',
+      estado: 'publicado',
+      fechaInicio: now,
+      fechaFin: in30Days
+    },
+    {
+      titulo: 'Primer Mes a Precio Especial de Apertura',
+      userDescription: 'Comienza tu viaje de entrenamiento al precio más accesible. Acceso 24/7 con código QR inteligente y evaluación física incluida.',
+      benefitType: 'PRECIO_ESPECIAL',
+      discountValue: 19.99,
+      planId: planMensual?.id || null,
+      precioAnterior: planMensual?.price || 35,
+      precioPromo: 19.99,
+      imagenUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop',
+      estado: 'publicado',
+      fechaInicio: now,
+      fechaFin: in60Days
+    },
+    {
+      titulo: 'Inscripción y Carnet Digital de Regalo',
+      userDescription: 'Cero costos ocultos en cualquier plan que elijas. Registro inmediato en recepción o desde tu móvil en menos de 2 minutos.',
+      benefitType: 'INSCRIPCION_GRATIS',
+      discountValue: 0,
+      planId: null, // Aplica a todos
+      precioAnterior: 20,
+      precioPromo: 0,
+      imagenUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=800&auto=format&fit=crop',
+      estado: 'publicado',
+      fechaInicio: now,
+      fechaFin: in60Days
+    },
+    {
+      titulo: '$15 USD OFF en Plan Trimestral Pro',
+      userDescription: 'Ahorro directo instantáneo para nuevos socios que inicien su plan de acondicionamiento físico de 3 meses.',
+      benefitType: 'DESCUENTO_FIJO',
+      discountValue: 15,
+      planId: planTrimestral?.id || null,
+      precioAnterior: planTrimestral?.price || 80,
+      precioPromo: planTrimestral ? Math.max(0, planTrimestral.price - 15) : 65,
+      imagenUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=800&auto=format&fit=crop',
+      estado: 'publicado',
+      fechaInicio: now,
+      fechaFin: in30Days
+    }
+  ];
+
+  for (const pr of promosData) {
+    const meta = {
+      membershipPlanId: pr.planId,
+      benefitType: pr.benefitType,
+      discountValue: pr.discountValue,
+      finalPrice: pr.precioPromo
+    };
+
+    const fullDescription = `${pr.userDescription}\n<!-- CITIOX_META:${JSON.stringify(meta)}-->`;
+
+    let existing = await (prisma as any).promotion.findFirst({
+      where: { businessId: vortex.id, titulo: pr.titulo }
+    });
+
+    if (!existing) {
+      await (prisma as any).promotion.create({
+        data: {
+          id: crypto.randomUUID(),
+          businessId: vortex.id,
+          titulo: pr.titulo,
+          descripcion: fullDescription,
+          imagenUrl: pr.imagenUrl,
+          estado: pr.estado,
+          precioPromo: pr.precioPromo,
+          precioAnterior: pr.precioAnterior,
+          fechaInicio: pr.fechaInicio,
+          fechaFin: pr.fechaFin,
+          tipoPromo: pr.benefitType,
+          updatedAt: new Date()
+        }
+      });
+      console.log(`[Promotion] Creada promoción: "${pr.titulo}"`);
+    } else {
+      await (prisma as any).promotion.update({
+        where: { id: existing.id },
+        data: {
+          descripcion: fullDescription,
+          imagenUrl: pr.imagenUrl,
+          estado: pr.estado,
+          precioPromo: pr.precioPromo,
+          precioAnterior: pr.precioAnterior,
+          fechaInicio: pr.fechaInicio,
+          fechaFin: pr.fechaFin,
+          tipoPromo: pr.benefitType,
+          updatedAt: new Date()
+        }
+      });
+      console.log(`[Promotion] Actualizada promoción: "${pr.titulo}"`);
+    }
+  }
+
+  console.log('🎉 [SEED GYM EXAMPLES] Finalizado con 5 áreas, 5 equipos y 5 promociones.');
 }
 
 if (require.main === module) {
