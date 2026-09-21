@@ -280,6 +280,8 @@ model Media {
   pages              Page[]              @relation("PageImage")
   automaticDiscounts AutomaticDiscount[] @relation("AutomaticDiscountImage")
   clinicalDocuments  ClinicalDocument[]  @relation("ClinicalDocumentMedia")
+  gymAreas           GymArea[]           @relation("GymAreaImage")
+  gymEquipment       GymEquipment[]      @relation("GymEquipmentImage")
 }
 
 model LikeResultado {
@@ -435,6 +437,8 @@ model Negocio {
   clinicalDocuments          ClinicalDocument[]
   membershipPlans            MembershipPlan[]
   memberships                Membership[]
+  gymAreas               GymArea[]
+  gymEquipment           GymEquipment[]
   gymAccessLogs              GymAccessLog[]
   gymAttendances             GymAttendance[]
   gymClasses                 GymClass[]
@@ -4313,3 +4317,44 @@ model GymClassBooking {
   @@index([businessId, date])
 }
 
+model GymArea {
+  id           String         @id @default(uuid())
+  businessId   String
+  name         String
+  description  String?
+  imageUrl     String?
+  imageMediaId String?
+  imageMedia   Media?         @relation("GymAreaImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
+  order        Int            @default(0)
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  negocio      Negocio        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  equipment    GymEquipment[]
+
+  @@index([businessId])
+  @@index([businessId, active])
+}
+
+model GymEquipment {
+  id           String    @id @default(uuid())
+  businessId   String
+  areaId       String?
+  name         String
+  description  String?
+  imageUrl     String?
+  imageMediaId String?
+  imageMedia   Media?    @relation("GymEquipmentImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
+  order        Int       @default(0)
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  negocio      Negocio   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  area         GymArea?  @relation(fields: [areaId], references: [id], onDelete: SetNull)
+
+  @@index([businessId])
+  @@index([areaId])
+  @@index([businessId, active])
+}

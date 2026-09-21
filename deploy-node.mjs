@@ -104,7 +104,11 @@ const manualFiles = [
   "src/components/admin/mobile/MobileBusiness.tsx",
   "src/app/api/config/route.ts",
   "src/app/admin/config/accesos/page.tsx",
-  "src/app/admin/config/page.tsx"
+  "src/app/admin/config/page.tsx",
+  "src/app/admin/promociones/page.tsx",
+  "src/components/admin/gym/GymKnowTheGymAdmin.tsx",
+  "src/components/admin/gym/GymPromotionForm.tsx",
+  "src/app/admin/marketing/conoce-el-gym/page.tsx"
 ];
 
 function collectAllFilesAndDirs(roots, extraFiles) {

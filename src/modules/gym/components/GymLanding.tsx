@@ -4,16 +4,25 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Dumbbell, CheckCircle, ArrowRight, Shield, Zap, Flame, Award, 
-  Clock, MapPin, Phone, Star, Sparkles, User, Calendar, QrCode, X, ChevronRight, Check, Users
+  Clock, MapPin, Phone, Star, Sparkles, User, Calendar, QrCode, X, ChevronRight, Check, Users,
+  Building2, Layers, Tag
 } from 'lucide-react';
 
 interface GymLandingProps {
   negocio: any;
   initialPlans?: any[];
   initialPromotions?: any[];
+  initialGymAreas?: any[];
+  initialEquipment?: any[];
 }
 
-export default function GymLanding({ negocio, initialPlans = [], initialPromotions = [] }: GymLandingProps) {
+export default function GymLanding({
+  negocio,
+  initialPlans = [],
+  initialPromotions = [],
+  initialGymAreas = [],
+  initialEquipment = []
+}: GymLandingProps) {
   const [plans, setPlans] = useState<any[]>(initialPlans);
   const [loadingPlans, setLoadingPlans] = useState<boolean>(initialPlans.length === 0);
   const [classes, setClasses] = useState<any[]>([]);
@@ -117,6 +126,40 @@ export default function GymLanding({ negocio, initialPlans = [], initialPromotio
         .finally(() => setLoadingClasses(false));
     }
   }, [negocio?.slug]);
+
+  // Estados de áreas y equipamiento
+  const [gymAreas, setGymAreas] = useState<any[]>(initialGymAreas);
+  const [gymEquipment, setGymEquipment] = useState<any[]>(initialEquipment);
+  const [loadingGym, setLoadingGym] = useState(initialGymAreas.length === 0);
+
+  // Cargar áreas/equipamiento si no vinieron pre-cargados (SSR)
+  useEffect(() => {
+    if (initialGymAreas.length === 0 && negocio?.slug) {
+      fetch(`/api/${negocio.slug}/gym/know-the-gym`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setGymAreas(data.areas || []);
+            setGymEquipment(data.equipment || []);
+          }
+        })
+        .catch(err => console.error('Error fetching gym areas:', err))
+        .finally(() => setLoadingGym(false));
+    } else {
+      setLoadingGym(false);
+    }
+  }, [negocio?.slug, initialGymAreas.length]);
+
+  // Promoción destacada activa
+  const activePromo = (initialPromotions || []).find((p: any) => {
+    if (p.estado !== 'publicado') return false;
+    const now = new Date();
+    const start = p.fechaInicio ? new Date(p.fechaInicio) : null;
+    const end = p.fechaFin ? new Date(p.fechaFin) : null;
+    if (start && now < start) return false;
+    if (end && now > end) return false;
+    return true;
+  }) || null;
 
   const handleOpenCheckout = (plan: any) => {
     setSelectedPlan(plan);
@@ -491,6 +534,195 @@ export default function GymLanding({ negocio, initialPlans = [], initialPromotio
           </div>
         )}
       </section>
+
+      {/* ── PROMO DESTACADA (si hay una activa vigente) ─────────────────────── */}
+      {activePromo && (() => {
+        // Parsear metadata CITIOX_META de la descripción
+        let promoDesc = activePromo.descripcion || '';
+        let promoMeta: any = {};
+        if (promoDesc.includes('<!-- CITIOX_META:')) {
+          try {
+            const parts = promoDesc.split('<!-- CITIOX_META:');
+            promoDesc = parts[0].trim();
+            promoMeta = JSON.parse(parts[1].split('-->')[0].trim());
+          } catch (_) {}
+        }
+
+        return (
+          <section className="py-12 max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="relative overflow-hidden rounded-3xl border border-orange-500/40 bg-gradient-to-r from-slate-900 via-orange-950/30 to-slate-900 p-8 sm:p-10 shadow-2xl shadow-orange-500/10">
+              {/* Glow decorativo */}
+              <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none" style={{ backgroundColor: primaryColor }} />
+
+              <div className="relative z-10 flex flex-col sm:flex-row gap-8 items-center">
+                {/* Imagen */}
+                {activePromo.imagenUrl && (
+                  <div className="shrink-0 w-full sm:w-52 aspect-square rounded-2xl overflow-hidden border border-slate-700">
+                    <img src={activePromo.imagenUrl} alt={activePromo.titulo} className="w-full h-full object-cover" />
+                  </div>
+                )}
+
+                {/* Contenido */}
+                <div className="flex-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-black uppercase tracking-widest mb-3 border border-orange-500/25">
+                    <Flame size={12} />
+                    Oferta Especial
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black uppercase text-white mb-2 leading-tight">
+                    {activePromo.titulo}
+                  </h2>
+                  {promoDesc && (
+                    <p className="text-slate-300 text-sm mb-4 leading-relaxed">{promoDesc}</p>
+                  )}
+
+                  {/* Precio */}
+                  <div className="flex items-baseline gap-3 mb-5">
+                    <span className="text-4xl font-black text-white">
+                      ${activePromo.precioPromo}
+                    </span>
+                    {activePromo.precioAnterior && activePromo.precioAnterior > activePromo.precioPromo && (
+                      <span className="text-xl text-slate-500 line-through">
+                        ${activePromo.precioAnterior}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Validez */}
+                  {activePromo.fechaFin && (
+                    <p className="text-xs text-slate-400 mb-4">
+                      Válido hasta: <span className="font-semibold text-slate-300">
+                        {new Date(activePromo.fechaFin).toLocaleDateString('es', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      </span>
+                    </p>
+                  )}
+
+                  <a
+                    href="#planes"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-lg transition-all hover:scale-105 active:scale-95"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <Dumbbell size={16} />
+                    Ver Membresías
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* ── 3.5 CONOCE NUESTRO GIMNASIO (solo si hay contenido activo) ─── */}
+      {!loadingGym && (gymAreas.length > 0 || gymEquipment.length > 0) && (
+        <section id="conoce-el-gym" className="py-20 max-w-6xl mx-auto px-4 sm:px-6 scroll-mt-20">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 text-orange-400 text-xs font-bold uppercase tracking-wider mb-3">
+              <Building2 size={14} />
+              Instalaciones
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">
+              CONOCE NUESTRO GIMNASIO
+            </h2>
+            <p className="text-slate-400 text-sm sm:text-base">
+              Espacios diseñados para maximizar tu entrenamiento y tu bienestar.
+            </p>
+          </div>
+
+          {/* Áreas del Gimnasio */}
+          {gymAreas.length > 0 && (
+            <div className="mb-14">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-5 flex items-center gap-2">
+                <Layers size={14} /> Áreas y Espacios
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {gymAreas.map((area: any) => (
+                  <div key={area.id} className="group relative overflow-hidden rounded-2xl border border-slate-800 hover:border-orange-500/40 transition-all shadow-xl">
+                    {/* Imagen */}
+                    <div className="aspect-video overflow-hidden bg-slate-900">
+                      {area.imageUrl ? (
+                        <img
+                          src={area.imageUrl}
+                          alt={area.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-slate-900">
+                          <Building2 className="text-slate-700" size={48} />
+                        </div>
+                      )}
+                    </div>
+                    {/* Info superpuesta */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h4 className="text-base font-black text-white uppercase tracking-wide drop-shadow">
+                        {area.name}
+                      </h4>
+                      {area.description && (
+                        <p className="text-xs text-slate-300 mt-0.5 line-clamp-2 leading-relaxed">
+                          {area.description}
+                        </p>
+                      )}
+                      {/* Equipos del área */}
+                      {gymEquipment.filter((e: any) => e.areaId === area.id).length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {gymEquipment
+                            .filter((e: any) => e.areaId === area.id)
+                            .slice(0, 3)
+                            .map((e: any) => (
+                              <span key={e.id} className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-[10px] font-semibold border border-orange-500/20">
+                                {e.name}
+                              </span>
+                            ))}
+                          {gymEquipment.filter((e: any) => e.areaId === area.id).length > 3 && (
+                            <span className="px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 text-[10px] font-semibold">
+                              +{gymEquipment.filter((e: any) => e.areaId === area.id).length - 3} más
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Equipamiento sin área asignada */}
+          {gymEquipment.filter((e: any) => !e.areaId).length > 0 && (
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-5 flex items-center gap-2">
+                <Dumbbell size={14} /> Equipamiento General
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {gymEquipment
+                  .filter((e: any) => !e.areaId)
+                  .map((equip: any) => (
+                    <div key={equip.id} className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden hover:border-slate-700 transition-all group">
+                      <div className="aspect-square overflow-hidden bg-slate-900/80">
+                        {equip.imageUrl ? (
+                          <img
+                            src={equip.imageUrl}
+                            alt={equip.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Dumbbell className="text-slate-700" size={32} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs font-bold text-white truncate">{equip.name}</p>
+                        {equip.description && (
+                          <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">{equip.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ── 4. BENEFICIOS E INSTALACIONES (100% CONFIGURABLE DESDE ADMIN) ─ */}
       <section id="instalaciones" className="py-20 bg-slate-900/40 border-y border-slate-800/80 scroll-mt-20">

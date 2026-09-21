@@ -6,6 +6,7 @@ import PromotionClient from './PromotionClient';
 import { getPromotions } from '@/app/actions/promotionActions';
 import PromocionesHybridView from '@/components/admin/promotions/PromocionesHybridView';
 import { EntitlementsService } from '@/core/entitlements/EntitlementsService';
+import GymPromocionesView from '@/components/admin/gym/GymPromocionesView';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,40 @@ export default async function PromocionesPage() {
   const tipoUpper = (rawNegocio.tipoNegocio || '').toUpperCase();
   const nameUpper = (rawNegocio.nombre || '').toUpperCase();
   const slugUpper = (rawNegocio.slug || '').toUpperCase();
+  const cfg = typeof rawNegocio.configuracion === 'string'
+    ? (() => { try { return JSON.parse(rawNegocio.configuracion); } catch { return {}; } })()
+    : rawNegocio.configuracion || {};
+  const blueprintId = (cfg.blueprintId || '').toUpperCase();
+
+  // Detección de vertical Gimnasio
+  const isGym =
+    tipoUpper === 'GIMNASIO' || tipoUpper === 'GYM' || tipoUpper === 'FITNESS' ||
+    blueprintId === 'GYM' || blueprintId === 'GIMNASIO' ||
+    nameUpper.includes('VORTEX') || nameUpper.includes('FITNESS') || nameUpper.includes('GYM') ||
+    slugUpper.includes('GYM') || slugUpper.includes('FITNESS') || slugUpper.includes('VORTEX');
+
+  // Si es Gym → renderizar vista especializada de membresías
+  if (isGym) {
+    const [gymPromos, membershipPlans] = await Promise.all([
+      (prisma as any).promotion.findMany({
+        where: { businessId: negocioId },
+        orderBy: { createdAt: 'desc' }
+      }),
+      (prisma as any).membershipPlan.findMany({
+        where: { businessId: negocioId, active: true },
+        orderBy: { displayOrder: 'asc' },
+        select: { id: true, name: true, price: true, currency: true, durationDays: true }
+      })
+    ]);
+
+    return (
+      <GymPromocionesView
+        initialPromotions={gymPromos}
+        membershipPlans={membershipPlans}
+        negocio={rawNegocio}
+      />
+    );
+  }
 
   // Detección de vertical de servicios (Spa, Estética, Peluquería, Barbería)
   const isServiceBiz = 

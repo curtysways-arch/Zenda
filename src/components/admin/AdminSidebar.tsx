@@ -472,6 +472,7 @@ export default function AdminSidebar({
         // ── MARKETING & COMUNIDAD ──
         { name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'MARKETING' },
         { name: 'Hero y Destacados', href: '/admin/hero-destacados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Conoce el Gimnasio', href: '/admin/marketing/conoce-el-gym', icon: Building2, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Comunicaciones', href: '/admin/comunicacion', icon: MessageSquare, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'MARKETING' },
