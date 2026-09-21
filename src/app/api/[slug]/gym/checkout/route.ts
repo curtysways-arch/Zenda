@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
 import { publishBusinessEvent } from '@/lib/growth/eventBus';
+import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
 
 export async function GET(
   req: Request,
@@ -171,7 +172,115 @@ export async function POST(
       console.error('[MEMBERSHIP_EVENT_BUS_ERROR]', evtErr);
     }
 
-    // 5. Retornar confirmación
+    // 5. Enviar Notificaciones Automáticas por WhatsApp (Socio y Administradores)
+    try {
+      const normalizePhone = (p: string) => {
+        const clean = p.replace(/\D/g, '');
+        if (clean.startsWith('593')) return clean;
+        if (clean.startsWith('0')) return `593${clean.slice(1)}`;
+        if (clean.length === 9) return `593${clean}`;
+        return clean;
+      };
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
+      const qrUrl = `${appUrl}/${negocio.slug}/mi-qr`;
+
+      const methodLabels: Record<string, string> = {
+        TARJETA_ONLINE: '💳 Tarjeta de Crédito/Débito (Online)',
+        TRANSFERENCIA: `🏦 Transferencia Bancaria (${clientRef ? `Ref: ${clientRef}` : 'Comprobante reportado'})`,
+        RECEPCION_EFECTIVO: '💵 Pago en Recepción / Caja'
+      };
+      const methodLabel = methodLabels[paymentMethod] || paymentMethod;
+
+      const formattedEndAt = endAt.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+
+      // A) WhatsApp al SOCIO / CLIENTE
+      const clientPhone = normalizePhone(cliente.telefono);
+      if (clientPhone && clientPhone.length >= 8) {
+        const clientMsg = 
+          `🏋️ *¡Bienvenido a ${negocio.nombre}!* 🎉\n\n` +
+          `Hola *${cliente.nombre}*, tu membresía ha sido registrada con éxito:\n\n` +
+          `📋 *Plan:* ${plan.name}\n` +
+          `⏱️ *Duración:* ${durationDays} días de acceso\n` +
+          `💰 *Monto:* $${plan.price} ${plan.currency || 'USD'}\n` +
+          `💳 *Método de Pago:* ${methodLabel}\n` +
+          `📅 *Válido hasta:* ${formattedEndAt}\n\n` +
+          `📲 *Tu Carnet Digital QR de Acceso:*\n` +
+          `Presenta tu código QR en recepción para ingresar a las instalaciones:\n` +
+          `👉 ${qrUrl}\n\n` +
+          `¡A entrenar con todo! 💪🔥`;
+
+        console.log(`[API_GYM_CHECKOUT] Enviando WhatsApp al cliente ${clientPhone}...`);
+        sendWhatsAppMessage(clientPhone, clientMsg, 'gym_membership_client').catch(e => {
+          console.error('[API_GYM_CHECKOUT] Error enviando WhatsApp al cliente:', e);
+        });
+      }
+
+      // B) WhatsApp a los ADMINISTRADORES del Gimnasio
+      const adminPhones = new Set<string>();
+      if (negocio.whatsapp) {
+        adminPhones.add(normalizePhone(negocio.whatsapp));
+      }
+
+      // Buscar administradores del negocio
+      const adminUsers = await prisma.usuario.findMany({
+        where: {
+          negocioId: negocio.id,
+          role: { in: ['ADMIN', 'SUPERADMIN'] },
+          phone: { not: null }
+        },
+        select: { phone: true }
+      });
+
+      for (const u of adminUsers) {
+        if (u.phone) {
+          adminPhones.add(normalizePhone(u.phone));
+        }
+      }
+
+      // Fallback: Si el negocio no tiene whatsapp configurado, notificar al número global
+      if (adminPhones.size === 0) {
+        try {
+          const globalConfig = await prisma.globalConfig.findUnique({
+            where: { clave: 'NUMERO_WHATSAPP_ADMIN' }
+          });
+          if (globalConfig?.valor) {
+            adminPhones.add(normalizePhone(globalConfig.valor));
+          }
+        } catch (_) {}
+      }
+
+      const adminMsg = 
+        `🔔 *¡Nueva Membresía Adquirida!* 🏋️‍♂️\n\n` +
+        `Se ha registrado un nuevo socio en *${negocio.nombre}*:\n\n` +
+        `👤 *Socio:* ${cliente.nombre}\n` +
+        `📱 *Teléfono:* ${cliente.telefono}\n` +
+        (cliente.email ? `📧 *Email:* ${cliente.email}\n` : '') +
+        `📋 *Plan:* ${plan.name} ($${plan.price} ${plan.currency || 'USD'})\n` +
+        `⏱️ *Duración:* ${durationDays} días\n` +
+        `💳 *Método de Pago:* ${methodLabel}\n` +
+        `📅 *Vigencia:* ${now.toLocaleDateString('es-ES')} al ${formattedEndAt}\n\n` +
+        `👉 *Gestionar en Panel Admin:*\n` +
+        `${appUrl}/admin/socios`;
+
+      for (const targetAdmin of adminPhones) {
+        if (targetAdmin && targetAdmin.length >= 8) {
+          console.log(`[API_GYM_CHECKOUT] Enviando alerta a admin ${targetAdmin}...`);
+          sendWhatsAppMessage(targetAdmin, adminMsg, 'gym_membership_admin').catch(e => {
+            console.error('[API_GYM_CHECKOUT] Error enviando WhatsApp al admin:', e);
+          });
+        }
+      }
+
+    } catch (waErr) {
+      console.error('[API_GYM_CHECKOUT_WA_ERROR]', waErr);
+    }
+
+    // 6. Retornar confirmación
     return NextResponse.json({
       success: true,
       message: '¡Membresía adquirida con éxito!',
