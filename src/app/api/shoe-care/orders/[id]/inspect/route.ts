@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ServiceEngine } from '@/core/services/ServiceEngine';
 import prisma from '@/lib/prisma';
+import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,11 +40,54 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       notasInspeccion
     });
 
-    // Simulación de envío de WhatsApp automático con el desglose y fecha estimada de entrega
-    console.log(`📱 [WhatsApp Client Notify] Cotización Confirmada para la Orden #${result.pedido.numeroPedido}:`);
-    console.log(`• Resumen: Calzado ${nivelSuciedad} sucio ($${baseFinal})`);
-    console.log(`• Total: $${result.breakdown.total.toFixed(2)}`);
-    console.log(`• Entrega estimada: ${fechaHoraEntregaEstimada || 'Por confirmar'}`);
+    // Obtener teléfono del cliente desde el pedido
+    const pedido = result.pedido as any;
+    const extra = (pedido.extraInfo as any) || {};
+    const telefonoCliente: string | undefined =
+      pedido.telefonoCliente || extra.telefono || extra.telefonoCliente;
+
+    if (telefonoCliente) {
+      const nivelLabel: Record<string, string> = {
+        POCO: 'Poco sucio',
+        MEDIO: 'Medianamente sucio',
+        ALTO: 'Muy sucio',
+        RESTAURACION: 'Restauración'
+      };
+
+      const addLines = (serviciosAdicionales || [])
+        .map((s: { nombre: string; precio: number }) => `  • ${s.nombre}: +$${Number(s.precio).toFixed(2)}`)
+        .join('\n');
+
+      const entregaTexto = fechaHoraEntregaEstimada
+        ? new Date(fechaHoraEntregaEstimada).toLocaleString('es-EC', {
+            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+          })
+        : 'Por confirmar';
+
+      const mensaje = [
+        `✅ *Cotización lista — Orden #${pedido.numeroPedido || id.slice(-6).toUpperCase()}*`,
+        ``,
+        `Hola! Ya inspeccionamos tus zapatos y tenemos el precio final:`,
+        ``,
+        `👟 *Nivel:* ${nivelLabel[nivelSuciedad] || nivelSuciedad} — $${baseFinal.toFixed(2)}`,
+        addLines ? `🔧 *Adicionales:*\n${addLines}` : null,
+        ``,
+        `💵 *Total: $${result.breakdown.total.toFixed(2)}*`,
+        ``,
+        `📅 *Entrega estimada:* ${entregaTexto}`,
+        notasInspeccion ? `📝 *Notas:* ${notasInspeccion}` : null,
+        ``,
+        `Para confirmar o cancelar responde a este mensaje. ¡Gracias! 🙏`
+      ].filter(Boolean).join('\n');
+
+      await sendWhatsAppMessage(
+        telefonoCliente.replace(/\D/g, ''),
+        mensaje,
+        'shoe_care_cotizacion'
+      );
+    } else {
+      console.warn(`[inspect] Orden ${id} sin teléfono de cliente registrado — WhatsApp no enviado`);
+    }
 
     return NextResponse.json(result.pedido);
   } catch (error: any) {
