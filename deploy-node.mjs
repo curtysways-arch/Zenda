@@ -11,6 +11,8 @@ const REMOTE_BASE = "/opt/Zenda";
 const syncFolderRoots = [
   // Módulo Gimnasio Completo
   "src/modules/gym",
+  "src/components/admin/gym",
+  "src/app/admin/config",
   "src/app/admin/clases",
   "src/app/admin/accesos",
   "src/app/admin/asistencias",

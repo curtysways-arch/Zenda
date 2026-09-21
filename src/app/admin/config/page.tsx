@@ -160,7 +160,27 @@ export default function ConfigMensajesPage() {
         );
     }
 
-    const isGym = isGymBusiness(negocio);
+    const isGym = isGymBusiness(negocio) || 
+        ['GIMNASIO', 'GYM', 'FITNESS'].includes((negocio?.tipoNegocio || tipoNegocio || '').toUpperCase()) ||
+        (negocio?.nombre || '').toUpperCase().includes('VORTEX') ||
+        (negocio?.nombre || '').toUpperCase().includes('FITNESS') ||
+        (negocio?.nombre || '').toUpperCase().includes('GYM');
+
+    const [activeTab, setActiveTab] = useState<string>('accesos');
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+            if (tabParam) {
+                setActiveTab(tabParam);
+            } else if (isGym) {
+                setActiveTab('accesos');
+            } else {
+                setActiveTab('todos');
+            }
+        }
+    }, [isGym]);
 
     return (
         <>
@@ -195,11 +215,52 @@ export default function ConfigMensajesPage() {
 
             {/* VISTA ESCRITORIO */}
             <div className="hidden md:block space-y-8 animate-in fade-in duration-500">
-                <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Configuración de Negocio</h1>
-                    <p className="text-gray-500 text-sm font-medium">
-                        {isGym ? 'Personaliza los mensajes, métodos de acceso y parámetros operativos de tu Gimnasio.' : 'Personaliza los mensajes y parámetros operativos de tu Spa.'}
-                    </p>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Configuración de Negocio</h1>
+                        <p className="text-gray-500 text-sm font-medium">
+                            {isGym ? 'Personaliza los métodos de acceso de socios, mensajes y parámetros de tu Gimnasio.' : 'Personaliza los mensajes y parámetros operativos de tu Negocio.'}
+                        </p>
+                    </div>
+
+                    {isGym && (
+                        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('accesos')}
+                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all ${
+                                    activeTab === 'accesos'
+                                        ? 'bg-white text-emerald-600 shadow-sm border border-slate-200/60'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                Acceso de Socios
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('mensajes')}
+                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all ${
+                                    activeTab === 'mensajes'
+                                        ? 'bg-white text-gray-900 shadow-sm border border-slate-200/60'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                Mensajes
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('todos')}
+                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all ${
+                                    activeTab === 'todos'
+                                        ? 'bg-white text-gray-900 shadow-sm border border-slate-200/60'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                Ver Todo
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {message && (
@@ -210,29 +271,42 @@ export default function ConfigMensajesPage() {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-8">
-                    <MessageConfigItem
-                        title="Reserva Recibida (Pendiente)"
-                        description="Mensaje enviado inmediatamente después de que el cliente solicita una reserva."
-                        clave="PENDING_MSG"
-                        value={configs.PENDING_MSG || DEFAULT_CONFIGS.PENDING_MSG}
-                        onChange={(val: any) => setConfigs(prev => ({ ...prev, PENDING_MSG: val }))}
-                        onSave={() => handleSave('PENDING_MSG')}
-                        onReset={() => handleReset('PENDING_MSG')}
-                        isSaving={saving === 'PENDING_MSG'}
-                    />
+                {/* 1. SECCIÓN DE ACCESO DE SOCIOS (EN PRIMER LUGAR PARA GIMNASIOS) */}
+                {isGym && (activeTab === 'accesos' || activeTab === 'todos') && (
+                    <div className="animate-in fade-in duration-300">
+                        <GymAccessConfigSection 
+                            negocio={negocio} 
+                            primaryColor={primaryColor} 
+                        />
+                    </div>
+                )}
 
-                    <MessageConfigItem
-                        title="Reserva Confirmada"
-                        description="Mensaje enviado cuando cambias el estado de la reserva a 'CONFIRMADA'."
-                        clave="CONFIRMATION_MSG"
-                        value={configs.CONFIRMATION_MSG || DEFAULT_CONFIGS.CONFIRMATION_MSG}
-                        onChange={(val: any) => setConfigs(prev => ({ ...prev, CONFIRMATION_MSG: val }))}
-                        onSave={() => handleSave('CONFIRMATION_MSG')}
-                        onReset={() => handleReset('CONFIRMATION_MSG')}
-                        isSaving={saving === 'CONFIRMATION_MSG'}
-                    />
-                </div>
+                {/* 2. MENSAJES Y OPERACIONES */}
+                {(activeTab === 'mensajes' || activeTab === 'todos' || !isGym) && (
+                    <div className="space-y-8 animate-in fade-in duration-300">
+                        <div className="grid grid-cols-1 gap-8">
+                            <MessageConfigItem
+                                title="Reserva Recibida (Pendiente)"
+                                description="Mensaje enviado inmediatamente después de que el cliente solicita una reserva."
+                                clave="PENDING_MSG"
+                                value={configs.PENDING_MSG || DEFAULT_CONFIGS.PENDING_MSG}
+                                onChange={(val: any) => setConfigs(prev => ({ ...prev, PENDING_MSG: val }))}
+                                onSave={() => handleSave('PENDING_MSG')}
+                                onReset={() => handleReset('PENDING_MSG')}
+                                isSaving={saving === 'PENDING_MSG'}
+                            />
+
+                            <MessageConfigItem
+                                title="Reserva Confirmada"
+                                description="Mensaje enviado cuando cambias el estado de la reserva a 'CONFIRMADA'."
+                                clave="CONFIRMATION_MSG"
+                                value={configs.CONFIRMATION_MSG || DEFAULT_CONFIGS.CONFIRMATION_MSG}
+                                onChange={(val: any) => setConfigs(prev => ({ ...prev, CONFIRMATION_MSG: val }))}
+                                onSave={() => handleSave('CONFIRMATION_MSG')}
+                                onReset={() => handleReset('CONFIRMATION_MSG')}
+                                isSaving={saving === 'CONFIRMATION_MSG'}
+                            />
+                        </div>
 
                 {/* --- RECORDATORIOS --- */}
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden">
@@ -398,12 +472,7 @@ export default function ConfigMensajesPage() {
                         primaryColor={primaryColor} 
                     />
                 </FeatureGate>
-
-                {isGym && (
-                    <GymAccessConfigSection 
-                        negocio={negocio} 
-                        primaryColor={primaryColor} 
-                    />
+                    </div>
                 )}
 
                 <DeliveryLogisticsConfigSection 
