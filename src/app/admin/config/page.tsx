@@ -9,7 +9,7 @@ import ImageUploader from '@/components/ui/ImageUploader';
 import { useSession } from 'next-auth/react';
 import ProductsConfig from '@/components/admin/ProductsConfig';
 
-import { DEFAULT_CONFIGS } from '@/lib/constants/defaultConfigs';
+import { DEFAULT_CONFIGS, DEFAULT_CONFIGS_GYM, DEFAULT_CONFIGS_DENTAL, getDefaultConfigs } from '@/lib/constants/defaultConfigs';
 import BusinessLocationPicker from '@/components/admin/BusinessLocationPicker';
 import { isGymBusiness } from '@/modules/gym/utils/gymHelper';
 import GymAccessConfigSection from '@/components/admin/gym/GymAccessConfigSection';
@@ -73,6 +73,69 @@ export default function ConfigMensajesPage() {
         if (color) setPrimaryColor(color);
     }, []);
 
+    let cfg: any = {};
+    if (typeof negocio?.configuracion === 'string') {
+        try { cfg = JSON.parse(negocio.configuracion); } catch { cfg = {}; }
+    } else {
+        cfg = negocio?.configuracion || {};
+    }
+    const caps = cfg.activeCapabilities || cfg.capabilities || {};
+    const effectiveCaps = cfg.effectiveCapabilities || {};
+
+    const activeTipo = (negocio?.tipoNegocio || cfg.tipoNegocio || tipoNegocio || '').toUpperCase().trim();
+    const blueprintId = (cfg.blueprintId || '').toUpperCase().trim();
+    const slugUpper = (negocio?.slug || '').toUpperCase().trim();
+    const nameUpper = (negocio?.nombre || '').toUpperCase().trim();
+
+    const isGym = isGymBusiness(negocio) || 
+        ['GIMNASIO', 'GYM', 'FITNESS'].includes(activeTipo) ||
+        blueprintId === 'GYM' || blueprintId === 'GIMNASIO' ||
+        nameUpper.includes('VORTEX') || nameUpper.includes('FITNESS') || nameUpper.includes('GYM') ||
+        slugUpper.includes('gym') || slugUpper.includes('fitness');
+
+    const isDental = activeTipo === 'ODONTOLOGIA' || activeTipo === 'DENTAL' || activeTipo === 'DENTISTA' ||
+        blueprintId === 'DENTAL' || blueprintId === 'DENTISTA' ||
+        nameUpper.includes('DENTAL') || nameUpper.includes('ODONTOL') || nameUpper.includes('DENTISTA') ||
+        slugUpper.includes('dental') || slugUpper.includes('odontol') || slugUpper.includes('dentista');
+
+    const isStoreOrProducts =
+        activeTipo === 'PRODUCTOS' ||
+        activeTipo === 'TIENDA' ||
+        activeTipo === 'STORE' ||
+        activeTipo === 'ECOMMERCE' ||
+        blueprintId === 'STORE';
+
+    const currentDefaults = isGym ? DEFAULT_CONFIGS_GYM : isDental ? DEFAULT_CONFIGS_DENTAL : DEFAULT_CONFIGS;
+
+    const getConfigValue = (clave: string): string => {
+        const val = configs[clave];
+        if (isGym) {
+            if (!val) return (DEFAULT_CONFIGS_GYM as any)[clave] || '';
+            const lower = val.toLowerCase();
+            if (clave === 'PENDING_MSG' && (lower.includes('solicitud de cita') || lower.includes('cita en'))) {
+                return DEFAULT_CONFIGS_GYM.PENDING_MSG;
+            }
+            if (clave === 'CONFIRMATION_MSG' && (lower.includes('cita en') || val.includes('💆') || lower.includes('servicio:'))) {
+                return DEFAULT_CONFIGS_GYM.CONFIRMATION_MSG;
+            }
+            if (clave === 'REMINDER_DAY_MSG' && (lower.includes('cita en') || lower.includes('tienes una cita'))) {
+                return DEFAULT_CONFIGS_GYM.REMINDER_DAY_MSG;
+            }
+            if (clave === 'REMINDER_2H_MSG' && (lower.includes('es tu cita') || lower.includes('cita en'))) {
+                return DEFAULT_CONFIGS_GYM.REMINDER_2H_MSG;
+            }
+            return val;
+        }
+        if (isDental) {
+            if (!val) return (DEFAULT_CONFIGS_DENTAL as any)[clave] || '';
+            if (clave === 'CONFIRMATION_MSG' && val.includes('💆')) {
+                return DEFAULT_CONFIGS_DENTAL.CONFIRMATION_MSG;
+            }
+            return val;
+        }
+        return val !== undefined ? val : ((DEFAULT_CONFIGS as any)[clave] || '');
+    };
+
     const handleSaveNegocio = async (data: any) => {
         setSaving('NEGOCIO');
         setMessage(null);
@@ -106,10 +169,11 @@ export default function ConfigMensajesPage() {
         setSaving(clave);
         setMessage(null);
         try {
+            const valorToSave = configs[clave] !== undefined ? configs[clave] : getConfigValue(clave);
             const res = await fetch('/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ clave, valor: configs[clave] || DEFAULT_CONFIGS[clave as keyof typeof DEFAULT_CONFIGS] }),
+                body: JSON.stringify({ clave, valor: valorToSave }),
             });
 
             if (res.ok) {
@@ -126,7 +190,8 @@ export default function ConfigMensajesPage() {
     };
 
     const handleReset = (clave: string) => {
-        setConfigs(prev => ({ ...prev, [clave]: DEFAULT_CONFIGS[clave as keyof typeof DEFAULT_CONFIGS] }));
+        const defVal = (currentDefaults as any)[clave] || '';
+        setConfigs(prev => ({ ...prev, [clave]: defVal }));
     };
 
     const handleDeleteUbicacion = async (id: string) => {
@@ -148,27 +213,6 @@ export default function ConfigMensajesPage() {
         );
     }
 
-    let cfg: any = {};
-    if (typeof negocio?.configuracion === 'string') {
-        try { cfg = JSON.parse(negocio.configuracion); } catch { cfg = {}; }
-    } else {
-        cfg = negocio?.configuracion || {};
-    }
-    const caps = cfg.activeCapabilities || cfg.capabilities || {};
-    const effectiveCaps = cfg.effectiveCapabilities || {};
-
-    const activeTipo = (negocio?.tipoNegocio || cfg.tipoNegocio || tipoNegocio || '').toUpperCase().trim();
-    const blueprintId = (cfg.blueprintId || '').toUpperCase().trim();
-    const slugUpper = (negocio?.slug || '').toUpperCase().trim();
-    const nameUpper = (negocio?.nombre || '').toUpperCase().trim();
-
-    const isStoreOrProducts =
-        activeTipo === 'PRODUCTOS' ||
-        activeTipo === 'TIENDA' ||
-        activeTipo === 'STORE' ||
-        activeTipo === 'ECOMMERCE' ||
-        blueprintId === 'STORE';
-
     if (isStoreOrProducts) {
         return (
             <ProductsConfig 
@@ -179,17 +223,6 @@ export default function ConfigMensajesPage() {
             />
         );
     }
-
-    const isGym = isGymBusiness(negocio) || 
-        ['GIMNASIO', 'GYM', 'FITNESS'].includes(activeTipo) ||
-        blueprintId === 'GYM' || blueprintId === 'GIMNASIO' ||
-        nameUpper.includes('VORTEX') || nameUpper.includes('FITNESS') || nameUpper.includes('GYM') ||
-        slugUpper.includes('gym') || slugUpper.includes('fitness');
-
-    const isDental = activeTipo === 'ODONTOLOGIA' || activeTipo === 'DENTAL' || activeTipo === 'DENTISTA' ||
-        blueprintId === 'DENTAL' || blueprintId === 'DENTISTA' ||
-        nameUpper.includes('DENTAL') || nameUpper.includes('ODONTOL') || nameUpper.includes('DENTISTA') ||
-        slugUpper.includes('dental') || slugUpper.includes('odontol') || slugUpper.includes('dentista');
 
     const isShoeCareOrLaundry = activeTipo === 'SHOE_CARE' || activeTipo === 'LAVANDERIA' || activeTipo === 'ORDENES-SERVICIO' ||
         blueprintId === 'SHOE_CARE' || blueprintId === 'LAVANDERIA';
@@ -239,6 +272,8 @@ export default function ConfigMensajesPage() {
                         if (el) el.scrollIntoView({ behavior: 'smooth' });
                     }}
                     saving={saving}
+                    isGym={isGym}
+                    isDental={isDental}
                 />
             </div>
 
@@ -316,24 +351,28 @@ export default function ConfigMensajesPage() {
                         <div className="grid grid-cols-1 gap-8">
                             <MessageConfigItem
                                 title={isDental ? 'Cita Odontológica Solicitada (Pendiente)' : isGym ? 'Bienvenida al Socio (Nuevo Registro)' : 'Reserva Recibida (Pendiente)'}
-                                description={isDental ? 'Mensaje enviado inmediatamente después de que el paciente solicita su cita dental.' : isGym ? 'Mensaje enviado al registrar a un nuevo socio en el gimnasio.' : 'Mensaje enviado inmediatamente después de que el cliente solicita una reserva.'}
+                                description={isDental ? 'Mensaje enviado inmediatamente después de que el paciente solicita su cita dental.' : isGym ? 'Mensaje enviado al socio al registrar su cuenta o darse de alta en el gimnasio.' : 'Mensaje enviado inmediatamente después de que el cliente solicita una reserva.'}
                                 clave="PENDING_MSG"
-                                value={configs.PENDING_MSG || DEFAULT_CONFIGS.PENDING_MSG}
+                                value={getConfigValue('PENDING_MSG')}
                                 onChange={(val: any) => setConfigs(prev => ({ ...prev, PENDING_MSG: val }))}
                                 onSave={() => handleSave('PENDING_MSG')}
                                 onReset={() => handleReset('PENDING_MSG')}
                                 isSaving={saving === 'PENDING_MSG'}
+                                isGym={isGym}
+                                isDental={isDental}
                             />
 
                             <MessageConfigItem
                                 title={isDental ? 'Cita Odontológica Confirmada' : isGym ? 'Membresía Activada / Confirmada' : 'Reserva Confirmada'}
                                 description={isDental ? 'Mensaje enviado cuando confirmas la cita del paciente.' : isGym ? 'Mensaje enviado al socio al activar o renovar su membresía.' : 'Mensaje enviado cuando cambias el estado de la reserva a \'CONFIRMADA\'.'}
                                 clave="CONFIRMATION_MSG"
-                                value={configs.CONFIRMATION_MSG || DEFAULT_CONFIGS.CONFIRMATION_MSG}
+                                value={getConfigValue('CONFIRMATION_MSG')}
                                 onChange={(val: any) => setConfigs(prev => ({ ...prev, CONFIRMATION_MSG: val }))}
                                 onSave={() => handleSave('CONFIRMATION_MSG')}
                                 onReset={() => handleReset('CONFIRMATION_MSG')}
                                 isSaving={saving === 'CONFIRMATION_MSG'}
+                                isGym={isGym}
+                                isDental={isDental}
                             />
                         </div>
 
@@ -342,8 +381,12 @@ export default function ConfigMensajesPage() {
                     <div className="p-8 space-y-6">
                         <div className="flex justify-between items-start">
                             <div className="space-y-1">
-                                <h3 className="font-black text-gray-900 leading-tight uppercase tracking-tight">Recordatorios Automáticos</h3>
-                                <p className="text-gray-400 text-sm">Configura los mensajes que se enviarán antes de la cita.</p>
+                                <h3 className="font-black text-gray-900 leading-tight uppercase tracking-tight">
+                                    {isGym ? 'Recordatorios de Clases y Entrenamientos' : isDental ? 'Recordatorios de Citas Odontológicas' : 'Recordatorios Automáticos'}
+                                </h3>
+                                <p className="text-gray-400 text-sm">
+                                    {isGym ? 'Configura los mensajes que se enviarán a los socios sobre sus clases agendadas.' : isDental ? 'Configura los mensajes que se enviarán antes de la consulta odontológica.' : 'Configura los mensajes que se enviarán antes de la cita.'}
+                                </p>
                             </div>
                         </div>
 
@@ -352,7 +395,7 @@ export default function ConfigMensajesPage() {
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
                                     <label className="text-[10px] font-black uppercase tracking-widest block" style={{ color: 'var(--primary-color)' }}>
-                                        Recordatorio del Día
+                                        {isGym ? 'Recordatorio de la Mañana (Clases del Día)' : 'Recordatorio del Día'}
                                     </label>
                                     <button 
                                         onClick={() => setConfigs(prev => ({ ...prev, REMINDER_DAY_ENABLED: (prev.REMINDER_DAY_ENABLED === '0' ? '1' : '0') }))}
@@ -367,7 +410,7 @@ export default function ConfigMensajesPage() {
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Hora de envío</label>
                                         <input
                                             type="time"
-                                            value={configs.REMINDER_DAY_TIME || DEFAULT_CONFIGS.REMINDER_DAY_TIME}
+                                            value={configs.REMINDER_DAY_TIME || currentDefaults.REMINDER_DAY_TIME}
                                             onChange={(e) => setConfigs(prev => ({ ...prev, REMINDER_DAY_TIME: e.target.value }))}
                                             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 outline-none transition-all"
                                             style={ { '--tw-ring-color': primaryColor } as any }
@@ -377,7 +420,7 @@ export default function ConfigMensajesPage() {
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Mensaje</label>
                                         <textarea
                                             className="w-full p-4 bg-gray-50 border border-transparent rounded-xl outline-none transition-all text-sm font-medium min-h-[100px] resize-none leading-relaxed text-gray-700"
-                                            value={configs.REMINDER_DAY_MSG || DEFAULT_CONFIGS.REMINDER_DAY_MSG}
+                                            value={getConfigValue('REMINDER_DAY_MSG')}
                                             onChange={(e) => setConfigs(prev => ({ ...prev, REMINDER_DAY_MSG: e.target.value }))}
                                         />
                                     </div>
@@ -393,7 +436,7 @@ export default function ConfigMensajesPage() {
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
                                     <label className="text-[10px] font-black uppercase tracking-widest block" style={{ color: 'var(--primary-color)' }}>
-                                        Recordatorio 2 Horas Antes
+                                        {isGym ? 'Recordatorio 2 Horas Antes de la Clase' : 'Recordatorio 2 Horas Antes'}
                                     </label>
                                     <button 
                                         onClick={() => setConfigs(prev => ({ ...prev, REMINDER_2H_ENABLED: (prev.REMINDER_2H_ENABLED === '0' ? '1' : '0') }))}
@@ -407,14 +450,14 @@ export default function ConfigMensajesPage() {
                                     <div>
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block text-transparent select-none">Espaciador</label>
                                         <div className="w-full px-4 py-3 bg-transparent rounded-xl text-sm font-bold text-gray-400 flex items-center h-[46px]">
-                                            Se envía 2 horas antes de la cita
+                                            {isGym ? 'Se envía 2 horas antes de iniciar la clase' : 'Se envía 2 horas antes de la cita'}
                                         </div>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Mensaje</label>
                                         <textarea
                                             className="w-full p-4 bg-gray-50 border border-transparent rounded-xl outline-none transition-all text-sm font-medium min-h-[100px] resize-none leading-relaxed text-gray-700"
-                                            value={configs.REMINDER_2H_MSG || DEFAULT_CONFIGS.REMINDER_2H_MSG}
+                                            value={getConfigValue('REMINDER_2H_MSG')}
                                             onChange={(e) => setConfigs(prev => ({ ...prev, REMINDER_2H_MSG: e.target.value }))}
                                         />
                                     </div>
@@ -502,6 +545,7 @@ export default function ConfigMensajesPage() {
                         onSave={handleSaveNegocio} 
                         isSaving={saving === 'NEGOCIO'} 
                         primaryColor={primaryColor} 
+                        isGym={isGym}
                     />
                 </FeatureGate>
                     </div>
@@ -547,7 +591,7 @@ export default function ConfigMensajesPage() {
     );
 }
 
-function WhatsAppConfigSection({ negocio, onSave, isSaving, primaryColor }: any) {
+function WhatsAppConfigSection({ negocio, onSave, isSaving, primaryColor, isGym }: any) {
     const [localWhatsapp, setLocalWhatsapp] = useState(negocio?.whatsapp || '');
     const [localNotifications, setLocalNotifications] = useState(negocio?.whatsapp_notifications || false);
 
@@ -562,7 +606,11 @@ function WhatsAppConfigSection({ negocio, onSave, isSaving, primaryColor }: any)
                 <div className="flex justify-between items-start">
                     <div className="space-y-1">
                         <h3 className="font-black text-gray-900 leading-tight uppercase tracking-tight">Canal de WhatsApp</h3>
-                        <p className="text-gray-400 text-sm">Configura el número donde recibirás las notificaciones de reservas.</p>
+                        <p className="text-gray-400 text-sm">
+                            {isGym 
+                                ? 'Configura el número oficial de WhatsApp de tu gimnasio para notificaciones a socios y soporte.' 
+                                : 'Configura el número donde recibirás las notificaciones de reservas.'}
+                        </p>
                     </div>
                 </div>
 
@@ -706,7 +754,32 @@ function DeliveryLogisticsConfigSection({ configs, onSaveConfig, primaryColor }:
     );
 }
 
-function MessageConfigItem({ title, description, value, onChange, onSave, onReset, isSaving }: any) {
+function MessageConfigItem({ title, description, value, onChange, onSave, onReset, isSaving, isGym, isDental }: any) {
+    const variables = isGym ? [
+        { tag: '{{nombre}}', desc: 'Nombre del socio' },
+        { tag: '{{negocio}}', desc: 'Nombre del gimnasio' },
+        { tag: '{{servicio}}', desc: 'Plan o Membresía' },
+        { tag: '{{fecha}}', desc: 'Fecha o Vigencia' },
+        { tag: '{{link_reserva}}', desc: 'Carnet QR / Enlace de acceso' },
+        { tag: '{{telefono_negocio}}', desc: 'WhatsApp del Gym' }
+    ] : isDental ? [
+        { tag: '{{nombre}}', desc: 'Nombre del paciente' },
+        { tag: '{{negocio}}', desc: 'Nombre de la clínica' },
+        { tag: '{{servicio}}', desc: 'Tratamiento / Consulta' },
+        { tag: '{{fecha}}', desc: 'Fecha de la cita' },
+        { tag: '{{hora}}', desc: 'Hora' },
+        { tag: '{{link_reserva}}', desc: 'Detalles de la cita' },
+        { tag: '{{telefono_negocio}}', desc: 'WhatsApp' }
+    ] : [
+        { tag: '{{nombre}}', desc: 'Nombre del cliente' },
+        { tag: '{{negocio}}', desc: 'Nombre del negocio' },
+        { tag: '{{servicio}}', desc: 'Servicio agendado' },
+        { tag: '{{fecha}}', desc: 'Fecha' },
+        { tag: '{{hora}}', desc: 'Hora' },
+        { tag: '{{link_reserva}}', desc: 'Enlace de reserva' },
+        { tag: '{{telefono_negocio}}', desc: 'WhatsApp' }
+    ];
+
     return (
         <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden">
             <div className="p-8 space-y-6">
@@ -715,18 +788,46 @@ function MessageConfigItem({ title, description, value, onChange, onSave, onRese
                         <h3 className="font-black text-gray-900 leading-tight">{title}</h3>
                         <p className="text-gray-400 text-sm">{description}</p>
                     </div>
-                    <button onClick={onReset} className="p-2 text-gray-400 hover:text-[var(--primary-color)] transition"><RotateCcw size={18} /></button>
+                    <button 
+                        onClick={onReset} 
+                        title="Restablecer mensaje predeterminado"
+                        className="p-2 text-gray-400 hover:text-[var(--primary-color)] transition rounded-xl hover:bg-slate-50 cursor-pointer"
+                    >
+                        <RotateCcw size={18} />
+                    </button>
                 </div>
                 <textarea
-                    className="w-full p-6 bg-gray-50 border border-transparent rounded-2xl outline-none transition-all text-sm font-medium min-h-[120px] resize-none leading-relaxed text-gray-700"
+                    className="w-full p-6 bg-gray-50 border border-slate-100 rounded-2xl outline-none transition-all text-sm font-medium min-h-[130px] resize-none leading-relaxed text-gray-700 focus:bg-white focus:ring-2 focus:ring-[var(--primary-color)]/20"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                 />
+
+                {/* Variables Dinámicas */}
+                <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100 space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                        Variables disponibles (haz clic para insertar):
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                        {variables.map((v) => (
+                            <button
+                                key={v.tag}
+                                type="button"
+                                onClick={() => onChange(value ? `${value} ${v.tag}` : v.tag)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer"
+                                title={`Insertar ${v.tag} (${v.desc})`}
+                            >
+                                <code className="text-indigo-600 font-bold">{v.tag}</code>
+                                <span className="text-[11px] text-slate-400 font-normal">({v.desc})</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="flex justify-end">
                     <button
                         onClick={onSave}
                         disabled={isSaving}
-                        className="flex items-center gap-2 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg disabled:opacity-50"
+                        className="flex items-center gap-2 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg disabled:opacity-50 transition active:scale-95 cursor-pointer"
                         style={{ backgroundColor: 'var(--primary-color)' }}
                     >
                         {isSaving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}

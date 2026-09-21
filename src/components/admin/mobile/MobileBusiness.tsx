@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { DEFAULT_CONFIGS } from '@/lib/constants/defaultConfigs';
+import { DEFAULT_CONFIGS, DEFAULT_CONFIGS_GYM, DEFAULT_CONFIGS_DENTAL } from '@/lib/constants/defaultConfigs';
 import ColorPaletteEditor from '@/components/admin/ColorPaletteEditor';
 import ImageUploader from '@/components/ui/ImageUploader';
 
@@ -44,6 +44,8 @@ interface MobileBusinessProps {
     onEditUbicacion: (u: any) => void;
     onNewUbicacion: () => void;
     saving: string | null;
+    isGym?: boolean;
+    isDental?: boolean;
 }
 
 export default function MobileBusiness({ 
@@ -58,10 +60,43 @@ export default function MobileBusiness({
     onDeleteUbicacion,
     onEditUbicacion,
     onNewUbicacion,
-    saving 
+    saving,
+    isGym = false,
+    isDental = false
 }: MobileBusinessProps) {
     const [activeTab, setActiveTab] = useState('MESSAGES'); // MESSAGES, CATALOG, BRANDING, BRANCHES, DISCOUNTS, FLOW
     const [localNegocio, setLocalNegocio] = useState<any>(negocio);
+
+    const currentDefaults = isGym ? DEFAULT_CONFIGS_GYM : isDental ? DEFAULT_CONFIGS_DENTAL : DEFAULT_CONFIGS;
+
+    const getResolvedValue = (clave: string): string => {
+        const val = configs[clave];
+        if (isGym) {
+            if (!val) return (DEFAULT_CONFIGS_GYM as any)[clave] || '';
+            const lower = val.toLowerCase();
+            if (clave === 'PENDING_MSG' && (lower.includes('solicitud de cita') || lower.includes('cita en'))) {
+                return DEFAULT_CONFIGS_GYM.PENDING_MSG;
+            }
+            if (clave === 'CONFIRMATION_MSG' && (lower.includes('cita en') || val.includes('💆') || lower.includes('servicio:'))) {
+                return DEFAULT_CONFIGS_GYM.CONFIRMATION_MSG;
+            }
+            if (clave === 'REMINDER_DAY_MSG' && (lower.includes('cita en') || lower.includes('tienes una cita'))) {
+                return DEFAULT_CONFIGS_GYM.REMINDER_DAY_MSG;
+            }
+            if (clave === 'REMINDER_2H_MSG' && (lower.includes('es tu cita') || lower.includes('cita en'))) {
+                return DEFAULT_CONFIGS_GYM.REMINDER_2H_MSG;
+            }
+            return val;
+        }
+        if (isDental) {
+            if (!val) return (DEFAULT_CONFIGS_DENTAL as any)[clave] || '';
+            if (clave === 'CONFIRMATION_MSG' && val.includes('💆')) {
+                return DEFAULT_CONFIGS_DENTAL.CONFIRMATION_MSG;
+            }
+            return val;
+        }
+        return val !== undefined ? val : ((DEFAULT_CONFIGS as any)[clave] || '');
+    };
 
     // Sincronizar localNegocio cuando negocio cambie (al cargar)
     useState(() => {
@@ -302,9 +337,9 @@ export default function MobileBusiness({
                 {activeTab === 'MESSAGES' && (
                     <div className="space-y-6">
                         <MessageItem 
-                            title="Reserva Pendiente"
+                            title={isGym ? "Bienvenida al Socio (Registro)" : isDental ? "Consulta Solicitada" : "Reserva Pendiente"}
                             clave="PENDING_MSG"
-                            value={configs.PENDING_MSG || DEFAULT_CONFIGS.PENDING_MSG}
+                            value={getResolvedValue('PENDING_MSG')}
                             onChange={(val) => onConfigChange('PENDING_MSG', val)}
                             onSave={() => onSaveConfig('PENDING_MSG')}
                             onReset={() => onResetConfig('PENDING_MSG')}
@@ -312,9 +347,9 @@ export default function MobileBusiness({
                             primaryColor={primaryColor}
                         />
                         <MessageItem 
-                            title="Confirmación"
+                            title={isGym ? "Membresía Activada / Confirmada" : isDental ? "Consulta Confirmada" : "Confirmación"}
                             clave="CONFIRMATION_MSG"
-                            value={configs.CONFIRMATION_MSG || DEFAULT_CONFIGS.CONFIRMATION_MSG}
+                            value={getResolvedValue('CONFIRMATION_MSG')}
                             onChange={(val) => onConfigChange('CONFIRMATION_MSG', val)}
                             onSave={() => onSaveConfig('CONFIRMATION_MSG')}
                             onReset={() => onResetConfig('CONFIRMATION_MSG')}
@@ -325,7 +360,7 @@ export default function MobileBusiness({
                         {/* --- RECORDATORIOS --- */}
                         <div className="space-y-4">
                             <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest pl-4">
-                                Recordatorios Automáticos
+                                {isGym ? "Recordatorios de Clases y Entrenamientos" : isDental ? "Recordatorios de Citas Odontológicas" : "Recordatorios Automáticos"}
                             </h4>
 
                             {/* Recordatorio del Día */}
@@ -339,7 +374,9 @@ export default function MobileBusiness({
                                             <MessageSquare size={18} />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">Recordatorio del Día</h4>
+                                            <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">
+                                                {isGym ? "Recordatorio de la Mañana (Clases)" : "Recordatorio del Día"}
+                                            </h4>
                                             <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Toque para {expandedDay ? 'cerrar' : 'editar'}</p>
                                         </div>
                                     </div>
@@ -367,14 +404,14 @@ export default function MobileBusiness({
                                                 <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Hora de envío</label>
                                                 <input
                                                     type="time"
-                                                    value={configs.REMINDER_DAY_TIME || DEFAULT_CONFIGS.REMINDER_DAY_TIME}
+                                                    value={configs.REMINDER_DAY_TIME || currentDefaults.REMINDER_DAY_TIME}
                                                     onChange={(e) => onConfigChange('REMINDER_DAY_TIME', e.target.value)}
                                                     className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold focus:ring-2"
                                                     style={ { '--tw-ring-color': primaryColor } as any }
                                                 />
                                             </div>
                                             <textarea
-                                                value={configs.REMINDER_DAY_MSG || DEFAULT_CONFIGS.REMINDER_DAY_MSG}
+                                                value={getResolvedValue('REMINDER_DAY_MSG')}
                                                 onChange={(e) => onConfigChange('REMINDER_DAY_MSG', e.target.value)}
                                                 className="w-full bg-slate-50 border-none rounded-2xl p-4 text-xs font-medium text-slate-700 leading-relaxed min-h-[100px] focus:ring-2"
                                                 style={ { '--tw-ring-color': primaryColor } as any }
@@ -403,7 +440,9 @@ export default function MobileBusiness({
                                             <MessageSquare size={18} />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">Recordatorio 2 Horas</h4>
+                                            <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">
+                                                {isGym ? "Recordatorio 2 Horas Antes de la Clase" : "Recordatorio 2 Horas"}
+                                            </h4>
                                             <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Toque para {expanded2H ? 'cerrar' : 'editar'}</p>
                                         </div>
                                     </div>
@@ -427,9 +466,11 @@ export default function MobileBusiness({
                                             </button>
                                         </div>
                                         <div className={`space-y-4 transition-opacity duration-300 ${configs.REMINDER_2H_ENABLED === '0' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                                            <p className="text-[10px] font-bold text-slate-400 italic">Se envía 2 horas antes de la cita</p>
+                                            <p className="text-[10px] font-bold text-slate-400 italic">
+                                                {isGym ? "Se envía 2 horas antes de iniciar la clase" : "Se envía 2 horas antes de la cita"}
+                                            </p>
                                             <textarea
-                                                value={configs.REMINDER_2H_MSG || DEFAULT_CONFIGS.REMINDER_2H_MSG}
+                                                value={getResolvedValue('REMINDER_2H_MSG')}
                                                 onChange={(e) => onConfigChange('REMINDER_2H_MSG', e.target.value)}
                                                 className="w-full bg-slate-50 border-none rounded-2xl p-4 text-xs font-medium text-slate-700 leading-relaxed min-h-[100px] focus:ring-2"
                                                 style={ { '--tw-ring-color': primaryColor } as any }

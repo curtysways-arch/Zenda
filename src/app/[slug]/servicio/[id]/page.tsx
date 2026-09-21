@@ -303,11 +303,53 @@ export default async function CanchaDetailPage({
                 </div>
             </header>
 
-            <main className="max-w-xl mx-auto px-4 pt-4 pb-28 overflow-x-hidden">
+            <main className="max-w-xl mx-auto px-4 pt-4 pb-32 space-y-5 overflow-x-hidden">
                 {/* CSS Hack para ocultar la barra global en esta página y dar espacio al nuevo botón */}
                 <style dangerouslySetInnerHTML={{ __html: `
                     nav.fixed.bottom-0 { display: none !important; }
                 ` }} />
+
+                {/* IMAGEN HERO DEL SERVICIO */}
+                {imagesToUse.length > 0 && (
+                    <div className="relative aspect-[16/9] sm:aspect-[16/8] rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-slate-100">
+                        <HeroCarousel images={imagesToUse} opacityActive="opacity-100" />
+                        
+                        {/* Overlay Etiquetas */}
+                        <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2">
+                            {cancha.duracion && (
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-black/65 backdrop-blur-md rounded-full border border-white/20 text-white text-[11px] font-bold">
+                                    <Timer size={12} className="text-white" />
+                                    <span>{cancha.duracion} min</span>
+                                </div>
+                            )}
+                            {cancha.tipo && (
+                                <div className="px-3 py-1 bg-black/65 backdrop-blur-md rounded-full border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider">
+                                    {cancha.tipo}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* DESCRIPCIÓN DEL SERVICIO */}
+                {cancha.descripcion && (
+                    <div className="bg-white border border-slate-200/80 shadow-xs rounded-2xl p-4 sm:p-5 space-y-2">
+                        <div className="flex items-center gap-2">
+                            <div 
+                                className="p-1 rounded-md flex items-center justify-center text-white shadow-xs"
+                                style={{ backgroundColor: primaryColor }}
+                            >
+                                <Sparkles size={13} />
+                            </div>
+                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                                Descripción del servicio
+                            </h3>
+                        </div>
+                        <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">
+                            {cancha.descripcion}
+                        </p>
+                    </div>
+                )}
 
                 {/* BOOKING SECTION - COMPONENTE PRINCIPAL CON NUEVO DISEÑO */}
                 <section id="reservar" className="space-y-4">

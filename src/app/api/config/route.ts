@@ -1,13 +1,12 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import crypto from 'crypto';
 
 export async function GET() {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const session = await getEffectiveAdminSession();
+        if (!session?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const negocioId = (session.user as any).negocioId;
 
@@ -23,8 +22,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const session = await getEffectiveAdminSession();
+        if (!session?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const negocioId = (session.user as any).negocioId;
         const body = await req.json();

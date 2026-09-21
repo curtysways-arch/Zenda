@@ -937,379 +937,550 @@ export default function HeroDestacadosPage() {
       )}
 
       {/* MODAL EDITAR / CREAR HERO */}
+      {/* MODAL EDITAR / CREAR HERO - PANTALLA COMPLETA */}
       {showHeroModal && editingHero && (
-        <div className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-[2.5rem] max-w-2xl w-full p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-                <Sparkles style={{ color: cp }} size={20} />
-                {editingHero.id ? 'Editar Elemento Hero' : 'Nuevo Elemento Hero'}
-              </h3>
-              <button type="button" onClick={() => setShowHeroModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
+        <div className="fixed inset-0 z-[9999] bg-[#FAFCFF] flex flex-col w-screen h-screen overflow-hidden animate-in fade-in duration-200">
+          
+          {/* BARRA SUPERIOR STICKY */}
+          <header className="h-16 sm:h-20 bg-white/95 backdrop-blur-md border-b border-gray-100 px-6 sm:px-10 flex items-center justify-between shrink-0 z-20">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md shrink-0"
+                style={{ backgroundColor: cp }}
+              >
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-gray-900 tracking-tight leading-tight">
+                  {editingHero.id ? 'Editar Elemento Hero' : 'Nuevo Elemento Hero'}
+                </h3>
+                <p className="text-[11px] font-bold text-gray-400">
+                  Configura el banner principal, imagen, textos de llamado a la acción y enlaces interactivos.
+                </p>
+              </div>
             </div>
 
-            <form onSubmit={handleSaveHero} className="space-y-6">
-              {/* Selector de Tipo de Hero */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tipo de Hero</label>
-                <select
-                  className="w-full px-4 py-3.5 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white outline-none"
-                  value={editingHero.type || 'IMAGE'}
-                  onChange={(e) => {
-                    const newType = e.target.value;
-                    let newSourceType = 'CUSTOM';
-                    if (newType === 'PROMOTION') newSourceType = 'PROMOTION';
-                    if (newType === 'PRODUCT') newSourceType = 'PRODUCT';
-                    if (newType === 'SERVICE') newSourceType = 'SERVICE';
-                    if (newType === 'COMBO') newSourceType = 'COMBO';
+            <div className="flex items-center gap-3">
+              <button 
+                type="button" 
+                onClick={() => setShowHeroModal(false)}
+                className="px-4 py-2.5 rounded-xl text-xs font-black uppercase text-gray-500 hover:bg-gray-100 transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <X size={16} />
+                <span className="hidden sm:inline">Cerrar</span>
+              </button>
 
-                    setEditingHero({
-                      ...editingHero,
-                      type: newType,
-                      sourceType: newSourceType,
-                      sourceId: null
-                    });
-                  }}
-                >
-                  <option value="AUTOMATIC">🪄 Automático (Dinámico según disponibilidad)</option>
-                  <option value="IMAGE">🖼️ Imagen Personalizada</option>
-                  <option value="PROMOTION">🏷️ Promoción</option>
-                  <option value="PRODUCT">📦 Producto</option>
-                  <option value="SERVICE">✂️ Servicio</option>
-                  <option value="COMBO">🍱 Combo</option>
-                </select>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const form = document.getElementById('hero-fullscreen-form') as HTMLFormElement;
+                  if (form) form.requestSubmit();
+                }}
+                disabled={saving}
+                style={{ backgroundColor: cp }}
+                className="px-6 py-2.5 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2 shadow-md shadow-blue-500/20 active:scale-95 cursor-pointer"
+              >
+                {saving ? <Loader2 className="animate-spin" size={15} /> : <Sparkles size={15} />}
+                <span>{saving ? 'Guardando...' : 'Guardar Hero'}</span>
+              </button>
+            </div>
+          </header>
 
-              {/* Mensaje de ayuda si es Automático */}
-              {editingHero.type === 'AUTOMATIC' && (
-                <div className="bg-purple-50 border border-purple-100 p-4 rounded-2xl space-y-1">
-                  <span className="text-xs font-black text-purple-900 flex items-center gap-1.5">
-                    <Wand2 size={14} /> Modo Automático Inteligente
-                  </span>
-                  <p className="text-[11px] text-purple-700 font-medium">
-                    Citiox seleccionará dinámicamente la mejor promoción o producto activo para mostrar. Puedes añadir una imagen o título opcional como fallback.
-                  </p>
-                </div>
-              )}
-
-              {/* Selector de entidad si es PROMOTION, PRODUCT, SERVICE */}
-              {(editingHero.type === 'PROMOTION' || editingHero.type === 'PRODUCT' || editingHero.type === 'SERVICE') && (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    Seleccionar {editingHero.type === 'PROMOTION' ? 'Promoción' : editingHero.type === 'PRODUCT' ? 'Producto' : 'Servicio'} específica del negocio
-                  </label>
-                  <select
-                    className="w-full px-4 py-3.5 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white outline-none"
-                    value={editingHero.sourceId || ''}
-                    onChange={(e) => {
-                      const selectedId = e.target.value;
-                      let imgUrl = editingHero.image;
-                      let titleVal = editingHero.title;
-                      let descVal = editingHero.description;
-                      let actType = editingHero.actionType;
-                      let actVal = editingHero.actionValue;
-                      let btnEnabled = editingHero.buttonEnabled ?? true;
-                      let btnText = editingHero.buttonText;
-
-                      if (editingHero.type === 'PROMOTION') {
-                        const promo = options.promotions.find(p => p.id === selectedId);
-                        if (promo) {
-                          imgUrl = promo.imagenUrl || imgUrl;
-                          titleVal = promo.titulo || titleVal;
-                          descVal = promo.descripcion || descVal;
-                          actType = 'PROMOTION';
-                          actVal = promo.id;
-                          btnText = btnText || 'Ver Promoción';
-                        }
-                      } else if (editingHero.type === 'PRODUCT') {
-                        const prod = options.products.find(p => p.id === selectedId);
-                        if (prod) {
-                          imgUrl = prod.imagenUrl || imgUrl;
-                          titleVal = prod.nombre || titleVal;
-                          descVal = prod.descripcion || descVal;
-                          actType = 'PRODUCT';
-                          actVal = prod.id;
-                          btnText = btnText || 'Ver Producto';
-                        }
-                      } else if (editingHero.type === 'SERVICE') {
-                        const srv = options.services.find(s => s.id === selectedId);
-                        if (srv) {
-                          titleVal = srv.nombre || titleVal;
-                          actType = 'SERVICE';
-                          actVal = srv.id;
-                          btnText = btnText || 'Reservar Servicio';
-                        }
-                      }
-
-                      setEditingHero({
-                        ...editingHero,
-                        sourceId: selectedId,
-                        image: imgUrl,
-                        title: titleVal,
-                        description: descVal,
-                        actionType: actType,
-                        actionValue: actVal,
-                        buttonEnabled: btnEnabled,
-                        buttonText: btnText
-                      });
-                    }}
-                  >
-                    <option value="">-- Seleccionar de la lista --</option>
-                    {editingHero.type === 'PROMOTION' && options.promotions.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.titulo} (${p.precioPromo}) {p.estado !== 'activa' ? `[${p.estado?.toUpperCase() || 'INACTIVA'}]` : ''}
-                      </option>
-                    ))}
-                    {editingHero.type === 'PRODUCT' && options.products.map(p => (
-                      <option key={p.id} value={p.id}>{p.nombre} (${p.precio})</option>
-                    ))}
-                    {editingHero.type === 'SERVICE' && options.services.map(s => (
-                      <option key={s.id} value={s.id}>{s.nombre} (${s.precio || '0'})</option>
-                    ))}
-                  </select>
-                  {editingHero.type === 'PROMOTION' && editingHero.sourceId && (() => {
-                    const selPromo = options.promotions.find(p => p.id === editingHero.sourceId);
-                    if (selPromo && selPromo.estado !== 'activa') {
-                      return (
-                        <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl flex items-center gap-2 mt-2">
-                          <AlertCircle size={15} className="text-amber-600 shrink-0" />
-                          <p className="text-[11px] font-bold text-amber-800">
-                            Aviso: Esta promoción está en estado <strong>{selPromo.estado?.toUpperCase() || 'INACTIVA'}</strong>. Para que tus clientes puedan verla y reservarla normalmente, actívala en Administración &gt; Promociones.
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                </div>
-              )}
-
-              {/* Imagen Desktop */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Imagen Principal (Desktop)</label>
-                <ImageUploader
-                  category="banner"
-                  currentUrl={editingHero.image || ''}
-                  onUploadSuccess={(media) => setEditingHero({ ...editingHero, image: media.url })}
-                  onRemove={() => setEditingHero({ ...editingHero, image: null })}
-                  label="Subir Imagen Banner"
-                  aspect="landscape"
-                />
-              </div>
-
-              {/* Título y Descripción Opcionales */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Título (Opcional)</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Oferta Especial de Verano"
-                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white outline-none"
-                    value={editingHero.title || ''}
-                    onChange={(e) => setEditingHero({ ...editingHero, title: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Descripción (Opcional)</label>
-                  <textarea
-                    placeholder="Ej: Descuento exclusivo del 20% reservando online"
-                    rows={2}
-                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white outline-none resize-none"
-                    value={editingHero.description || ''}
-                    onChange={(e) => setEditingHero({ ...editingHero, description: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* Configuración de Botón Opcional */}
-              <div className="pt-4 border-t border-gray-100 space-y-4">
-                <div className="flex items-center justify-between bg-gray-50 p-4 rounded-2xl">
-                  <div>
-                    <span className="text-xs font-black text-gray-900 uppercase">Mostrar Botón de Acción</span>
-                    <p className="text-[10px] text-gray-400 font-bold">Añade un botón interactivo a esta tarjeta</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setEditingHero({ ...editingHero, buttonEnabled: !editingHero.buttonEnabled })}
-                    style={{ backgroundColor: editingHero.buttonEnabled ? cp : '#cbd5e1' }}
-                    className="w-12 h-6 rounded-full transition-all relative"
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-                      editingHero.buttonEnabled ? 'left-[26px]' : 'left-1'
-                    }`} />
-                  </button>
-                </div>
-
-                {editingHero.buttonEnabled && (
-                  <div className="space-y-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100 animate-in fade-in duration-200">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Texto del Botón *</label>
-                      <input
-                        type="text"
-                        placeholder="Ej: Comprar ahora, Ver servicio, Reservar"
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
-                        value={editingHero.buttonText || ''}
-                        onChange={(e) => setEditingHero({ ...editingHero, buttonText: e.target.value })}
-                        required={editingHero.buttonEnabled}
-                      />
+          {/* CONTENIDO PRINCIPAL SCROLLEABLE */}
+          <main className="flex-1 overflow-y-auto px-4 sm:px-8 lg:px-12 py-8 bg-[#FAFCFF]">
+            <form id="hero-fullscreen-form" onSubmit={handleSaveHero} className="max-w-6xl mx-auto pb-10">
+              
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                {/* COLUMNA IZQUIERDA: CONFIGURACIÓN PRINCIPAL (7 columnas) */}
+                <div className="lg:col-span-7 space-y-6">
+                  
+                  {/* Tarjeta: Tipo y Fuente */}
+                  <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-150/80 shadow-xs space-y-5">
+                    <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cp }} />
+                      <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">
+                        1. Tipo de Contenido y Origen
+                      </h4>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Acción del Botón</label>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                        Tipo de Hero
+                      </label>
+                      <select
+                        className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition"
+                        value={editingHero.type || 'IMAGE'}
+                        onChange={(e) => {
+                          const newType = e.target.value;
+                          let newSourceType = 'CUSTOM';
+                          if (newType === 'PROMOTION') newSourceType = 'PROMOTION';
+                          if (newType === 'PRODUCT') newSourceType = 'PRODUCT';
+                          if (newType === 'SERVICE') newSourceType = 'SERVICE';
+                          if (newType === 'COMBO') newSourceType = 'COMBO';
+
+                          setEditingHero({
+                            ...editingHero,
+                            type: newType,
+                            sourceType: newSourceType,
+                            sourceId: null
+                          });
+                        }}
+                      >
+                        <option value="AUTOMATIC">🪄 Automático (Dinámico según promociones activas)</option>
+                        <option value="IMAGE">🖼️ Imagen Personalizada de Banner</option>
+                        <option value="PROMOTION">🏷️ Vincular a una Promoción</option>
+                        <option value="PRODUCT">📦 Vincular a un Producto</option>
+                        <option value="SERVICE">✂️ Vincular a un Servicio</option>
+                        <option value="COMBO">🍱 Vincular a un Combo</option>
+                      </select>
+                    </div>
+
+                    {/* Mensaje de ayuda si es Automático */}
+                    {editingHero.type === 'AUTOMATIC' && (
+                      <div className="bg-purple-50 border border-purple-100 p-4 rounded-2xl space-y-1">
+                        <span className="text-xs font-black text-purple-900 flex items-center gap-1.5">
+                          <Wand2 size={14} /> Modo Automático Inteligente
+                        </span>
+                        <p className="text-[11px] text-purple-700 font-medium leading-relaxed">
+                          Citiox seleccionará dinámicamente la mejor promoción o producto activo para mostrar. Puedes añadir una imagen o título opcional como fallback.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Selector de entidad si es PROMOTION, PRODUCT, SERVICE */}
+                    {(editingHero.type === 'PROMOTION' || editingHero.type === 'PRODUCT' || editingHero.type === 'SERVICE') && (
+                      <div className="space-y-2 pt-2 border-t border-gray-100">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                          Seleccionar {editingHero.type === 'PROMOTION' ? 'Promoción' : editingHero.type === 'PRODUCT' ? 'Producto' : 'Servicio'} específica del negocio
+                        </label>
                         <select
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
-                          value={editingHero.actionType || 'NONE'}
+                          className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition"
+                          value={editingHero.sourceId || ''}
                           onChange={(e) => {
-                            const newAct = e.target.value;
-                            let defaultVal = '';
-                            if (newAct === 'PROMOTION' && options.promotions.length > 0) defaultVal = options.promotions[0].id;
-                            if (newAct === 'PRODUCT' && options.products.length > 0) defaultVal = options.products[0].id;
-                            if (newAct === 'SERVICE' && options.services.length > 0) defaultVal = options.services[0].id;
-                            if (newAct === 'CATEGORY' && options.categories.length > 0) defaultVal = options.categories[0].id;
-                            setEditingHero({ ...editingHero, actionType: newAct, actionValue: defaultVal });
+                            const selectedId = e.target.value;
+                            let imgUrl = editingHero.image;
+                            let titleVal = editingHero.title;
+                            let descVal = editingHero.description;
+                            let actType = editingHero.actionType;
+                            let actVal = editingHero.actionValue;
+                            let btnEnabled = editingHero.buttonEnabled ?? true;
+                            let btnText = editingHero.buttonText;
+
+                            if (editingHero.type === 'PROMOTION') {
+                              const promo = options.promotions.find(p => p.id === selectedId);
+                              if (promo) {
+                                imgUrl = promo.imagenUrl || imgUrl;
+                                titleVal = promo.titulo || titleVal;
+                                descVal = promo.descripcion || descVal;
+                                actType = 'PROMOTION';
+                                actVal = promo.id;
+                                btnText = btnText || 'Ver Promoción';
+                              }
+                            } else if (editingHero.type === 'PRODUCT') {
+                              const prod = options.products.find(p => p.id === selectedId);
+                              if (prod) {
+                                imgUrl = prod.imagenUrl || imgUrl;
+                                titleVal = prod.nombre || titleVal;
+                                descVal = prod.descripcion || descVal;
+                                actType = 'PRODUCT';
+                                actVal = prod.id;
+                                btnText = btnText || 'Ver Producto';
+                              }
+                            } else if (editingHero.type === 'SERVICE') {
+                              const srv = options.services.find(s => s.id === selectedId);
+                              if (srv) {
+                                titleVal = srv.nombre || titleVal;
+                                actType = 'SERVICE';
+                                actVal = srv.id;
+                                btnText = btnText || 'Reservar Servicio';
+                              }
+                            }
+
+                            setEditingHero({
+                              ...editingHero,
+                              sourceId: selectedId,
+                              image: imgUrl,
+                              title: titleVal,
+                              description: descVal,
+                              actionType: actType,
+                              actionValue: actVal,
+                              buttonEnabled: btnEnabled,
+                              buttonText: btnText
+                            });
                           }}
                         >
-                          <option value="NONE">-- Seleccionar Acción --</option>
-                          <option value="PROMOTION">Ir a Promoción</option>
-                          <option value="PRODUCT">Ir a Producto</option>
-                          <option value="SERVICE">Ir a Servicio</option>
-                          {(options.negocio?.tipoNegocio === 'RESTAURANT' || options.negocio?.tipoNegocio === 'PINCHOS') && (
-                            <option value="COMBO">Ir a Combo</option>
-                          )}
-                          <option value="CATEGORY">Ir a Categoría</option>
-                          <option value="INTERNAL_URL">Ruta Interna (/ejemplo)</option>
-                          <option value="EXTERNAL_URL">Enlace Externo (https://...)</option>
+                          <option value="">-- Seleccionar de la lista --</option>
+                          {editingHero.type === 'PROMOTION' && options.promotions.map(p => (
+                            <option key={p.id} value={p.id}>
+                              {p.titulo} (${p.precioPromo}) {p.estado !== 'activa' ? `[${p.estado?.toUpperCase() || 'INACTIVA'}]` : ''}
+                            </option>
+                          ))}
+                          {editingHero.type === 'PRODUCT' && options.products.map(p => (
+                            <option key={p.id} value={p.id}>{p.nombre} (${p.precio})</option>
+                          ))}
+                          {editingHero.type === 'SERVICE' && options.services.map(s => (
+                            <option key={s.id} value={s.id}>{s.nombre} (${s.precio || '0'})</option>
+                          ))}
                         </select>
+                        {editingHero.type === 'PROMOTION' && editingHero.sourceId && (() => {
+                          const selPromo = options.promotions.find(p => p.id === editingHero.sourceId);
+                          if (selPromo && selPromo.estado !== 'activa') {
+                            return (
+                              <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl flex items-center gap-2 mt-2">
+                                <AlertCircle size={15} className="text-amber-600 shrink-0" />
+                                <p className="text-[11px] font-bold text-amber-800">
+                                  Aviso: Esta promoción está en estado <strong>{selPromo.estado?.toUpperCase() || 'INACTIVA'}</strong>. Para que tus clientes puedan verla y reservarla normalmente, actívala en Administración &gt; Promociones.
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
+                    )}
+                  </div>
 
+                  {/* Tarjeta: Imagen Principal */}
+                  <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-150/80 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cp }} />
+                        <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">
+                          2. Imagen del Banner
+                        </h4>
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400">Recomendado: Panorámica horizontal (16:9)</span>
+                    </div>
+
+                    <div className="w-full">
+                      <ImageUploader
+                        category="banner"
+                        currentUrl={editingHero.image || ''}
+                        onUploadSuccess={(media) => setEditingHero({ ...editingHero, image: media.url })}
+                        onRemove={() => setEditingHero({ ...editingHero, image: null })}
+                        label="Subir Imagen Banner Principal"
+                        aspect="landscape"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Tarjeta: Títulos y Textos */}
+                  <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-150/80 shadow-xs space-y-4">
+                    <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cp }} />
+                      <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">
+                        3. Textos Informativos
+                      </h4>
+                    </div>
+
+                    <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Destino Específico de la Acción</label>
-                        {editingHero.actionType === 'PROMOTION' ? (
-                          <select
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
-                            value={editingHero.actionValue || ''}
-                            onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
-                          >
-                            <option value="">-- Toda la sección de Promociones --</option>
-                            {options.promotions.map(p => (
-                              <option key={p.id} value={p.id}>
-                                🎯 {p.titulo} (${p.precioPromo}) {p.estado !== 'activa' ? `[${p.estado?.toUpperCase() || 'INACTIVA'}]` : ''}
-                              </option>
-                            ))}
-                          </select>
-                        ) : editingHero.actionType === 'PRODUCT' ? (
-                          <select
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
-                            value={editingHero.actionValue || ''}
-                            onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
-                          >
-                            <option value="">-- Toda la sección de Productos --</option>
-                            {options.products.map(p => (
-                              <option key={p.id} value={p.id}>🛍️ {p.nombre} (${p.precio})</option>
-                            ))}
-                          </select>
-                        ) : editingHero.actionType === 'SERVICE' ? (
-                          <select
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
-                            value={editingHero.actionValue || ''}
-                            onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
-                          >
-                            <option value="">-- Toda la sección de Servicios --</option>
-                            {options.services.map(s => (
-                              <option key={s.id} value={s.id}>✂️ {s.nombre} (${s.precio || '0'})</option>
-                            ))}
-                          </select>
-                        ) : editingHero.actionType === 'CATEGORY' ? (
-                          <select
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
-                            value={editingHero.actionValue || ''}
-                            onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
-                          >
-                            <option value="">-- Todas las categorías --</option>
-                            {options.categories.map(c => (
-                              <option key={c.id} value={c.id}>📁 {c.nombre}</option>
-                            ))}
-                          </select>
-                        ) : (
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Título Principal (Opcional)</label>
+                        <input
+                          type="text"
+                          placeholder="Ej: Oferta Especial de Verano"
+                          className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition"
+                          value={editingHero.title || ''}
+                          onChange={(e) => setEditingHero({ ...editingHero, title: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Descripción o Subtítulo (Opcional)</label>
+                        <textarea
+                          placeholder="Ej: Descuento exclusivo del 20% reservando online"
+                          rows={3}
+                          className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition resize-none"
+                          value={editingHero.description || ''}
+                          onChange={(e) => setEditingHero({ ...editingHero, description: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tarjeta: Botón Interactivo de Acción */}
+                  <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-150/80 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cp }} />
+                        <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">
+                          4. Botón de Acción Interactivo
+                        </h4>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditingHero({ ...editingHero, buttonEnabled: !editingHero.buttonEnabled })}
+                        style={{ backgroundColor: editingHero.buttonEnabled ? cp : '#cbd5e1' }}
+                        className="w-12 h-6 rounded-full transition-all relative cursor-pointer"
+                      >
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
+                          editingHero.buttonEnabled ? 'left-[26px]' : 'left-1'
+                        }`} />
+                      </button>
+                    </div>
+
+                    {editingHero.buttonEnabled && (
+                      <div className="space-y-4 pt-2 animate-in fade-in duration-200">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Texto del Botón *</label>
                           <input
                             type="text"
-                            placeholder={
-                              editingHero.actionType === 'EXTERNAL_URL' 
-                                ? "Ej: https://wa.me/593999999999"
-                                : editingHero.actionType === 'INTERNAL_URL'
-                                ? "Ej: /servicios o /contacto"
-                                : "ID, slug o URL de destino"
-                            }
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
-                            value={editingHero.actionValue || ''}
-                            onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
+                            placeholder="Ej: Comprar ahora, Ver servicio, Reservar cita"
+                            className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition"
+                            value={editingHero.buttonText || ''}
+                            onChange={(e) => setEditingHero({ ...editingHero, buttonText: e.target.value })}
+                            required={editingHero.buttonEnabled}
                           />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Acción del Botón</label>
+                            <select
+                              className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition"
+                              value={editingHero.actionType || 'NONE'}
+                              onChange={(e) => {
+                                const newAct = e.target.value;
+                                let defaultVal = '';
+                                if (newAct === 'PROMOTION' && options.promotions.length > 0) defaultVal = options.promotions[0].id;
+                                if (newAct === 'PRODUCT' && options.products.length > 0) defaultVal = options.products[0].id;
+                                if (newAct === 'SERVICE' && options.services.length > 0) defaultVal = options.services[0].id;
+                                if (newAct === 'CATEGORY' && options.categories.length > 0) defaultVal = options.categories[0].id;
+                                setEditingHero({ ...editingHero, actionType: newAct, actionValue: defaultVal });
+                              }}
+                            >
+                              <option value="NONE">-- Seleccionar Acción --</option>
+                              <option value="PROMOTION">Ir a Promoción</option>
+                              <option value="PRODUCT">Ir a Producto</option>
+                              <option value="SERVICE">Ir a Servicio</option>
+                              {(options.negocio?.tipoNegocio === 'RESTAURANT' || options.negocio?.tipoNegocio === 'PINCHOS') && (
+                                <option value="COMBO">Ir a Combo</option>
+                              )}
+                              <option value="CATEGORY">Ir a Categoría</option>
+                              <option value="INTERNAL_URL">Ruta Interna (/ejemplo)</option>
+                              <option value="EXTERNAL_URL">Enlace Externo (https://...)</option>
+                            </select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Destino Específico de la Acción</label>
+                            {editingHero.actionType === 'PROMOTION' ? (
+                              <select
+                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition"
+                                value={editingHero.actionValue || ''}
+                                onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
+                              >
+                                <option value="">-- Toda la sección de Promociones --</option>
+                                {options.promotions.map(p => (
+                                  <option key={p.id} value={p.id}>
+                                    🎯 {p.titulo} (${p.precioPromo}) {p.estado !== 'activa' ? `[${p.estado?.toUpperCase() || 'INACTIVA'}]` : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : editingHero.actionType === 'PRODUCT' ? (
+                              <select
+                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition"
+                                value={editingHero.actionValue || ''}
+                                onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
+                              >
+                                <option value="">-- Toda la sección de Productos --</option>
+                                {options.products.map(p => (
+                                  <option key={p.id} value={p.id}>🛍️ {p.nombre} (${p.precio})</option>
+                                ))}
+                              </select>
+                            ) : editingHero.actionType === 'SERVICE' ? (
+                              <select
+                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition"
+                                value={editingHero.actionValue || ''}
+                                onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
+                              >
+                                <option value="">-- Toda la sección de Servicios --</option>
+                                {options.services.map(s => (
+                                  <option key={s.id} value={s.id}>✂️ {s.nombre} (${s.precio || '0'})</option>
+                                ))}
+                              </select>
+                            ) : editingHero.actionType === 'CATEGORY' ? (
+                              <select
+                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition"
+                                value={editingHero.actionValue || ''}
+                                onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
+                              >
+                                <option value="">-- Todas las categorías --</option>
+                                {options.categories.map(c => (
+                                  <option key={c.id} value={c.id}>📁 {c.nombre}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                placeholder={
+                                  editingHero.actionType === 'EXTERNAL_URL' 
+                                    ? "Ej: https://wa.me/593999999999"
+                                    : editingHero.actionType === 'INTERNAL_URL'
+                                    ? "Ej: /servicios o /contacto"
+                                    : "ID, slug o URL de destino"
+                                }
+                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition"
+                                value={editingHero.actionValue || ''}
+                                onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* COLUMNA DERECHA: PREVISUALIZACIÓN Y VIGENCIA (5 columnas) */}
+                <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-4">
+                  
+                  {/* Tarjeta: Previsualización en Vivo */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-150/80 shadow-xs space-y-3">
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Eye size={16} className="text-gray-500" />
+                        <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">
+                          Vista Previa en Vivo
+                        </h4>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">
+                        {editingHero.isActive ? '🟢 Activo' : '⚪ Inactivo'}
+                      </span>
+                    </div>
+
+                    <div className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 aspect-[16/9] flex flex-col justify-end p-5 shadow-inner">
+                      {editingHero.image ? (
+                        <img 
+                          src={editingHero.image} 
+                          alt="Preview" 
+                          className="absolute inset-0 w-full h-full object-cover opacity-75"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center text-slate-600">
+                          <ImageIcon size={36} className="opacity-30" />
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+
+                      <div className="relative z-10 space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          {getTypeBadge(editingHero.type || 'IMAGE')}
+                        </div>
+                        <h4 className="text-white font-black text-base line-clamp-1">
+                          {editingHero.title || 'Título del Banner'}
+                        </h4>
+                        <p className="text-white/80 font-medium text-xs line-clamp-2 leading-snug">
+                          {editingHero.description || 'Aquí se mostrará la descripción o mensaje promocional.'}
+                        </p>
+                        {editingHero.buttonEnabled && (
+                          <div className="pt-1.5">
+                            <span 
+                              style={{ backgroundColor: cp }}
+                              className="inline-flex items-center gap-1.5 text-white px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-md"
+                            >
+                              <span>{editingHero.buttonText || 'Ver más'}</span>
+                              <span>→</span>
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Fechas de Vigencia y Estado */}
-              <div className="pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Fecha Inicio Vigencia (Opcional)</label>
-                  <input
-                    type="date"
-                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 outline-none"
-                    value={editingHero.startAt ? new Date(editingHero.startAt).toISOString().split('T')[0] : ''}
-                    onChange={(e) => setEditingHero({ ...editingHero, startAt: e.target.value ? e.target.value : null })}
-                  />
+                  {/* Tarjeta: Vigencia y Estado */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-150/80 shadow-xs space-y-4">
+                    <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+                      <Calendar size={16} className="text-gray-500" />
+                      <h4 className="text-xs font-black text-gray-900 uppercase tracking-wider">
+                        5. Publicación y Vigencia
+                      </h4>
+                    </div>
+
+                    {/* Active Toggle */}
+                    <div className="flex items-center justify-between bg-gray-50 p-4 rounded-2xl">
+                      <div>
+                        <span className="text-xs font-black text-gray-900 uppercase">Estado del Banner</span>
+                        <p className="text-[10px] text-gray-400 font-bold">
+                          {editingHero.isActive ? 'Visible en la portada pública' : 'Oculto (Borrador)'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditingHero({ ...editingHero, isActive: !editingHero.isActive })}
+                        style={{ backgroundColor: editingHero.isActive ? cp : '#cbd5e1' }}
+                        className="w-12 h-6 rounded-full transition-all relative cursor-pointer"
+                      >
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
+                          editingHero.isActive ? 'left-[26px]' : 'left-1'
+                        }`} />
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                          Fecha Inicio Vigencia (Opcional)
+                        </label>
+                        <input
+                          type="date"
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-xs text-gray-900 outline-none"
+                          value={editingHero.startAt ? new Date(editingHero.startAt).toISOString().split('T')[0] : ''}
+                          onChange={(e) => setEditingHero({ ...editingHero, startAt: e.target.value ? e.target.value : null })}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                          Fecha Fin Vigencia (Opcional)
+                        </label>
+                        <input
+                          type="date"
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200/80 rounded-2xl font-bold text-xs text-gray-900 outline-none"
+                          value={editingHero.endAt ? new Date(editingHero.endAt).toISOString().split('T')[0] : ''}
+                          onChange={(e) => setEditingHero({ ...editingHero, endAt: e.target.value ? e.target.value : null })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Fecha Fin Vigencia (Opcional)</label>
-                  <input
-                    type="date"
-                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 outline-none"
-                    value={editingHero.endAt ? new Date(editingHero.endAt).toISOString().split('T')[0] : ''}
-                    onChange={(e) => setEditingHero({ ...editingHero, endAt: e.target.value ? e.target.value : null })}
-                  />
-                </div>
+
               </div>
 
-              {/* Active Toggle */}
-              <div className="flex items-center justify-between bg-gray-50 p-4 rounded-2xl">
-                <span className="text-xs font-black text-gray-900 uppercase">Estado Activo</span>
-                <button
-                  type="button"
-                  onClick={() => setEditingHero({ ...editingHero, isActive: !editingHero.isActive })}
-                  style={{ backgroundColor: editingHero.isActive ? cp : '#cbd5e1' }}
-                  className="w-12 h-6 rounded-full transition-all relative"
-                >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-                    editingHero.isActive ? 'left-[26px]' : 'left-1'
-                  }`} />
-                </button>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowHeroModal(false)}
-                  className="px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider text-gray-500 hover:bg-gray-100 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  style={{ backgroundColor: cp }}
-                  className="px-8 py-3 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2 shadow-lg"
-                >
-                  {saving ? <Loader2 className="animate-spin" size={16} /> : 'Guardar Hero'}
-                </button>
-              </div>
             </form>
-          </div>
+          </main>
+
+          {/* BARRA INFERIOR STICKY */}
+          <footer className="h-18 bg-white/95 backdrop-blur-md border-t border-gray-100 px-6 sm:px-10 flex items-center justify-between shrink-0 z-20">
+            <span className="text-xs text-gray-400 font-bold">
+              {editingHero.id ? 'Editando banner existente' : 'Nuevo banner para la portada pública'}
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowHeroModal(false)}
+                className="px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-gray-500 hover:bg-gray-100 transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const form = document.getElementById('hero-fullscreen-form') as HTMLFormElement;
+                  if (form) form.requestSubmit();
+                }}
+                disabled={saving}
+                style={{ backgroundColor: cp }}
+                className="px-8 py-2.5 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer"
+              >
+                {saving ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} />}
+                <span>{saving ? 'Guardando...' : 'Guardar Hero'}</span>
+              </button>
+            </div>
+          </footer>
+
         </div>
       )}
 

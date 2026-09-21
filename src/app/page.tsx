@@ -62,11 +62,11 @@ export default function LandingPage() {
             {/* 1. NAVBAR SUPERIOR                                              */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+                <div className="max-w-7xl mx-auto px-6 h-16 sm:h-18 flex justify-between items-center">
                     
                     {/* Brand Logo */}
                     <Link href="/" className="group flex items-center transition-transform hover:scale-105">
-                        <CitioxBrandLogo className="h-10 sm:h-12 w-auto" />
+                        <CitioxBrandLogo className="h-10 sm:h-11 w-auto" />
                     </Link>
                     
                     {/* Menú de Enlaces */}
@@ -110,17 +110,17 @@ export default function LandingPage() {
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* 2. HERO PRINCIPAL CON MOCKUPS INTERACTIVOS Y RESPONSIVOS        */}
             {/* ═══════════════════════════════════════════════════════════════ */}
-            <header className="relative pt-8 sm:pt-12 md:pt-16 pb-14 md:pb-24 overflow-hidden bg-gradient-to-b from-[#EEF5FF]/80 via-[#F7FAFF]/50 to-[#FAFCFF]">
+            <header className="relative pt-5 sm:pt-7 md:pt-8 pb-8 md:pb-14 overflow-hidden bg-gradient-to-b from-[#EEF5FF]/80 via-[#F7FAFF]/50 to-[#FAFCFF]">
                 
                 {/* Resplandores de fondo */}
                 <div className="absolute top-1/4 right-10 w-[550px] h-[550px] bg-gradient-to-tr from-blue-200/40 via-sky-200/40 to-indigo-100/30 rounded-full blur-3xl -z-10 pointer-events-none" />
                 <div className="absolute top-10 left-1/3 w-[300px] h-[300px] bg-blue-100/30 rounded-full blur-2xl -z-10 pointer-events-none" />
 
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-6 xl:gap-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                    <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-6 lg:gap-6 xl:gap-8">
                         
                         {/* Columna Izquierda: Mensaje y CTA */}
-                        <div className="w-full lg:w-[390px] xl:w-[430px] shrink-0 space-y-6 text-center lg:text-left z-20 flex flex-col items-center lg:items-start">
+                        <div className="w-full lg:w-[350px] xl:w-[390px] shrink-0 space-y-4 sm:space-y-5 text-center lg:text-left z-20 flex flex-col items-center lg:items-start">
                             
                             {/* Tag Badge */}
                             <div className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-[#E8F1FF] text-[#0066FF] text-[11px] font-black uppercase tracking-wider">
@@ -128,34 +128,34 @@ export default function LandingPage() {
                             </div>
                             
                             {/* Titular */}
-                            <h1 className="text-4xl sm:text-5xl lg:text-[42px] xl:text-[52px] font-black text-slate-950 tracking-tight leading-[1.08]">
+                            <h1 className="text-3xl sm:text-4xl lg:text-[38px] xl:text-[46px] font-black text-slate-950 tracking-tight leading-[1.1]">
                                 Tu negocio.<br />
                                 <span className="text-[#0066FF]">Tu propia app.</span>
                             </h1>
                             
                             {/* Subtítulo */}
-                            <div className="space-y-2 text-slate-600 text-base md:text-lg leading-relaxed max-w-lg font-medium mx-auto lg:mx-0">
+                            <div className="space-y-1 text-slate-600 text-sm md:text-base leading-relaxed max-w-lg font-medium mx-auto lg:mx-0">
                                 <p className="font-bold text-slate-900">
                                     No importa qué tipo de negocio tengas.
                                 </p>
-                                <p className="text-slate-500 text-sm md:text-base">
+                                <p className="text-slate-500 text-xs md:text-sm">
                                     Con Citiox puedes crear la app de tu negocio para recibir clientes, vender, gestionar reservas, pedidos, servicios, membresías y mucho más.
                                 </p>
                             </div>
 
                             {/* Botón Principal */}
-                            <div className="pt-2 w-full flex justify-center lg:justify-start">
+                            <div className="pt-1 w-full flex justify-center lg:justify-start">
                                 <Link
                                     href="/register"
-                                    className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[#0066FF] hover:bg-[#0052cc] text-white font-extrabold text-sm shadow-xl shadow-blue-500/30 hover:shadow-blue-500/40 active:scale-95 transition-all"
+                                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#0066FF] hover:bg-[#0052cc] text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-blue-500/30 hover:shadow-blue-500/40 active:scale-95 transition-all"
                                 >
                                     <span>Crear mi app gratis</span>
-                                    <ArrowRight size={16} />
+                                    <ArrowRight size={15} />
                                 </Link>
                             </div>
 
                             {/* Checks de Confianza */}
-                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-y-2 gap-x-5 text-xs font-semibold text-slate-600 pt-2">
+                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-y-1.5 gap-x-4 text-xs font-semibold text-slate-600 pt-1">
                                 <span className="flex items-center gap-1.5">
                                     <Check size={14} className="text-[#0066FF] stroke-[3]" />
                                     Sin complicaciones
@@ -172,7 +172,7 @@ export default function LandingPage() {
                         </div>
 
                         {/* Columna Derecha: Mockups Realistas (Móvil y Desktop diferenciados) */}
-                        <div className="w-full flex-1 flex justify-center lg:justify-start items-center overflow-visible">
+                        <div className="w-full flex-1 flex justify-center items-center overflow-visible">
                             
                             {/* ─── VISTA MÓVIL: LAS 2 DEMOS QUE LE GUSTABAN (Gimnasio & Dentista - Sin Lavandería) ─── */}
                             <div className="lg:hidden w-full flex justify-center items-center py-4">
@@ -246,117 +246,117 @@ export default function LandingPage() {
 
                             {/* ─── VISTA DESKTOP: LOS 4 DEMOS CLAROS, COMPLETOS Y VISIBLES SIMULTÁNEAMENTE ─── */}
                             <div className="hidden lg:flex w-full justify-center items-center select-none overflow-visible">
-                                <div className="relative flex items-center -space-x-3 lg:-space-x-3.5 xl:-space-x-4 shrink-0">
+                                <div className="relative flex items-center -space-x-4 lg:-space-x-4.5 xl:-space-x-5 shrink-0">
                                     
                                     {/* TELÉFONO 1: RESTAURANTE (La Parrilla Citiox) */}
-                                    <div className="w-[162px] lg:w-[172px] xl:w-[192px] h-[348px] lg:h-[372px] xl:h-[415px] bg-white rounded-[2.2rem] xl:rounded-[2.6rem] p-1.5 xl:p-2 shadow-2xl shadow-slate-900/10 border-[4.5px] xl:border-[5px] border-slate-900/95 shrink-0 transform -rotate-2 translate-y-3 hover:rotate-0 hover:scale-105 hover:-translate-y-2 hover:z-30 transition-all duration-300 z-10 group/phone1 cursor-pointer">
-                                        <div className="relative flex items-center justify-between px-2 mb-1 pt-0.5">
-                                            <div className="w-10 xl:w-12 h-2.5 xl:h-3 bg-slate-900 rounded-full mx-auto" />
+                                    <div className="w-[142px] lg:w-[152px] xl:w-[172px] h-[308px] lg:h-[328px] xl:h-[372px] bg-white rounded-[2rem] xl:rounded-[2.4rem] p-1.5 xl:p-2 shadow-2xl shadow-slate-900/10 border-[4px] xl:border-[4.5px] border-slate-900/95 shrink-0 transform -rotate-2 translate-y-1 hover:rotate-0 hover:scale-105 hover:-translate-y-2 hover:z-30 transition-all duration-300 z-10 group/phone1 cursor-pointer">
+                                        <div className="relative flex items-center justify-between px-1.5 mb-1 pt-0.5">
+                                            <div className="w-9 xl:w-11 h-2 xl:h-2.5 bg-slate-900 rounded-full mx-auto" />
                                             <a 
                                                 href="/parrilla-citiox-demo" 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-[#0066FF] transition-colors"
+                                                className="absolute right-1 top-0 size-4.5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[7px] hover:bg-[#0066FF] transition-colors"
                                                 title="Abrir app en pantalla completa"
                                             >
-                                                <ExternalLink size={10} />
+                                                <ExternalLink size={9} />
                                             </a>
                                         </div>
-                                        <div className="h-[calc(100%-20px)] xl:h-[calc(100%-24px)] bg-white rounded-[1.5rem] xl:rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-amber-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6.5px] xl:text-[7.5px] font-bold">
+                                        <div className="h-[calc(100%-18px)] xl:h-[calc(100%-22px)] bg-white rounded-[1.4rem] xl:rounded-[1.7rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-amber-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6px] xl:text-[7px] font-bold">
                                                 <span className="size-1 rounded-full bg-amber-300 animate-pulse" />
                                                 <span>🍔 Restaurante</span>
                                             </div>
                                             <iframe 
                                                 src="/parrilla-citiox-demo" 
                                                 title="La Parrilla Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.43] lg:scale-[0.46] xl:scale-[0.51] border-0 select-none pointer-events-auto"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.38] lg:scale-[0.41] xl:scale-[0.46] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
                                     </div>
 
                                     {/* TELÉFONO 2: GIMNASIO & FITNESS (Vortex Club - Central Destacado) */}
-                                    <div className="w-[172px] lg:w-[184px] xl:w-[206px] h-[368px] lg:h-[394px] xl:h-[442px] bg-white rounded-[2.4rem] xl:rounded-[2.8rem] p-1.5 xl:p-2 shadow-2xl shadow-blue-500/20 border-[5.5px] xl:border-[6px] border-slate-950 shrink-0 z-20 transform -translate-y-1 hover:scale-105 hover:-translate-y-3 hover:z-30 transition-all duration-300 group/phone2 cursor-pointer">
-                                        <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
-                                            <div className="w-14 xl:w-16 h-3 xl:h-3.5 bg-slate-950 rounded-full mx-auto flex items-center justify-center">
+                                    <div className="w-[152px] lg:w-[162px] xl:w-[184px] h-[326px] lg:h-[346px] xl:h-[394px] bg-white rounded-[2.2rem] xl:rounded-[2.6rem] p-1.5 xl:p-2 shadow-2xl shadow-blue-500/20 border-[5px] xl:border-[5.5px] border-slate-950 shrink-0 z-20 transform -translate-y-1 hover:scale-105 hover:-translate-y-3 hover:z-30 transition-all duration-300 group/phone2 cursor-pointer">
+                                        <div className="relative flex items-center justify-between px-1.5 mb-1 pt-0.5">
+                                            <div className="w-12 xl:w-14 h-2.5 xl:h-3 bg-slate-950 rounded-full mx-auto flex items-center justify-center">
                                                 <div className="size-1 xl:size-1.5 rounded-full bg-slate-800 ml-auto mr-1" />
                                             </div>
                                             <a 
                                                 href="/vortex-fitness" 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className="absolute right-1 top-0 size-5 rounded-full bg-slate-950 text-white flex items-center justify-center text-[8px] hover:bg-[#0066FF] transition-colors"
+                                                className="absolute right-1 top-0 size-4.5 rounded-full bg-slate-950 text-white flex items-center justify-center text-[7px] hover:bg-[#0066FF] transition-colors"
                                                 title="Abrir app en pantalla completa"
                                             >
-                                                <ExternalLink size={10} />
+                                                <ExternalLink size={9} />
                                             </a>
                                         </div>
-                                        <div className="h-[calc(100%-22px)] xl:h-[calc(100%-26px)] bg-slate-950 rounded-[1.7rem] xl:rounded-[2rem] overflow-hidden relative border border-slate-900 shadow-inner">
-                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-blue-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] xl:text-[8px] font-black">
+                                        <div className="h-[calc(100%-20px)] xl:h-[calc(100%-24px)] bg-slate-950 rounded-[1.5rem] xl:rounded-[1.8rem] overflow-hidden relative border border-slate-900 shadow-inner">
+                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-blue-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6.5px] xl:text-[7.5px] font-black">
                                                 <span className="size-1 rounded-full bg-emerald-300 animate-pulse" />
                                                 <span>⚡ Gimnasio</span>
                                             </div>
                                             <iframe 
                                                 src="/vortex-fitness" 
                                                 title="FitZone Vortex Demo"
-                                                className="w-[390px] h-[800px] origin-top-left scale-[0.44] lg:scale-[0.47] xl:scale-[0.53] border-0 select-none pointer-events-auto"
+                                                className="w-[390px] h-[800px] origin-top-left scale-[0.39] lg:scale-[0.42] xl:scale-[0.47] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
                                     </div>
 
                                     {/* TELÉFONO 3: CLÍNICA DENTAL (Dental Chip - Citas y Servicios) */}
-                                    <div className="w-[170px] lg:w-[182px] xl:w-[204px] h-[364px] lg:h-[390px] xl:h-[438px] bg-white rounded-[2.3rem] xl:rounded-[2.7rem] p-1.5 xl:p-2 shadow-2xl shadow-sky-500/15 border-[5px] xl:border-[5.5px] border-slate-900/95 shrink-0 z-20 transform translate-y-0 hover:scale-105 hover:-translate-y-3 hover:z-30 transition-all duration-300 group/phone3 cursor-pointer">
-                                        <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
-                                            <div className="w-12 xl:w-14 h-2.5 xl:h-3 bg-slate-900 rounded-full mx-auto" />
+                                    <div className="w-[150px] lg:w-[160px] xl:w-[182px] h-[322px] lg:h-[342px] xl:h-[390px] bg-white rounded-[2.1rem] xl:rounded-[2.5rem] p-1.5 xl:p-2 shadow-2xl shadow-sky-500/15 border-[4.5px] xl:border-[5px] border-slate-900/95 shrink-0 z-20 transform translate-y-0 hover:scale-105 hover:-translate-y-3 hover:z-30 transition-all duration-300 group/phone3 cursor-pointer">
+                                        <div className="relative flex items-center justify-between px-1.5 mb-1 pt-0.5">
+                                            <div className="w-11 xl:w-13 h-2 xl:h-2.5 bg-slate-900 rounded-full mx-auto" />
                                             <a 
                                                 href="/dental-chip" 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-sky-600 transition-colors"
+                                                className="absolute right-1 top-0 size-4.5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[7px] hover:bg-sky-600 transition-colors"
                                                 title="Abrir app en pantalla completa"
                                             >
-                                                <ExternalLink size={10} />
+                                                <ExternalLink size={9} />
                                             </a>
                                         </div>
-                                        <div className="h-[calc(100%-22px)] xl:h-[calc(100%-24px)] bg-slate-50 rounded-[1.6rem] xl:rounded-[1.9rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-sky-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6.5px] xl:text-[7.5px] font-bold">
+                                        <div className="h-[calc(100%-20px)] xl:h-[calc(100%-22px)] bg-slate-50 rounded-[1.5rem] xl:rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-sky-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6px] xl:text-[7px] font-bold">
                                                 <ToothIcon className="w-2 h-2 text-white" />
                                                 <span>🦷 Clínica Dental</span>
                                             </div>
                                             <iframe 
                                                 src="/dental-chip" 
                                                 title="Dental Chip Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.45] lg:scale-[0.48] xl:scale-[0.54] border-0 select-none pointer-events-auto"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.40] lg:scale-[0.43] xl:scale-[0.49] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
                                     </div>
 
                                     {/* TELÉFONO 4: TIENDA & RETAIL (E-commerce - Productos y Compras) */}
-                                    <div className="w-[162px] lg:w-[172px] xl:w-[192px] h-[348px] lg:h-[372px] xl:h-[415px] bg-white rounded-[2.2rem] xl:rounded-[2.6rem] p-1.5 xl:p-2 shadow-2xl shadow-purple-500/15 border-[4.5px] xl:border-[5px] border-slate-900/95 shrink-0 transform rotate-2 translate-y-3 hover:rotate-0 hover:scale-105 hover:-translate-y-2 hover:z-30 transition-all duration-300 z-10 group/phone4 cursor-pointer">
-                                        <div className="relative flex items-center justify-between px-2 mb-1 pt-0.5">
-                                            <div className="w-10 xl:w-12 h-2.5 xl:h-3 bg-slate-900 rounded-full mx-auto" />
+                                    <div className="w-[142px] lg:w-[152px] xl:w-[172px] h-[308px] lg:h-[328px] xl:h-[372px] bg-white rounded-[2rem] xl:rounded-[2.4rem] p-1.5 xl:p-2 shadow-2xl shadow-purple-500/15 border-[4px] xl:border-[4.5px] border-slate-900/95 shrink-0 transform rotate-2 translate-y-1 hover:rotate-0 hover:scale-105 hover:-translate-y-2 hover:z-30 transition-all duration-300 z-10 group/phone4 cursor-pointer">
+                                        <div className="relative flex items-center justify-between px-1.5 mb-1 pt-0.5">
+                                            <div className="w-9 xl:w-11 h-2 xl:h-2.5 bg-slate-900 rounded-full mx-auto" />
                                             <a 
                                                 href="/tienda" 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-purple-600 transition-colors"
+                                                className="absolute right-1 top-0 size-4.5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[7px] hover:bg-purple-600 transition-colors"
                                                 title="Abrir app en pantalla completa"
                                             >
-                                                <ExternalLink size={10} />
+                                                <ExternalLink size={9} />
                                             </a>
                                         </div>
-                                        <div className="h-[calc(100%-20px)] xl:h-[calc(100%-22px)] bg-white rounded-[1.5rem] xl:rounded-[1.7rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-purple-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6.5px] xl:text-[7.5px] font-bold">
+                                        <div className="h-[calc(100%-18px)] xl:h-[calc(100%-20px)] bg-white rounded-[1.4rem] xl:rounded-[1.6rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-purple-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6px] xl:text-[7px] font-bold">
                                                 <span className="size-1 rounded-full bg-emerald-300 animate-pulse" />
                                                 <span>🛍️ Tienda & Retail</span>
                                             </div>
                                             <iframe 
                                                 src="/tienda" 
                                                 title="Citiox Store Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.43] lg:scale-[0.46] xl:scale-[0.51] border-0 select-none pointer-events-auto"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.38] lg:scale-[0.41] xl:scale-[0.46] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>

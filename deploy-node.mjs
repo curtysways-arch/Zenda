@@ -99,7 +99,12 @@ const manualFiles = [
   "src/app/tiendas/page.tsx",
   "src/app/canchas/page.tsx",
   "src/app/lavanderias/page.tsx",
-  "src/app/servicios/page.tsx"
+  "src/app/servicios/page.tsx",
+  "src/lib/constants/defaultConfigs.ts",
+  "src/components/admin/mobile/MobileBusiness.tsx",
+  "src/app/api/config/route.ts",
+  "src/app/admin/config/accesos/page.tsx",
+  "src/app/admin/config/page.tsx"
 ];
 
 function collectAllFilesAndDirs(roots, extraFiles) {

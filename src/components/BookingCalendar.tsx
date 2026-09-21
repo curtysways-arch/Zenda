@@ -492,7 +492,7 @@ export default function BookingCalendar({
                         ) : null}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-2.5">
                         {hoursToRender.map((hour) => {
                             const busySlot = getBusySlot(hour);
                             const available = isRangeAvailable(hour);
@@ -512,7 +512,7 @@ export default function BookingCalendar({
                                     onClick={() => handleHourSelect(hour)}
                                     style={isSelected ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}
                                     className={cn(
-                                        "relative min-h-[64px] rounded-2xl text-[14px] sm:text-[15px] font-black tracking-wider transition-all border flex flex-col items-center justify-center overflow-hidden cursor-pointer",
+                                        "relative h-11 sm:h-12 rounded-xl text-xs sm:text-[13px] font-black tracking-wider transition-all border flex flex-col items-center justify-center overflow-hidden cursor-pointer",
                                         isSelected
                                             ? "text-white shadow-md border-2"
                                             : inRange
@@ -520,47 +520,43 @@ export default function BookingCalendar({
                                                 : isPending
                                                     ? "bg-amber-50 border-amber-200 text-amber-500/80"
                                                     : available
-                                                        ? "bg-white border-slate-200/90 text-slate-900 hover:border-slate-300 shadow-sm hover:shadow"
-                                                        : "bg-slate-100/60 border-slate-100 text-slate-350 line-through cursor-not-allowed"
+                                                        ? "bg-white border-slate-200/90 text-slate-800 hover:border-slate-300 shadow-xs hover:shadow-sm"
+                                                        : "bg-slate-100/70 border-slate-100 text-slate-400 line-through opacity-60 cursor-not-allowed"
                                     )}
                                 >
                                     {promo.hasPromotion && available && (
                                         <div 
                                             className={cn(
-                                                "absolute top-2 right-2 text-[10px] font-black flex items-center gap-0.5 px-1.5 py-0.5 rounded-full shadow-sm",
-                                                isSelected ? "bg-white" : ""
+                                                "absolute top-0 right-0 text-[7px] font-black px-1 py-0.5 rounded-bl-[6px] z-10 uppercase tracking-tighter leading-none",
+                                                isSelected ? "bg-white text-slate-900" : "text-white"
                                             )}
-                                            style={{
-                                                color: primaryColor,
-                                                backgroundColor: isSelected ? '#ffffff' : `color-mix(in srgb, ${primaryColor} 12%, white 88%)`
-                                            }}
+                                            style={!isSelected ? { backgroundColor: primaryColor } : undefined}
                                         >
-                                            <span>⚡</span>
-                                            <span>{promo.labelText}</span>
+                                            {promo.labelText}
                                         </div>
                                     )}
                                     
-                                    <div className="flex items-center gap-1.5">
-                                        {isSelected && <Check size={16} strokeWidth={3.5} className="text-white shrink-0" />}
+                                    <div className="flex items-center gap-1">
+                                        {isSelected && <Check size={12} strokeWidth={3.5} className="text-white shrink-0" />}
                                         <span className={cn(
-                                            "leading-none font-black text-base sm:text-lg",
-                                            isPending ? "text-[12px] mb-0.5" : "",
-                                            isSelected ? "text-white" : !available ? "text-slate-400/60 line-through" : "text-slate-900"
+                                            "leading-tight font-black",
+                                            isPending ? "text-[11px]" : "",
+                                            isSelected ? "text-white" : !available ? "text-slate-400 line-through" : "text-slate-800"
                                         )}>
                                             {hour}
                                         </span>
                                     </div>
                                     
                                     {isPending && (
-                                        <span className="text-[7px] font-black uppercase tracking-widest animate-pulse text-amber-500 mt-1">PENDIENTE</span>
+                                        <span className="text-[7px] font-black uppercase tracking-widest animate-pulse text-amber-500 leading-none mt-0.5">PENDIENTE</span>
                                     )}
 
                                     {!available && !isPending && !isBlocked && hour < format(new Date(), 'HH:mm') && isSameDay(selectedDate!, new Date()) && (
-                                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest mt-0.5">PASADO</span>
+                                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-0.5 scale-90">PASADO</span>
                                     )}
                                     
                                     {isBlocked && (
-                                        <span className="text-[7px] font-black text-rose-500/60 uppercase tracking-widest mt-0.5">BLOQUEADO</span>
+                                        <span className="text-[7px] font-bold text-rose-500 uppercase tracking-widest leading-none mt-0.5 scale-90">BLOQUEADO</span>
                                     )}
                                 </button>
                             );
