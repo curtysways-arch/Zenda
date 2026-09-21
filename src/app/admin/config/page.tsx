@@ -148,10 +148,19 @@ export default function ConfigMensajesPage() {
         );
     }
 
-    const activeTipo = (negocio?.tipoNegocio || tipoNegocio || '').toUpperCase();
-    const blueprintId = (typeof negocio?.configuracion === 'string'
-        ? (() => { try { return JSON.parse(negocio.configuracion).blueprintId; } catch { return undefined; } })()
-        : negocio?.configuracion?.blueprintId);
+    let cfg: any = {};
+    if (typeof negocio?.configuracion === 'string') {
+        try { cfg = JSON.parse(negocio.configuracion); } catch { cfg = {}; }
+    } else {
+        cfg = negocio?.configuracion || {};
+    }
+    const caps = cfg.activeCapabilities || cfg.capabilities || {};
+    const effectiveCaps = cfg.effectiveCapabilities || {};
+
+    const activeTipo = (negocio?.tipoNegocio || cfg.tipoNegocio || tipoNegocio || '').toUpperCase().trim();
+    const blueprintId = (cfg.blueprintId || '').toUpperCase().trim();
+    const slugUpper = (negocio?.slug || '').toUpperCase().trim();
+    const nameUpper = (negocio?.nombre || '').toUpperCase().trim();
 
     const isStoreOrProducts =
         activeTipo === 'PRODUCTOS' ||
@@ -172,10 +181,35 @@ export default function ConfigMensajesPage() {
     }
 
     const isGym = isGymBusiness(negocio) || 
-        ['GIMNASIO', 'GYM', 'FITNESS'].includes((negocio?.tipoNegocio || tipoNegocio || '').toUpperCase()) ||
-        (negocio?.nombre || '').toUpperCase().includes('VORTEX') ||
-        (negocio?.nombre || '').toUpperCase().includes('FITNESS') ||
-        (negocio?.nombre || '').toUpperCase().includes('GYM');
+        ['GIMNASIO', 'GYM', 'FITNESS'].includes(activeTipo) ||
+        blueprintId === 'GYM' || blueprintId === 'GIMNASIO' ||
+        nameUpper.includes('VORTEX') || nameUpper.includes('FITNESS') || nameUpper.includes('GYM') ||
+        slugUpper.includes('gym') || slugUpper.includes('fitness');
+
+    const isDental = activeTipo === 'ODONTOLOGIA' || activeTipo === 'DENTAL' || activeTipo === 'DENTISTA' ||
+        blueprintId === 'DENTAL' || blueprintId === 'DENTISTA' ||
+        nameUpper.includes('DENTAL') || nameUpper.includes('ODONTOL') || nameUpper.includes('DENTISTA') ||
+        slugUpper.includes('dental') || slugUpper.includes('odontol') || slugUpper.includes('dentista');
+
+    const isShoeCareOrLaundry = activeTipo === 'SHOE_CARE' || activeTipo === 'LAVANDERIA' || activeTipo === 'ORDENES-SERVICIO' ||
+        blueprintId === 'SHOE_CARE' || blueprintId === 'LAVANDERIA';
+
+    const isRestaurant = ['RESTAURANTE', 'GASTRONOMIA', 'RESTAURANT', 'BAR'].includes(activeTipo) ||
+        nameUpper.includes('BURGER') || nameUpper.includes('PARRILLA');
+
+    const hasDeliveryAddon = Boolean(
+        effectiveCaps.DELIVERY ?? effectiveCaps.delivery ?? caps.delivery ?? caps.DELIVERY ?? cfg.deliveryEnabled
+    );
+
+    const showDeliveryLogistics = (isShoeCareOrLaundry || isRestaurant || hasDeliveryAddon) && !isGym && !isDental;
+
+    const getSubtitle = () => {
+        if (isGym) return 'Personaliza los métodos de acceso de socios, mensajes de membresías y parámetros de tu Gimnasio.';
+        if (isDental) return 'Personaliza los mensajes a pacientes, recordatorios de citas odontológicas y parámetros de tu Clínica Dental.';
+        if (isRestaurant) return 'Personaliza los mensajes de pedidos, atención y parámetros operativos de tu Restaurante.';
+        if (isShoeCareOrLaundry) return 'Personaliza las órdenes de servicio, logística de entrega y parámetros operativos de tu Negocio.';
+        return 'Personaliza los mensajes y parámetros operativos de tu Negocio.';
+    };
 
     return (
         <>
@@ -214,7 +248,7 @@ export default function ConfigMensajesPage() {
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Configuración de Negocio</h1>
                         <p className="text-gray-500 text-sm font-medium">
-                            {isGym ? 'Personaliza los métodos de acceso de socios, mensajes y parámetros de tu Gimnasio.' : 'Personaliza los mensajes y parámetros operativos de tu Negocio.'}
+                            {getSubtitle()}
                         </p>
                     </div>
 
@@ -281,8 +315,8 @@ export default function ConfigMensajesPage() {
                     <div className="space-y-8 animate-in fade-in duration-300">
                         <div className="grid grid-cols-1 gap-8">
                             <MessageConfigItem
-                                title="Reserva Recibida (Pendiente)"
-                                description="Mensaje enviado inmediatamente después de que el cliente solicita una reserva."
+                                title={isDental ? 'Cita Odontológica Solicitada (Pendiente)' : isGym ? 'Bienvenida al Socio (Nuevo Registro)' : 'Reserva Recibida (Pendiente)'}
+                                description={isDental ? 'Mensaje enviado inmediatamente después de que el paciente solicita su cita dental.' : isGym ? 'Mensaje enviado al registrar a un nuevo socio en el gimnasio.' : 'Mensaje enviado inmediatamente después de que el cliente solicita una reserva.'}
                                 clave="PENDING_MSG"
                                 value={configs.PENDING_MSG || DEFAULT_CONFIGS.PENDING_MSG}
                                 onChange={(val: any) => setConfigs(prev => ({ ...prev, PENDING_MSG: val }))}
@@ -292,8 +326,8 @@ export default function ConfigMensajesPage() {
                             />
 
                             <MessageConfigItem
-                                title="Reserva Confirmada"
-                                description="Mensaje enviado cuando cambias el estado de la reserva a 'CONFIRMADA'."
+                                title={isDental ? 'Cita Odontológica Confirmada' : isGym ? 'Membresía Activada / Confirmada' : 'Reserva Confirmada'}
+                                description={isDental ? 'Mensaje enviado cuando confirmas la cita del paciente.' : isGym ? 'Mensaje enviado al socio al activar o renovar su membresía.' : 'Mensaje enviado cuando cambias el estado de la reserva a \'CONFIRMADA\'.'}
                                 clave="CONFIRMATION_MSG"
                                 value={configs.CONFIRMATION_MSG || DEFAULT_CONFIGS.CONFIRMATION_MSG}
                                 onChange={(val: any) => setConfigs(prev => ({ ...prev, CONFIRMATION_MSG: val }))}
@@ -395,68 +429,71 @@ export default function ConfigMensajesPage() {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden">
-                    <div className="p-8 space-y-6">
-                        <div className="flex justify-between items-start">
-                            <div className="space-y-1">
-                                <h3 className="font-black text-gray-900 leading-tight uppercase tracking-tight">Flujo de Reservas</h3>
-                                <p className="text-gray-400 text-sm">Configura el comportamiento del sistema de reservas.</p>
-                            </div>
-                            <div className="p-2 rounded-xl" style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>
-                                <RotateCcw size={18} className="cursor-pointer" onClick={() => handleReset('BOOKING_TIMEOUT')} />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                            <div className="space-y-4">
-                                <div>
-                                    <div className="flex justify-between items-center mb-4">
-                                        <label className="text-[10px] font-black uppercase tracking-widest block" style={{ color: 'var(--primary-color)' }}>
-                                            Autoconfirmar Reservas
-                                        </label>
-                                        <button 
-                                            onClick={() => setConfigs(prev => ({ ...prev, BOOKING_TIMEOUT: (prev.BOOKING_TIMEOUT === '0' ? '15' : '0') }))}
-                                            className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all shadow-sm ${configs.BOOKING_TIMEOUT === '0' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
-                                        >
-                                            {configs.BOOKING_TIMEOUT === '0' ? 'Activado' : 'Desactivado'}
-                                        </button>
-                                    </div>
-                                    <div className={`flex items-center gap-4 transition-opacity duration-300 ${configs.BOOKING_TIMEOUT === '0' ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
-                                        <input
-                                            type="range"
-                                            min="5"
-                                            max="60"
-                                            step="5"
-                                            value={configs.BOOKING_TIMEOUT === '0' ? '15' : (configs.BOOKING_TIMEOUT || DEFAULT_CONFIGS.BOOKING_TIMEOUT)}
-                                            onChange={(e) => setConfigs(prev => ({ ...prev, BOOKING_TIMEOUT: e.target.value }))}
-                                            className="flex-1"
-                                            style={{ accentColor: 'var(--primary-color)' }}
-                                        />
-                                        <div className="w-16 h-12 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center font-black text-gray-900 text-lg shadow-inner">
-                                            {configs.BOOKING_TIMEOUT === '0' ? '--' : (configs.BOOKING_TIMEOUT || DEFAULT_CONFIGS.BOOKING_TIMEOUT)}
-                                        </div>
-                                    </div>
-                                    {configs.BOOKING_TIMEOUT === '0' && (
-                                        <p className="text-[10px] text-gray-400 font-bold mt-3">
-                                            Las reservas pasarán directamente a confirmadas sin tiempo de espera.
-                                        </p>
-                                    )}
+                {/* Flujo de Reservas (No aplica para gimnasios donde el acceso es por membresía/control de accesos) */}
+                {!isGym && (
+                    <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden">
+                        <div className="p-8 space-y-6">
+                            <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                    <h3 className="font-black text-gray-900 leading-tight uppercase tracking-tight">Flujo de Reservas</h3>
+                                    <p className="text-gray-400 text-sm">Configura el comportamiento del sistema de reservas.</p>
+                                </div>
+                                <div className="p-2 rounded-xl" style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>
+                                    <RotateCcw size={18} className="cursor-pointer" onClick={() => handleReset('BOOKING_TIMEOUT')} />
                                 </div>
                             </div>
-                            <div className="flex justify-end">
-                                <button
-                                    onClick={() => handleSave('BOOKING_TIMEOUT')}
-                                    disabled={saving === 'BOOKING_TIMEOUT'}
-                                    className="flex items-center gap-2 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition shadow-lg disabled:opacity-50"
-                                    style={{ backgroundColor: 'var(--primary-color)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--primary-color), transparent 80%)' }}
-                                >
-                                    {saving === 'BOOKING_TIMEOUT' ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                                    Guardar Configuración
-                                </button>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                                <div className="space-y-4">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-4">
+                                            <label className="text-[10px] font-black uppercase tracking-widest block" style={{ color: 'var(--primary-color)' }}>
+                                                Autoconfirmar Reservas
+                                            </label>
+                                            <button 
+                                                onClick={() => setConfigs(prev => ({ ...prev, BOOKING_TIMEOUT: (prev.BOOKING_TIMEOUT === '0' ? '15' : '0') }))}
+                                                className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all shadow-sm ${configs.BOOKING_TIMEOUT === '0' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
+                                            >
+                                                {configs.BOOKING_TIMEOUT === '0' ? 'Activado' : 'Desactivado'}
+                                            </button>
+                                        </div>
+                                        <div className={`flex items-center gap-4 transition-opacity duration-300 ${configs.BOOKING_TIMEOUT === '0' ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
+                                            <input
+                                                type="range"
+                                                min="5"
+                                                max="60"
+                                                step="5"
+                                                value={configs.BOOKING_TIMEOUT === '0' ? '15' : (configs.BOOKING_TIMEOUT || DEFAULT_CONFIGS.BOOKING_TIMEOUT)}
+                                                onChange={(e) => setConfigs(prev => ({ ...prev, BOOKING_TIMEOUT: e.target.value }))}
+                                                className="flex-1"
+                                                style={{ accentColor: 'var(--primary-color)' }}
+                                            />
+                                            <div className="w-16 h-12 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center font-black text-gray-900 text-lg shadow-inner">
+                                                {configs.BOOKING_TIMEOUT === '0' ? '--' : (configs.BOOKING_TIMEOUT || DEFAULT_CONFIGS.BOOKING_TIMEOUT)}
+                                            </div>
+                                        </div>
+                                        {configs.BOOKING_TIMEOUT === '0' && (
+                                            <p className="text-[10px] text-gray-400 font-bold mt-3">
+                                                Las reservas pasarán directamente a confirmadas sin tiempo de espera.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={() => handleSave('BOOKING_TIMEOUT')}
+                                        disabled={saving === 'BOOKING_TIMEOUT'}
+                                        className="flex items-center gap-2 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition shadow-lg disabled:opacity-50"
+                                        style={{ backgroundColor: 'var(--primary-color)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--primary-color), transparent 80%)' }}
+                                    >
+                                        {saving === 'BOOKING_TIMEOUT' ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                                        Guardar Configuración
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
 
                 <FeatureGate feature="whatsapp_notifications" fallbackMessage="Actualiza tu plan para activar notificaciones automáticas por WhatsApp.">
@@ -470,11 +507,14 @@ export default function ConfigMensajesPage() {
                     </div>
                 )}
 
-                <DeliveryLogisticsConfigSection 
-                    configs={configs}
-                    onSaveConfig={handleSave}
-                    primaryColor={primaryColor}
-                />
+                {/* Tarifas de Logística (Solo para negocios con delivery/despacho o addon activo) */}
+                {showDeliveryLogistics && (
+                    <DeliveryLogisticsConfigSection 
+                        configs={configs}
+                        onSaveConfig={handleSave}
+                        primaryColor={primaryColor}
+                    />
+                )}
 
                 {/* Banner Sucursales / Ubicaciones */}
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden">
