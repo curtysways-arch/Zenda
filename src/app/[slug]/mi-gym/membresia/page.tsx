@@ -70,7 +70,18 @@ export default function MiMembresiaPage() {
     );
   }
 
-  const activeMembership = memberData?.activeMembership;
+  const rawMembership = memberData?.activeMembership || memberData?.membership;
+  const activeMembership = rawMembership ? {
+    planName: rawMembership.planName,
+    startDate: rawMembership.startDate || rawMembership.startAt,
+    endDate: rawMembership.endDate || rawMembership.endAt,
+    remainingDays: rawMembership.remainingDays ?? rawMembership.daysRemaining ?? 0,
+    features: Array.isArray(rawMembership.features) 
+      ? rawMembership.features 
+      : Array.isArray(rawMembership.benefits) 
+        ? rawMembership.benefits 
+        : []
+  } : null;
   const isExpired = activeMembership && activeMembership.remainingDays <= 0;
   const isExpiringSoon = activeMembership && activeMembership.remainingDays > 0 && activeMembership.remainingDays <= 5;
 

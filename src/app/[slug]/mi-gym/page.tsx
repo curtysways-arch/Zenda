@@ -128,11 +128,52 @@ export default function MiGymDashboardPage() {
         return;
       }
 
-      setMemberData(data);
-      if (data.member?.telefono) {
-        setPhone(data.member.telefono);
+      if (!data.member) {
+        setMemberData(null);
+        if (data.message) {
+          setError(data.message);
+        }
+        return;
+      }
+
+      const normalized: MemberData = {
+        member: {
+          id: data.member.id,
+          nombre: data.member.nombre || 'Socio',
+          telefono: data.member.telefono || '',
+          email: data.member.email,
+          avatarUrl: data.member.imagenUrl,
+          qrCode: data.member.qrCode || data.qrPayload || `CITIOX_GYM:${slug}:${data.member.id}`,
+        },
+        activeMembership: data.activeMembership || (data.membership ? {
+          id: data.membership.id,
+          planName: data.membership.planName,
+          status: data.membership.status,
+          price: data.membership.price,
+          startDate: data.membership.startAt,
+          endDate: data.membership.endAt,
+          remainingDays: data.membership.daysRemaining ?? 0,
+          autoRenew: false,
+          features: Array.isArray(data.membership.benefits) ? data.membership.benefits : []
+        } : null),
+        metrics: {
+          visitsThisMonth: data.metrics?.visitsThisMonth ?? data.stats?.monthAttendances ?? 0,
+          weeklyStreak: data.metrics?.weeklyStreak ?? data.stats?.weekAttendances ?? 0,
+          totalMinutesThisMonth: data.metrics?.totalMinutesThisMonth ?? ((data.stats?.monthAttendances || 0) * 60),
+        },
+        isInside: !!(data.isInside ?? data.currentStatus?.isInside),
+        currentAttendance: data.currentAttendance || (data.currentStatus?.isInside ? {
+          id: data.currentStatus.openAttendanceId || 'curr',
+          checkedInAt: data.currentStatus.checkedInAt || new Date().toISOString(),
+          minutesElapsed: data.currentStatus.durationMinutes || 0
+        } : undefined)
+      };
+
+      setMemberData(normalized);
+      if (normalized.member.telefono) {
+        setPhone(normalized.member.telefono);
         if (typeof window !== 'undefined') {
-          localStorage.setItem(`${slug}_client_phone`, data.member.telefono);
+          localStorage.setItem(`${slug}_client_phone`, normalized.member.telefono);
         }
       }
     } catch (err) {
@@ -196,7 +237,7 @@ export default function MiGymDashboardPage() {
   }
 
   // Si no está identificado como socio
-  if (!memberData) {
+  if (!memberData || !memberData.member) {
     return (
       <div className="max-w-md mx-auto p-4 md:p-6 space-y-6 pt-8 pb-24">
         <div className="text-center space-y-3">
@@ -260,6 +301,9 @@ export default function MiGymDashboardPage() {
   const { member, activeMembership, metrics, isInside } = memberData;
   const isExpired = activeMembership && activeMembership.remainingDays <= 0;
   const isExpiringSoon = activeMembership && activeMembership.remainingDays > 0 && activeMembership.remainingDays <= 5;
+  const memberName = (member?.nombre || 'Socio').trim();
+  const initial = memberName.charAt(0).toUpperCase() || 'S';
+  const firstName = memberName.split(' ')[0] || 'Socio';
 
   return (
     <div className="max-w-xl mx-auto p-4 md:p-6 space-y-6 pb-28 pt-2">
@@ -267,7 +311,7 @@ export default function MiGymDashboardPage() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-emerald-500/20 border-2 border-white/20">
-            {member.nombre.charAt(0).toUpperCase()}
+            {initial}
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -278,7 +322,7 @@ export default function MiGymDashboardPage() {
               <span className="text-xs text-slate-400 font-medium">Socio Activo</span>
             </div>
             <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              ¡Hola, {member.nombre.split(' ')[0]}!
+              ¡Hola, {firstName}!
             </h1>
           </div>
         </div>
@@ -538,6 +582,26 @@ export default function MiGymDashboardPage() {
             </div>
           </Link>
         </div>
+      </div>
+
+      {/* Botón de Cerrar Sesión / Cambiar Socio */}
+      <div className="pt-2 text-center">
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem(`${slug}_client_phone`);
+              localStorage.removeItem('user_phone');
+              localStorage.removeItem('customer_phone');
+            }
+            setMemberData(null);
+            setPhone('');
+          }}
+          className="text-xs font-semibold text-slate-400 hover:text-rose-500 transition-colors inline-flex items-center gap-1.5 py-2 px-4 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Cerrar sesión de socio</span>
+        </button>
       </div>
     </div>
   );
