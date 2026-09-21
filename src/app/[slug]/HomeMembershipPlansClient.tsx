@@ -102,6 +102,18 @@ export default function HomeMembershipPlansClient({
             .catch(() => {});
     }, [slug]);
 
+    // Bloquear scroll del fondo cuando el modal esté abierto
+    useEffect(() => {
+        if (isModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isModalOpen]);
+
     // Detectar promoción y plan desde la URL (ej: ?promo=xyz#planes)
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -584,7 +596,7 @@ export default function HomeMembershipPlansClient({
             {isModalOpen && selectedPlan && (() => {
                 const modalPricing = getPlanPricing(selectedPlan);
                 return (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in overflow-y-auto">
+                    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in overflow-y-auto">
                         <div className="relative w-full max-w-lg bg-white rounded-[2rem] border border-slate-100 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
                             
                             {/* Header del Modal */}
