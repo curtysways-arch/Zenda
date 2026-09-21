@@ -13,6 +13,7 @@ interface PromotionsSectionProps {
     textColor?: string;
     showPrices?: boolean;
     totalServicesCount?: number;
+    isGym?: boolean;
 }
 
 export default function PromotionsSection({ 
@@ -24,7 +25,7 @@ export default function PromotionsSection({
     showPrices = true,
     totalServicesCount = 0,
     isGym = false
-}: PromotionsSectionProps & { isGym?: boolean }) {
+}: PromotionsSectionProps) {
     const router = useRouter();
     const [activeIndex, setActiveIndex] = useState(0);
     const [selectedPromoServices, setSelectedPromoServices] = useState<any | null>(null);
