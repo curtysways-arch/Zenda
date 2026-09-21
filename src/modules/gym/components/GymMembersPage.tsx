@@ -374,7 +374,11 @@ export default function GymMembersPage() {
 
             <div className="px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex gap-2">
               <a
-                href="/admin/membresias"
+                href={selectedMember.activeMembership
+                  ? `/admin/membresias?membresiaId=${selectedMember.activeMembership.id}`
+                  : (selectedMember.memberships[0]
+                    ? `/admin/membresias?membresiaId=${selectedMember.memberships[0].id}`
+                    : '/admin/membresias')}
                 className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold uppercase text-xs text-center flex items-center justify-center gap-2 shadow-sm"
               >
                 <CreditCard size={15} />

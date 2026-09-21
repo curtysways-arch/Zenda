@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { redirect } from 'next/navigation';
 import GymMembershipsPage from '@/modules/gym/components/GymMembershipsPage';
@@ -9,5 +9,9 @@ export default async function MembresiasPage() {
     redirect('/login');
   }
 
-  return <GymMembershipsPage />;
+  return (
+    <Suspense>
+      <GymMembershipsPage />
+    </Suspense>
+  );
 }

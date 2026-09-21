@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   CreditCard, Search, CheckCircle, AlertTriangle, Snowflake,
   RotateCw, X, Clock, DollarSign, MessageCircle, ShieldCheck, Ban,
@@ -30,6 +31,7 @@ const PAY_LABELS: Record<string, { label: string; cls: string; icon: React.React
 };
 
 export default function GymMembershipsPage() {
+  const searchParams = useSearchParams();
   const [memberships, setMemberships] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +83,15 @@ export default function GymMembershipsPage() {
   };
 
   useEffect(() => { fetchMemberships(); fetchPlans(); }, [statusFilter, paymentFilter]);
+
+  // Auto-abrir detalle si viene ?membresiaId=xxx en la URL
+  useEffect(() => {
+    const membresiaId = searchParams.get('membresiaId');
+    if (membresiaId && memberships.length > 0 && !detailMembership) {
+      const found = memberships.find((m: any) => m.id === membresiaId);
+      if (found) setDetailMembership(found);
+    }
+  }, [memberships, searchParams]);
 
   const doAction = async (id: string, body: object, successMsg: string) => {
     setIsProcessing(true);
