@@ -1272,121 +1272,98 @@ export default async function PublicNegocioPage({
                 </section>
             )}
 
-            {/* 4. PROMOCIONES (Movidas inmediatamente debajo de las tarjetas de confianza) */}
-            {promocionesActivas.length > 0 && (
-                <section id="promociones" className="mb-6">
-                    <PromotionsSection 
-                        promociones={promocionesActivas} 
-                        slug={slug} 
-                        primaryColor={primaryColor}
-                        tertiaryColor={tertiaryColor}
-                        textColor={textColor}
-                        showPrices={negocio.mostrarPrecios !== false}
-                        totalServicesCount={canchasConDisponibilidad.length}
-                    />
-                </section>
-            )}
-
-            {/* 5. SERVICIOS O PLANES DE MEMBRESÍA */}
+            {/* VISTA PARA GIMNASIOS: 1. Conoce el Gym -> 2. Promociones -> 3. Planes de Membresía */}
             {isGymModule ? (
-                <HomeMembershipPlansClient 
-                    plans={membershipPlans}
-                    slug={slug}
-                    primaryColor={primaryColor}
-                    textColor={textColor}
-                    whatsapp={negocio.whatsapp}
-                    businessName={negocio.nombre}
-                />
-            ) : (
-                <section id="servicios-seccion">
-                    <HomeServicesClient 
-                        filteredCanchas={filteredCanchas}
+                <>
+                    {/* GYM — 1. CONOCE EL GIMNASIO (INSTALACIONES Y EQUIPOS) */}
+                    {(gymAreas.length > 0 || gymEquipment.length > 0) && (
+                        <section id="conoce-el-gym" className="mb-8 px-4 sm:px-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest block mb-1" style={{ color: primaryColor }}>INSTALACIONES</span>
+                                    <h3 className="text-2xl font-black leading-none text-slate-900">Conoce el Gimnasio</h3>
+                                </div>
+                            </div>
+                            {gymAreas.length > 0 && (
+                                <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-none">
+                                    {gymAreas.map((area: any) => (
+                                        <div key={area.id} className="relative shrink-0 w-48 sm:w-56 rounded-2xl overflow-hidden border border-slate-200/80 shadow-md group">
+                                            <div className="aspect-[3/4] bg-slate-100">
+                                                {area.imageUrl ? (
+                                                    <img src={area.imageUrl} alt={area.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-slate-50">
+                                                        <Dumbbell className="text-slate-300" size={36} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                                            <div className="absolute bottom-0 left-0 right-0 p-3.5">
+                                                <p className="text-xs sm:text-sm font-black text-white uppercase tracking-wide leading-tight">{area.name}</p>
+                                                {area.description && <p className="text-[10px] text-white/80 mt-1 line-clamp-2 leading-tight">{area.description}</p>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+                    )}
+
+                    {/* GYM — 2. PROMOCIONES DESTACADAS */}
+                    {promocionesActivas.length > 0 && (
+                        <section id="promociones" className="mb-8">
+                            <PromotionsSection 
+                                promociones={promocionesActivas} 
+                                slug={slug} 
+                                primaryColor={primaryColor}
+                                tertiaryColor={tertiaryColor}
+                                textColor={textColor}
+                                showPrices={negocio.mostrarPrecios !== false}
+                                totalServicesCount={canchasConDisponibilidad.length}
+                                isGym={true}
+                            />
+                        </section>
+                    )}
+
+                    {/* GYM — 3. PLANES DE MEMBRESÍA */}
+                    <HomeMembershipPlansClient 
+                        plans={membershipPlans}
                         slug={slug}
                         primaryColor={primaryColor}
                         textColor={textColor}
+                        whatsapp={negocio.whatsapp}
+                        businessName={negocio.nombre}
                     />
-                </section>
-            )}
-
-            {/* GYM — CONOCE EL GIMNASIO */}
-            {isGymModule && (gymAreas.length > 0 || gymEquipment.length > 0) && (
-                <section id="conoce-el-gym" className="mb-6 px-4 sm:px-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <span className="text-[10px] font-black uppercase tracking-widest block mb-1" style={{ color: primaryColor }}>INSTALACIONES</span>
-                            <h3 className="text-2xl font-black leading-none text-slate-900">Conoce el Gimnasio</h3>
-                        </div>
-                    </div>
-                    {gymAreas.length > 0 && (
-                        <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-none">
-                            {gymAreas.map((area: any) => (
-                                <div key={area.id} className="relative shrink-0 w-44 rounded-2xl overflow-hidden border border-slate-100 shadow-sm group">
-                                    <div className="aspect-[3/4] bg-slate-100">
-                                        {area.imageUrl ? (
-                                            <img src={area.imageUrl} alt={area.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-slate-50">
-                                                <Dumbbell className="text-slate-200" size={32} />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                                        <p className="text-xs font-black text-white uppercase tracking-wide leading-tight">{area.name}</p>
-                                        {area.description && <p className="text-[10px] text-white/70 mt-0.5 line-clamp-2">{area.description}</p>}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                </>
+            ) : (
+                <>
+                    {/* NEGOCIO REGULAR — 1. PROMOCIONES */}
+                    {promocionesActivas.length > 0 && (
+                        <section id="promociones" className="mb-6">
+                            <PromotionsSection 
+                                promociones={promocionesActivas} 
+                                slug={slug} 
+                                primaryColor={primaryColor}
+                                tertiaryColor={tertiaryColor}
+                                textColor={textColor}
+                                showPrices={negocio.mostrarPrecios !== false}
+                                totalServicesCount={canchasConDisponibilidad.length}
+                                isGym={false}
+                            />
+                        </section>
                     )}
-                </section>
-            )}
 
-            {/* GYM — PROMOCIÓN DESTACADA */}
-            {isGymModule && gymPromotions.length > 0 && (() => {
-                const activePromo = gymPromotions.find((p: any) => {
-                    const now = new Date();
-                    const start = p.fechaInicio ? new Date(p.fechaInicio) : null;
-                    const end = p.fechaFin ? new Date(p.fechaFin) : null;
-                    if (start && now < start) return false;
-                    if (end && now > end) return false;
-                    return true;
-                });
-                if (!activePromo) return null;
-                let promoDesc = activePromo.descripcion || '';
-                if (promoDesc.includes('<!-- CITIOX_META:')) {
-                    promoDesc = promoDesc.split('<!-- CITIOX_META:')[0].trim();
-                }
-                return (
-                    <section className="px-4 sm:px-6 mb-6">
-                        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 to-slate-800 p-6 shadow-xl border border-orange-500/20">
-                            <div className="flex gap-4 items-center">
-                                {activePromo.imagenUrl && (
-                                    <img src={activePromo.imagenUrl} alt={activePromo.titulo} className="w-20 h-20 rounded-2xl object-cover shrink-0 border border-slate-700" />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-1">Oferta Especial</p>
-                                    <h3 className="font-black text-white text-sm leading-tight truncate">{activePromo.titulo}</h3>
-                                    {promoDesc && <p className="text-xs text-slate-400 mt-1 line-clamp-2">{promoDesc}</p>}
-                                    <div className="flex items-baseline gap-2 mt-2">
-                                        <span className="text-xl font-black text-white">${activePromo.precioPromo}</span>
-                                        {activePromo.precioAnterior && activePromo.precioAnterior > activePromo.precioPromo && (
-                                            <span className="text-sm text-slate-500 line-through">${activePromo.precioAnterior}</span>
-                                        )}
-                                    </div>
-                                </div>
-                                <a
-                                    href="#planes"
-                                    className="shrink-0 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white transition-all"
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    Ver
-                                </a>
-                            </div>
-                        </div>
+                    {/* NEGOCIO REGULAR — 2. SERVICIOS */}
+                    <section id="servicios-seccion">
+                        <HomeServicesClient 
+                            filteredCanchas={filteredCanchas}
+                            slug={slug}
+                            primaryColor={primaryColor}
+                            textColor={textColor}
+                        />
                     </section>
-                );
-            })()}
+                </>
+            )}
 
             {/* CURSOS Y TALLERES */}
             {coursesModuleEnabled && cursosActivos.length > 0 && (

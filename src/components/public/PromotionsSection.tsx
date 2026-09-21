@@ -22,8 +22,9 @@ export default function PromotionsSection({
     tertiaryColor = '#7B68EE',
     textColor = '#000000',
     showPrices = true,
-    totalServicesCount = 0
-}: PromotionsSectionProps) {
+    totalServicesCount = 0,
+    isGym = false
+}: PromotionsSectionProps & { isGym?: boolean }) {
     const router = useRouter();
     const [activeIndex, setActiveIndex] = useState(0);
     const [selectedPromoServices, setSelectedPromoServices] = useState<any | null>(null);
@@ -58,6 +59,8 @@ export default function PromotionsSection({
         if (diffCreatedDays <= 3) return 'Nuevo';
         if (diffEndsDays > 0 && diffEndsDays <= 3) return 'Últimos días';
         if (promo.tipoPromo === '2x1' || promo.tipoPromo === '3x1') return 'Oferta limitada';
+        if (promo.tipoPromo === 'INSCRIPCION_GRATIS') return 'Regalo';
+        if (promo.tipoPromo === 'MATRICULA_GRATIS') return 'Sin matrícula';
         
         const staticTags = ["Oferta limitada", "Más reservado", "Exclusivo", "Popular"];
         return staticTags[index % staticTags.length];
@@ -70,7 +73,7 @@ export default function PromotionsSection({
         if (promo.services && promo.services.length > 0) {
             return getServicePrimaryImage(promo.services[0]);
         }
-        return 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=600';
+        return 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=800';
     };
 
     return (
@@ -135,39 +138,96 @@ export default function PromotionsSection({
                     const servicesList = promo.services || [];
                     const promoServicesCount = servicesList.length;
 
+                    // Parsear descripción y metadatos de CITIOX_META
+                    let cleanDescription = promo.descripcion || '';
+                    let meta: any = null;
+                    if (cleanDescription.includes('<!-- CITIOX_META:')) {
+                        const parts = cleanDescription.split('<!-- CITIOX_META:');
+                        cleanDescription = parts[0].trim();
+                        try {
+                            meta = JSON.parse(parts[1].split('-->')[0].trim());
+                        } catch (_) {}
+                    }
+
+                    const promoIsGym = isGym || 
+                        promo.tipoPromo?.includes('MEMBRESIA') || 
+                        promo.tipoPromo === 'MATRICULA_GRATIS' || 
+                        promo.tipoPromo === 'INSCRIPCION_GRATIS' ||
+                        Boolean(meta?.membershipPlanId) ||
+                        Boolean(meta?.benefitType);
+
                     // 1. Resolver etiqueta dinámica "Aplica para"
                     let appliesToText = '';
                     let showVerServiciosLink = false;
 
-                    const isAll = totalServicesCount > 0 && promoServicesCount === totalServicesCount;
-
-                    if (isAll || promoServicesCount === 0) {
-                        appliesToText = 'Todos los servicios';
-                    } else if (promoServicesCount === 1) {
-                        appliesToText = servicesList[0]?.nombre || '1 servicio incluido';
-                    } else if (promoServicesCount === 2) {
-                        appliesToText = `${servicesList[0]?.nombre} + ${servicesList[1]?.nombre}`;
+                    if (promoIsGym) {
+                        if (meta?.benefitType === 'INSCRIPCION_GRATIS') {
+                            appliesToText = 'Cualquier Membresía';
+                        } else if (meta?.benefitType === 'MATRICULA_GRATIS') {
+                            appliesToText = 'Plan Trimestral';
+                        } else if (meta?.membershipPlanId) {
+                            appliesToText = 'Plan de Membresía';
+                        } else {
+                            appliesToText = 'Planes de Gimnasio';
+                        }
                     } else {
-                        appliesToText = `${promoServicesCount} servicios seleccionados`;
-                        showVerServiciosLink = true;
-                    }
-
-                    // 2. Calcular porcentaje de descuento
-                    let discountText = '30%';
-                    let hasCalculatedDiscount = false;
-
-                    const precioAnteriorBase = promo.precioAnterior || (promoServicesCount > 0 ? servicesList.reduce((acc: number, s: any) => acc + (s.precio || 0), 0) : 0);
-                    
-                    if (precioAnteriorBase > 0 && promo.precioPromo) {
-                        const calculatedDiscount = Math.round(((precioAnteriorBase - promo.precioPromo) / precioAnteriorBase) * 100);
-                        if (calculatedDiscount > 0) {
-                            discountText = `${calculatedDiscount}%`;
-                            hasCalculatedDiscount = true;
+                        const isAll = totalServicesCount > 0 && promoServicesCount === totalServicesCount;
+                        if (isAll || promoServicesCount === 0) {
+                            appliesToText = 'Todos los servicios';
+                        } else if (promoServicesCount === 1) {
+                            appliesToText = servicesList[0]?.nombre || '1 servicio incluido';
+                        } else if (promoServicesCount === 2) {
+                            appliesToText = `${servicesList[0]?.nombre} + ${servicesList[1]?.nombre}`;
+                        } else {
+                            appliesToText = `${promoServicesCount} servicios seleccionados`;
+                            showVerServiciosLink = true;
                         }
                     }
 
-                    // 3. Calcular Ahorro
-                    const ahorroVal = precioAnteriorBase > promo.precioPromo ? (precioAnteriorBase - promo.precioPromo) : 0;
+                    // 2. Resolver porcentaje o tipo de descuento sin errores de 30% en $0
+                    const numPromoPrice = promo.precioPromo !== null && promo.precioPromo !== undefined ? Number(promo.precioPromo) : null;
+                    const precioAnteriorBase = promo.precioAnterior || (promoServicesCount > 0 ? servicesList.reduce((acc: number, s: any) => acc + (s.precio || 0), 0) : 0);
+
+                    let discountNumber = 'PROMO';
+                    let discountSublabel = 'ESPECIAL';
+
+                    if (
+                        meta?.benefitType === 'INSCRIPCION_GRATIS' || 
+                        meta?.benefitType === 'MATRICULA_GRATIS' || 
+                        promo.tipoPromo === 'INSCRIPCION_GRATIS' || 
+                        promo.tipoPromo === 'MATRICULA_GRATIS' || 
+                        (numPromoPrice === 0 && precioAnteriorBase > 0)
+                    ) {
+                        discountNumber = '100%';
+                        discountSublabel = meta?.benefitType === 'MATRICULA_GRATIS' ? 'MATRÍCULA GRATIS' : 'DE REGALO';
+                    } else if (meta?.benefitType === 'DESCUENTO_PORCENTAJE' && meta?.discountValue) {
+                        discountNumber = `${meta.discountValue}%`;
+                        discountSublabel = 'DESCUENTO';
+                    } else if (precioAnteriorBase > 0 && numPromoPrice !== null) {
+                        const calculatedDiscount = Math.round(((precioAnteriorBase - numPromoPrice) / precioAnteriorBase) * 100);
+                        if (calculatedDiscount >= 100) {
+                            discountNumber = '100%';
+                            discountSublabel = 'DE REGALO';
+                        } else if (calculatedDiscount > 0) {
+                            discountNumber = `${calculatedDiscount}%`;
+                            discountSublabel = 'DESCUENTO';
+                        } else {
+                            discountNumber = 'OFERTA';
+                            discountSublabel = 'ESPECIAL';
+                        }
+                    } else if (meta?.benefitType === 'DESCUENTO_FIJO' && meta?.discountValue) {
+                        discountNumber = `$${meta.discountValue}`;
+                        discountSublabel = 'DE AHORRO';
+                    } else if (promo.tipoPromo === '2x1' || promo.tipoPromo === '3x1') {
+                        discountNumber = promo.tipoPromo;
+                        discountSublabel = 'OFERTA';
+                    }
+
+                    // 3. Calcular Ahorro real
+                    let ahorroVal = 0;
+                    if (precioAnteriorBase > 0 && numPromoPrice !== null && precioAnteriorBase > numPromoPrice) {
+                        ahorroVal = precioAnteriorBase - numPromoPrice;
+                    }
 
                     // 4. Formatear vigencia
                     const dateStr = promo.fechaFin 
@@ -181,7 +241,7 @@ export default function PromotionsSection({
                         <div
                             key={promo.id}
                             onClick={() => router.push(`/${slug}/promo/${promo.id}`)}
-                            className="group bg-white border border-rose-100/60 shadow-[0_8px_30px_rgba(244,63,94,0.03)] rounded-[24px] p-5 flex cursor-pointer snap-center w-[85vw] sm:w-[500px] shrink-0 min-h-[220px] sm:min-h-[240px] hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(244,63,94,0.08)] active:scale-[0.99] transition-all duration-500 gap-4 relative overflow-hidden"
+                            className="group bg-white border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-[24px] p-5 flex cursor-pointer snap-center w-[85vw] sm:w-[500px] shrink-0 min-h-[220px] sm:min-h-[240px] hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] active:scale-[0.99] transition-all duration-500 gap-4 relative overflow-hidden"
                         >
                             {/* LADO IZQUIERDO: Información y Descuento (Aprox. 55% - 60% de la tarjeta) */}
                             <div className="flex-1 flex flex-col justify-between min-w-0 pr-1 select-none">
@@ -189,11 +249,11 @@ export default function PromotionsSection({
                                     {/* Badge Superior */}
                                     <div className="flex items-center">
                                         <span 
-                                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[8.5px] font-black uppercase tracking-wider shadow-sm border border-rose-100/50"
-                                            style={{ backgroundColor: '#fff5f7', color: primaryColor }}
+                                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[8.5px] font-black uppercase tracking-wider shadow-sm border border-slate-200/60"
+                                            style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}
                                         >
                                             <Flame size={9} className="fill-current animate-bounce" />
-                                            PROMOCIÓN ESPECIAL
+                                            {promoIsGym ? 'BENEFICIO FITNESS' : 'PROMOCIÓN ESPECIAL'}
                                         </span>
                                     </div>
 
@@ -204,66 +264,53 @@ export default function PromotionsSection({
                                                 className="text-4xl sm:text-5xl font-black tracking-tighter leading-none"
                                                 style={{ color: primaryColor }}
                                             >
-                                                {discountText}
+                                                {discountNumber}
                                             </span>
-                                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-800">
-                                                DESCUENTO
+                                            <span className="text-[8.5px] sm:text-[9.5px] font-black uppercase tracking-[0.15em] text-slate-800">
+                                                {discountSublabel}
                                             </span>
                                         </div>
                                     </div>
 
-                                    {/* Título y descripción corta */}
-                                    <div className="space-y-1 pt-1">
-                                        <h4 className="text-xs sm:text-sm font-black text-slate-800 leading-snug uppercase tracking-tight line-clamp-1">
+                                    {/* Título y descripción limpia */}
+                                    <div className="space-y-1 pt-0.5">
+                                        <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug uppercase tracking-tight line-clamp-1">
                                             {promo.titulo}
                                         </h4>
-                                        <p className="text-[10px] sm:text-[11px] text-amber-950 font-bold leading-snug line-clamp-2 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-lg mt-1">
-                                            {(() => {
-                                                let displayDesc = promo.descripcion || '';
-                                                if (Array.isArray(promo.productosRelacionados) && promo.productosRelacionados.length > 0) {
-                                                    const names = promo.productosRelacionados.map((id: string) => (promo.services || []).find((s: any) => s.id === id || s.nombre === id)?.nombre).filter(Boolean);
-                                                    if (names.length > 0) {
-                                                        return `Incluye: ${names.join(' + ')}`;
-                                                    }
-                                                }
-                                                if (!displayDesc || displayDesc === 'Plato Principal + Acompañante + Bebida a precio especial.') {
-                                                    if (promo.titulo?.toLowerCase().includes('dúo') || promo.titulo?.toLowerCase().includes('duo')) {
-                                                        return 'Incluye: 2x Hamburguesas Especiales + 1x Papas Fritas Grandes + 2x Bebidas 500ml';
-                                                    } else if (promo.titulo?.toLowerCase().includes('familiar')) {
-                                                        return 'Incluye: 1x Costillas BBQ (500g) + 2x Papas Rústicas + Ensalada + 1.5L Gaseosa';
-                                                    } else if (promo.tipoPromo === 'COMBO') {
-                                                        return 'Incluye: 1x Plato Fuerte + 1x Porción de Acompañamiento + 1x Bebida Personal';
-                                                    }
-                                                }
-                                                return displayDesc || 'Incluye: Combo especial de casa + Bebida';
-                                            })()}
+                                        <p className="text-[10px] sm:text-[11px] text-slate-600 font-semibold leading-snug line-clamp-2 bg-slate-50 border border-slate-200/60 px-2.5 py-1.5 rounded-lg mt-1">
+                                            {cleanDescription || 'Promoción especial por tiempo limitado para nuevos miembros.'}
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* Precio Promocional */}
-                                {showPrices && promo.precioPromo && (
+                                {showPrices && numPromoPrice !== null && (
                                     <div className="flex items-baseline gap-2 pt-1">
                                         <span className="text-xl sm:text-2xl font-black italic tracking-tighter" style={{ color: primaryColor }}>
-                                            ${parseFloat(promo.precioPromo).toFixed(0)}
+                                            {numPromoPrice === 0 ? '¡GRATIS!' : `$${numPromoPrice.toFixed(0)}`}
                                         </span>
-                                        {precioAnteriorBase > promo.precioPromo && (
+                                        {precioAnteriorBase > numPromoPrice && (
                                             <span className="text-xs font-bold text-slate-400 line-through">
                                                 ${precioAnteriorBase.toFixed(0)}
+                                            </span>
+                                        )}
+                                        {numPromoPrice === 0 && precioAnteriorBase > 0 && (
+                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 tracking-wider">
+                                                Ahorro 100%
                                             </span>
                                         )}
                                     </div>
                                 )}
 
-                                {/* Servicio Resaltado */}
+                                {/* Servicio o Plan Resaltado */}
                                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-100 max-w-full">
-                                        <Sparkles size={10} className="text-pink-500 shrink-0" />
-                                        <span className="text-[9.5px] sm:text-[10px] font-black text-slate-700 uppercase tracking-tight truncate max-w-[130px] sm:max-w-[180px]">
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 max-w-full">
+                                        <Sparkles size={10} className="text-amber-500 shrink-0" />
+                                        <span className="text-[9.5px] sm:text-[10px] font-black text-slate-700 uppercase tracking-tight truncate max-w-[140px] sm:max-w-[200px]">
                                             {appliesToText}
                                         </span>
                                     </div>
-                                    {showVerServiciosLink && (
+                                    {!promoIsGym && showVerServiciosLink && (
                                         <button
                                             type="button"
                                             onClick={(e) => {
@@ -288,7 +335,7 @@ export default function PromotionsSection({
                                         </span>
                                     </div>
 
-                                    {/* Botón Reservar */}
+                                    {/* Botón Reservar / Ver Membresía */}
                                     <button 
                                         type="button"
                                         onClick={(e) => {
@@ -301,7 +348,7 @@ export default function PromotionsSection({
                                             boxShadow: `0 8px 16px ${primaryColor}25`
                                         }}
                                     >
-                                        Reservar ahora
+                                        {promoIsGym ? 'Ver Membresía' : 'Reservar ahora'}
                                         <ChevronRight size={10} strokeWidth={3.5} />
                                     </button>
                                 </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Share2, Clock, CheckCircle2, Copy, Calendar, Navigation2, ChevronLeft, ShieldCheck, Tag, Sparkles } from 'lucide-react';
+import { Share2, Clock, CheckCircle2, Copy, Calendar, Navigation2, ChevronLeft, ShieldCheck, Tag, Sparkles, Dumbbell, Award } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -28,6 +28,33 @@ export default function PromoShareClient({
     const [isSharing, setIsSharing] = useState(false);
     const router = useRouter();
 
+    // Parsear descripción y metadatos de CITIOX_META
+    const rawDesc = promotion?.descripcion || '';
+    let cleanDescription = rawDesc;
+    let meta: any = null;
+    if (rawDesc.includes('<!-- CITIOX_META:')) {
+        const parts = rawDesc.split('<!-- CITIOX_META:');
+        cleanDescription = parts[0].trim();
+        try {
+            meta = JSON.parse(parts[1].split('-->')[0].trim());
+        } catch (_) {}
+    }
+
+    const isGym = 
+        negocio?.tipoNegocio === 'GIMNASIO' || 
+        negocio?.tipoNegocio === 'GYM' || 
+        negocio?.tipoNegocio === 'FITNESS' || 
+        Boolean(meta?.membershipPlanId) || 
+        Boolean(meta?.benefitType) ||
+        promotion?.tipoPromo?.includes('MEMBRESIA') ||
+        promotion?.tipoPromo === 'INSCRIPCION_GRATIS' ||
+        promotion?.tipoPromo === 'MATRICULA_GRATIS' ||
+        slug?.includes('gym') ||
+        slug?.includes('vortex');
+
+    const numPromoPrice = promotion?.precioPromo !== null && promotion?.precioPromo !== undefined ? Number(promotion.precioPromo) : null;
+    const isFreeBenefit = numPromoPrice === 0 || meta?.benefitType === 'INSCRIPCION_GRATIS' || meta?.benefitType === 'MATRICULA_GRATIS' || promotion?.tipoPromo === 'INSCRIPCION_GRATIS';
+
     const handleShareWhatsApp = async () => {
         setIsSharing(true);
         
@@ -46,7 +73,10 @@ export default function PromoShareClient({
             ? promotion.services.map((s: any) => `• ${s.nombre}`).join('\n')
             : '';
 
-        const mensaje = `🔥 *PROMOCIÓN ESPECIAL* 🔥 ${negocio.nombre}\n\n*${promotion.titulo}*\n${promotion.precioAnterior ? `Antes: ~${promotion.precioAnterior}~ \n` : ''}Ahora: *$${promotion.precioPromo}*\n\n${serviciosStr ? `💆‍♂️ *Servicios incluidos:*\n${serviciosStr}\n\n` : ''}📅 *Días disponibles:* ${diasStr}\n⏰ *Horario:* ${horarioStr}\n\nReserva aquí: ${shareUrl}`;
+        const precioTxt = isFreeBenefit ? '¡GRATIS / 100% REGALO!' : `$${promotion.precioPromo}`;
+        const itemLabel = isGym ? '🏋️ *Beneficio Gym:*' : '💆‍♂️ *Servicios incluidos:*';
+
+        const mensaje = `🔥 *PROMOCIÓN ESPECIAL* 🔥 ${negocio.nombre}\n\n*${promotion.titulo}*\n${promotion.precioAnterior ? `Antes: ~${promotion.precioAnterior}~ \n` : ''}Ahora: *${precioTxt}*\n\n${serviciosStr ? `${itemLabel}\n${serviciosStr}\n\n` : ''}📅 *Días disponibles:* ${diasStr}\n⏰ *Horario:* ${horarioStr}\n\nVer oferta aquí: ${shareUrl}`;
 
         try {
             await fetch(`/api/promotions/${promotion.id}/share`, { method: 'POST' });
@@ -135,48 +165,72 @@ export default function PromoShareClient({
                             </div>
 
                             {/* DESCRIPCIÓN DE LA PROMO */}
-                            {promotion.descripcion && (
+                            {cleanDescription && (
                                 <p className="text-sm font-semibold text-slate-600 leading-relaxed">
-                                    {promotion.descripcion}
+                                    {cleanDescription}
                                 </p>
                             )}
 
-                            {/* SERVICIO PRINCIPAL DE LA PROMOCIÓN */}
-
-                            {promotion.services && promotion.services.length > 0 && (
+                            {/* SERVICIO O BENEFICIO PRINCIPAL DE LA PROMOCIÓN */}
+                            {isGym ? (
                                 <div className="space-y-3">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Servicio Principal a Aplicar</p>
-                                    <div className="space-y-3">
-                                        {promotion.services.map((service: any) => (
-                                            <Link 
-                                                key={service.id} 
-                                                href={`/${slug}/servicio/${service.id}`}
-                                                className="relative overflow-hidden p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-800 hover:border-pink-500/50 shadow-2xl flex items-center justify-between gap-4 group cursor-pointer transition-all duration-300 block hover:-translate-y-0.5 active:scale-95"
-                                            >
-                                                {/* Brillo dinámico de fondo */}
-                                                <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full -translate-y-12 translate-x-12 blur-2xl group-hover:scale-150 transition-all duration-1000" />
-                                                
-                                                <div className="flex items-start gap-4 relative z-10">
-                                                    <div className="p-3 bg-pink-500/10 text-pink-500 rounded-2xl border border-pink-500/20 shrink-0">
-                                                        <Sparkles size={20} className="animate-pulse" />
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-[9px] font-black text-pink-400 uppercase tracking-widest block mb-1">Servicio Incluido</span>
-                                                        <h4 className="text-base font-black text-white uppercase tracking-tight leading-snug">
-                                                            {service.nombre}
-                                                        </h4>
-                                                        <p className="text-[10px] font-bold text-slate-400 mt-1">Duración: {service.duracion || 60} minutos</p>
-                                                    </div>
-                                                </div>
-                                                <div className="shrink-0 relative z-10 flex flex-col items-end">
-                                                    <span className="px-3.5 py-1.5 bg-pink-500 text-white text-[8px] font-black uppercase rounded-lg shadow-lg tracking-widest">
-                                                        Activo
-                                                    </span>
-                                                </div>
-                                            </Link>
-                                        ))}
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Membresía / Beneficio Incluido</p>
+                                    <div className="relative overflow-hidden p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-800 shadow-2xl flex items-center justify-between gap-4">
+                                        <div className="flex items-start gap-4 relative z-10">
+                                            <div className="p-3 bg-orange-500/10 text-orange-500 rounded-2xl border border-orange-500/20 shrink-0">
+                                                <Dumbbell size={20} className="animate-pulse" />
+                                            </div>
+                                            <div>
+                                                <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block mb-1">Gimnasio Oficial</span>
+                                                <h4 className="text-base font-black text-white uppercase tracking-tight leading-snug">
+                                                    {promotion.titulo}
+                                                </h4>
+                                                <p className="text-[10px] font-bold text-slate-400 mt-1">Acceso digital inteligente + Instalaciones de alto nivel</p>
+                                            </div>
+                                        </div>
+                                        <div className="shrink-0 relative z-10 flex flex-col items-end">
+                                            <span className="px-3.5 py-1.5 bg-orange-500 text-white text-[8px] font-black uppercase rounded-lg shadow-lg tracking-widest">
+                                                Activo
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
+                            ) : (
+                                promotion.services && promotion.services.length > 0 && (
+                                    <div className="space-y-3">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Servicio Principal a Aplicar</p>
+                                        <div className="space-y-3">
+                                            {promotion.services.map((service: any) => (
+                                                <Link 
+                                                    key={service.id} 
+                                                    href={`/${slug}/servicio/${service.id}`}
+                                                    className="relative overflow-hidden p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-800 hover:border-pink-500/50 shadow-2xl flex items-center justify-between gap-4 group cursor-pointer transition-all duration-300 block hover:-translate-y-0.5 active:scale-95"
+                                                >
+                                                    {/* Brillo dinámico de fondo */}
+                                                    <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full -translate-y-12 translate-x-12 blur-2xl group-hover:scale-150 transition-all duration-1000" />
+                                                    
+                                                    <div className="flex items-start gap-4 relative z-10">
+                                                        <div className="p-3 bg-pink-500/10 text-pink-500 rounded-2xl border border-pink-500/20 shrink-0">
+                                                            <Sparkles size={20} className="animate-pulse" />
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-[9px] font-black text-pink-400 uppercase tracking-widest block mb-1">Servicio Incluido</span>
+                                                            <h4 className="text-base font-black text-white uppercase tracking-tight leading-snug">
+                                                                {service.nombre}
+                                                            </h4>
+                                                            <p className="text-[10px] font-bold text-slate-400 mt-1">Duración: {service.duracion || 60} minutos</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="shrink-0 relative z-10 flex flex-col items-end">
+                                                        <span className="px-3.5 py-1.5 bg-pink-500 text-white text-[8px] font-black uppercase rounded-lg shadow-lg tracking-widest">
+                                                            Activo
+                                                        </span>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
                             )}
 
                             {/* Card de Precio */}
@@ -185,7 +239,15 @@ export default function PromoShareClient({
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Precio de Oferta</p>
                                         <div className="flex items-end gap-3">
-                                            <span className="text-6xl font-black tracking-tighter italic leading-none" style={{ color: primaryColor }}>${parseFloat(promotion.precioPromo).toFixed(0)}</span>
+                                            {isFreeBenefit || numPromoPrice === 0 ? (
+                                                <span className="text-5xl sm:text-6xl font-black tracking-tighter italic leading-none text-emerald-600">
+                                                    ¡GRATIS!
+                                                </span>
+                                            ) : (
+                                                <span className="text-6xl font-black tracking-tighter italic leading-none" style={{ color: primaryColor }}>
+                                                    ${parseFloat(promotion.precioPromo).toFixed(0)}
+                                                </span>
+                                            )}
                                             {promotion.precioAnterior && (
                                                 <div className="mb-1 flex flex-col">
                                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Normal</span>
@@ -214,10 +276,10 @@ export default function PromoShareClient({
                                                 <p className="text-xs font-bold text-slate-700 uppercase">
                                                     {promotion.diasValidos ? 
                                                         promotion.diasValidos.split(',').map((d: string) => {
-                                                            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-                                                            return days[parseInt(d)];
-                                                        }).join(', ') 
-                                                        : 'Todos los días'}
+                                                             const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                                                             return days[parseInt(d)];
+                                                         }).join(', ') 
+                                                         : 'Todos los días'}
                                                 </p>
                                             </div>
                                         </div>
@@ -241,22 +303,31 @@ export default function PromoShareClient({
                                  <div className="space-y-4 pt-6 border-t border-slate-50">
                                     {isExpirada ? (
                                         <Link
-                                            href={`/${slug}#servicios`}
+                                            href={isGym ? `/${slug}#planes` : `/${slug}#servicios`}
                                             className="w-full text-white font-black text-sm uppercase tracking-widest py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 group bg-slate-800 hover:bg-slate-700 text-center"
                                         >
                                             <Navigation2 size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                                            Promoción Finalizada — Ver Servicios
+                                            Promoción Finalizada — {isGym ? 'Ver Membresías' : 'Ver Servicios'}
                                         </Link>
                                     ) : (
                                         <Link
-                                            href={promotion.services && promotion.services.length > 0
-                                                ? `/${slug}/servicio/${promotion.services[0].id}`
-                                                : `/${slug}#servicios`}
+                                            href={isGym 
+                                                ? `/${slug}#planes` 
+                                                : (promotion.services && promotion.services.length > 0 ? `/${slug}/servicio/${promotion.services[0].id}` : `/${slug}#servicios`)}
                                             className="w-full text-white font-black text-sm uppercase tracking-widest py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 group text-center"
                                             style={{ backgroundColor: primaryColor }}
                                         >
-                                            <Navigation2 size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                                            Reservar Ahora
+                                            {isGym ? (
+                                                <>
+                                                    <Dumbbell size={20} className="group-hover:rotate-12 transition-transform" />
+                                                    Ver Planes de Membresía
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Navigation2 size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                                    Reservar Ahora
+                                                </>
+                                            )}
                                         </Link>
                                     )}
 
@@ -285,7 +356,7 @@ export default function PromoShareClient({
                                     <ShieldCheck size={28} className="text-white" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-xs font-black uppercase tracking-widest leading-none mb-1" style={{ color: primaryColor }}>Reserva Protegida</p>
+                                    <p className="text-xs font-black uppercase tracking-widest leading-none mb-1" style={{ color: primaryColor }}>{isGym ? 'Gimnasio Oficial' : 'Reserva Protegida'}</p>
                                     <p className="text-[10px] font-bold text-slate-400 italic leading-snug">Promoción exclusiva gestionada a través de la plataforma oficial de {negocio.nombre}.</p>
                                 </div>
                             </div>
@@ -301,9 +372,9 @@ export default function PromoShareClient({
                         Detalles de la Promoción
                     </h2>
                     <div className="bg-white p-10 md:p-14 rounded-[4rem] border border-slate-100 text-slate-600 font-medium text-lg leading-relaxed shadow-inner italic">
-                         {promotion.descripcion}
+                         {cleanDescription}
                          <br /><br />
-                          Esta oferta es por tiempo limitado y está sujeta a la disponibilidad de los servicios del centro {negocio.nombre}. No acumulable con otras promociones ni con cupones de servicio gratis (se debe elegir solo un beneficio por reserva).
+                          Esta oferta es por tiempo limitado y está sujeta a los términos y condiciones de {negocio.nombre}. No acumulable con otras promociones activas.
                     </div>
                 </div>
             </main>
