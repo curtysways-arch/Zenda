@@ -13,6 +13,7 @@ const syncFolderRoots = [
   "src/modules/gym",
   "src/components/admin/gym",
   "src/app/admin/config",
+  "src/app/admin/perfil",
   "src/app/admin/clases",
   "src/app/admin/accesos",
   "src/app/admin/asistencias",
@@ -21,6 +22,7 @@ const syncFolderRoots = [
   "src/app/[slug]/mi-gym",
   "src/app/api/admin/gym",
   "src/app/api/[slug]/gym",
+  "src/app/api/[slug]/otp",
 
   // Módulo Dental Completo
   "src/modules/dental",
@@ -110,7 +112,8 @@ const manualFiles = [
   "src/components/admin/gym/GymKnowTheGymAdmin.tsx",
   "src/components/admin/gym/GymPromotionForm.tsx",
   "src/app/admin/marketing/conoce-el-gym/page.tsx",
-  "src/components/public/PromotionsSection.tsx"
+  "src/components/public/PromotionsSection.tsx",
+  "src/components/ui/PhoneInput.tsx"
 ];
 
 function collectAllFilesAndDirs(roots, extraFiles) {
