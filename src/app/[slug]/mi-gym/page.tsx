@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PhoneInput from '@/components/ui/PhoneInput';
 import { 
   QrCode, 
   Dumbbell, 
@@ -22,7 +23,10 @@ import {
   RefreshCw,
   Phone,
   ShieldCheck,
-  Award
+  Award,
+  Key,
+  Loader2,
+  ArrowLeft
 } from 'lucide-react';
 
 interface MemberData {
@@ -77,6 +81,124 @@ export default function MiGymDashboardPage() {
   const [error, setError] = useState('');
   const [checkingOut, setCheckingOut] = useState(false);
   const [insideSeconds, setInsideSeconds] = useState(0);
+
+  // Estados de autenticación OTP
+  const [authStep, setAuthStep] = useState<'phone' | 'otp'>('phone');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpCountdown, setOtpCountdown] = useState(0);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const otpInputRef = useRef<HTMLInputElement>(null);
+
+  // Contador para reenvío de OTP
+  useEffect(() => {
+    if (otpCountdown <= 0) return;
+    const timer = setInterval(() => setOtpCountdown((c) => c - 1), 1000);
+    return () => clearInterval(timer);
+  }, [otpCountdown]);
+
+  // Autofocus en el input OTP cuando cambia a paso 'otp'
+  useEffect(() => {
+    if (authStep === 'otp') {
+      otpInputRef.current?.focus();
+    }
+  }, [authStep]);
+
+  // Enviar código OTP
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = inputPhone.replace(/\D/g, '');
+    if (!inputPhone.trim() || clean.length < 8) {
+      setError('Ingresa un número de WhatsApp válido.');
+      return;
+    }
+    setError('');
+    setSendingOtp(true);
+    try {
+      const res = await fetch(`/api/${slug}/otp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telefono: inputPhone.trim(),
+          purpose: 'LOGIN'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudo enviar el código de verificación.');
+      }
+      setAuthStep('otp');
+      setOtpCountdown(60);
+      setOtpCode('');
+    } catch (err: any) {
+      setError(err.message || 'Error al enviar código.');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  // Reenviar código OTP
+  const handleResendOtp = async () => {
+    if (otpCountdown > 0 || sendingOtp) return;
+    setError('');
+    setSendingOtp(true);
+    try {
+      const res = await fetch(`/api/${slug}/otp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telefono: inputPhone.trim(),
+          purpose: 'LOGIN'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudo reenviar el código.');
+      }
+      setOtpCountdown(60);
+    } catch (err: any) {
+      setError(err.message || 'Error al reenviar código.');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  // Validar código OTP
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanCode = otpCode.replace(/\D/g, '');
+    if (cleanCode.length < 4) {
+      setError('Ingresa el código de 6 dígitos recibido por WhatsApp.');
+      return;
+    }
+    setError('');
+    setVerifyingOtp(true);
+    try {
+      const res = await fetch(`/api/${slug}/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telefono: inputPhone.trim(),
+          code: cleanCode
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Código incorrecto o expirado.');
+      }
+      // Guardar sesión de socio
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`${slug}_client_phone`, inputPhone.trim());
+        localStorage.setItem('user_phone', inputPhone.trim());
+      }
+      setPhone(inputPhone.trim());
+      await fetchMemberInfo(inputPhone.trim());
+    } catch (err: any) {
+      setError(err.message || 'Error al validar código de acceso.');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   // 1. Cargar número de socio o sesión
   useEffect(() => {
@@ -242,58 +364,144 @@ export default function MiGymDashboardPage() {
       <div className="max-w-md mx-auto p-4 md:p-6 space-y-6 pt-8 pb-24">
         <div className="text-center space-y-3">
           <div className="w-16 h-16 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-3xl mx-auto flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
-            <Dumbbell className="w-8 h-8" />
+            {authStep === 'phone' ? <Dumbbell className="w-8 h-8" /> : <Key className="w-8 h-8" />}
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Portal del Socio
+            {authStep === 'phone' ? 'Portal del Socio' : 'Verificación de Acceso'}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Accede a tu carnet digital, rutinas, historial de entrenamientos y membresía.
+            {authStep === 'phone' 
+              ? 'Accede a tu carnet digital, rutinas, historial de entrenamientos y membresía.'
+              : `Ingresa el código de 6 dígitos que enviamos por WhatsApp a ${inputPhone}`}
           </p>
         </div>
 
-        <form onSubmit={handleLoginSubmit} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
-              Ingresa tu Teléfono registrado
-            </label>
+        {authStep === 'phone' ? (
+          <form onSubmit={handleSendOtp} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-5 animate-in fade-in">
+            <div className="space-y-1.5">
+              <PhoneInput 
+                value={inputPhone} 
+                onChange={setInputPhone} 
+                darkMode={false} 
+                label="WhatsApp / Móvil Registrado *" 
+                placeholder="099 123 4567" 
+              />
+              <p className="text-[10px] text-slate-400 ml-1">
+                Te enviaremos un código de un solo uso para verificar tu cuenta de socio.
+              </p>
+            </div>
+
+            {error && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-500 text-xs font-medium flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={sendingOtp}
+              className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-black rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm tracking-wide"
+            >
+              {sendingOtp ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <span>Enviar Código de Acceso</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+
+            <div className="pt-2 text-center">
+              <Link
+                href={`/${slug}`}
+                className="text-xs font-semibold text-slate-400 hover:text-emerald-500 transition-colors"
+              >
+                ¿Aún no eres socio? Ver planes y membresías
+              </Link>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyOtp} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-6 animate-in fade-in slide-in-from-right-3">
             <div className="relative">
-              <Phone className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+              <div className="flex justify-between items-center gap-2">
+                {[0, 1, 2, 3, 4, 5].map((idx) => {
+                  const char = otpCode.replace(/\D/g, '')[idx] || '';
+                  const isActive = otpCode.replace(/\D/g, '').length === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex-1 h-14 bg-white dark:bg-slate-800 border-2 rounded-2xl flex items-center justify-center text-2xl font-black transition-all ${
+                        char 
+                          ? 'text-slate-900 dark:text-white border-emerald-500 shadow-sm' 
+                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-300'
+                      } ${isActive ? 'border-emerald-500 ring-2 ring-emerald-500/20' : ''}`}
+                    >
+                      {char}
+                    </div>
+                  );
+                })}
+              </div>
               <input
-                type="tel"
-                value={inputPhone}
-                onChange={(e) => setInputPhone(e.target.value)}
-                placeholder="Ej. +593 99 123 4567"
-                required
-                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-medium focus:outline-none focus:border-emerald-500 transition-all text-base"
+                ref={otpInputRef}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoFocus
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                className="absolute inset-0 opacity-0 cursor-default w-full h-full"
               />
             </div>
-          </div>
 
-          {error && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-500 text-xs font-medium flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
+            {error && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-500 text-xs font-medium flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
-          <button
-            type="submit"
-            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm tracking-wide"
-          >
-            <span>Ingresar a Mi Gym</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-
-          <div className="pt-2 text-center">
-            <Link
-              href={`/${slug}`}
-              className="text-xs font-semibold text-slate-400 hover:text-emerald-500 transition-colors"
+            <button
+              type="submit"
+              disabled={verifyingOtp || otpCode.replace(/\D/g, '').length < 4}
+              className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-black rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm tracking-wide"
             >
-              ¿Aún no eres socio? Ver planes y membresías
-            </Link>
-          </div>
-        </form>
+              {verifyingOtp ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <span>Validar e Ingresar</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+
+            <div className="flex items-center justify-between text-xs px-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthStep('phone');
+                  setError('');
+                }}
+                className="font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-1 transition-colors"
+              >
+                <ArrowLeft size={14} />
+                <span>Cambiar número</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={otpCountdown > 0 || sendingOtp}
+                onClick={handleResendOtp}
+                className="font-bold text-emerald-500 hover:text-emerald-600 disabled:text-slate-400 transition-colors"
+              >
+                {otpCountdown > 0 ? `Reenviar en ${otpCountdown}s` : 'Reenviar código'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     );
   }

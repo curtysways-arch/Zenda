@@ -22,14 +22,25 @@ export async function POST(
             return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
         }
 
+        // Normalizar variaciones del teléfono para máxima compatibilidad
+        const localTelefono = telefono.replace(/^\+(\d{1,4})/, ''); 
+        const digitsOnly = telefono.replace(/\D/g, ''); 
+        const localNoZero = localTelefono.replace(/^0+/, '');
+
         // Buscar el último código para ese teléfono y negocio
         const otpEntry = await prisma.otpCode.findFirst({
             where: {
-                telefono,
                 businessId: negocio.id,
                 code,
                 verified: false,
-                expires_at: { gt: new Date() }
+                expires_at: { gt: new Date() },
+                OR: [
+                    { telefono },
+                    { telefono: localTelefono },
+                    { telefono: digitsOnly },
+                    { telefono: `+${digitsOnly}` },
+                    { telefono: { endsWith: localNoZero } }
+                ]
             },
             orderBy: { created_at: 'desc' }
         });
@@ -45,10 +56,6 @@ export async function POST(
         });
 
         // Buscar si existe un Usuario con este teléfono para obtener sus roles
-        // Variaciones del teléfono para máxima compatibilidad
-        const localTelefono = telefono.replace(/^\+(\d{1,4})/, ''); 
-        const digitsOnly = telefono.replace(/\D/g, ''); 
-        const localNoZero = localTelefono.replace(/^0+/, '');
 
         const usuario = await prisma.usuario.findFirst({
             where: {

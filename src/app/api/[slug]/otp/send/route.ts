@@ -9,7 +9,7 @@ export async function POST(
 ) {
     try {
         const { slug } = await params;
-        const { telefono } = await req.json();
+        const { telefono, purpose, isRegistration } = await req.json();
 
         if (!telefono) {
             return NextResponse.json({ error: "Teléfono requerido" }, { status: 400 });
@@ -17,7 +17,7 @@ export async function POST(
 
         const negocio = await prisma.negocio.findUnique({
             where: { slug },
-            select: { id: true, nombre: true }
+            select: { id: true, nombre: true, tipoNegocio: true }
         });
 
         if (!negocio) {
@@ -29,60 +29,80 @@ export async function POST(
         const digitsOnly = telefono.replace(/\D/g, '');                // Solo dígitos
         const localNoZero = localTelefono.replace(/^0+/, '');          // Sin ceros iniciales
 
-        // Buscar cliente con búsqueda flexible (el número puede estar guardado con/sin prefijo)
-        let hasAccess = false;
-        try {
-            // Usar SQL directo para búsqueda flexible con LIKE
-            const searchTerm = localNoZero; // Ej: "95999752" - los últimos dígitos significativos
-            const clientes: any[] = await prisma.$queryRawUnsafe(
-                `SELECT id FROM Cliente WHERE 
-                    telefono = '${telefono}' OR 
-                    telefono = '${localTelefono}' OR 
-                    telefono = '${digitsOnly}' OR
-                    telefono LIKE '%${searchTerm}%' OR
-                    telefono LIKE '%${localNoZero}'
-                LIMIT 5`
-            );
+        const tipoNegocio = (negocio as any).tipoNegocio || 'PRODUCTOS';
+        const isGym = tipoNegocio === 'GIMNASIO' || tipoNegocio === 'GYM' || slug.includes('fitness') || slug.includes('gym');
 
-            if (clientes.length > 0) {
-                const clienteIds = clientes.map((c: any) => c.id);
-                // Verificar reservas en este negocio
-                const reservas: any[] = await prisma.$queryRawUnsafe(
-                    `SELECT id FROM Reserva WHERE negocioId = '${negocio.id}' AND clienteId IN (${clienteIds.map((id: string) => `'${id}'`).join(',')}) LIMIT 1`
+        // Para checkout/adquisición de membresía o registro nuevo, siempre se permite enviar OTP
+        let hasAccess = purpose === 'MEMBERSHIP_CHECKOUT' || isRegistration === true;
+
+        if (!hasAccess) {
+            try {
+                // Usar SQL directo para búsqueda flexible con LIKE
+                const searchTerm = localNoZero; // Ej: "95999752" - los últimos dígitos significativos
+                const clientes: any[] = await prisma.$queryRawUnsafe(
+                    `SELECT id FROM Cliente WHERE 
+                        negocioId = '${negocio.id}' AND (
+                            telefono = '${telefono}' OR 
+                            telefono = '${localTelefono}' OR 
+                            telefono = '${digitsOnly}' OR
+                            telefono LIKE '%${searchTerm}%' OR
+                            telefono LIKE '%${localNoZero}'
+                        )
+                    LIMIT 5`
                 );
-                hasAccess = reservas.length > 0;
 
-                // Si no tiene reservas, buscar inscripciones
-                if (!hasAccess) {
-                    try {
+                if (clientes.length > 0) {
+                    const clienteIds = clientes.map((c: any) => c.id);
+
+                    if (isGym) {
+                        // En gimnasio, si el cliente existe o tiene membresía
                         const p = prisma as any;
-                        const enrollment = await p.courseEnrollment.findFirst({
+                        const mem = await p.membership.findFirst({
                             where: {
                                 businessId: negocio.id,
-                                OR: [
-                                    { guardian_phone: telefono },
-                                    { guardian_phone: localTelefono },
-                                    { guardian_phone: digitsOnly }
-                                ]
-                            },
-                            select: { id: true }
+                                customerId: { in: clienteIds }
+                            }
                         });
-                        hasAccess = !!enrollment;
-                    } catch (_) {
-                        // courseEnrollment puede no existir
+                        hasAccess = !!mem || clientes.length > 0;
+                    } else {
+                        // Verificar reservas en este negocio
+                        const reservas: any[] = await prisma.$queryRawUnsafe(
+                            `SELECT id FROM Reserva WHERE negocioId = '${negocio.id}' AND clienteId IN (${clienteIds.map((id: string) => `'${id}'`).join(',')}) LIMIT 1`
+                        );
+                        hasAccess = reservas.length > 0;
+
+                        // Si no tiene reservas, buscar inscripciones
+                        if (!hasAccess) {
+                            try {
+                                const p = prisma as any;
+                                const enrollment = await p.courseEnrollment.findFirst({
+                                    where: {
+                                        businessId: negocio.id,
+                                        OR: [
+                                            { guardian_phone: telefono },
+                                            { guardian_phone: localTelefono },
+                                            { guardian_phone: digitsOnly }
+                                        ]
+                                    },
+                                    select: { id: true }
+                                });
+                                hasAccess = !!enrollment;
+                            } catch (_) {}
+                        }
                     }
                 }
+            } catch (lookupErr) {
+                console.error("[OTP Send] Error buscando cliente:", lookupErr);
+                hasAccess = true;
             }
-        } catch (lookupErr) {
-            console.error("[OTP Send] Error buscando cliente:", lookupErr);
-            // En caso de error técnico, permitir continuar para no bloquear
-            hasAccess = true;
         }
 
-        const tipoNegocio = (negocio as any).tipoNegocio || 'PRODUCTOS';
         if (!hasAccess && tipoNegocio !== 'PRODUCTOS' && tipoNegocio !== 'SHOE_CARE') {
+            const notFoundMsg = isGym
+                ? "No encontramos una cuenta de socio registrada con este número. Selecciona una membresía para registrarte."
+                : "No encontramos reservas con ese número. Verifica que sea el número con el que agendaste tu cita.";
             return NextResponse.json({
-                error: "No encontramos reservas con ese número. Verifica que sea el número con el que agendaste tu cita."
+                error: notFoundMsg
             }, { status: 404 });
         }
 
