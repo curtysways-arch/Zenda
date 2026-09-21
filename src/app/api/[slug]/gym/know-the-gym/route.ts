@@ -6,10 +6,10 @@ export const dynamic = 'force-dynamic';
 // GET público — áreas y equipamiento activos del gimnasio para la landing
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
 
     const negocio = await (prisma as any).negocio.findUnique({
       where: { slug },

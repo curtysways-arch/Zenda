@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 // PUT — Actualizar área
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getEffectiveAdminSession();
@@ -16,7 +16,7 @@ export async function PUT(
     }
 
     const negocioId = (session.user as any).negocioId;
-    const { id } = params;
+    const { id } = await params;
 
     // Verificar propiedad
     const existing = await (prisma as any).gymArea.findFirst({
@@ -55,7 +55,7 @@ export async function PUT(
 // DELETE — Eliminar área
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getEffectiveAdminSession();
@@ -64,7 +64,7 @@ export async function DELETE(
     }
 
     const negocioId = (session.user as any).negocioId;
-    const { id } = params;
+    const { id } = await params;
 
     // Verificar propiedad
     const existing = await (prisma as any).gymArea.findFirst({

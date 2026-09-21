@@ -7,13 +7,13 @@ export const dynamic = 'force-dynamic';
 // PUT — Actualizar promoción
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getEffectiveAdminSession();
     if (!session?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     const negocioId = (session.user as any).negocioId;
-    const { id } = params;
+    const { id } = await params;
 
     const existing = await (prisma as any).promotion.findFirst({
       where: { id, businessId: negocioId }
@@ -48,13 +48,13 @@ export async function PUT(
 // DELETE — Eliminar promoción
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getEffectiveAdminSession();
     if (!session?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     const negocioId = (session.user as any).negocioId;
-    const { id } = params;
+    const { id } = await params;
 
     const existing = await (prisma as any).promotion.findFirst({
       where: { id, businessId: negocioId }
