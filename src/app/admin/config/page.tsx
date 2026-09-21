@@ -24,6 +24,17 @@ export default function ConfigMensajesPage() {
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
     const [ubicaciones, setUbicaciones] = useState<any[]>([]);
     const [negocio, setNegocio] = useState<any>(null);
+    const [activeTab, setActiveTab] = useState<string>('accesos');
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+            if (tabParam) {
+                setActiveTab(tabParam);
+            }
+        }
+    }, []);
 
     const fetchConfigs = async () => {
         try {
@@ -165,22 +176,6 @@ export default function ConfigMensajesPage() {
         (negocio?.nombre || '').toUpperCase().includes('VORTEX') ||
         (negocio?.nombre || '').toUpperCase().includes('FITNESS') ||
         (negocio?.nombre || '').toUpperCase().includes('GYM');
-
-    const [activeTab, setActiveTab] = useState<string>('accesos');
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            const tabParam = params.get('tab');
-            if (tabParam) {
-                setActiveTab(tabParam);
-            } else if (isGym) {
-                setActiveTab('accesos');
-            } else {
-                setActiveTab('todos');
-            }
-        }
-    }, [isGym]);
 
     return (
         <>
