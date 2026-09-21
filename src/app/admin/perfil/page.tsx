@@ -9,6 +9,7 @@ import ImageUploader from '@/components/ui/ImageUploader';
 import ColorPaletteEditor from '@/components/admin/ColorPaletteEditor';
 import CoverageManagerModal from '@/components/admin/CoverageManagerModal';
 import DynamicFavicon from '@/components/DynamicFavicon';
+import PhoneInput from '@/components/ui/PhoneInput';
 import { Layers } from 'lucide-react';
 
 export default function NegocioConfigPage() {
@@ -299,14 +300,17 @@ export default function NegocioConfigPage() {
                             </button>
                         </div>
                         <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">WhatsApp</label>
-                                <input
-                                    type="text"
-                                    className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-900"
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">WhatsApp Oficial</label>
+                                <PhoneInput
                                     value={negocio.whatsapp || ''}
-                                    onChange={e => setNegocio({ ...negocio, whatsapp: e.target.value })}
+                                    onChange={(val) => setNegocio({ ...negocio, whatsapp: val })}
+                                    placeholder="099 123 4567"
+                                    darkMode={false}
                                 />
+                                <p className="text-[10px] text-gray-400 px-2 font-medium">
+                                    Selecciona el código de tu país e ingresa el número de WhatsApp oficial del negocio.
+                                </p>
                             </div>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between px-2">

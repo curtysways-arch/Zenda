@@ -13,6 +13,7 @@ import { DEFAULT_CONFIGS, DEFAULT_CONFIGS_GYM, DEFAULT_CONFIGS_DENTAL, getDefaul
 import BusinessLocationPicker from '@/components/admin/BusinessLocationPicker';
 import { isGymBusiness } from '@/modules/gym/utils/gymHelper';
 import GymAccessConfigSection from '@/components/admin/gym/GymAccessConfigSection';
+import PhoneInput from '@/components/ui/PhoneInput';
 
 export default function ConfigMensajesPage() {
     const { data: session } = useSession();
@@ -618,19 +619,14 @@ function WhatsAppConfigSection({ negocio, onSave, isSaving, primaryColor, isGym 
                     <div className="space-y-6">
                         <div className="space-y-4">
                             <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Número del Negocio</label>
-                                <div className="relative">
-                                    <input 
-                                        type="text"
-                                        value={localWhatsapp}
-                                        onChange={(e) => setLocalWhatsapp(e.target.value)}
-                                        placeholder="Ej: 593959997521"
-                                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 focus:ring-2 outline-none transition-all"
-                                        style={ { '--tw-ring-color': primaryColor } as any }
-                                    />
-                                    <MessageSquare size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300" />
-                                </div>
-                                <p className="text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-tight">Incluye código de país sin el signo +</p>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Número de WhatsApp Oficial</label>
+                                <PhoneInput
+                                    value={localWhatsapp}
+                                    onChange={(val) => setLocalWhatsapp(val)}
+                                    placeholder="099 123 4567"
+                                    darkMode={false}
+                                />
+                                <p className="text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-tight">Selecciona tu país e ingresa el número oficial</p>
                             </div>
                         </div>
                     </div>

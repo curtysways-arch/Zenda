@@ -116,18 +116,26 @@ export default function PhoneInput({
                     </button>
 
                     {isOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-64 bg-[#11141d] border border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-72 overflow-y-auto p-1.5 animate-in zoom-in-95 duration-150">
+                        <div className={clsx(
+                            "absolute top-full left-0 mt-2 w-64 border rounded-2xl shadow-2xl z-[9999] max-h-72 overflow-y-auto p-1.5 animate-in zoom-in-95 duration-150",
+                            darkMode 
+                                ? "bg-[#11141d] border-white/10" 
+                                : "bg-white border-slate-200 shadow-xl shadow-slate-200/50"
+                        )}>
                             {countries.map((c) => (
                                 <button
                                     key={c.iso}
                                     type="button"
                                     onClick={() => handleCountrySelect(c)}
-                                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-all text-left cursor-pointer"
+                                    className={clsx(
+                                        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left cursor-pointer",
+                                        darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"
+                                    )}
                                 >
                                     <span className="text-xl">{c.flag}</span>
                                     <div className="flex-1">
-                                        <p className="font-black text-white text-xs uppercase italic">{c.name}</p>
-                                        <p className="text-slate-400 font-black text-[10px]">{c.code}</p>
+                                        <p className={clsx("font-black text-xs uppercase italic", darkMode ? "text-white" : "text-slate-900")}>{c.name}</p>
+                                        <p className={clsx("font-black text-[10px]", darkMode ? "text-slate-400" : "text-slate-500")}>{c.code}</p>
                                     </div>
                                     {selectedCountry.iso === c.iso && <Check size={14} className="text-emerald-500" />}
                                 </button>
