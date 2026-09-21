@@ -1,7 +1,7 @@
 import React from 'react';
 import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { redirect } from 'next/navigation';
-import GymMembersPage from '@/modules/gym/components/GymMembersPage';
+import GymMembershipsPage from '@/modules/gym/components/GymMembershipsPage';
 
 export default async function MembresiasPage() {
   const session = await getEffectiveAdminSession();
@@ -9,5 +9,5 @@ export default async function MembresiasPage() {
     redirect('/login');
   }
 
-  return <GymMembersPage />;
+  return <GymMembershipsPage />;
 }

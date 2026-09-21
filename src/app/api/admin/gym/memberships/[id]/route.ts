@@ -196,7 +196,39 @@ export async function PATCH(
       return NextResponse.json({ success: true, message: 'Membresía cancelada', membership: updated });
     }
 
-    return NextResponse.json({ error: 'Acción no válida (use freeze, unfreeze, renew o cancel)' }, { status: 400 });
+
+    // ── 5. CONFIRMAR PAGO (CONFIRM_PAYMENT) ─────────────────────────────────────
+    if (action === 'confirm_payment') {
+      const updated = await (prisma as any).membership.update({
+        where: { id },
+        data: {
+          paymentStatus: 'PAID',
+          paymentMethod: body.paymentMethod || membership.paymentMethod || 'EFECTIVO',
+          paymentReference: body.paymentReference || membership.paymentReference || null,
+        },
+        include: { cliente: true, membershipPlan: true }
+      });
+
+      try {
+        if (adminUserId) {
+          await (prisma as any).adminAuditLog.create({
+            data: {
+              adminUserId,
+              accion: 'MEMBERSHIP_PAYMENT_CONFIRMED',
+              modulo: 'GIMNASIO',
+              descripcion: `Pago confirmado para membresía de ${membership.cliente.nombre} (${membership.membershipPlan.name}) — $${membership.price}`,
+              targetId: id,
+              targetType: 'MEMBERSHIP'
+            }
+          });
+        }
+      } catch (_) {}
+
+      return NextResponse.json({ success: true, message: 'Pago confirmado', membership: updated });
+    }
+
+    return NextResponse.json({ error: 'Acción no válida (use freeze, unfreeze, renew, cancel o confirm_payment)' }, { status: 400 });
+
   } catch (error: any) {
     console.error('[API_GYM_MEMBERSHIPS_ACTIONS_PATCH]', error);
     return NextResponse.json({ error: error.message || 'Error al procesar acción sobre membresía' }, { status: 500 });

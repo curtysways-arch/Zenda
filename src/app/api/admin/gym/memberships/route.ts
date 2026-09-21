@@ -14,6 +14,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const statusFilter = searchParams.get('status');
+  const paymentFilter = searchParams.get('payment'); // PENDING | PAID | PAID_REPORTED | PENDING_ON_SITE | ALL
   const searchQuery = searchParams.get('q')?.toLowerCase() || '';
 
   try {
@@ -37,6 +38,11 @@ export async function GET(req: Request) {
 
     if (statusFilter && statusFilter !== 'ALL') {
       whereClause.status = statusFilter;
+    }
+
+    // Filtro de pago pendiente
+    if (paymentFilter && paymentFilter !== 'ALL') {
+      whereClause.paymentStatus = paymentFilter;
     }
 
     if (searchQuery) {
