@@ -76,6 +76,7 @@ const manualFiles = [
   "src/app/api/superadmin/rewards/[id]/route.ts",
   "src/scripts/seed_gym_benefits.ts",
   "src/scripts/seed_gym_canonical.ts",
+  "src/scripts/seed_gym_examples.ts",
   "src/app/admin/usuarios/nuevo/page.tsx",
   "src/app/admin/staff/page.tsx",
   "src/components/admin/StaffModal.tsx",
@@ -228,6 +229,7 @@ conn.on("ready", async () => {
   await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_plan_families.ts || true)`, "Seed Canónico de Planes");
   await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_gym_benefits.ts || true)`, "Seed Beneficios Gimnasio");
   await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_gym_canonical.ts || true)`, "Seed Gimnasio Canónico");
+  await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_gym_examples.ts || true)`, "Seed Ejemplos Conoce Gimnasio");
 
   // 5. Build de producción Next.js
   console.log("\n🏗️ Compilando aplicación Next.js en VPS (npm run build)...");
