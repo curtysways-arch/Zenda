@@ -16,7 +16,9 @@ import {
     QrCode, 
     AlertCircle, 
     User, 
-    Banknote
+    Banknote,
+    Tag,
+    Flame
 } from 'lucide-react';
 
 interface MembershipPlanItem {
@@ -33,6 +35,7 @@ interface MembershipPlanItem {
 
 interface HomeMembershipPlansClientProps {
     plans: MembershipPlanItem[];
+    promotions?: any[];
     slug: string;
     primaryColor: string;
     textColor: string;
@@ -44,6 +47,7 @@ type PaymentMethodType = 'TARJETA_ONLINE' | 'TRANSFERENCIA' | 'RECEPCION_EFECTIV
 
 export default function HomeMembershipPlansClient({
     plans,
+    promotions = [],
     slug,
     primaryColor,
     textColor,
@@ -57,6 +61,7 @@ export default function HomeMembershipPlansClient({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [copiedAccount, setCopiedAccount] = useState(false);
+    const [appliedPromo, setAppliedPromo] = useState<any | null>(null);
 
     // Datos del formulario
     const [formData, setFormData] = useState({
@@ -85,8 +90,8 @@ export default function HomeMembershipPlansClient({
     // Membresía comprada
     const [purchasedMembership, setPurchasedMembership] = useState<any>(null);
 
+    // Cargar datos bancarios del gimnasio para transferencias
     useEffect(() => {
-        // Cargar datos bancarios del gimnasio para transferencias
         fetch(`/api/${slug}/gym/checkout`)
             .then(res => res.json())
             .then(data => {
@@ -96,6 +101,126 @@ export default function HomeMembershipPlansClient({
             })
             .catch(() => {});
     }, [slug]);
+
+    // Detectar promoción y plan desde la URL (ej: ?promo=xyz#planes)
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const promoId = params.get('promo') || params.get('promoId');
+        const planId = params.get('plan') || params.get('planId');
+
+        if (promoId && promotions && promotions.length > 0) {
+            const found = promotions.find((p: any) => p.id === promoId);
+            if (found) {
+                setAppliedPromo(found);
+
+                // Determinar el plan correspondiente para auto-seleccionar
+                const rawDesc = found.descripcion || '';
+                let meta: any = null;
+                if (rawDesc.includes('<!-- CITIOX_META:')) {
+                    try {
+                        meta = JSON.parse(rawDesc.split('<!-- CITIOX_META:')[1].split('-->')[0]);
+                    } catch (_) {}
+                }
+
+                let targetPlan = plans.find(p => p.id === planId);
+                if (!targetPlan && meta?.membershipPlanId) {
+                    targetPlan = plans.find(p => p.id === meta.membershipPlanId);
+                }
+                if (!targetPlan) {
+                    const tName = (found.titulo || '').toLowerCase();
+                    if (tName.includes('anual')) targetPlan = plans.find(p => p.durationDays >= 360);
+                    else if (tName.includes('trimestral')) targetPlan = plans.find(p => (p.durationDays >= 80 && p.durationDays <= 100) || p.name.toLowerCase().includes('trimestral'));
+                    else if (tName.includes('primer mes') || tName.includes('mensual')) targetPlan = plans.find(p => p.durationDays <= 31 || p.name.toLowerCase().includes('mensual'));
+                }
+                if (!targetPlan && plans.length > 0) {
+                    targetPlan = plans[0];
+                }
+
+                if (targetPlan) {
+                    setSelectedPlan(targetPlan);
+                    // Abrir modal con pequeño retardo para permitir smooth scroll a #planes
+                    const timer = setTimeout(() => {
+                        setIsModalOpen(true);
+                    }, 400);
+                    return () => clearTimeout(timer);
+                }
+            }
+        }
+    }, [slug, promotions, plans]);
+
+    // Función para calcular precios y descuentos considerando promociones
+    const getPlanPricing = (plan: MembershipPlanItem | null) => {
+        if (!plan) {
+            return { originalPrice: 0, finalPrice: 0, discount: 0, hasDiscount: false, isFreeRegistration: false, promoTitle: null };
+        }
+        const basePrice = plan.price || 0;
+        if (!appliedPromo) {
+            return { originalPrice: basePrice, finalPrice: basePrice, discount: 0, hasDiscount: false, isFreeRegistration: false, promoTitle: null };
+        }
+
+        const rawDesc = appliedPromo.descripcion || '';
+        let meta: any = null;
+        if (rawDesc.includes('<!-- CITIOX_META:')) {
+            try {
+                meta = JSON.parse(rawDesc.split('<!-- CITIOX_META:')[1].split('-->')[0]);
+            } catch (_) {}
+        }
+
+        let applies = false;
+        if (meta?.membershipPlanId) {
+            applies = meta.membershipPlanId === plan.id;
+        } else if (appliedPromo.tipoPromo === 'INSCRIPCION_GRATIS' || meta?.benefitType === 'INSCRIPCION_GRATIS') {
+            applies = true;
+        } else {
+            const pName = (plan.name || '').toLowerCase();
+            const tName = (appliedPromo.titulo || '').toLowerCase();
+            if (tName.includes('anual') && (plan.durationDays >= 360 || pName.includes('anual'))) applies = true;
+            else if (tName.includes('trimestral') && ((plan.durationDays >= 80 && plan.durationDays <= 100) || pName.includes('trimestral'))) applies = true;
+            else if ((tName.includes('primer mes') || tName.includes('mensual')) && (plan.durationDays <= 31 || pName.includes('mensual'))) applies = true;
+        }
+
+        if (!applies) {
+            return { originalPrice: basePrice, finalPrice: basePrice, discount: 0, hasDiscount: false, isFreeRegistration: false, promoTitle: null };
+        }
+
+        if (meta?.benefitType === 'INSCRIPCION_GRATIS' || appliedPromo.tipoPromo === 'INSCRIPCION_GRATIS') {
+            return {
+                originalPrice: basePrice,
+                finalPrice: basePrice,
+                discount: 0,
+                hasDiscount: false,
+                isFreeRegistration: true,
+                promoTitle: appliedPromo.titulo || 'Inscripción y Carnet de Regalo'
+            };
+        }
+
+        let finalPrice = basePrice;
+        let discount = 0;
+
+        if (meta?.finalPrice !== undefined && meta.finalPrice !== null) {
+            finalPrice = Number(meta.finalPrice);
+            discount = Math.max(0, basePrice - finalPrice);
+        } else if (appliedPromo.precioPromo !== undefined && appliedPromo.precioPromo !== null) {
+            finalPrice = Number(appliedPromo.precioPromo);
+            discount = Math.max(0, basePrice - finalPrice);
+        } else if (meta?.benefitType === 'DESCUENTO_PORCENTAJE' && meta?.discountValue) {
+            discount = Number((basePrice * (meta.discountValue / 100)).toFixed(2));
+            finalPrice = Math.max(0, Number((basePrice - discount).toFixed(2)));
+        } else if (meta?.benefitType === 'DESCUENTO_FIJO' && meta?.discountValue) {
+            discount = Number(meta.discountValue);
+            finalPrice = Math.max(0, basePrice - discount);
+        }
+
+        return {
+            originalPrice: basePrice,
+            finalPrice: Number(finalPrice.toFixed(2)),
+            discount: Number(discount.toFixed(2)),
+            hasDiscount: discount > 0,
+            isFreeRegistration: false,
+            promoTitle: appliedPromo.titulo
+        };
+    };
 
     if (!plans || plans.length === 0) {
         return null;
@@ -191,6 +316,7 @@ export default function HomeMembershipPlansClient({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     planId: selectedPlan.id,
+                    promotionId: appliedPromo?.id,
                     nombre: formData.nombre,
                     telefono: formData.telefono,
                     email: formData.email,
@@ -230,17 +356,25 @@ export default function HomeMembershipPlansClient({
                 ? `593${clean.slice(1)}`
                 : `593${clean}`;
 
+        const pricing = getPlanPricing(selectedPlan);
+
         const methodLabel = paymentMethod === 'TARJETA_ONLINE' 
             ? 'Tarjeta en Línea' 
             : paymentMethod === 'TRANSFERENCIA' 
                 ? `Transferencia (Ref: ${formData.transferRef})` 
                 : 'Abono en Recepción';
 
+        const promoLine = pricing.promoTitle ? `🎁 *Promoción aplicada:* ${pricing.promoTitle}\n` : '';
+        const priceDetail = pricing.hasDiscount 
+            ? `$${pricing.finalPrice} ${selectedPlan?.currency || 'USD'} (Ahorro de $${pricing.discount})`
+            : `$${pricing.finalPrice} ${selectedPlan?.currency || 'USD'}`;
+
         const msg = encodeURIComponent(
             `¡Hola ${businessName || 'Gimnasio'}! Acabo de registrar mi membresía desde la app:\n\n` +
             `👤 *Socio:* ${formData.nombre}\n` +
             `📱 *Teléfono:* ${formData.telefono}\n` +
-            `🏋️ *Plan:* ${selectedPlan?.name} ($${selectedPlan?.price} ${selectedPlan?.currency})\n` +
+            `🏋️ *Plan:* ${selectedPlan?.name} (${priceDetail})\n` +
+            promoLine +
             `💳 *Método de pago:* ${methodLabel}\n\n` +
             `Ya tengo mi carnet QR listo para ingresar. ¡Muchas gracias!`
         );
@@ -266,11 +400,43 @@ export default function HomeMembershipPlansClient({
                 </div>
             </div>
 
+            {/* Banner de Promoción Activa (si viene de una promo seleccionada) */}
+            {appliedPromo && (
+                <div className="mb-6 p-4 rounded-3xl bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 border border-amber-300 flex items-center justify-between gap-3 shadow-sm animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="size-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                            <Flame size={22} className="fill-current animate-pulse" />
+                        </div>
+                        <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-amber-500 text-white shadow-xs">
+                                    Promoción Activa
+                                </span>
+                                <span className="text-xs sm:text-sm font-black text-slate-900 truncate">
+                                    {appliedPromo.titulo}
+                                </span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-1">
+                                {appliedPromo.descripcion?.replace(/<!-- CITIOX_META:[\s\S]*?-->/, '').trim() || 'Descuento especial aplicado directamente a tu membresía.'}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setAppliedPromo(null)}
+                        className="text-xs font-bold text-slate-400 hover:text-slate-700 px-3 py-1.5 rounded-xl hover:bg-white/80 transition-colors shrink-0"
+                    >
+                        Quitar promo
+                    </button>
+                </div>
+            )}
+
             {/* Grid de Planes */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {plans.map((plan) => {
                     const benefitsList = parseBenefits(plan.benefits);
                     const isFeatured = !!plan.featured;
+                    const pricing = getPlanPricing(plan);
 
                     return (
                         <div
@@ -285,20 +451,34 @@ export default function HomeMembershipPlansClient({
                                 outlineColor: isFeatured ? primaryColor : undefined
                             }}
                         >
-                            {/* Featured Badge */}
-                            {isFeatured && (
-                                <div 
-                                    className="absolute -top-3.5 left-8 px-3.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md flex items-center gap-1.5"
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    <Sparkles size={11} className="fill-current" />
-                                    Más Popular
-                                </div>
-                            )}
+                            {/* Badges superiores */}
+                            <div className="absolute -top-3.5 left-6 right-6 flex items-center justify-between pointer-events-none">
+                                {isFeatured ? (
+                                    <div 
+                                        className="px-3.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md flex items-center gap-1.5"
+                                        style={{ backgroundColor: primaryColor }}
+                                    >
+                                        <Sparkles size={11} className="fill-current" />
+                                        Más Popular
+                                    </div>
+                                ) : <div />}
+
+                                {pricing.hasDiscount ? (
+                                    <div className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-md flex items-center gap-1">
+                                        <Tag size={10} />
+                                        ¡Ahorras ${pricing.discount}!
+                                    </div>
+                                ) : pricing.isFreeRegistration ? (
+                                    <div className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md flex items-center gap-1">
+                                        <Sparkles size={10} />
+                                        Inscripción Gratis
+                                    </div>
+                                ) : null}
+                            </div>
 
                             <div>
                                 {/* Header del Plan */}
-                                <div className="flex items-start justify-between gap-2 mb-3">
+                                <div className="flex items-start justify-between gap-2 mb-3 mt-1">
                                     <div>
                                         <h4 className="font-black text-xl text-slate-900 leading-tight">
                                             {plan.name}
@@ -317,9 +497,14 @@ export default function HomeMembershipPlansClient({
 
                                 {/* Precio */}
                                 <div className="my-5 pb-5 border-b border-slate-100">
-                                    <div className="flex items-baseline gap-1">
+                                    <div className="flex items-baseline gap-2">
+                                        {pricing.hasDiscount && (
+                                            <span className="text-lg font-bold text-slate-400 line-through">
+                                                ${pricing.originalPrice}
+                                            </span>
+                                        )}
                                         <span className="text-3xl font-black text-slate-900 tracking-tight">
-                                            ${plan.price}
+                                            ${pricing.finalPrice}
                                         </span>
                                         <span className="text-xs font-bold text-slate-400 uppercase">
                                             {plan.currency || 'USD'}
@@ -328,6 +513,19 @@ export default function HomeMembershipPlansClient({
                                             / {plan.durationDays === 1 ? 'día' : plan.durationDays <= 31 ? 'mes' : `${plan.durationDays} días`}
                                         </span>
                                     </div>
+
+                                    {pricing.hasDiscount && (
+                                        <p className="text-[11px] font-bold text-rose-600 mt-1.5 flex items-center gap-1">
+                                            <Tag size={12} />
+                                            Precio promocional aplicado
+                                        </p>
+                                    )}
+                                    {pricing.isFreeRegistration && (
+                                        <p className="text-[11px] font-bold text-emerald-600 mt-1.5 flex items-center gap-1">
+                                            <Sparkles size={12} />
+                                            ¡Ahorraste matrícula y carnet!
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Checklist de Beneficios */}
@@ -365,7 +563,7 @@ export default function HomeMembershipPlansClient({
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     <CreditCard size={15} />
-                                    Adquirir Membresía
+                                    {pricing.finalPrice === 0 ? 'Adquirir Gratis' : `Adquirir por $${pricing.finalPrice}`}
                                 </button>
                                 <Link
                                     href={`/${slug}/mi-qr`}
@@ -383,33 +581,51 @@ export default function HomeMembershipPlansClient({
             {/* ═══════════════════════════════════════════════════════════════════ */}
             {/* MODAL DE CHECKOUT & PASARELA DE PAGO                             */}
             {/* ═══════════════════════════════════════════════════════════════════ */}
-            {isModalOpen && selectedPlan && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in overflow-y-auto">
-                    <div className="relative w-full max-w-lg bg-white rounded-[2rem] border border-slate-100 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
-                        
-                        {/* Header del Modal */}
-                        <div className="p-5 sm:p-6 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between shrink-0">
-                            <div>
-                                <span 
-                                    className="text-[10px] font-black uppercase tracking-widest block"
-                                    style={{ color: primaryColor }}
+            {isModalOpen && selectedPlan && (() => {
+                const modalPricing = getPlanPricing(selectedPlan);
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in overflow-y-auto">
+                        <div className="relative w-full max-w-lg bg-white rounded-[2rem] border border-slate-100 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+                            
+                            {/* Header del Modal */}
+                            <div className="p-5 sm:p-6 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between shrink-0">
+                                <div>
+                                    <span 
+                                        className="text-[10px] font-black uppercase tracking-widest block"
+                                        style={{ color: primaryColor }}
+                                    >
+                                        {step === 'form' ? 'Checkout de Membresía' : 'Confirmación Oficial'}
+                                    </span>
+                                    <h3 className="text-xl font-black text-slate-900 leading-tight">
+                                        {step === 'form' ? selectedPlan.name : '¡Membresía Activada!'}
+                                    </h3>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        {modalPricing.hasDiscount ? (
+                                            <div className="flex items-center gap-1.5 text-xs">
+                                                <span className="line-through text-slate-400 font-semibold">
+                                                    ${modalPricing.originalPrice}
+                                                </span>
+                                                <span className="font-black text-rose-600">
+                                                    ${modalPricing.finalPrice} {selectedPlan.currency || 'USD'}
+                                                </span>
+                                                <span className="text-slate-400 font-medium">
+                                                    · {formatDuration(selectedPlan.durationDays)}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-500 font-medium">
+                                                ${modalPricing.finalPrice} {selectedPlan.currency || 'USD'} · {formatDuration(selectedPlan.durationDays)}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="size-9 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors shadow-sm"
                                 >
-                                    {step === 'form' ? 'Checkout de Membresía' : 'Confirmación Oficial'}
-                                </span>
-                                <h3 className="text-xl font-black text-slate-900 leading-tight">
-                                    {step === 'form' ? selectedPlan.name : '¡Membresía Activada!'}
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    ${selectedPlan.price} {selectedPlan.currency || 'USD'} · {formatDuration(selectedPlan.durationDays)}
-                                </p>
+                                    <X size={18} />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="size-9 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors shadow-sm"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
 
                         {/* Cuerpo del Modal con Scroll */}
                         <div className="p-5 sm:p-6 overflow-y-auto space-y-5">
@@ -471,6 +687,56 @@ export default function HomeMembershipPlansClient({
                                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-xs font-medium focus:bg-white focus:border-blue-500 focus:outline-none transition-colors"
                                                     />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* RESUMEN DE LA MEMBRESÍA Y PRECIO TRANSPARENTE */}
+                                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
+                                        <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-slate-700">
+                                            <span>Resumen de tu Membresía</span>
+                                            <span className="text-[10px] font-bold text-slate-400">
+                                                {formatDuration(selectedPlan.durationDays)}
+                                            </span>
+                                        </div>
+                                        <div className="space-y-1.5 text-xs">
+                                            <div className="flex justify-between items-center text-slate-600">
+                                                <span>Plan: {selectedPlan.name}</span>
+                                                <span className="font-semibold text-slate-800">
+                                                    ${modalPricing.originalPrice.toFixed(2)}
+                                                </span>
+                                            </div>
+
+                                            {modalPricing.hasDiscount && (
+                                                <div className="flex justify-between items-center text-rose-600 font-bold bg-rose-50 px-2 py-1 rounded-lg">
+                                                    <span className="flex items-center gap-1">
+                                                        <Tag size={12} />
+                                                        Descuento ({modalPricing.promoTitle || 'Promoción'})
+                                                    </span>
+                                                    <span>-${modalPricing.discount.toFixed(2)}</span>
+                                                </div>
+                                            )}
+
+                                            {modalPricing.isFreeRegistration && (
+                                                <div className="flex justify-between items-center text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-lg">
+                                                    <span className="flex items-center gap-1">
+                                                        <Sparkles size={12} />
+                                                        Inscripción / Matrícula
+                                                    </span>
+                                                    <span>¡GRATIS ($0.00)!</span>
+                                                </div>
+                                            )}
+
+                                            <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline">
+                                                <span className="font-black text-slate-900 text-sm">Total a Pagar:</span>
+                                                <div className="text-right">
+                                                    <span className="text-2xl font-black text-slate-900">
+                                                        ${modalPricing.finalPrice.toFixed(2)}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase ml-1">
+                                                        {selectedPlan.currency || 'USD'}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -703,11 +969,13 @@ export default function HomeMembershipPlansClient({
                                             ) : (
                                                 <>
                                                     <span>
-                                                        {paymentMethod === 'TARJETA_ONLINE' 
-                                                            ? `Pagar $${selectedPlan.price} y Activar` 
-                                                            : paymentMethod === 'TRANSFERENCIA'
-                                                                ? `Confirmar Transferencia ($${selectedPlan.price})`
-                                                                : `Reservar y Activar Membresía`}
+                                                        {modalPricing.finalPrice === 0
+                                                            ? '¡Activar Membresía 100% Gratis!'
+                                                            : paymentMethod === 'TARJETA_ONLINE' 
+                                                                ? `Pagar $${modalPricing.finalPrice} y Activar` 
+                                                                : paymentMethod === 'TRANSFERENCIA'
+                                                                    ? `Confirmar Transferencia ($${modalPricing.finalPrice})`
+                                                                    : `Reservar y Pagar $${modalPricing.finalPrice} en Recepción`}
                                                     </span>
                                                     <ArrowRight size={16} />
                                                 </>
@@ -752,6 +1020,17 @@ export default function HomeMembershipPlansClient({
                                         <div className="flex justify-between">
                                             <span className="text-slate-400">Duración:</span>
                                             <span className="font-bold text-slate-800">{formatDuration(selectedPlan.durationDays)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-400">Total:</span>
+                                            <span className="font-black text-slate-900">
+                                                ${modalPricing.finalPrice.toFixed(2)} {selectedPlan.currency || 'USD'}
+                                                {modalPricing.hasDiscount && (
+                                                    <span className="text-[10px] font-bold text-rose-600 ml-1.5">
+                                                        (Ahorro de ${modalPricing.discount})
+                                                    </span>
+                                                )}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between pt-1.5 border-t border-slate-200/60">
                                             <span className="text-slate-400">Método:</span>
@@ -800,7 +1079,8 @@ export default function HomeMembershipPlansClient({
 
                     </div>
                 </div>
-            )}
+            );
+        })()}
         </section>
     );
 }

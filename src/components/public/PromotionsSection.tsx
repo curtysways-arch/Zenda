@@ -341,7 +341,11 @@ export default function PromotionsSection({
                                         type="button"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            router.push(`/${slug}/promo/${promo.id}`);
+                                            if (promoIsGym) {
+                                                router.push(`/${slug}?promo=${promo.id}#planes`);
+                                            } else {
+                                                router.push(`/${slug}/promo/${promo.id}`);
+                                            }
                                         }}
                                         className="inline-flex items-center justify-center gap-1 px-4.5 py-2.5 rounded-2xl font-black text-[9px] uppercase tracking-widest text-white shadow-md active:scale-105 hover:scale-[1.02] transition-all duration-300 border-0 cursor-pointer"
                                         style={{ 

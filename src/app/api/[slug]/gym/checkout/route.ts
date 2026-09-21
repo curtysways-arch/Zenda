@@ -68,6 +68,7 @@ export async function POST(
     const body = await req.json();
     const { 
       planId, 
+      promotionId,
       nombre, 
       telefono, 
       email, 
@@ -87,6 +88,40 @@ export async function POST(
 
     if (!plan) {
       return NextResponse.json({ error: 'El plan de membresía seleccionado no está disponible' }, { status: 404 });
+    }
+
+    // 1.1 Calcular Precio con Promoción si se envió promotionId
+    let chargedPrice = plan.price;
+    let appliedPromoTitle: string | null = null;
+
+    if (promotionId) {
+      try {
+        const promo = await (prisma as any).promotion.findFirst({
+          where: { id: promotionId, businessId: negocio.id }
+        });
+        if (promo) {
+          appliedPromoTitle = promo.titulo;
+          const rawDesc = promo.descripcion || '';
+          let meta: any = null;
+          if (rawDesc.includes('<!-- CITIOX_META:')) {
+            try {
+              meta = JSON.parse(rawDesc.split('<!-- CITIOX_META:')[1].split('-->')[0]);
+            } catch (_) {}
+          }
+
+          if (meta?.finalPrice !== undefined && meta.finalPrice !== null) {
+            chargedPrice = Number(meta.finalPrice);
+          } else if (promo.precioPromo !== undefined && promo.precioPromo !== null) {
+            chargedPrice = Number(promo.precioPromo);
+          } else if (meta?.benefitType === 'DESCUENTO_PORCENTAJE' && meta?.discountValue) {
+            chargedPrice = Math.max(0, Number((plan.price * (1 - meta.discountValue / 100)).toFixed(2)));
+          } else if (meta?.benefitType === 'DESCUENTO_FIJO' && meta?.discountValue) {
+            chargedPrice = Math.max(0, Number((plan.price - meta.discountValue).toFixed(2)));
+          }
+        }
+      } catch (err) {
+        console.error('[PROMO_CHECKOUT_RESOLVE_ERROR]', err);
+      }
     }
 
     // 2. Buscar o crear Socio (Cliente universal)
@@ -141,7 +176,7 @@ export async function POST(
         status: 'ACTIVE',
         startAt: now,
         endAt,
-        price: plan.price,
+        price: chargedPrice,
         currency: plan.currency || 'USD',
         paymentStatus,
         paymentMethod,
@@ -160,12 +195,14 @@ export async function POST(
         userId: cliente.id,
         eventType: 'MEMBERSHIP_PURCHASED',
         entityId: membership.id,
-        monto: plan.price,
+        monto: chargedPrice,
         cantidad: 1,
         metadata: {
           planName: plan.name,
           durationDays,
-          price: plan.price
+          price: chargedPrice,
+          originalPrice: plan.price,
+          promotionTitle: appliedPromoTitle
         }
       });
     } catch (evtErr) {

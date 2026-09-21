@@ -1328,6 +1328,7 @@ export default async function PublicNegocioPage({
                     {/* GYM — 3. PLANES DE MEMBRESÍA */}
                     <HomeMembershipPlansClient 
                         plans={membershipPlans}
+                        promotions={promocionesActivas}
                         slug={slug}
                         primaryColor={primaryColor}
                         textColor={textColor}
