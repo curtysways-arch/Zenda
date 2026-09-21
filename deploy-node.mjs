@@ -23,6 +23,8 @@ const syncFolderRoots = [
   "src/app/api/admin/gym",
   "src/app/api/[slug]/gym",
   "src/app/api/[slug]/otp",
+  "src/app/admin/notificaciones",
+  "src/app/api/admin/notificaciones",
 
   // Módulo Dental Completo
   "src/modules/dental",

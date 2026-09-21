@@ -209,6 +209,44 @@ export async function POST(
       console.error('[MEMBERSHIP_EVENT_BUS_ERROR]', evtErr);
     }
 
+    // 4.1. Crear Notificación en Panel de Notificaciones del Administrador
+    try {
+      const paymentMethodNames: Record<string, string> = {
+        TARJETA_ONLINE: 'Tarjeta Online',
+        TRANSFERENCIA: `Transferencia Bancaria (Ref: ${refCode})`,
+        RECEPCION_EFECTIVO: 'Pago en Recepción / Caja'
+      };
+      const methodLabelText = paymentMethodNames[paymentMethod] || paymentMethod;
+
+      await prisma.notification.create({
+        data: {
+          negocioId: negocio.id,
+          tipo: 'MEMBRESIA',
+          categoria: 'MEMBRESÍAS',
+          titulo: '🏋️ Nueva Membresía Adquirida',
+          descripcion: `${cliente.nombre} ha adquirido el plan "${plan.name}" por $${chargedPrice} ${plan.currency || 'USD'} (${methodLabelText}).`,
+          icono: 'CreditCard',
+          prioridad: 'SUCCESS',
+          recipientType: 'ADMIN',
+          actionType: 'VER_MEMBRESIA',
+          actionPayload: JSON.stringify({
+            membershipId: membership.id,
+            customerId: cliente.id,
+            customerName: cliente.nombre,
+            customerPhone: cliente.telefono,
+            planName: plan.name,
+            price: chargedPrice,
+            currency: plan.currency || 'USD',
+            paymentMethod: methodLabelText,
+            endAt: endAt.toISOString()
+          }),
+          leida: false
+        }
+      });
+    } catch (notifErr) {
+      console.error('[MEMBERSHIP_ADMIN_NOTIFICATION_ERROR]', notifErr);
+    }
+
     // 5. Enviar Notificaciones Automáticas por WhatsApp (Socio y Administradores)
     try {
       const normalizePhone = (p: string) => {

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import prisma from '@/lib/prisma';
 import { publishBusinessEvent } from '@/lib/growth/eventBus';
 import { getGymAccessConfig } from '@/modules/gym/types/gymAccessConfig';
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getEffectiveAdminSession();
   if (!session?.user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }

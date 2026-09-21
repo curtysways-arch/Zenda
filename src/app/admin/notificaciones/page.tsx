@@ -26,7 +26,8 @@ import {
     ExternalLink,
     MessageSquare,
     FileText,
-    ArrowRight
+    ArrowRight,
+    CreditCard
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -252,6 +253,9 @@ export default function NotificacionesPage() {
                         if (actionPayload?.appointmentId) {
                             directLink = `/admin/citas/${actionPayload.appointmentId}`;
                             linkLabel = "Ver Detalle de Cita";
+                        } else if (actionPayload?.membershipId || item.tipo === 'MEMBRESIA' || item.actionType === 'VER_MEMBRESIA') {
+                            directLink = `/admin/socios`;
+                            linkLabel = "Ver Socios y Membresías";
                         } else if (actionPayload?.rewardId || item.tipo === 'PREMIO') {
                             directLink = `/admin/misiones?tab=rewards`;
                             linkLabel = "Ver Premios y Canjes";
@@ -454,6 +458,67 @@ export default function NotificacionesPage() {
                                                         No se pudo cargar la información de la reserva.
                                                     </div>
                                                 )}
+                                            </div>
+                                        )}
+
+                                        {/* Detalle Dinámico de la Membresía / Socio */}
+                                        {actionPayload?.membershipId && (
+                                            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-5">
+                                                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
+                                                        <CreditCard size={12} className="text-cyan-500" /> Datos del Socio y Membresía
+                                                    </span>
+                                                    <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                                        ACTIVA
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    {/* Datos del Socio */}
+                                                    <div className="space-y-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                                            <Users size={11} /> Información del Socio
+                                                        </p>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="size-11 rounded-xl bg-cyan-500 text-white font-black text-sm flex items-center justify-center shrink-0">
+                                                                {actionPayload.customerName?.charAt(0).toUpperCase() || 'S'}
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-xs font-black text-slate-800 truncate uppercase">{actionPayload.customerName || 'Socio'}</p>
+                                                                <p className="text-[10px] text-slate-400 font-medium truncate">{actionPayload.customerPhone || ''}</p>
+                                                            </div>
+                                                        </div>
+                                                        {actionPayload.customerPhone && (
+                                                            <div className="flex items-center gap-2 pt-2 border-t border-slate-200/50">
+                                                                <a 
+                                                                    href={`https://wa.me/${actionPayload.customerPhone.replace(/[^0-9]/g, '')}`}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                                                                >
+                                                                    <MessageSquare size={12} /> Contactar WhatsApp
+                                                                </a>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Datos del Plan y Pago */}
+                                                    <div className="space-y-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                                                        <div className="space-y-2">
+                                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                                                <CreditCard size={11} /> Plan Adquirido
+                                                            </p>
+                                                            <p className="text-xs font-black text-slate-800 uppercase tracking-tight leading-snug">{actionPayload.planName}</p>
+                                                            <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold">
+                                                                <span className="flex items-center gap-1">
+                                                                    <DollarSign size={11} className="text-slate-400" /> ${actionPayload.price} {actionPayload.currency || 'USD'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="pt-2 border-t border-slate-200/50 text-[10px] text-slate-500 font-medium">
+                                                            Método: <span className="font-bold text-slate-700">{actionPayload.paymentMethod || 'Online'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
 
