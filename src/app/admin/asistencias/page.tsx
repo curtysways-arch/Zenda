@@ -1,13 +1,12 @@
 import React from 'react';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { redirect } from 'next/navigation';
 import GymAttendancePage from '@/modules/gym/components/GymAttendancePage';
 
 export default async function AsistenciasPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getEffectiveAdminSession();
   if (!session?.user) {
-    redirect('/auth/login');
+    redirect('/login');
   }
 
   return <GymAttendancePage />;

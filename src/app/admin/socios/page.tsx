@@ -1,13 +1,12 @@
 import React from 'react';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { redirect } from 'next/navigation';
 import GymMembersPage from '@/modules/gym/components/GymMembersPage';
 
 export default async function SociosPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getEffectiveAdminSession();
   if (!session?.user) {
-    redirect('/auth/login');
+    redirect('/login');
   }
 
   return <GymMembersPage />;
