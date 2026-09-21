@@ -99,7 +99,7 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         // PROTECCIÓN MODO DEMO
