@@ -25,7 +25,6 @@ import {
   Check
 } from 'lucide-react';
 import PhoneInput from '@/components/ui/PhoneInput';
-import { isPointInPolygon } from '@/lib/geoUtils';
 import MapSelectionModal from '@/components/public/MapSelectionModal';
 
 export interface ArticleItem {
@@ -106,7 +105,6 @@ export default function UniversalServiceRequestModal({
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpCountdown, setOtpCountdown] = useState(60);
   const [otpSentSuccess, setOtpSentSuccess] = useState(false);
-  const [coveragePolygon, setCoveragePolygon] = useState<Array<[number, number]>>([]);
 
   // Cuenta regresiva para reenvío de OTP
   useEffect(() => {
@@ -146,20 +144,6 @@ export default function UniversalServiceRequestModal({
     }
   ]);
 
-  // Cargar Cobertura oficial del Negocio
-  useEffect(() => {
-    if (negocio?.id) {
-      fetch(`/api/shoe-care/coverage?negocioId=${negocio.id}`)
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data && Array.isArray(data.poligono) && data.poligono.length >= 3) {
-            setCoveragePolygon(data.poligono);
-          }
-        })
-        .catch(() => {});
-    }
-  }, [negocio?.id]);
-
   // Cargar Sesión de Cliente Activa
   useEffect(() => {
     if (negocio?.slug) {
@@ -179,12 +163,6 @@ export default function UniversalServiceRequestModal({
         .catch(() => {});
     }
   }, [negocio?.slug]);
-
-  // Validación GPS de Cobertura para Retiro a Domicilio
-  const isOutsideCoverage = useMemo(() => {
-    if (!coords.lat || !coords.lng || !coveragePolygon || coveragePolygon.length < 3) return false;
-    return !isPointInPolygon([coords.lat, coords.lng], coveragePolygon);
-  }, [coords.lat, coords.lng, coveragePolygon]);
 
   // Cálculo Dinámico del Costo de Retiro / Entrega por Distancia GPS (Haversine)
   const costoEnvioCalculado = useMemo(() => {
@@ -341,7 +319,6 @@ export default function UniversalServiceRequestModal({
     if (!formCliente.telefono.trim()) errors.telefono = 'El teléfono WhatsApp es obligatorio';
     if (!formCliente.direccion.trim()) errors.direccion = 'La dirección de retiro es obligatoria';
     if (!formCliente.referencia.trim()) errors.referencia = 'La referencia de ubicación es obligatoria';
-    if (isOutsideCoverage) errors.cobertura = 'La ubicación está fuera de la zona de cobertura oficial';
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -979,16 +956,6 @@ export default function UniversalServiceRequestModal({
                         </p>
                       )}
                     </div>
-
-                    {isOutsideCoverage && (
-                      <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-amber-900 text-xs font-medium">
-                        <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-                        <div>
-                          <strong className="block font-black text-amber-950">Fuera de Zona de Cobertura</strong>
-                          <span>Tu punto GPS está fuera del perímetro de retiro oficial del negocio. Puedes consultarnos directamente por WhatsApp para coordinar una excepción.</span>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Selección de Horario */}
