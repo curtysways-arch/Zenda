@@ -535,10 +535,10 @@ export default function MiPerfilPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 pb-36 select-none">
+    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 pb-36 select-none pt-[76px]">
       
       {/* ── 1. HEADER SUPERIOR NEGRO ── */}
-      <header className="sticky top-0 z-[100] bg-slate-950 text-white px-4 py-3.5 shadow-md border-b border-slate-800">
+      <header className="sticky top-[76px] z-[100] bg-slate-950 text-white px-4 py-3.5 shadow-md border-b border-slate-800">
         <div className="max-w-4xl w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
