@@ -8,6 +8,18 @@ import { SignJWT } from 'jose';
 // Memoria caché de respaldo rápida para entornos de desarrollo y producción
 const otpStore = new Map<string, { code: string; expiresAt: number }>();
 
+function normalizePhone(phone: string): string {
+    let clean = phone.replace(/\D/g, '');
+    if (clean.startsWith('0') && clean.length === 10) {
+        clean = '593' + clean.substring(1);
+    } else if (clean.length === 9 && clean.startsWith('9')) {
+        clean = '593' + clean;
+    } else if (clean.startsWith('5930')) {
+        clean = '593' + clean.substring(4);
+    }
+    return clean;
+}
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -20,7 +32,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const cleanPhone = phone.replace(/\D/g, '');
+        const cleanPhone = normalizePhone(phone);
         if (cleanPhone.length < 7) {
             return NextResponse.json(
                 { success: false, error: 'Número de teléfono inválido.' },

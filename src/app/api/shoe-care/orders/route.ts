@@ -1,7 +1,20 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
 
 export const dynamic = 'force-dynamic';
+
+function normalizePhone(phone: string): string {
+  let clean = phone.replace(/\D/g, '');
+  if (clean.startsWith('0') && clean.length === 10) {
+    clean = '593' + clean.substring(1);
+  } else if (clean.length === 9 && clean.startsWith('9')) {
+    clean = '593' + clean;
+  } else if (clean.startsWith('5930')) {
+    clean = '593' + clean.substring(4);
+  }
+  return clean;
+}
 
 export async function GET(req: Request) {
   try {
@@ -211,9 +224,80 @@ export async function POST(req: Request) {
       }
     });
 
-    // 4. Si es Domicilio, simular o disparar notificación de WhatsApp al negocio
-    if (esDomicilio) {
-      console.log(`📱 [WhatsApp Business Notify] Nueva solicitud de retiro a domicilio #${numeroPedido} de ${nombreCliente} (${telefonoCliente})`);
+    // 4. Enviar notificaciones reales de WhatsApp al Negocio y al Cliente
+    try {
+      const negocio = await prisma.negocio.findUnique({
+        where: { id: negocioId },
+        select: { nombre: true, whatsapp: true }
+      });
+
+      // Si el negocio no tiene teléfono configurado, intentar con el teléfono admin global
+      let waNegocioNumero = negocio?.whatsapp;
+      if (!waNegocioNumero) {
+        try {
+          const cfg = await (prisma as any).globalConfig.findUnique({
+            where: { clave: 'NUMERO_WHATSAPP_ADMIN' }
+          });
+          waNegocioNumero = cfg?.valor || '593959997521';
+        } catch {
+          waNegocioNumero = '593959997521';
+        }
+      }
+
+      const cleanCliente = normalizePhone(telefonoCliente);
+      const cleanNegocio = waNegocioNumero ? normalizePhone(waNegocioNumero) : null;
+
+      // Resumen legible de artículos
+      const articulosTexto = Array.isArray(rawArticulos) && rawArticulos.length > 0
+        ? rawArticulos.map((a: any, idx: number) => `  ${idx + 1}. ${a.cantidad || 1}x ${a.tipo || 'Calzado'} (${a.servicioNombre || 'Limpieza'}${a.variante ? ' - ' + a.variante : ''})`).join('\n')
+        : `  • ${cantidadPares || 1} par(es) de calzado`;
+
+      const totalEstimadoFinal = (totalCalculado + costoEnvioCalculado).toFixed(2);
+
+      // 4.1 Notificación al Negocio
+      if (cleanNegocio) {
+        const msgNegocio = [
+          `🔔 *NUEVA ORDEN DE SERVICIO #${numeroPedido}*`,
+          ``,
+          `👤 *Cliente:* ${nombreCliente}`,
+          `📞 *WhatsApp:* +${cleanCliente}`,
+          `📍 *Dirección:* ${direccionCliente || 'Recepción en local'}`,
+          referenciaCliente ? `📝 *Referencia:* ${referenciaCliente}` : null,
+          `🚚 *Modalidad:* ${esDomicilio ? 'Retiro a Domicilio' : 'Recepción en Local'}`,
+          `⏰ *Horario:* ${fechaHoraRetiro || 'A coordinar'}`,
+          `📦 *Prendas:*`,
+          articulosTexto,
+          observaciones || notas ? `💬 *Observaciones:* ${observaciones || notas}` : null,
+          ``,
+          `💵 *Total Estimado: $${totalEstimadoFinal} USD*`,
+          ``,
+          `👉 Gestionar pedido en el panel:`,
+          `https://citiox.com/admin/lavado`
+        ].filter(Boolean).join('\n');
+
+        await sendWhatsAppMessage(cleanNegocio, msgNegocio, 'shoe_care_nueva_orden_negocio');
+      }
+
+      // 4.2 Notificación de confirmación al Cliente
+      if (cleanCliente) {
+        const msgCliente = [
+          `👟 *¡Hola ${nombreCliente}! Recibimos tu solicitud #${numeroPedido}*`,
+          ``,
+          `Hemos registrado tu pedido para el cuidado de tus prendas:`,
+          `📦 *Artículos:*`,
+          articulosTexto,
+          `🚚 *Modalidad:* ${esDomicilio ? 'Retiro a Domicilio' : 'Recepción en Local'}`,
+          `⏰ *Horario solicitado:* ${fechaHoraRetiro || 'A coordinar'}`,
+          `📍 *Dirección:* ${direccionCliente || 'En local'}`,
+          `💵 *Total Estimado: $${totalEstimadoFinal} USD*`,
+          ``,
+          `Nos pondremos en contacto contigo para coordinar el retiro e informarte tras la inspección física en taller. ¡Gracias por tu preferencia! 🫧✨`
+        ].filter(Boolean).join('\n');
+
+        await sendWhatsAppMessage(cleanCliente, msgCliente, 'shoe_care_confirmacion_cliente');
+      }
+    } catch (waErr) {
+      console.error('[WhatsApp Orders] Error despachando notificaciones:', waErr);
     }
 
     return NextResponse.json(pedido, { status: 201 });

@@ -5,6 +5,18 @@ import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
 
 export const dynamic = 'force-dynamic';
 
+function normalizePhone(phone: string): string {
+  let clean = phone.replace(/\D/g, '');
+  if (clean.startsWith('0') && clean.length === 10) {
+    clean = '593' + clean.substring(1);
+  } else if (clean.length === 9 && clean.startsWith('9')) {
+    clean = '593' + clean;
+  } else if (clean.startsWith('5930')) {
+    clean = '593' + clean.substring(4);
+  }
+  return clean;
+}
+
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
@@ -81,7 +93,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       ].filter(Boolean).join('\n');
 
       await sendWhatsAppMessage(
-        telefonoCliente.replace(/\D/g, ''),
+        normalizePhone(telefonoCliente),
         mensaje,
         'shoe_care_cotizacion'
       );

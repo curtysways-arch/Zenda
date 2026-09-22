@@ -100,7 +100,22 @@ export default function UniversalServiceRequestModal({
 
   // Sesión y Cobertura
   const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(false);
+  const [showOtpView, setShowOtpView] = useState(false);
+  const [otpInput, setOtpInput] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpCountdown, setOtpCountdown] = useState(60);
+  const [otpSentSuccess, setOtpSentSuccess] = useState(false);
   const [coveragePolygon, setCoveragePolygon] = useState<Array<[number, number]>>([]);
+
+  // Cuenta regresiva para reenvío de OTP
+  useEffect(() => {
+    let timer: any;
+    if (showOtpView && otpCountdown > 0) {
+      timer = setInterval(() => setOtpCountdown(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [showOtpView, otpCountdown]);
 
   // Servicios reales del catálogo del negocio
   const businessServices = useMemo(() => {
@@ -373,13 +388,8 @@ export default function UniversalServiceRequestModal({
     }
   };
 
-  // Enviar Solicitud Definitiva al Backend (Paso 4)
-  const handleConfirmSubmit = async () => {
-    if (!validateStep1() || !validateStep2()) {
-      setStep(1);
-      return;
-    }
-
+  // Ejecuta la creación del pedido en el backend
+  const executeOrderSubmission = async () => {
     setSubmitting(true);
     setSubmitError(null);
 
@@ -436,6 +446,91 @@ export default function UniversalServiceRequestModal({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Solicitar envío de OTP por WhatsApp
+  const handleRequestOtp = async () => {
+    setOtpLoading(true);
+    setOtpError(null);
+    try {
+      const res = await fetch('/api/public/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_otp',
+          phone: formCliente.telefono,
+          slug: negocio?.slug || 'lavado'
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setShowOtpView(true);
+        setOtpSentSuccess(true);
+        setOtpCountdown(60);
+      } else {
+        setSubmitError(data.error || 'No se pudo enviar el código OTP a tu WhatsApp. Verifica tu número.');
+      }
+    } catch (err) {
+      setSubmitError('Error de conexión al enviar el código de verificación.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Verificar OTP e Iniciar Sesión + Enviar Pedido
+  const handleVerifyOtpAndSubmit = async () => {
+    if (!otpInput || otpInput.trim().length < 6) {
+      setOtpError('Por favor ingresa el código completo de 6 dígitos.');
+      return;
+    }
+
+    setOtpLoading(true);
+    setOtpError(null);
+
+    try {
+      const res = await fetch('/api/public/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify_otp',
+          phone: formCliente.telefono,
+          code: otpInput.trim(),
+          slug: negocio?.slug || 'lavado'
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        // Sesión confirmada exitosamente con cookies customer_token y cs=1
+        setIsCustomerLoggedIn(true);
+        setShowOtpView(false);
+        // Crear la orden inmediatamente
+        await executeOrderSubmission();
+      } else {
+        setOtpError(data.error || 'El código ingresado es incorrecto o ha expirado.');
+      }
+    } catch (err) {
+      setOtpError('Error de red al validar el código OTP.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Al presionar Confirmar Solicitud:
+  // Si no está logueado, solicita OTP. Si ya está logueado, crea la orden directamente.
+  const handleConfirmSubmit = async () => {
+    if (!validateStep1() || !validateStep2()) {
+      setStep(1);
+      return;
+    }
+
+    if (!isCustomerLoggedIn) {
+      await handleRequestOtp();
+      return;
+    }
+
+    await executeOrderSubmission();
   };
 
   if (!isOpen) return null;
@@ -528,6 +623,116 @@ export default function UniversalServiceRequestModal({
             >
               Entendido y Ver Mis Órdenes
             </button>
+          </div>
+        ) : showOtpView ? (
+          /* ──────── PANTALLA DE VERIFICACIÓN OTP ──────── */
+          <div className="p-6 sm:p-8 space-y-5 overflow-y-auto my-auto text-center animate-in zoom-in-95 duration-200">
+            <div className="size-18 bg-purple-100 text-purple-700 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+              <ShieldCheck size={40} />
+            </div>
+
+            <div className="space-y-2">
+              <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200/80 rounded-full text-[10px] font-black uppercase tracking-widest inline-block">
+                Verificación WhatsApp Requerida
+              </span>
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                Confirma tu número
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-md mx-auto leading-relaxed">
+                Para registrar tu pedido e iniciar tu sesión de forma segura, ingresa el código de 6 dígitos que enviamos por WhatsApp al número:
+              </p>
+              <div className="flex items-center justify-center gap-2 pt-1">
+                <span className="font-mono font-black text-sm text-slate-900 bg-slate-100 px-3.5 py-1.5 rounded-xl border border-slate-200">
+                  {formCliente.telefono}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowOtpView(false);
+                    setStep(1);
+                  }}
+                  className="text-xs text-purple-600 hover:text-purple-800 font-bold underline cursor-pointer"
+                >
+                  Editar número
+                </button>
+              </div>
+            </div>
+
+            {otpError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-bold text-rose-700 flex items-center gap-2 text-left max-w-sm mx-auto">
+                <AlertCircle size={18} className="shrink-0 text-rose-600" />
+                <span>{otpError}</span>
+              </div>
+            )}
+
+            {otpSentSuccess && (
+              <p className="text-xs text-emerald-600 font-bold">
+                ✓ Código enviado a tu WhatsApp. Revisa tus mensajes.
+              </p>
+            )}
+
+            <div className="max-w-xs mx-auto space-y-4">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-2">
+                  Código de 6 dígitos
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  autoFocus
+                  value={otpInput}
+                  onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
+                  placeholder="••••••"
+                  className="w-full text-center tracking-[0.5em] font-mono text-3xl font-black py-3.5 px-4 bg-slate-50 border-2 border-purple-300 focus:border-purple-600 rounded-2xl outline-none text-slate-900 transition-colors shadow-inner"
+                />
+              </div>
+
+              <button
+                type="button"
+                disabled={otpLoading || submitting || otpInput.trim().length < 6}
+                onClick={handleVerifyOtpAndSubmit}
+                className="w-full py-4 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-600/25 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+              >
+                {(otpLoading || submitting) ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    <span>Verificando y registrando pedido...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={18} />
+                    <span>Verificar y Confirmar Pedido</span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowOtpView(false)}
+                  className="text-slate-400 hover:text-slate-600 font-medium cursor-pointer"
+                >
+                  Volver a la orden
+                </button>
+
+                {otpCountdown > 0 ? (
+                  <span className="text-slate-400 font-medium text-[11px]">
+                    Reenviar en {otpCountdown}s
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleRequestOtp}
+                    disabled={otpLoading}
+                    className="text-purple-600 hover:text-purple-800 font-bold underline cursor-pointer text-[11px]"
+                  >
+                    Reenviar código
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         ) : (
           /* ──────── WIZARD DE 4 PASOS ──────── */
@@ -1317,18 +1522,18 @@ export default function UniversalServiceRequestModal({
                 <button
                   type="button"
                   onClick={handleConfirmSubmit}
-                  disabled={submitting}
+                  disabled={submitting || otpLoading}
                   className="py-4 px-8 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-600/30 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98 flex-1 sm:flex-initial ml-auto"
                 >
-                  {submitting ? (
+                  {submitting || otpLoading ? (
                     <>
                       <Loader2 className="animate-spin" size={18} />
-                      <span>Enviando solicitud...</span>
+                      <span>{otpLoading ? 'Enviando código WhatsApp...' : 'Enviando solicitud...'}</span>
                     </>
                   ) : (
                     <>
                       <Check size={18} />
-                      <span>CONFIRMAR SOLICITUD</span>
+                      <span>{isCustomerLoggedIn ? 'CONFIRMAR SOLICITUD' : 'CONFIRMAR Y VERIFICAR'}</span>
                     </>
                   )}
                 </button>

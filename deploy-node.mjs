@@ -36,7 +36,12 @@ const syncFolderRoots = [
 
   // Módulo Productos y Tienda
   "src/app/[slug]/producto",
-  "src/app/api/public/[slug]/products"
+  "src/app/api/public/[slug]/products",
+
+  // Módulo Lavandería / Calzado (Shoe Care) Completo
+  "src/modules/shoe-care",
+  "src/app/api/shoe-care",
+  "src/app/lavado"
 ];
 
 // Archivos individuales adicionales
@@ -116,7 +121,9 @@ const manualFiles = [
   "src/app/admin/marketing/conoce-el-gym/page.tsx",
   "src/components/public/PromotionsSection.tsx",
   "src/components/ui/PhoneInput.tsx",
-  "src/app/api/shoe-care/orders/[id]/inspect/route.ts"
+  "src/app/api/shoe-care/orders/[id]/inspect/route.ts",
+  "src/components/public/UniversalServiceRequestModal.tsx",
+  "src/app/api/public/auth/otp/route.ts"
 ];
 
 function collectAllFilesAndDirs(roots, extraFiles) {
