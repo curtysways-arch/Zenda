@@ -55,6 +55,7 @@ const manualFiles = [
   "src/scripts/seed_plan_families.ts",
   "src/components/admin/AdminSidebar.tsx",
   "src/components/public/PublicMobileNav.tsx",
+  "src/components/public/PublicDesktopNav.tsx",
   "src/core/capabilities/types.ts",
   "src/core/modules/types.ts",
   "src/core/modules/registry.ts",

@@ -1025,7 +1025,8 @@ function ShoeCareLandingInner({ negocio, reviews = [], paginasPersonalizadas = [
       })()}
 
       {/* 🏷️ SECTION 3: NUESTROS SERVICIOS */}
-      <section id="servicios" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      <section id="servicios" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 scroll-mt-24">
+        <div id="catalogo" className="relative -top-24 pointer-events-none" />
         <div className="text-center space-y-3">
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Nuestros servicios</h2>
           <div className="w-12 h-1 bg-purple-600 mx-auto rounded-full" />
@@ -1068,7 +1069,8 @@ function ShoeCareLandingInner({ negocio, reviews = [], paginasPersonalizadas = [
 
       {/* ── 3. SECCIÓN DE PROMOCIONES & COMBOS (DISEÑO EXACTO A LA TIENDA DE LA REFERENCIA) ── */}
       {displayPromotions.length > 0 && (
-        <section id="promociones" className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
+        <section id="promociones" className="max-w-7xl mx-auto px-4 sm:px-6 mt-6 scroll-mt-24">
+          <div id="ofertas" className="relative -top-24 pointer-events-none" />
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full bg-cyan-50 border border-cyan-200/80 text-cyan-700 font-extrabold text-[10px] uppercase tracking-wider shadow-2xs flex items-center gap-1">

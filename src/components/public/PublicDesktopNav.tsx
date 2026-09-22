@@ -141,7 +141,7 @@ export default function PublicDesktopNav({
         },
         {
             label: 'Ofertas',
-            href: `/${slug}#ofertas`,
+            href: isShoeCare ? `/${slug}#promociones` : `/${slug}#ofertas`,
             icon: Flame,
             active: activeTab === 'ofertas'
         },
@@ -155,7 +155,7 @@ export default function PublicDesktopNav({
             label: 'Mi Cuenta',
             href: `/${slug}/perfil`,
             icon: User,
-            active: activeTab === 'cuenta'
+            active: activeTab === 'cuenta' || pathname.includes('/perfil')
         }
     ] : [
         {
@@ -204,11 +204,21 @@ export default function PublicDesktopNav({
 
     const buttonHref = isGym
         ? `/${slug}#planes`
+        : isShoeCare
+        ? `/${slug}#servicios`
         : canOrders 
         ? `/${slug}#catalogo` 
         : `/${slug}#servicios`;
 
     const handleCatalogClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (isShoeCare && pathname === `/${slug}`) {
+            const el = document.getElementById('servicios') || document.getElementById('catalogo') || document.getElementById('productos');
+            if (el) {
+                e.preventDefault();
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            return;
+        }
         if (isGym && pathname === `/${slug}`) {
             const el = document.getElementById('planes');
             if (el) {
@@ -230,6 +240,28 @@ export default function PublicDesktopNav({
     };
 
     const handleNavClick = (item: typeof navItems[0], e: React.MouseEvent) => {
+        if (isShoeCare) {
+            if (item.label.toLowerCase().includes('oferta')) {
+                if (pathname === `/${slug}`) {
+                    e.preventDefault();
+                    const el = document.getElementById('promociones') || document.getElementById('ofertas');
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+                return;
+            }
+            if (item.label.toLowerCase().includes('inicio')) {
+                if (pathname === `/${slug}`) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                return;
+            }
+            // Para "Mis Órdenes" (/lavado/pedidos) y "Mi Cuenta" (/lavado/perfil), dejamos que navegue normalmente
+            return;
+        }
+
         if (canOrders && pathname === `/${slug}`) {
             e.preventDefault();
             const tabKey = item.label.toLowerCase().includes('oferta') ? 'ofertas'
