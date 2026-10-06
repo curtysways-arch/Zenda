@@ -1,5 +1,5 @@
 import { getNegocioBySlug } from '@/lib/services';
-import { getServiceGalleryImages } from '@/lib/serviceImageHelper';
+import { getServiceGalleryImages, getServicePrimaryImage } from '@/lib/serviceImageHelper';
 import BookingClient from '../../BookingClient';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
@@ -26,10 +26,14 @@ import { jwtVerify } from 'jose';
 
 export default async function CanchaDetailPage({
     params,
+    searchParams,
 }: {
     params: Promise<{ slug: string; id: string }>;
+    searchParams?: Promise<{ promoId?: string; [key: string]: any }>;
 }) {
     const { slug, id } = await params;
+    const resolvedSearchParams = searchParams ? await searchParams : {};
+    const urlPromoId = resolvedSearchParams.promoId;
     const negocio = await getNegocioBySlug(slug);
 
     if (!negocio) {
@@ -121,15 +125,27 @@ export default async function CanchaDetailPage({
     }
 
     // Buscar si la cancha (servicio) tiene una promoción activa HOY para efectos visuales iniciales
-    // Buscar la promoción base de hoy (preferir la que NO tiene restricciones de horario)
-    const promoHoy = cancha.promociones?.find((p: any) => {
+    const allCanchaPromos = [
+        ...(cancha.promociones || []),
+        ...(cancha.PromotionToService || []).map((rel: any) => rel.Promotion),
+        ...(cancha.Promotion ? [cancha.Promotion] : [])
+    ].filter(Boolean);
+
+    let promoHoy: any = null;
+    if (urlPromoId) {
+        promoHoy = allCanchaPromos.find((p: any) => p.id === urlPromoId);
+    }
+
+    if (!promoHoy) {
         const now = new Date();
-        const isTimeLimited = (p.horaInicioValida && p.horaInicioValida.trim() !== '') || (p.horaFinValida && p.horaFinValida.trim() !== '');
-        return p.estado === 'activa' && new Date(p.fechaInicio) <= now && new Date(p.fechaFin) >= now && !isTimeLimited;
-    }) || cancha.promociones?.find((p: any) => {
-        const now = new Date();
-        return p.estado === 'activa' && new Date(p.fechaInicio) <= now && new Date(p.fechaFin) >= now;
-    });
+        promoHoy = allCanchaPromos.find((p: any) => {
+            const isTimeLimited = (p.horaInicioValida && p.horaInicioValida.trim() !== '') || (p.horaFinValida && p.horaFinValida.trim() !== '');
+            return p.estado === 'activa' && new Date(p.fechaInicio) <= now && new Date(p.fechaFin) >= now && !isTimeLimited;
+        }) || allCanchaPromos.find((p: any) => {
+            const now = new Date();
+            return p.estado === 'activa' && new Date(p.fechaInicio) <= now && new Date(p.fechaFin) >= now;
+        });
+    }
 
     if (promoHoy) {
         cancha.promocion = promoHoy;
@@ -159,7 +175,11 @@ export default async function CanchaDetailPage({
 
     const canchaImages = getServiceGalleryImages(cancha, 'medium');
     const negocioImages = negocio.imagenes?.map((img: any) => img.url) || [];
-    const imagesToUse = canchaImages.length > 0 ? canchaImages : negocioImages.length > 0 ? negocioImages : ['https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=600'];
+    const imagesToUse = canchaImages.length > 0 
+        ? canchaImages 
+        : negocioImages.length > 0 
+            ? negocioImages 
+            : [getServicePrimaryImage(cancha, 'original', negocio.tipoNegocio)];
 
     const ubicacion = (cancha as any).ubicacion;
 
@@ -348,6 +368,35 @@ export default async function CanchaDetailPage({
                         <p className="text-xs sm:text-sm font-medium text-slate-600 leading-relaxed">
                             {cancha.descripcion}
                         </p>
+                    </div>
+                )}
+
+                {/* ¿QUÉ INCLUYE ESTE SERVICIO? */}
+                {((Array.isArray((cancha as any).itemsIncluidos) && (cancha as any).itemsIncluidos.length > 0) ||
+                  (Array.isArray((cancha as any).extraInfo?.itemsIncluidos) && (cancha as any).extraInfo.itemsIncluidos.length > 0)) && (
+                    <div className="bg-white border border-slate-200/80 shadow-xs rounded-2xl p-4 sm:p-5 space-y-3">
+                        <div className="flex items-center gap-2">
+                            <div 
+                                className="p-1 rounded-md flex items-center justify-center text-white shadow-xs"
+                                style={{ backgroundColor: primaryColor }}
+                            >
+                                <Sparkles size={13} />
+                            </div>
+                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                                ¿Qué incluye este servicio?
+                            </h3>
+                        </div>
+                        <ul className="space-y-2">
+                            {(((cancha as any).itemsIncluidos?.length > 0 ? (cancha as any).itemsIncluidos : (cancha as any).extraInfo?.itemsIncluidos) || []).map((item: string, idx: number) => (
+                                <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 font-medium">
+                                    <div 
+                                        className="size-1.5 rounded-full shrink-0 mt-1.5"
+                                        style={{ backgroundColor: primaryColor }}
+                                    />
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 )}
 

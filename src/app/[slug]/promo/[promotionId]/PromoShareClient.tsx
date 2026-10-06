@@ -313,7 +313,7 @@ export default function PromoShareClient({
                                         <Link
                                             href={isGym 
                                                 ? `/${slug}?promo=${promotion.id}${meta?.membershipPlanId ? `&planId=${meta.membershipPlanId}` : ''}#planes` 
-                                                : (promotion.services && promotion.services.length > 0 ? `/${slug}/servicio/${promotion.services[0].id}` : `/${slug}#servicios`)}
+                                                : (promotion.services && promotion.services.length > 0 ? `/${slug}/servicio/${promotion.services[0].id}?promoId=${promotion.id}` : `/${slug}#servicios`)}
                                             className="w-full text-white font-black text-sm uppercase tracking-widest py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 group text-center"
                                             style={{ backgroundColor: primaryColor }}
                                         >

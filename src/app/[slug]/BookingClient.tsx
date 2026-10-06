@@ -368,14 +368,14 @@ const resolveSlotPromotion = (
     }, [selectedServiceIds, allServices]);
 
     const activePackInfo = useMemo(() => {
-        if (selectedBooking?.packPromo) return parsePackInfo(selectedBooking);
+        if (selectedBooking?.packPromo) return parsePackInfo(selectedBooking, forcedPromoId);
         const mainService = allServices.find((s: any) => s.id === (selectedServiceIds[0] || initialServiceId)) || primaryService;
         if (mainService) {
-            const fromService = parsePackInfo(mainService);
+            const fromService = parsePackInfo(mainService, forcedPromoId);
             if (fromService) return fromService;
         }
         return null;
-    }, [selectedBooking, selectedServiceIds, initialServiceId, allServices, primaryService]);
+    }, [selectedBooking, selectedServiceIds, initialServiceId, allServices, primaryService, forcedPromoId]);
 
     useEffect(() => {
         if (selectedBooking) {
@@ -403,29 +403,29 @@ const resolveSlotPromotion = (
                                        (wp.PromotionToService && wp.PromotionToService.length > 1) ||
                                        String(wp.titulo || '').toLowerCase().includes('pack') ||
                                        String(wp.titulo || '').toLowerCase().includes('combo');
-                        if (isPack) {
-                            const included = (wp.PromotionToService || [])
-                                .map((pts: any) => pts.Service?.nombre || pts.Service?.name)
-                                .filter(Boolean);
-                            const includedDetails = (wp.PromotionToService || [])
-                                .map((pts: any) => ({
-                                    nombre: pts.Service?.nombre || pts.Service?.name,
-                                    duracion: pts.Service?.duracion,
-                                    precio: pts.Service?.precio
-                                }))
-                                .filter((item: any) => Boolean(item.nombre));
+                        
+                        const included = (wp.PromotionToService || [])
+                            .map((pts: any) => pts.Service?.nombre || pts.Service?.name)
+                            .filter(Boolean);
+                        const includedDetails = (wp.PromotionToService || [])
+                            .map((pts: any) => ({
+                                nombre: pts.Service?.nombre || pts.Service?.name,
+                                duracion: pts.Service?.duracion,
+                                precio: pts.Service?.precio
+                            }))
+                            .filter((item: any) => Boolean(item.nombre));
 
-                            currentPackPromo = {
-                                id: wp.id,
-                                titulo: wp.titulo,
-                                descripcion: wp.descripcion,
-                                precioPromo: res.price,
-                                precioOriginal: wp.precioAnterior || s.precio,
-                                servicios: included.length > 0 ? included : [s.nombre],
-                                serviciosDetalle: includedDetails.length > 0 ? includedDetails : undefined,
-                                tipoPromo: wp.tipoPromo
-                            };
-                        }
+                        currentPackPromo = {
+                            id: wp.id,
+                            titulo: wp.titulo,
+                            descripcion: wp.descripcion,
+                            precioPromo: res.price,
+                            precioOriginal: wp.precioAnterior || s.precio,
+                            servicios: included.length > 0 ? included : [s.nombre],
+                            serviciosDetalle: includedDetails.length > 0 ? includedDetails : undefined,
+                            tipoPromo: wp.tipoPromo,
+                            isPack: Boolean(isPack)
+                        };
                     }
                 }
 
@@ -490,29 +490,28 @@ const resolveSlotPromotion = (
                                    String(winningPromo.titulo || '').toLowerCase().includes('pack') ||
                                    String(winningPromo.titulo || '').toLowerCase().includes('combo');
 
-                    if (isPack) {
-                        const included = (winningPromo.PromotionToService || [])
-                            .map((pts: any) => pts.Service?.nombre || pts.Service?.name)
-                            .filter(Boolean);
-                        const includedDetails = (winningPromo.PromotionToService || [])
-                            .map((pts: any) => ({
-                                nombre: pts.Service?.nombre || pts.Service?.name,
-                                duracion: pts.Service?.duracion,
-                                precio: pts.Service?.precio
-                            }))
-                            .filter((item: any) => Boolean(item.nombre));
+                    const included = (winningPromo.PromotionToService || [])
+                        .map((pts: any) => pts.Service?.nombre || pts.Service?.name)
+                        .filter(Boolean);
+                    const includedDetails = (winningPromo.PromotionToService || [])
+                        .map((pts: any) => ({
+                            nombre: pts.Service?.nombre || pts.Service?.name,
+                            duracion: pts.Service?.duracion,
+                            precio: pts.Service?.precio
+                        }))
+                        .filter((item: any) => Boolean(item.nombre));
 
-                        appliedPackPromo = {
-                            id: winningPromo.id,
-                            titulo: winningPromo.titulo,
-                            descripcion: winningPromo.descripcion,
-                            precioPromo: res.price,
-                            precioOriginal: winningPromo.precioAnterior || s.precio,
-                            servicios: included.length > 0 ? included : [s.nombre],
-                            serviciosDetalle: includedDetails.length > 0 ? includedDetails : undefined,
-                            tipoPromo: winningPromo.tipoPromo
-                        };
-                    }
+                    appliedPackPromo = {
+                        id: winningPromo.id,
+                        titulo: winningPromo.titulo,
+                        descripcion: winningPromo.descripcion,
+                        precioPromo: res.price,
+                        precioOriginal: winningPromo.precioAnterior || s.precio,
+                        servicios: included.length > 0 ? included : [s.nombre],
+                        serviciosDetalle: includedDetails.length > 0 ? includedDetails : undefined,
+                        tipoPromo: winningPromo.tipoPromo,
+                        isPack: Boolean(isPack)
+                    };
                 }
             }
 
@@ -1176,17 +1175,35 @@ const resolveSlotPromotion = (
             {/* TARJETA DETALLE PACK PROMOCIONAL O DE LA PROMO */}
             {activePackInfo && (
                 <div className={`mx-2 rounded-[2rem] p-5 sm:p-6 shadow-sm space-y-4 animate-in fade-in duration-300 border-2 ${
-                    activePackInfo.isPack 
+                    activePackInfo.tipoPromo === '2x1'
+                        ? 'bg-gradient-to-br from-amber-50/95 via-orange-50/85 to-yellow-50/95 border-amber-200/90'
+                        : activePackInfo.tipoPromo === '3x1'
+                        ? 'bg-gradient-to-br from-rose-50/95 via-orange-50/85 to-amber-50/95 border-rose-200/90'
+                        : activePackInfo.isPack 
                         ? 'bg-gradient-to-br from-indigo-50/95 via-sky-50/85 to-blue-50/95 border-indigo-200/90' 
                         : 'bg-gradient-to-br from-emerald-50/95 via-teal-50/85 to-sky-50/95 border-emerald-200/90'
                 }`}>
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div className="space-y-1.5 flex-1">
                             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-xs ${
-                                activePackInfo.isPack ? 'bg-indigo-600' : 'bg-emerald-600'
+                                activePackInfo.tipoPromo === '2x1'
+                                    ? 'bg-amber-600'
+                                    : activePackInfo.tipoPromo === '3x1'
+                                    ? 'bg-rose-600'
+                                    : activePackInfo.isPack 
+                                    ? 'bg-indigo-600' 
+                                    : 'bg-emerald-600'
                             }`}>
                                 <Sparkles size={12} className="animate-pulse text-amber-300" />
-                                <span>{activePackInfo.isPack ? '📦 Pack Promocional Incluido' : '🔥 Promoción Especial con Descuento'}</span>
+                                <span>{
+                                    activePackInfo.tipoPromo === '2x1'
+                                        ? '👥 Promo 2x1 en Pareja'
+                                        : activePackInfo.tipoPromo === '3x1'
+                                        ? '🔥 Promo 3x1 Especial'
+                                        : activePackInfo.isPack 
+                                        ? '📦 Pack Promocional Incluido' 
+                                        : '🔥 Promoción Especial con Descuento'
+                                }</span>
                             </div>
                             <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug uppercase">
                                 {activePackInfo.titulo}
