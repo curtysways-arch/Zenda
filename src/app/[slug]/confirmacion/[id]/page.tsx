@@ -8,6 +8,8 @@ import { es } from 'date-fns/locale';
 import InstallAppButton from '@/components/InstallAppButton';
 import RatingModal from '@/components/RatingModal';
 import { useSearchParams } from 'next/navigation';
+import { parsePackInfo } from '@/lib/packHelper';
+import { isDentalBusiness, normalizeBusinessConfig } from '@/lib/businessTypeHelper';
 
 export default function ConfirmacionReservaPage({ 
     params 
@@ -134,13 +136,30 @@ export default function ConfirmacionReservaPage({
     const isCancelled = estadoNormalizado === 'cancelled' || estadoNormalizado === 'cancelada' || estadoNormalizado === 'no_show';
     const isPending = !isConfirmed && !isClientCheckedIn && !isInProgress && !isCompleted && !isCancelled;
 
-    const isCancha = appointment?.negocio?.tipoNegocio === 'SPORTS_COURTS' || 
+    const isDental = isDentalBusiness(appointment?.negocio) ||
+                    appointment?.negocio?.tipoNegocio === 'DENTAL' ||
+                    appointment?.negocio?.tipoNegocio === 'ODONTOLOGIA' ||
+                    (appointment?.negocio?.configuracion as any)?.blueprintId === 'DENTAL' ||
+                    (appointment?.negocio?.configuracion as any)?.blueprintId === 'ODONTOLOGIA' ||
+                    slug?.toLowerCase().includes('dent');
+
+    const isCancha = !isDental && (
+                    appointment?.negocio?.tipoNegocio === 'SPORTS_COURTS' || 
                     appointment?.negocio?.tipoNegocio === 'CANCHAS' || 
                     slug.includes('cancha') || 
-                    (!appointment?.staffId && (!appointment?.staff || appointment?.staff?.nombre === 'Cualquier profesional' || appointment?.staff?.name === 'Cualquier profesional'));
+                    (!appointment?.staffId && (!appointment?.staff || appointment?.staff?.nombre === 'Cualquier profesional' || appointment?.staff?.name === 'Cualquier profesional'))
+                    );
+
+    const negocioConfig = normalizeBusinessConfig(appointment?.negocio?.configuracion);
+    const dentalExplicitDeposit = Boolean(
+        negocioConfig?.requiereSena ||
+        negocioConfig?.requiereSeña ||
+        negocioConfig?.depositRequired ||
+        negocioConfig?.politicaSena
+    );
 
     const porcentajeSena = appointment?.negocio?.pagoPorcentaje || 50;
-    const precioTotalNum = Number(appointment?.precioTotal || appointment?.precio || 0);
+    const precioTotalNum = Number(appointment?.precioTotal || appointment?.total || appointment?.precio || 0);
     const montoSena = (precioTotalNum * porcentajeSena) / 100;
     const whatsapp = appointment?.negocio?.whatsapp || '';
 
@@ -167,24 +186,86 @@ export default function ConfirmacionReservaPage({
                     
                     <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter leading-tight italic uppercase">
                         {isConfirmed ? (
-                            <>¡Reserva <br /> <span className="text-emerald-500">Confirmada!</span></>
+                            <>¡{isDental ? 'Cita' : 'Reserva'} <br /> <span className="text-emerald-500">Confirmada!</span></>
                         ) : isCancelled ? (
-                            <>¡Reserva <br /> <span className="text-red-500">Cancelada!</span></>
+                            <>¡{isDental ? 'Cita' : 'Reserva'} <br /> <span className="text-red-500">Cancelada!</span></>
                         ) : (
                             <>¡Solicitud <br /> <span className="text-amber-500">Recibida!</span></>
                         )}
                     </h1>
-                    <p className="text-gray-400 font-bold mt-3 text-xs md:text-sm leading-relaxed max-w-[300px] mx-auto uppercase tracking-wide">
+                    <p className="text-gray-400 font-bold mt-3 text-xs md:text-sm leading-relaxed max-w-[340px] mx-auto uppercase tracking-wide">
                         {error ? 'Hubo un problema al cargar los detalles.' : (
-                            isConfirmed ? 'Todo listo. Tu lugar en la cancha está asegurado.' :
+                            isConfirmed ? (isCancha ? 'Todo listo. Tu lugar en la cancha está asegurado.' : isDental ? 'Tu cita ha sido confirmada por el consultorio. ¡Te esperamos!' : 'Tu reserva está confirmada. ¡Todo listo!') :
                             isCancelled ? 'Esta reserva no se encuentra activa.' :
+                            isDental ? 'Tu solicitud de cita ha sido registrada. El consultorio revisará tu solicitud y te confirmará la cita próximamente.' :
                             'Paga tu seña para confirmar inmediatamente tu reserva.'
                         )}
                     </p>
                 </div>
 
-                {/* TARJETA DE SEÑA / PAGO PARA CONFIRMAR RESERVA DE CANCHA */}
-                {isPending && (
+                {/* NUEVO BLOQUE EXCLUSIVO PARA DENTAL: CITA PENDIENTE DE CONFIRMACIÓN (SIN SEÑA POR DEFECTO) */}
+                {isPending && isDental && !dentalExplicitDeposit && (
+                    <div className="bg-gradient-to-br from-amber-50/90 via-white to-sky-50/70 rounded-[2.5rem] p-7 border-2 border-amber-200/80 shadow-xl space-y-6 relative overflow-hidden text-left animate-in fade-in duration-300">
+                        <div className="absolute top-0 right-0 w-36 h-36 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" style={{ backgroundColor: `${primaryColor}20` }} />
+                        
+                        <div className="flex items-center justify-between border-b border-amber-100 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div 
+                                    className="p-2.5 rounded-2xl flex items-center justify-center text-white shadow-md shrink-0"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
+                                    <Clock size={20} className="animate-pulse" />
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-black uppercase tracking-widest block leading-none text-amber-700">
+                                        ESTADO DE TU CITA
+                                    </span>
+                                    <h3 className="text-sm sm:text-base font-black text-slate-900 italic uppercase mt-0.5 tracking-tight">
+                                        ⏳ CITA PENDIENTE DE CONFIRMACIÓN
+                                    </h3>
+                                </div>
+                            </div>
+                            <span className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-800 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest shrink-0">
+                                PENDIENTE
+                            </span>
+                        </div>
+
+                        <div className="space-y-3">
+                            <p className="text-xs sm:text-sm font-bold text-slate-700 leading-relaxed">
+                                El consultorio ha recibido tu solicitud de cita. Revisarán la disponibilidad y te enviarán la confirmación.
+                            </p>
+                            <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-600 bg-white/90 p-3.5 rounded-2xl border border-amber-100 shadow-xs">
+                                <Sparkles size={16} className="shrink-0 text-amber-500" />
+                                <span>Tu horario queda reservado temporalmente mientras el consultorio revisa la solicitud.</span>
+                            </div>
+                        </div>
+
+                        {/* Fila de Valor Total Estimado (separado de la confirmación) */}
+                        {precioTotalNum > 0 && (
+                            <div className="pt-3 border-t border-amber-100 flex items-center justify-between">
+                                <div>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                                        TOTAL ESTIMADO
+                                    </span>
+                                    <span className="text-2xl font-black text-slate-900 italic tracking-tight">
+                                        ${precioTotalNum.toFixed(2)}
+                                    </span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                                        PAGO
+                                    </span>
+                                    <span className="text-xs font-black uppercase text-amber-800 bg-amber-100/80 px-3 py-1 rounded-full border border-amber-200 inline-block mt-0.5">
+                                        Pendiente en consultorio
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* TARJETA DE SEÑA / PAGO PARA CONFIRMAR RESERVA (CANCHAS Y OTROS NEGOCIOS CON SEÑA) */}
+                {isPending && (!isDental || dentalExplicitDeposit) && (
                     <div className="bg-gradient-to-br from-emerald-950 via-slate-900 to-[#07090f] text-white rounded-[2.5rem] p-7 border border-emerald-500/30 shadow-2xl space-y-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                         
@@ -239,8 +320,8 @@ export default function ConfirmacionReservaPage({
                     </div>
                 )}
 
-                {/* Banner de estado PENDIENTE / CONFIRMADO */}
-                {!error && appointment && isPending && !paymentUrl && (
+                {/* Banner de estado PENDIENTE / CONFIRMADO (para negocios que no son Dental sin seña) */}
+                {!error && appointment && isPending && !paymentUrl && (!isDental || dentalExplicitDeposit) && (
                     <div className="bg-amber-50 border border-amber-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
                         <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
                             <Clock size={20} className="text-amber-500" />
@@ -250,7 +331,10 @@ export default function ConfirmacionReservaPage({
                                 ⏳ Pendiente de Confirmación
                             </p>
                             <p className="text-xs font-bold text-amber-700 leading-relaxed">
-                                El negocio revisará tu solicitud de cancha y recibirás la confirmación en breve. Tu lugar está reservado temporalmente.
+                                {isCancha 
+                                    ? 'El negocio revisará tu solicitud de cancha y recibirás la confirmación en breve. Tu lugar está reservado temporalmente.'
+                                    : 'El negocio revisará tu solicitud y recibirás la confirmación en breve. Tu turno está reservado temporalmente.'
+                                }
                             </p>
                         </div>
                     </div>
@@ -287,12 +371,50 @@ export default function ConfirmacionReservaPage({
                                     </div>
                                     <div>
                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
-                                            {isCancha ? 'Cancha' : 'Servicio'}
+                                            {isCancha ? 'Cancha' : isDental ? 'Tratamiento' : 'Servicio'}
                                         </p>
-                                        <p className="text-base font-black text-gray-900 leading-none">{appointment?.service?.nombre || 'Cancha'}</p>
+                                        <p className="text-base font-black text-gray-900 leading-none">{appointment?.service?.nombre || (isDental ? 'Tratamiento Dental' : 'Servicio')}</p>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Desglose de Pack Promocional si aplica */}
+                            {(() => {
+                                const packInfo = parsePackInfo(appointment);
+                                if (!packInfo) return null;
+                                return (
+                                    <div className="p-5 bg-gradient-to-br from-indigo-50/90 via-sky-50/70 to-blue-50/80 rounded-[2rem] border-2 border-indigo-200/80 space-y-3 shadow-xs animate-in fade-in duration-300">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-indigo-600 text-white shadow-xs">
+                                                    📦 Pack Promocional
+                                                </span>
+                                                <span className="text-xs font-black text-slate-900 uppercase italic">
+                                                    {packInfo.titulo}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {packInfo.descripcion && (
+                                            <p className="text-[11px] text-slate-600 font-medium leading-relaxed bg-white/70 p-2.5 rounded-xl border border-indigo-100/60">
+                                                {packInfo.descripcion}
+                                            </p>
+                                        )}
+                                        <div className="space-y-1.5 pt-1">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-indigo-900">
+                                                Tratamientos incluidos en esta cita:
+                                            </p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                {packInfo.servicios.map((s: string, idx: number) => (
+                                                    <div key={idx} className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-indigo-100 shadow-xs">
+                                                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                                                        <span className="text-xs font-bold text-slate-800 leading-tight">{s}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Fecha y Hora */}
                             <div className="grid grid-cols-2 gap-4">
@@ -347,6 +469,23 @@ export default function ConfirmacionReservaPage({
                                             {appointment?.staff?.name || appointment?.staff?.nombre}
                                         </p>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Total Estimado de la Cita */}
+                            {precioTotalNum > 0 && (
+                                <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                            {isCancha ? 'Total Reserva' : 'Total Estimado'}
+                                        </p>
+                                        <p className="text-base font-black text-gray-900 leading-none">
+                                            ${precioTotalNum.toFixed(2)}
+                                        </p>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-500 bg-white px-3 py-1 rounded-full border border-gray-100">
+                                        {isDental ? 'Pago en consultorio' : 'Tarifa total'}
+                                    </span>
                                 </div>
                             )}
 
