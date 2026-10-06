@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { CheckCircle2, ChevronRight, Calendar, MapPin, Clock, ArrowRight, Sparkles, User, Scissors, AlertCircle, ClipboardCheck, CreditCard, MessageSquare } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Calendar, MapPin, Clock, ArrowRight, Sparkles, User, Scissors, AlertCircle, ClipboardCheck, CreditCard, MessageSquare, Smile, Trophy, Stethoscope } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -367,7 +367,13 @@ export default function ConfirmacionReservaPage({
                             <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-gray-100">
-                                        <Scissors size={20} className={isCancha ? 'text-emerald-500' : 'text-gray-400'} />
+                                        {isDental ? (
+                                            <Smile size={22} style={{ color: primaryColor }} />
+                                        ) : isCancha ? (
+                                            <Trophy size={20} className="text-emerald-500" />
+                                        ) : (
+                                            <Scissors size={20} className="text-gray-400" />
+                                        )}
                                     </div>
                                     <div>
                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
