@@ -9,6 +9,7 @@ import { useSession } from 'next-auth/react';
 import PhoneInput from '@/components/ui/PhoneInput';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { parsePackInfo } from '@/lib/packHelper';
 
 interface BookingClientProps {
     negocio: any;
@@ -32,6 +33,8 @@ export default function BookingClient({
     // Parámetros externos (ej: desde Resultados)
     const urlServiceId = searchParams.get('serviceId');
     const urlStaffId = searchParams.get('staffId');
+    // Promo forzada: cuando el usuario llega desde la tarjeta de una promo específica
+    const forcedPromoId = searchParams.get('promoId');
 
     // Vista: 'calendar' o 'checkout'
     const [view, setView] = useState<'calendar' | 'checkout'>('calendar');
@@ -40,15 +43,35 @@ export default function BookingClient({
         initialServiceId ? [initialServiceId] : (urlServiceId ? [urlServiceId] : (allServices.length > 0 ? [allServices[0].id] : []))
     );
     
-    const availableStaff = useMemo(() => staff.filter(s => s.active !== false), [staff]);
+    // Staff disponible para el servicio actualmente seleccionado (o general)
+    const currentStaffList = useMemo(() => {
+        const activeServiceId = selectedServiceIds[0];
+        const currentService = allServices.find((s: any) => s.id === activeServiceId);
+        if (currentService?.Staff && Array.isArray(currentService.Staff) && currentService.Staff.length > 0) {
+            return currentService.Staff.filter((s: any) => s.active !== false);
+        }
+        return staff.filter((s: any) => s.active !== false);
+    }, [selectedServiceIds, allServices, staff]);
+
+    const availableStaff = currentStaffList;
     
     const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>(
-        urlStaffId && availableStaff.some(s => s.id === urlStaffId) 
+        urlStaffId && currentStaffList.some(s => s.id === urlStaffId) 
             ? urlStaffId 
-            : (availableStaff.length > 0 ? availableStaff[0].id : undefined)
+            : (currentStaffList.length > 0 ? currentStaffList[0].id : undefined)
     );
     const [showStaffDropdown, setShowStaffDropdown] = useState(false);
     const [showExtraServices, setShowExtraServices] = useState(false);
+
+    // Mantener seleccionado un staff valido cuando cambia el servicio
+    useEffect(() => {
+        if (currentStaffList.length > 0) {
+            if (!selectedStaffId || !currentStaffList.some(s => s.id === selectedStaffId)) {
+                setSelectedStaffId(currentStaffList[0].id);
+                setSelectedBooking(null);
+            }
+        }
+    }, [currentStaffList, selectedStaffId]);
     
     const [selectedBooking, setSelectedBooking] = useState<any>(null);
     const [formData, setFormData] = useState({ nombre: '', telefono: '', comentarios: '' });
@@ -218,12 +241,17 @@ const resolveSlotPromotion = (
     }
 
     // 1. Recolección de promociones (Soporte nombre/name)
-    const manualPromos = [
+    const allManualPromos = [
         ...(service.promociones || []),
         ...(service.promocion ? [service.promocion] : []),
         ...(service.PromotionToService || []).map((rel: any) => rel.Promotion),
         ...(service.Promotion ? [service.Promotion] : [])
     ].filter(Boolean);
+
+    // Si hay una promo forzada (desde URL ?promoId=), mostrar solo esa
+    const manualPromos = forcedPromoId
+        ? allManualPromos.filter((p: any) => p.id === forcedPromoId)
+        : allManualPromos;
 
     const sName = String(service.nombre || service.name || '').toLowerCase();
     const isMassage = sName.includes('masaje') || sName.includes('massage') || sName.includes('therapy');
@@ -290,17 +318,20 @@ const resolveSlotPromotion = (
             } else if (p.tipoPromo === '3x1') {
                 label = '3x1';
                 hasPromo = true;
+            } else if (p.tipoPromo === 'combo_pack' || p.tipoPromo === 'pack') {
+                label = 'PACK';
+                hasPromo = true;
             }
 
-            const priorityScore = (p.tipoPromo === '2x1' || p.tipoPromo === '3x1' ? 95 : discount) + (isTarget ? 20000 : 0);
-            return { price: pPrice, hasPromotion: hasPromo, discountPercent: discount, labelText: label, source: 'manual' as const, priorityScore };
+            const priorityScore = (p.tipoPromo === '2x1' || p.tipoPromo === '3x1' ? 95 : (p.tipoPromo === 'combo_pack' || p.tipoPromo === 'pack' ? 90 : discount)) + (isTarget ? 20000 : 0);
+            return { price: pPrice, hasPromotion: hasPromo, discountPercent: discount, labelText: label, source: 'manual' as const, priorityScore, promo: p };
         })
         .filter(Boolean)
         .sort((a, b) => b!.priorityScore - a!.priorityScore);
 
     if (evaluatedPromos.length > 0) {
         const winner = evaluatedPromos[0]!;
-        return { price: winner.price, hasPromotion: true, discountPercent: winner.discountPercent, labelText: winner.labelText, source: winner.source };
+        return { price: winner.price, hasPromotion: true, discountPercent: winner.discountPercent, labelText: winner.labelText, source: winner.source, promotion: (winner as any).promo };
     }
 
     if (automaticDiscount && automaticDiscount.enabled) {
@@ -313,13 +344,13 @@ const resolveSlotPromotion = (
                 const eVal = parseInt(automaticDiscount.endTime.replace(':', ''), 10);
                 if (hourNum >= sVal && hourNum <= eVal) {
                     const promoPrice = basePrice * (1 - (discount / 100));
-                    return { price: promoPrice, hasPromotion: true, discountPercent: discount, labelText: `-${discount}%`, source: 'optimization' as const };
+                    return { price: promoPrice, hasPromotion: true, discountPercent: discount, labelText: `-${discount}%`, source: 'optimization' as const, promotion: null };
                 }
             }
         }
     }
 
-    return { price: basePrice, hasPromotion: false, discountPercent: 0, labelText: '', source: null };
+    return { price: basePrice, hasPromotion: false, discountPercent: 0, labelText: '', source: null, promotion: null };
 };
 
     const totalDuracionMin = useMemo(() => selectedServiceIds.reduce((acc, id) => acc + (allServices.find((s: any) => s.id === id)?.duracion || 60), 0), [selectedServiceIds, allServices]);
@@ -336,20 +367,77 @@ const resolveSlotPromotion = (
         }, 0);
     }, [selectedServiceIds, allServices]);
 
+    const activePackInfo = useMemo(() => {
+        if (selectedBooking?.packPromo) return parsePackInfo(selectedBooking);
+        const mainService = allServices.find((s: any) => s.id === (selectedServiceIds[0] || initialServiceId)) || primaryService;
+        if (mainService) {
+            const fromService = parsePackInfo(mainService);
+            if (fromService) return fromService;
+        }
+        return null;
+    }, [selectedBooking, selectedServiceIds, initialServiceId, allServices, primaryService]);
+
     useEffect(() => {
         if (selectedBooking) {
+            let currentPackPromo = selectedBooking.packPromo;
+            let currentPromoType = selectedBooking.tipoPromo;
+
             const precioRealParaFecha = selectedServiceIds.reduce((acc, id) => {
                 const s = allServices.find((ser: any) => ser.id === id);
                 if (!s) return acc;
                 // Usar el motor unificado con la config de descuentos automáticos
                 const res = resolveSlotPromotion(selectedBooking.hour, selectedBooking.date, s, negocio.automaticDiscount);
+
+                if (res.hasPromotion && res.source === 'manual') {
+                    const manualPromos = [
+                        ...(s.promociones || []),
+                        ...(s.promocion ? [s.promocion] : []),
+                        ...(s.PromotionToService || []).map((rel: any) => rel.Promotion),
+                        ...(s.Promotion ? [s.Promotion] : [])
+                    ].filter(Boolean);
+                    const wp = (res as any).promotion || manualPromos.find((p: any) => Number(p.precioPromo || p.precioPromocion || 0) === res.price);
+                    if (wp) {
+                        currentPromoType = wp.tipoPromo;
+                        const isPack = wp.tipoPromo === 'combo_pack' || 
+                                       wp.tipoPromo === 'pack' || 
+                                       (wp.PromotionToService && wp.PromotionToService.length > 1) ||
+                                       String(wp.titulo || '').toLowerCase().includes('pack') ||
+                                       String(wp.titulo || '').toLowerCase().includes('combo');
+                        if (isPack) {
+                            const included = (wp.PromotionToService || [])
+                                .map((pts: any) => pts.Service?.nombre || pts.Service?.name)
+                                .filter(Boolean);
+                            const includedDetails = (wp.PromotionToService || [])
+                                .map((pts: any) => ({
+                                    nombre: pts.Service?.nombre || pts.Service?.name,
+                                    duracion: pts.Service?.duracion,
+                                    precio: pts.Service?.precio
+                                }))
+                                .filter((item: any) => Boolean(item.nombre));
+
+                            currentPackPromo = {
+                                id: wp.id,
+                                titulo: wp.titulo,
+                                descripcion: wp.descripcion,
+                                precioPromo: res.price,
+                                precioOriginal: wp.precioAnterior || s.precio,
+                                servicios: included.length > 0 ? included : [s.nombre],
+                                serviciosDetalle: includedDetails.length > 0 ? includedDetails : undefined,
+                                tipoPromo: wp.tipoPromo
+                            };
+                        }
+                    }
+                }
+
                 return acc + res.price;
             }, 0);
             
-            if (precioRealParaFecha !== selectedBooking.precio) {
+            if (precioRealParaFecha !== selectedBooking.precio || currentPackPromo !== selectedBooking.packPromo) {
                 setSelectedBooking((prev: any) => ({
                     ...prev,
                     precio: precioRealParaFecha,
+                    tipoPromo: currentPromoType,
+                    packPromo: currentPackPromo,
                     canchaNombre: selectedServiceIds.length > 1 ? allServices.find((s: any) => s.id === selectedServiceIds[0])?.nombre + ` +${selectedServiceIds.length - 1}` : allServices.find((s: any) => s.id === selectedServiceIds[0])?.nombre || 'SPA',
                 }));
             }
@@ -367,11 +455,13 @@ const resolveSlotPromotion = (
 
 
     const handleSelectSlot = (date: Date, hour: string, canchaId: string, duracion: number, discountPercentage: number = 0) => {
-        if (!selectedStaffId) return;
-        const staffMember = staff.find(s => s.id === selectedStaffId);
+        // Solo bloquear si el negocio tiene staff disponible y ninguno está seleccionado
+        if (availableStaff.length > 0 && !selectedStaffId) return;
+        const staffMember = selectedStaffId ? staff.find(s => s.id === selectedStaffId) : undefined;
         
         let appliedPromoType: string | null = null;
         let appliedPromoPrice: number = 0;
+        let appliedPackPromo: any = null;
 
         // Calcular precio final usando el motor unificado para cada servicio
         const precioRealParaFecha = selectedServiceIds.reduce((acc, id) => {
@@ -389,10 +479,40 @@ const resolveSlotPromotion = (
                     ...(s.Promotion ? [s.Promotion] : [])
                 ].filter(Boolean);
                 
-                const winningPromo = manualPromos.find(p => Number(p.precioPromo || p.precioPromocion || 0) === res.price);
+                const winningPromo = (res as any).promotion || manualPromos.find((p: any) => Number(p.precioPromo || p.precioPromocion || 0) === res.price);
                 if (winningPromo) {
                     appliedPromoType = winningPromo.tipoPromo;
                     appliedPromoPrice = res.price;
+
+                    const isPack = winningPromo.tipoPromo === 'combo_pack' || 
+                                   winningPromo.tipoPromo === 'pack' || 
+                                   (winningPromo.PromotionToService && winningPromo.PromotionToService.length > 1) ||
+                                   String(winningPromo.titulo || '').toLowerCase().includes('pack') ||
+                                   String(winningPromo.titulo || '').toLowerCase().includes('combo');
+
+                    if (isPack) {
+                        const included = (winningPromo.PromotionToService || [])
+                            .map((pts: any) => pts.Service?.nombre || pts.Service?.name)
+                            .filter(Boolean);
+                        const includedDetails = (winningPromo.PromotionToService || [])
+                            .map((pts: any) => ({
+                                nombre: pts.Service?.nombre || pts.Service?.name,
+                                duracion: pts.Service?.duracion,
+                                precio: pts.Service?.precio
+                            }))
+                            .filter((item: any) => Boolean(item.nombre));
+
+                        appliedPackPromo = {
+                            id: winningPromo.id,
+                            titulo: winningPromo.titulo,
+                            descripcion: winningPromo.descripcion,
+                            precioPromo: res.price,
+                            precioOriginal: winningPromo.precioAnterior || s.precio,
+                            servicios: included.length > 0 ? included : [s.nombre],
+                            serviciosDetalle: includedDetails.length > 0 ? includedDetails : undefined,
+                            tipoPromo: winningPromo.tipoPromo
+                        };
+                    }
                 }
             }
 
@@ -400,11 +520,12 @@ const resolveSlotPromotion = (
         }, 0);
 
         setSelectedBooking({
-            date, hour, canchaId: selectedServiceIds[0] || initialServiceId, staffId: selectedStaffId, staffName: staffMember?.name, duracion,
+            date, hour, canchaId: canchaId || selectedServiceIds[0] || initialServiceId, staffId: selectedStaffId, staffName: staffMember?.name, duracion,
             canchaNombre: selectedServiceIds.length > 1 ? allServices.find((s: any) => s.id === selectedServiceIds[0])?.nombre + ` +${selectedServiceIds.length - 1}` : allServices.find((s: any) => s.id === selectedServiceIds[0])?.nombre || 'SPA',
             precio: precioRealParaFecha, slug, discountPercentage,
             tipoPromo: appliedPromoType,
-            precioPromo: appliedPromoPrice
+            precioPromo: appliedPromoPrice,
+            packPromo: appliedPackPromo
         });
     };
 
@@ -440,10 +561,20 @@ const resolveSlotPromotion = (
             const cashbackADescontar = applyCashback ? Math.min(userCashback, subtotal) : 0;
             const precioFinal = Math.max(0, subtotal - cashbackADescontar);
 
+            let comentariosConPack = formData.comentarios || '';
+            if (selectedBooking.packPromo) {
+                const pack = selectedBooking.packPromo;
+                const serviciosTxt = Array.isArray(pack.servicios) && pack.servicios.length > 0
+                    ? pack.servicios.map((s: string) => `• ${s}`).join('\n')
+                    : `• ${allServices.find((s: any) => s.id === selectedBooking.canchaId)?.nombre || 'Servicio'}`;
+                comentariosConPack = `📦 Pack Promocional: ${pack.titulo}\nTratamientos incluidos:\n${serviciosTxt}${comentariosConPack ? `\n\nNotas del cliente: ${comentariosConPack}` : ''}`;
+            }
+
             const payload = {
                 clienteNombre: formData.nombre || 'Cliente',
                 clienteTelefono: formData.telefono,
-                comentarios: formData.comentarios,
+                comentarios: comentariosConPack,
+                packPromo: selectedBooking.packPromo,
                 fecha: format(selectedBooking.date, 'yyyy-MM-dd'),
                 horaInicio: selectedBooking.hour,
                 duracion: totalDuracionMin / 60,
@@ -542,6 +673,85 @@ const resolveSlotPromotion = (
                                 </div>
                             </div>
                         </div>
+
+                        {/* Tarjeta Desglose Pack Promocional o de la Promo */}
+                        {selectedBooking?.packPromo && (
+                            <div className={`border-2 rounded-3xl p-5 text-left space-y-3.5 shadow-sm ${
+                                selectedBooking.packPromo.isPack
+                                    ? 'bg-gradient-to-br from-indigo-50/90 via-sky-50/70 to-blue-50/80 border-indigo-200/80'
+                                    : 'bg-gradient-to-br from-emerald-50/90 via-teal-50/70 to-sky-50/80 border-emerald-200/80'
+                            }`}>
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className={`size-9 rounded-xl text-white flex items-center justify-center shadow-md shrink-0 ${
+                                            selectedBooking.packPromo.isPack ? 'bg-indigo-600 shadow-indigo-200' : 'bg-emerald-600 shadow-emerald-200'
+                                        }`}>
+                                            <Sparkles size={16} className="animate-pulse" />
+                                        </div>
+                                        <div>
+                                            <span className={`text-[9px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full border inline-block ${
+                                                selectedBooking.packPromo.isPack 
+                                                    ? 'text-indigo-700 bg-indigo-100/90 border-indigo-200' 
+                                                    : 'text-emerald-700 bg-emerald-100/90 border-emerald-200'
+                                            }`}>
+                                                {selectedBooking.packPromo.isPack ? '📦 Pack Promocional Aplicado' : '🔥 Promoción Especial Aplicada'}
+                                            </span>
+                                            <h4 className="text-xs font-black text-slate-900 uppercase italic tracking-tight mt-1 leading-snug">
+                                                {selectedBooking.packPromo.titulo}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                    {selectedBooking.packPromo.precioOriginal && (
+                                        <div className="text-right shrink-0">
+                                            <span className="text-[10px] text-slate-400 line-through font-bold block">
+                                                ${Number(selectedBooking.packPromo.precioOriginal).toFixed(2)}
+                                            </span>
+                                            <span className={`text-base font-black italic ${
+                                                selectedBooking.packPromo.isPack ? 'text-indigo-600' : 'text-emerald-600'
+                                            }`}>
+                                                ${Number(selectedBooking.packPromo.precioPromo).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {selectedBooking.packPromo.descripcion && (
+                                    <p className="text-[11px] text-slate-600 font-medium leading-relaxed bg-white/70 p-2.5 rounded-xl border border-slate-100">
+                                        {selectedBooking.packPromo.descripcion}
+                                    </p>
+                                )}
+
+                                {selectedBooking.packPromo.isPack && selectedBooking.packPromo.servicios && selectedBooking.packPromo.servicios.length > 0 && (
+                                    <div className="space-y-1.5 pt-0.5">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-700">
+                                            Servicios incluidos en este Pack:
+                                        </p>
+                                        <div className="space-y-1.5">
+                                            {(selectedBooking.packPromo.serviciosDetalle && selectedBooking.packPromo.serviciosDetalle.length > 0
+                                                ? selectedBooking.packPromo.serviciosDetalle
+                                                : selectedBooking.packPromo.servicios?.map((sName: string) => ({ nombre: sName }))
+                                            )?.map((item: any, sIdx: number) => (
+                                                <div key={sIdx} className="flex items-center justify-between gap-2 bg-white px-3 py-2 rounded-xl border border-slate-100 shadow-xs">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="size-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                                        <Check size={10} strokeWidth={3} />
+                                                    </div>
+                                                    <span className="text-xs font-bold text-slate-800 leading-tight truncate">
+                                                        {item.nombre}
+                                                    </span>
+                                                </div>
+                                                {item.duracion && (
+                                                    <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100 shrink-0">
+                                                        {item.duracion} min
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Alerta de beneficio aplicado de Servicio Gratis (Premio) */}
                         {selectedBooking && freeServices.some((fs: any) => fs.serviceId === selectedBooking.canchaId && fs.estado === 'DISPONIBLE') && (
@@ -963,55 +1173,198 @@ const resolveSlotPromotion = (
                 </div>
             )}
 
-            {/* Selector de Profesional estilo Pill (como en la referencia) */}
-            {availableStaff.length > 0 && (
-                <div id="booking-professional" className={`relative z-30 px-2 space-y-2 ${shakeProfessional ? 'animate-calendar-shake ring-4 ring-pink-500/50 rounded-full' : ''}`}>
-                    <div className="relative inline-block">
-                        <button
-                            type="button"
-                            onClick={() => setShowStaffDropdown(!showStaffDropdown)}
-                            className="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white rounded-full border border-slate-200/90 shadow-sm text-slate-800 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-all active:scale-95"
-                        >
-                            <User size={16} className="text-slate-700" />
-                            <span className="text-xs sm:text-sm font-black text-slate-900">
-                                {availableStaff.find(s => s.id === selectedStaffId)?.name || 'Cualquier profesional'}
-                            </span>
-                            <ChevronDown size={15} className={cn("text-slate-500 transition-transform", showStaffDropdown && "rotate-180")} />
-                        </button>
+            {/* TARJETA DETALLE PACK PROMOCIONAL O DE LA PROMO */}
+            {activePackInfo && (
+                <div className={`mx-2 rounded-[2rem] p-5 sm:p-6 shadow-sm space-y-4 animate-in fade-in duration-300 border-2 ${
+                    activePackInfo.isPack 
+                        ? 'bg-gradient-to-br from-indigo-50/95 via-sky-50/85 to-blue-50/95 border-indigo-200/90' 
+                        : 'bg-gradient-to-br from-emerald-50/95 via-teal-50/85 to-sky-50/95 border-emerald-200/90'
+                }`}>
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div className="space-y-1.5 flex-1">
+                            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-xs ${
+                                activePackInfo.isPack ? 'bg-indigo-600' : 'bg-emerald-600'
+                            }`}>
+                                <Sparkles size={12} className="animate-pulse text-amber-300" />
+                                <span>{activePackInfo.isPack ? '📦 Pack Promocional Incluido' : '🔥 Promoción Especial con Descuento'}</span>
+                            </div>
+                            <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug uppercase">
+                                {activePackInfo.titulo}
+                            </h3>
+                            {activePackInfo.descripcion && (
+                                <p className={`text-xs text-slate-600 leading-relaxed font-medium bg-white/80 p-3 rounded-2xl border mt-1 ${
+                                    activePackInfo.isPack ? 'border-indigo-100/70' : 'border-emerald-100/70'
+                                }`}>
+                                    {activePackInfo.descripcion}
+                                </p>
+                            )}
+                        </div>
 
-                        {/* Dropdown de profesionales si hay más de 1 */}
-                        {showStaffDropdown && (
-                            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50 animate-in fade-in zoom-in-95 duration-200">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 py-1.5">Profesionales</p>
-                                <div className="space-y-1">
-                                    {availableStaff.map((member) => (
-                                        <button
-                                            key={member.id}
-                                            type="button"
-                                            onClick={() => {
-                                                handleSelectStaff(member.id);
-                                                setShowStaffDropdown(false);
-                                            }}
-                                            className={cn(
-                                                "w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all cursor-pointer",
-                                                selectedStaffId === member.id ? "bg-slate-50 font-black" : "hover:bg-slate-50"
-                                            )}
-                                        >
-                                            <div className="size-8 rounded-full overflow-hidden bg-slate-100 shrink-0 border" style={{ borderColor: selectedStaffId === member.id ? primaryColor : 'transparent' }}>
-                                                {(member.imageMedia || member.avatar) 
-                                                    ? <img src={(member.imageMedia as any)?.url ?? member.avatar} className="w-full h-full object-cover" /> 
-                                                    : <div className="w-full h-full flex items-center justify-center text-xs font-black text-slate-500">{member.name[0]}</div>}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-black text-slate-900 truncate">{member.name}</p>
-                                                {member.role && <p className="text-[10px] text-slate-400 font-semibold truncate">{member.role}</p>}
-                                            </div>
-                                            {selectedStaffId === member.id && <Check size={14} style={{ color: primaryColor }} />}
-                                        </button>
-                                    ))}
+                        {/* Bloque de Precio y Ahorro */}
+                        {(activePackInfo.precioPromo !== undefined || activePackInfo.precioOriginal !== undefined) && (
+                            <div className="sm:text-right shrink-0 bg-white/85 sm:bg-transparent p-3 sm:p-0 rounded-2xl border sm:border-0 border-slate-150 flex sm:flex-col items-center sm:items-end justify-between">
+                                <div>
+                                    {activePackInfo.precioOriginal && (
+                                        <span className="text-xs font-bold text-slate-400 line-through block">
+                                            Antes ${Number(activePackInfo.precioOriginal).toFixed(2)}
+                                        </span>
+                                    )}
+                                    <div className={`text-2xl font-black tracking-tight leading-tight ${
+                                        activePackInfo.isPack ? 'text-indigo-600' : 'text-emerald-600'
+                                    }`}>
+                                        ${Number(activePackInfo.precioPromo ?? activePackInfo.precioOriginal).toFixed(2)}
+                                    </div>
                                 </div>
+                                {activePackInfo.precioOriginal && activePackInfo.precioPromo && activePackInfo.precioOriginal > activePackInfo.precioPromo && (
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100/90 px-2.5 py-0.5 rounded-full border border-emerald-200/80 mt-1 inline-block">
+                                        Ahorras ${(Number(activePackInfo.precioOriginal) - Number(activePackInfo.precioPromo)).toFixed(2)}
+                                        {activePackInfo.porcentajeDescuento ? ` (${activePackInfo.porcentajeDescuento}% OFF)` : ''}
+                                    </span>
+                                )}
                             </div>
                         )}
+                    </div>
+
+                    {/* Lista de tratamientos o servicios que incluye el pack (solo si es pack o tiene múltiples servicios) */}
+                    {activePackInfo.isPack && activePackInfo.servicios && activePackInfo.servicios.length > 0 && (
+                        <div className="space-y-2 pt-2 border-t border-indigo-100/80">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-900/90 flex items-center gap-1.5">
+                                <span>Tratamientos incluidos en esta sesión:</span>
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {(activePackInfo.serviciosDetalle && activePackInfo.serviciosDetalle.length > 0
+                                    ? activePackInfo.serviciosDetalle
+                                    : activePackInfo.servicios.map((s: string) => ({ nombre: s }))
+                                ).map((item: any, idx: number) => (
+                                    <div 
+                                        key={idx} 
+                                        className="flex items-center justify-between gap-2 bg-white/95 px-3.5 py-2.5 rounded-2xl border border-indigo-100/80 shadow-xs"
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="size-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                                <Check size={12} strokeWidth={3} />
+                                            </div>
+                                            <span className="text-xs font-bold text-slate-800 truncate">
+                                                {item.nombre}
+                                            </span>
+                                        </div>
+                                        {item.duracion && (
+                                            <span className="text-[10px] font-bold text-slate-400 shrink-0 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                                                {item.duracion} min
+                                            </span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Garantía / Compromiso Clínico */}
+                    <div className={`flex items-center gap-2 text-[10px] font-bold px-3.5 py-2 rounded-xl border ${
+                        activePackInfo.isPack 
+                            ? 'text-indigo-800 bg-indigo-100/60 border-indigo-200/50' 
+                            : 'text-emerald-800 bg-emerald-100/60 border-emerald-200/50'
+                    }`}>
+                        <Check size={12} className={activePackInfo.isPack ? 'text-indigo-600 shrink-0' : 'text-emerald-600 shrink-0'} strokeWidth={2.5} />
+                        <span>Sin costos ocultos · Diagnóstico integral y atención por especialistas odontológicos certificados.</span>
+                    </div>
+                </div>
+            )}
+
+            {/* PASO 2: ESPECIALISTA / PROFESIONAL */}
+            {availableStaff.length > 0 && (
+                <div id="booking-professional" className={`relative z-30 px-2 space-y-4 transition-all duration-300 ${shakeProfessional ? 'animate-calendar-shake ring-4 ring-pink-500/50 rounded-3xl p-3' : ''}`}>
+                    <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-3">
+                            <div 
+                                className="size-7 rounded-full border-2 flex items-center justify-center shrink-0" 
+                                style={{ borderColor: primaryColor, color: primaryColor }}
+                            >
+                                <User size={15} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h3 className="text-base sm:text-lg font-black tracking-wide !text-slate-900 uppercase leading-tight" style={{ color: '#0f172a' }}>
+                                    2. ESPECIALISTA
+                                </h3>
+                                <p className="text-xs sm:text-sm font-semibold text-slate-500 leading-tight">
+                                    {availableStaff.length === 1 
+                                        ? 'Especialista a cargo de tu atención' 
+                                        : 'Selecciona al especialista de tu preferencia'}
+                                </p>
+                            </div>
+                        </div>
+                        {availableStaff.length > 1 && (
+                            <span className="text-[10px] font-black uppercase text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100">
+                                {availableStaff.length} disponibles
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Tarjetas interactivas de Especialistas */}
+                    <div className={`grid gap-3 ${availableStaff.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
+                        {availableStaff.map((member) => {
+                            const isSelected = selectedStaffId === member.id;
+                            const avatarSrc = (member.imageMedia as any)?.url || member.avatar;
+                            return (
+                                <button
+                                    key={member.id}
+                                    type="button"
+                                    onClick={() => handleSelectStaff(member.id)}
+                                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3.5 relative overflow-hidden group active:scale-98 ${
+                                        isSelected 
+                                            ? 'bg-white shadow-md ring-2 ring-offset-1' 
+                                            : 'bg-white hover:bg-slate-50/80 border-slate-200/80 shadow-xs'
+                                    }`}
+                                    style={{
+                                        borderColor: isSelected ? primaryColor : undefined,
+                                        '--tw-ring-color': isSelected ? primaryColor : undefined
+                                    } as any}
+                                >
+                                    {/* Avatar */}
+                                    <div 
+                                        className="size-12 sm:size-14 rounded-full overflow-hidden bg-slate-100 shrink-0 border-2 shadow-xs"
+                                        style={{ borderColor: isSelected ? primaryColor : '#e2e8f0' }}
+                                    >
+                                        {avatarSrc ? (
+                                            <img src={avatarSrc} alt={member.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div 
+                                                className="w-full h-full flex items-center justify-center text-sm font-black text-white"
+                                                style={{ backgroundColor: primaryColor }}
+                                            >
+                                                {member.name.charAt(0)}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Datos del Doctor */}
+                                    <div className="flex-1 min-w-0 pr-4">
+                                        <p className="text-sm font-black text-slate-900 leading-snug truncate">
+                                            {member.name}
+                                        </p>
+                                        <p className="text-[11px] font-bold text-slate-500 line-clamp-1 mt-0.5" style={{ color: isSelected ? primaryColor : undefined }}>
+                                            {member.role || 'Especialista'}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-semibold mt-1">
+                                            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            <span>Disponible para agendar</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Check indicador */}
+                                    <div 
+                                        className={`size-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                                            isSelected 
+                                                ? 'text-white shadow-sm' 
+                                                : 'border border-slate-200 text-transparent'
+                                        }`}
+                                        style={{ backgroundColor: isSelected ? primaryColor : 'transparent' }}
+                                    >
+                                        <Check size={14} strokeWidth={3} className={isSelected ? 'text-white' : 'opacity-0'} />
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
 
                     {initialServiceId && otherServices.length > 1 && (
@@ -1019,9 +1372,9 @@ const resolveSlotPromotion = (
                             <button
                                 type="button"
                                 onClick={() => setShowExtraServices(!showExtraServices)}
-                                className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 transition-colors inline-flex items-center gap-1"
+                                className="text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1 cursor-pointer"
                             >
-                                <span>{showExtraServices ? '− Ocultar servicios extras' : '+ ¿Añadir otro servicio?'}</span>
+                                <span>{showExtraServices ? '− Ocultar otros servicios' : '+ ¿Deseas añadir otro tratamiento?'}</span>
                             </button>
                         </div>
                     )}
@@ -1057,20 +1410,26 @@ const resolveSlotPromotion = (
                             <Clock size={15} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="text-base sm:text-lg font-black tracking-wide text-slate-900 uppercase leading-tight">3. HORARIO</h3>
+                            <h3 className="text-base sm:text-lg font-black tracking-wide !text-slate-900 uppercase leading-tight" style={{ color: '#0f172a' }}>3. HORARIO</h3>
                             <p className="text-xs sm:text-sm font-semibold text-slate-500 leading-tight">Selecciona la fecha y el horario que prefieras</p>
                         </div>
                     </div>
 
                     <BookingCalendar 
-                        canchas={[
-                            ...negocio.services
-                                .filter((s: any) => selectedServiceIds.includes(s.id))
-                                .map((s: any) => ({ ...s, precioHora: s.precio })),
-                            ...negocio.services
-                                .filter((s: any) => !selectedServiceIds.includes(s.id))
-                                .map((s: any) => ({ ...s, precioHora: s.precio })),
-                        ]}
+                        canchas={
+                            (negocio.tipoNegocio === 'SPORTS_COURTS' || negocio.tipoNegocio === 'CANCHAS')
+                                ? [
+                                    ...negocio.services
+                                        .filter((s: any) => selectedServiceIds.includes(s.id))
+                                        .map((s: any) => ({ ...s, precioHora: s.precio })),
+                                    ...negocio.services
+                                        .filter((s: any) => !selectedServiceIds.includes(s.id))
+                                        .map((s: any) => ({ ...s, precioHora: s.precio })),
+                                  ]
+                                : (negocio.services.filter((s: any) => selectedServiceIds.includes(s.id)).length > 0
+                                    ? negocio.services.filter((s: any) => selectedServiceIds.includes(s.id)).map((s: any) => ({ ...s, precioHora: s.precio }))
+                                    : (negocio.services || []).map((s: any) => ({ ...s, precioHora: s.precio })))
+                        }
                         horarioApertura={negocio.horarioApertura || "09:00"}
                         horarioCierre={negocio.horarioCierre || "22:00"}
                         onSelectSlot={handleSelectSlot}
@@ -1080,6 +1439,8 @@ const resolveSlotPromotion = (
                         automaticDiscount={negocio.automaticDiscount}
                         diasAtencion={parsedConfig?.diasAtencion}
                         primaryColor={primaryColor}
+                        tipoNegocio={negocio.tipoNegocio}
+                        isCourt={negocio.tipoNegocio === 'SPORTS_COURTS' || negocio.tipoNegocio === 'CANCHAS'}
                     />
                 </div>
             </div>
@@ -1088,9 +1449,27 @@ const resolveSlotPromotion = (
             <div className="fixed bottom-3 left-3 right-3 sm:left-4 sm:right-4 z-[300] max-w-lg mx-auto">
                 <div className="bg-white rounded-full p-2.5 sm:p-3 shadow-[0_15px_40px_rgba(0,0,0,0.12)] border border-slate-150 flex items-center justify-between">
                     <div className="flex flex-col pl-4 sm:pl-5">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">TOTAL</span>
-                        <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
-                            ${(selectedBooking ? selectedBooking.precio : totalPrecioInitial).toFixed(2)}
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">TOTAL</span>
+                            {activePackInfo && (
+                                <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${
+                                    activePackInfo.isPack 
+                                        ? 'bg-indigo-100 text-indigo-700 border-indigo-200' 
+                                        : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                                }`}>
+                                    {activePackInfo.isPack ? '📦 PACK' : '🔥 PROMO'}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-baseline gap-1.5">
+                            {activePackInfo?.precioOriginal && (
+                                <span className="text-xs font-bold text-slate-400 line-through">
+                                    ${Number(activePackInfo.precioOriginal).toFixed(2)}
+                                </span>
+                            )}
+                            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
+                                ${(selectedBooking ? selectedBooking.precio : (activePackInfo?.precioPromo ?? totalPrecioInitial)).toFixed(2)}
+                            </div>
                         </div>
                     </div>
                     <div className="h-8 w-px bg-slate-200 mx-3 sm:mx-4 shrink-0" />
