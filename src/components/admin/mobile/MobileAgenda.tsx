@@ -36,6 +36,7 @@ interface MobileAgendaProps {
     onUpdateStatus?: (id: string, nuevoEstado: string) => void;
     slug: string;
     highlightedCitas?: Set<string>;
+    negocioTipo?: string;
 }
 
 // Helper para obtener configuración por estado
@@ -118,6 +119,7 @@ interface AppointmentCardProps {
     onConfirm?: any;
     onCancel?: any;
     isHighlighted: boolean;
+    negocioTipo?: string;
 }
 
 const AppointmentCard = memo(function AppointmentCard({ 
@@ -126,7 +128,8 @@ const AppointmentCard = memo(function AppointmentCard({
     onUpdateStatus, 
     onConfirm, 
     onCancel,
-    isHighlighted
+    isHighlighted,
+    negocioTipo
 }: AppointmentCardProps) {
     const status = getStatusConfig(cita.estado, primaryColor);
     
@@ -242,8 +245,20 @@ const AppointmentCard = memo(function AppointmentCard({
         setTranslateX(0);
     };
 
-    // Obtener imagen del servicio
-    let serviceImage = 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=150';
+    // Obtener imagen del servicio con placeholder correcto por tipo de negocio
+    const isDentalBiz = !!(
+        negocioTipo === 'ODONTOLOGIA' ||
+        negocioTipo === 'DENTAL' ||
+        negocioTipo === 'DENTISTA' ||
+        (negocioTipo || '').toUpperCase().includes('DENTAL') ||
+        (negocioTipo || '').toUpperCase().includes('ODONTO') ||
+        (cita.service?.nombre || '').match(/dental|diente|odontol|ortodoncia|endodoncia|implante|limpieza dental|blanqueamiento|sonrisa/i)
+    );
+
+    const DENTAL_PLACEHOLDER = 'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&q=80&w=150';
+    const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=150';
+
+    let serviceImage = isDentalBiz ? DENTAL_PLACEHOLDER : DEFAULT_PLACEHOLDER;
     if (cita.service) {
         if (cita.service.imageMedia?.key) {
             serviceImage = `/api/media/${cita.service.imageMedia.key}`;
@@ -251,6 +266,8 @@ const AppointmentCard = memo(function AppointmentCard({
             serviceImage = cita.service.imageMedia.url;
         } else if (cita.service.Imagen && cita.service.Imagen.length > 0) {
             serviceImage = cita.service.Imagen[0].url;
+        } else if (cita.service.imageUrl) {
+            serviceImage = cita.service.imageUrl;
         }
     }
 
@@ -456,7 +473,7 @@ const AppointmentCard = memo(function AppointmentCard({
            prevProps.primaryColor === nextProps.primaryColor;
 });
 
-export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel, onUpdateStatus, slug, highlightedCitas }: MobileAgendaProps) {
+export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel, onUpdateStatus, slug, highlightedCitas, negocioTipo }: MobileAgendaProps) {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [view, setView] = useState<'day' | 'week' | 'staff'>('week');
     const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'pending' | 'cancelled' | 'completed'>('all');
@@ -740,6 +757,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                                         onCancel={onCancel}
                                         onUpdateStatus={onUpdateStatus}
                                         isHighlighted={!!highlightedCitas?.has(cita.id)}
+                                        negocioTipo={negocioTipo}
                                     />
                                 ))
                             ) : (
@@ -802,6 +820,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                                                 onCancel={onCancel} 
                                                 onUpdateStatus={onUpdateStatus}
                                                 isHighlighted={!!highlightedCitas?.has(cita.id)}
+                                                negocioTipo={negocioTipo}
                                             />
                                         ))}
                                     </div>
@@ -862,6 +881,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                                                 onCancel={onCancel} 
                                                 onUpdateStatus={onUpdateStatus}
                                                 isHighlighted={!!highlightedCitas?.has(cita.id)}
+                                                negocioTipo={negocioTipo}
                                             />
                                         ))}
                                     </div>

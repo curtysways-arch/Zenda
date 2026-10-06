@@ -29,6 +29,7 @@ import {
     Trophy,
     Activity
 } from 'lucide-react';
+import { parsePackInfo } from '@/lib/packHelper';
 import { clsx } from 'clsx';
 import MobileAgenda from '@/components/admin/mobile/MobileAgenda';
 import { useConfirm } from '@/components/admin/ConfirmContext';
@@ -373,6 +374,7 @@ function CitasAdminPageContent() {
                     onUpdateStatus={handleUpdateStatus}
                     slug={slug}
                     highlightedCitas={highlightedCitas}
+                    negocioTipo={negocioTipo}
                 />
             </div>
 
@@ -536,6 +538,24 @@ function CitasAdminPageContent() {
                                                                     {reserva.service?.nombre || reserva.nombreServicio}
                                                                 </span>
                                                             </div>
+                                                            {(() => {
+                                                                const pack = parsePackInfo(reserva);
+                                                                if (!pack) return null;
+                                                                return (
+                                                                    <div className="space-y-1 bg-indigo-50/70 p-2 rounded-xl border border-indigo-150 max-w-[260px]">
+                                                                        <span className="text-[8px] font-black uppercase tracking-wider text-indigo-700 block">
+                                                                            📦 {pack.titulo}
+                                                                        </span>
+                                                                        <div className="flex flex-wrap gap-1">
+                                                                            {pack.servicios.map((s: string, idx: number) => (
+                                                                                <span key={idx} className="text-[8px] font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-indigo-100 shadow-xs">
+                                                                                    ✓ {s}
+                                                                                </span>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                             <div className="flex flex-col gap-1">
                                                                 <span className="text-[10px] font-black uppercase tracking-tighter italic" style={{ color: 'var(--primary-color)' }}>
                                                                     {reserva.horaInicio} - {reserva.horaFin}
@@ -659,6 +679,24 @@ function CitasAdminPageContent() {
                                                 </div>
                                                 <span className="text-[10px] font-black text-slate-400 italic uppercase">{format(new Date(reserva.fecha), 'd MMM', { locale: es })}</span>
                                             </div>
+                                            {(() => {
+                                                const pack = parsePackInfo(reserva);
+                                                if (!pack) return null;
+                                                return (
+                                                    <div className="space-y-1 bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-150">
+                                                        <span className="text-[8px] font-black uppercase tracking-wider text-indigo-700 block">
+                                                            📦 {pack.titulo}
+                                                        </span>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {pack.servicios.map((s: string, idx: number) => (
+                                                                <span key={idx} className="text-[8px] font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-indigo-100 shadow-xs">
+                                                                    ✓ {s}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
                                             <div className="flex items-end justify-between">
                                                 <div className="flex items-center gap-2 px-5 py-2.5 bg-white shadow-sm border border-slate-100 rounded-2xl">
                                                     <Clock size={16} style={{ color: 'var(--primary-color)' }} />
@@ -815,6 +853,7 @@ function StatCard({ label, value, icon: Icon, color, trend }: any) {
 }
 
 function ServiceInfo({ reserva, isCanchas }: { reserva: any; isCanchas?: boolean }) {
+    const packInfo = parsePackInfo(reserva);
     if (isCanchas) {
         return (
             <div className="mt-3 flex items-center gap-1.5 animate-in zoom-in-95 duration-500">
@@ -826,13 +865,29 @@ function ServiceInfo({ reserva, isCanchas }: { reserva: any; isCanchas?: boolean
         );
     }
     return (
-        <div className="mt-4 space-y-2 animate-in zoom-in-95 duration-500">
+        <div className="mt-4 space-y-1.5 animate-in zoom-in-95 duration-500">
             <div className="flex items-center gap-2">
-                <UserCircle size={14} className="text-emerald-500" />
+                <UserCircle size={14} className="text-emerald-500 shrink-0" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 italic">
                     {reserva.staff?.nombre || reserva.staff?.name || 'Cualquier profesional'}
                 </span>
             </div>
+            {packInfo && (
+                <div className="mt-1 space-y-1">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        📦 {packInfo.titulo}
+                    </span>
+                    {packInfo.servicios.length > 0 && (
+                        <div className="flex flex-wrap gap-1 max-w-[220px]">
+                            {packInfo.servicios.map((s: string, idx: number) => (
+                                <span key={idx} className="text-[8px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 shadow-xs">
+                                    ✓ {s}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
