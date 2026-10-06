@@ -14,6 +14,7 @@ import { headers } from "next/headers";
 import { AlertTriangle, Rocket } from 'lucide-react';
 import Link from 'next/link';
 import { destroyDelegatedSession, getDelegatedSession, getEffectiveAdminSession, logDelegatedAudit } from '@/lib/delegatedAuth';
+import { BranchWarehouseProvider } from '@/context/BranchWarehouseContext';
 
 export default async function AdminLayout({
     children,
@@ -101,70 +102,72 @@ export default async function AdminLayout({
 
     return (
         <ConfirmProvider primaryColor={primaryColor}>
-            {/* Notificador emergente y alarma de nuevos pedidos online */}
-            <GlobalOrderNotifier primaryColor={primaryColor} />
+            <BranchWarehouseProvider>
+                {/* Notificador emergente y alarma de nuevos pedidos online */}
+                <GlobalOrderNotifier primaryColor={primaryColor} />
 
-            <div className="flex h-screen bg-slate-50 overflow-hidden light-theme" style={{ '--primary-color': primaryColor } as any}>
-                
-                {/* Sidebar Unificado para todos los negocios de Citiox */}
-                <AdminSidebar 
-                    primaryColor={primaryColor} 
-                    initialBusinessName={negocio?.nombre} 
-                    initialSlug={negocio?.slug}
-                />
+                <div className="flex h-screen bg-slate-50 overflow-hidden light-theme" style={{ '--primary-color': primaryColor } as any}>
+                    
+                    {/* Sidebar Unificado para todos los negocios de Citiox */}
+                    <AdminSidebar 
+                        primaryColor={primaryColor} 
+                        initialBusinessName={negocio?.nombre} 
+                        initialSlug={negocio?.slug}
+                    />
 
-                {/* ── ÁREA PRINCIPAL CON DESPLAZAMIENTO PARA SIDEBAR Y BANNERS ── */}
-                <div className="flex-1 flex justify-center md:justify-start overflow-hidden relative md:pl-64">
-                    <div className="w-full flex flex-col bg-white md:shadow-none relative h-full overflow-hidden md:border-x-0">
-                        
-                        {/* TopBar: solo en móvil */}
-                        <div className="md:hidden">
-                            <MobileTopBar 
-                                primaryColor={primaryColor} 
-                                negocioNombre={negocio?.nombre} 
-                                slug={negocio?.slug}
-                            />
-                        </div>
-
-                        {/* Banners de estado */}
-                        <div className="z-40">
-                            {isDelegated && (
-                                <DelegatedAdminBanner
-                                    businessName={user.targetBusinessName || negocio?.nombre || 'Negocio Objetivo'}
-                                    expiresAt={user.delegatedExpiresAt}
-                                    isDemo={isDemo}
+                    {/* ── ÁREA PRINCIPAL CON DESPLAZAMIENTO PARA SIDEBAR Y BANNERS ── */}
+                    <div className="flex-1 flex justify-center md:justify-start overflow-hidden relative md:pl-64">
+                        <div className="w-full flex flex-col bg-white md:shadow-none relative h-full overflow-hidden md:border-x-0">
+                            
+                            {/* TopBar: solo en móvil */}
+                            <div className="md:hidden">
+                                <MobileTopBar 
+                                    primaryColor={primaryColor} 
+                                    negocioNombre={negocio?.nombre} 
+                                    slug={negocio?.slug}
                                 />
-                            )}
-                            {isDemo && !isDelegated && (
-                                <div className="bg-amber-500 text-white px-6 py-2 flex items-center justify-between shadow-lg">
-                                    <p className="text-[9px] font-black uppercase tracking-widest italic">MODO DEMO</p>
-                                    <Link href="/register" className="bg-white text-amber-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Crear mi Spa</Link>
-                                </div>
-                            )}
-                            {(isExpired || isSuspended) && !isDemo && !isSuperAdmin && process.env.NODE_ENV === 'production' && (
-                                <div className="bg-rose-600 text-white px-6 py-2 flex items-center justify-between shadow-lg">
-                                    <p className="text-[9px] font-black uppercase tracking-widest italic">
-                                        {isSuspended ? 'Negocio Suspendido' : 'Periodo Terminado'}
-                                    </p>
-                                    <Link href="/admin/plan" className="bg-white text-rose-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Activar Plan</Link>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Contenido scrollable */}
-                        <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-slate-50/30">
-                            <div className="p-5 md:p-8 pb-40 md:pb-10 w-full max-w-none">
-                                {children}
                             </div>
-                        </main>
 
-                        {/* BottomNav: solo en móvil */}
-                        <div className="md:hidden">
-                            <MobileBottomNav primaryColor={primaryColor} />
+                            {/* Banners de estado */}
+                            <div className="z-40">
+                                {isDelegated && (
+                                    <DelegatedAdminBanner
+                                        businessName={user.targetBusinessName || negocio?.nombre || 'Negocio Objetivo'}
+                                        expiresAt={user.delegatedExpiresAt}
+                                        isDemo={isDemo}
+                                    />
+                                )}
+                                {isDemo && !isDelegated && (
+                                    <div className="bg-amber-500 text-white px-6 py-2 flex items-center justify-between shadow-lg">
+                                        <p className="text-[9px] font-black uppercase tracking-widest italic">MODO DEMO</p>
+                                        <Link href="/register" className="bg-white text-amber-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Crear mi Spa</Link>
+                                    </div>
+                                )}
+                                {(isExpired || isSuspended) && !isDemo && !isSuperAdmin && process.env.NODE_ENV === 'production' && (
+                                    <div className="bg-rose-600 text-white px-6 py-2 flex items-center justify-between shadow-lg">
+                                        <p className="text-[9px] font-black uppercase tracking-widest italic">
+                                            {isSuspended ? 'Negocio Suspendido' : 'Periodo Terminado'}
+                                        </p>
+                                        <Link href="/admin/plan" className="bg-white text-rose-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Activar Plan</Link>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Contenido scrollable */}
+                            <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-slate-50/30">
+                                <div className="p-5 md:p-8 pb-40 md:pb-10 w-full max-w-none">
+                                    {children}
+                                </div>
+                            </main>
+
+                            {/* BottomNav: solo en móvil */}
+                            <div className="md:hidden">
+                                <MobileBottomNav primaryColor={primaryColor} initialBusiness={negocio} />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </BranchWarehouseProvider>
         </ConfirmProvider>
     );
 }

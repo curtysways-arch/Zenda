@@ -12,12 +12,15 @@ import {
   MessageSquare, Building2, BarChart3, Trophy, Tags, Lock, Layout, Package,
   GraduationCap, Contact, Scissors, Store, ShieldCheck, Bell, Briefcase, Utensils,
   Truck, Wallet, CreditCard, ClipboardList, Bike, LucideIcon, X, FileSpreadsheet,
-  Globe, ExternalLink, Code2, Dumbbell, Scan, CalendarCheck
+  Globe, ExternalLink, Code2, Dumbbell, Scan, CalendarCheck, Target,
+  Coffee, ChefHat, Calculator, Warehouse, FileText, ShoppingBag, Receipt, Smile
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useSession, signOut } from 'next-auth/react';
+import BranchWarehouseSelector from '@/components/admin/BranchWarehouseSelector';
 import BranchSelector from '@/components/admin/BranchSelector';
+import { ToothIcon } from '@/components/icons/ToothIcon';
 
 function cn(...inputs: any[]) {
   return twMerge(clsx(inputs));
@@ -87,13 +90,15 @@ export default function AdminSidebar({
   }, [pathname]);
   const [pendingOrders, setPendingOrders] = useState(0);
   const [capabilities, setCapabilities] = useState<Record<string, boolean>>({
-    promotions: true
+    promotions: false
   });
   const [businessName, setBusinessName] = useState<string>(initialBusinessName || '');
   const [businessSlug, setBusinessSlug] = useState<string>(initialSlug || '');
   const [isRestaurantBiz, setIsRestaurantBiz] = useState<boolean>(false);
+  const [isCafeteriaBiz, setIsCafeteriaBiz] = useState<boolean>(false);
   const [isDentalBiz, setIsDentalBiz] = useState<boolean>(false);
   const [isGymBiz, setIsGymBiz] = useState<boolean>(false);
+  const [isShoeCareBiz, setIsShoeCareBiz] = useState<boolean>(false);
 
   // Cargar capacidades activas del negocio dinámicamente mediante EntitlementsService
   useEffect(() => {
@@ -132,6 +137,18 @@ export default function AdminSidebar({
           const slugUpper = (data.slug || '').toUpperCase();
           const nameUpper = (data.nombre || businessName || '').toUpperCase();
 
+          const isCafeteria = tipoUpper === 'CAFETERIA' || tipoUpper === 'PANADERIA' || tipoUpper === 'PASTELERIA' ||
+            (cfg.tipoNegocio || '').toUpperCase().includes('CAFETERIA') ||
+            (cfg.tipoNegocio || '').toUpperCase().includes('PANADERIA') ||
+            (cfg.tipoNegocio || '').toUpperCase().includes('PASTELERIA') ||
+            (cfg.blueprintId || '').toUpperCase() === 'CAFETERIA' ||
+            (cfg.blueprintId || '').toUpperCase() === 'PANADERIA' ||
+            (cfg.blueprintId || '').toUpperCase() === 'PASTELERIA' ||
+            slugUpper.includes('CAFE') || slugUpper.includes('PANADERIA') || slugUpper.includes('PASTELERIA') ||
+            nameUpper.includes('CAFE') || nameUpper.includes('PANADERIA') || nameUpper.includes('PASTELERIA') ||
+            nameUpper.includes('COFFEE');
+          setIsCafeteriaBiz(isCafeteria);
+
           const isGym = tipoUpper === 'GIMNASIO' || tipoUpper === 'GYM' || tipoUpper === 'FITNESS' ||
             (cfg.tipoNegocio || '').toUpperCase().includes('GIMNASIO') ||
             (cfg.tipoNegocio || '').toUpperCase().includes('GYM') ||
@@ -152,15 +169,24 @@ export default function AdminSidebar({
             (cfg.tipoNegocio || '').toUpperCase().includes('DENTISTA') ||
             (cfg.blueprintId || '').toUpperCase() === 'DENTAL' ||
             (cfg.blueprintId || '').toUpperCase() === 'DENTISTA' ||
-            slugUpper.includes('DENTAL') || slugUpper.includes('ODONTOLOG') || slugUpper.includes('DENTISTA') ||
-            nameUpper.includes('DENTAL') || nameUpper.includes('ODONTOLOG') || nameUpper.includes('DENTISTA');
+            slugUpper.includes('DENTAL') || slugUpper.includes('ODONTOLOG') || slugUpper.includes('DENTISTA') || slugUpper.includes('DENTAR') ||
+            nameUpper.includes('DENTAL') || nameUpper.includes('ODONTOLOG') || nameUpper.includes('DENTISTA') || nameUpper.includes('DENTAR');
           setIsDentalBiz(isDental);
           const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
           const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || 
             slugUpper.includes('CANCHA') || slugUpper.includes('CAMPEONES') || 
             nameUpper.includes('CANCHA') || nameUpper.includes('COMPLEJO') || 
             nameUpper.includes('CAMPEONES') || nameUpper.includes('PADEL') || nameUpper.includes('SINTETICA');
-          const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && !isGym && (
+          const isShoeCare = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA' ||
+            tipoUpper === 'ORDENES-SERVICIO' || tipoUpper === 'LAVANDERIAS' ||
+            slugUpper.includes('LAVADO') || slugUpper.includes('WASH') || slugUpper.includes('SHOE') || slugUpper.includes('BUBBLE') ||
+            nameUpper.includes('LAVADO') || nameUpper.includes('WASH') || nameUpper.includes('BUBBLE') || nameUpper.includes('LAVANDERIA');
+          setIsShoeCareBiz(isShoeCare);
+          const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && !isGym && !isShoeCare && !isCafeteria && (
+            isDental ||
+            tipoUpper === 'ODONTOLOGIA' ||
+            tipoUpper === 'DENTAL' ||
+            tipoUpper === 'DENTISTA' ||
             tipoUpper === 'SPA' ||
             tipoUpper === 'CENTRO_ESTETICA' ||
             tipoUpper === 'PELUQUERIA' ||
@@ -174,30 +200,38 @@ export default function AdminSidebar({
             slugUpper.includes('BARBER') ||
             slugUpper.includes('NAILS') ||
             slugUpper.includes('DENTAL') ||
+            slugUpper.includes('DENTAR') ||
             slugUpper.includes('CITAS') ||
             nameUpper.includes('SPA') ||
             nameUpper.includes('ESTETICA') ||
             nameUpper.includes('PELUQUERIA') ||
-            nameUpper.includes('BARBERIA')
+            nameUpper.includes('BARBERIA') ||
+            nameUpper.includes('DENTAR') ||
+            nameUpper.includes('DENTAL')
           );
-          const isStore = !isRestaurant && !isPinchos && !isCanchas && !isGym && !isServiceBiz;
-          const hasEcommerce = Boolean(effectiveCaps.ECOMMERCE ?? effectiveCaps.ecommerce ?? caps.ecommerce ?? caps.orders);
+          const isStore = !isRestaurant && !isPinchos && !isCanchas && !isGym && !isShoeCare && !isCafeteria && !isServiceBiz;
+          const hasEcommerce = Boolean(effectiveCaps.ECOMMERCE ?? effectiveCaps.ecommerce ?? caps.ecommerce ?? (caps.orders && !isDental && !isServiceBiz));
 
           // Entitlements efectivos estrictos por vertical
           const normalizedCaps: Record<string, boolean> = {
-            orders: Boolean((effectiveCaps.ORDERS ?? effectiveCaps.orders) ?? (hasEcommerce || (isServiceBiz ? caps.orders === true : (isRestaurant || isPinchos || isStore)))),
-            catalog: Boolean((effectiveCaps.PRODUCTS ?? effectiveCaps.products) ?? (hasEcommerce || (isServiceBiz ? caps.catalog === true : (isRestaurant || isPinchos || isStore)))),
-            tables: Boolean((effectiveCaps.TABLES ?? effectiveCaps.tables) || isRestaurant || caps.tables),
+            orders: Boolean((effectiveCaps.ORDERS ?? effectiveCaps.orders) ?? (hasEcommerce || (isServiceBiz || isShoeCare ? Boolean(caps.orders === true || caps.ecommerce) : (isRestaurant || isPinchos || isStore || isCafeteria)))),
+            catalog: Boolean(isDental ? Boolean(effectiveCaps.ECOMMERCE || effectiveCaps.PRODUCTS || caps.ecommerce || caps.catalog || data.tieneTienda) : ((effectiveCaps.PRODUCTS ?? effectiveCaps.products) ?? (hasEcommerce || (isServiceBiz || isShoeCare ? Boolean(caps.catalog === true || caps.products || caps.ecommerce) : (isRestaurant || isPinchos || isStore || isCafeteria))))),
+            tables: Boolean((effectiveCaps.TABLES ?? effectiveCaps.tables) || caps.tables),
             kitchen: Boolean((effectiveCaps.KITCHEN ?? effectiveCaps.kitchen) || isRestaurant || isPinchos || caps.kitchen),
-            delivery: Boolean((effectiveCaps.DELIVERY ?? effectiveCaps.delivery) ?? (isServiceBiz ? caps.delivery === true : (isRestaurant || isPinchos || isStore))),
+            delivery: Boolean((effectiveCaps.DELIVERY ?? effectiveCaps.delivery) ?? (isServiceBiz || isShoeCare ? caps.delivery === true : (isRestaurant || isPinchos || isStore || isCafeteria))),
             dispatch: Boolean(effectiveCaps.DISPATCH ?? effectiveCaps.dispatch ?? caps.dispatch ?? isRestaurant),
-            appointments: !isRestaurant && !isStore && Boolean(effectiveCaps.APPOINTMENTS ?? effectiveCaps.appointments ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
-            courts: !isServiceBiz && !isRestaurant && !isStore && Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
-            services: !isRestaurant && !isStore && !isCanchas && Boolean(isServiceBiz || effectiveCaps.SERVICES || effectiveCaps.services || caps.services),
-            promotions: true,
-            courses: !isRestaurant && !isPinchos && Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses),
-            loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
-            inventory: Boolean((effectiveCaps.INVENTORY ?? effectiveCaps.inventory) ?? (hasEcommerce || caps.inventory)),
+            appointments: !isRestaurant && !isStore && !isShoeCare && !isCafeteria && Boolean(effectiveCaps.APPOINTMENTS ?? effectiveCaps.appointments ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
+            courts: !isServiceBiz && !isRestaurant && !isStore && !isCafeteria && Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
+            services: !isRestaurant && !isStore && !isCanchas && !isCafeteria && Boolean(isServiceBiz || isShoeCare || effectiveCaps.SERVICES || effectiveCaps.services || caps.services),
+            promotions: Boolean(
+              effectiveCaps.PROMOTIONS ?? 
+              effectiveCaps.promotions ?? 
+              caps.promotions ?? 
+              caps.PROMOTIONS
+            ),
+            courses: !isRestaurant && !isPinchos && !isCafeteria && Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses),
+            loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? (isPinchos || isCafeteria)),
+            inventory: Boolean((effectiveCaps.INVENTORY ?? effectiveCaps.inventory) ?? (hasEcommerce || caps.inventory || isCafeteria)),
             communications: Boolean(
               (effectiveCaps.COMMUNICATION_CENTER ?? effectiveCaps.communications) ||
               (effectiveCaps.WHATSAPP_CAMPAIGNS ?? effectiveCaps.whatsapp_campaigns) ||
@@ -206,6 +240,14 @@ export default function AdminSidebar({
               caps.whatsapp_campaigns
             ),
             payments: Boolean(effectiveCaps.PAYMENTS ?? effectiveCaps.payments ?? !isServiceBiz),
+            pos: Boolean(effectiveCaps.POS ?? effectiveCaps.pos ?? caps.pos ?? (isCafeteria || isRestaurant)),
+            recipes: Boolean(effectiveCaps.RECIPES ?? effectiveCaps.recipes ?? caps.recipes ?? isCafeteria),
+            production: Boolean(effectiveCaps.PRODUCTION ?? effectiveCaps.production ?? caps.production ?? isCafeteria),
+            costing: Boolean(effectiveCaps.COSTING ?? effectiveCaps.costing ?? caps.costing ?? isCafeteria),
+            purchases: Boolean(effectiveCaps.PURCHASES ?? effectiveCaps.purchases ?? caps.purchases ?? isCafeteria),
+            multi_warehouse: Boolean(effectiveCaps.MULTI_WAREHOUSE ?? effectiveCaps.multi_warehouse ?? caps.multi_warehouse),
+            electronic_billing: Boolean(effectiveCaps.ELECTRONIC_BILLING ?? effectiveCaps.electronic_billing ?? caps.electronic_billing ?? isCafeteria),
+            payroll: Boolean(effectiveCaps.PAYROLL ?? effectiveCaps.payroll ?? caps.payroll),
             clinical_records: Boolean(
               effectiveCaps.CLINICAL_RECORDS ?? 
               effectiveCaps.clinical_records ?? 
@@ -244,9 +286,17 @@ export default function AdminSidebar({
     ];
 
     // Core Operational Capabilities
+    if (capabilities.pos || isCafeteriaBiz || isRestaurantBiz) {
+      items.push({ name: 'Punto de Venta POS', href: '/admin/pos', icon: Coffee, section: 'GESTIÓN OPERATIVA' });
+    }
     if (capabilities.orders) {
       items.push({ name: 'Ventas', href: '/admin/ventas', icon: Store, section: 'GESTIÓN OPERATIVA' });
       items.push({ name: 'Pedidos App', href: '/admin/pedidos-online', icon: Bike, section: 'GESTIÓN OPERATIVA', badge: pendingOrders > 0 ? pendingOrders : undefined });
+    }
+    // Shoe Care / Lavandería / Servicios especializados
+    if (isShoeCareBiz || capabilities.shoe_care || capabilities.service_orders) {
+      items.push({ name: 'Órdenes de Servicio', href: '/admin/ordenes-servicio', icon: ClipboardList, section: 'GESTIÓN OPERATIVA' });
+      items.push({ name: 'Recepciones', href: '/admin/recepciones', icon: Store, section: 'GESTIÓN OPERATIVA' });
     }
     items.push({ name: 'Caja & Finanzas', href: '/admin/caja', icon: Wallet, section: 'GESTIÓN OPERATIVA' });
     if (capabilities.dispatch) {
@@ -269,25 +319,40 @@ export default function AdminSidebar({
       items.push({ name: 'Membresías', href: '/admin/membresias', icon: CreditCard, section: 'GESTIÓN OPERATIVA' });
     }
 
-    if (capabilities.appointments && !isGymBiz) {
+    if (capabilities.appointments && !isGymBiz && !isShoeCareBiz) {
       items.push({ 
         name: capabilities.courts ? 'Reservas / Agenda' : 'Agenda / Citas', 
         href: '/admin/citas', 
         icon: CalendarDays, 
         section: 'GESTIÓN OPERATIVA' 
       });
-      if (!capabilities.courts) {
-        items.push({ 
-          name: 'Profesionales', 
-          href: '/admin/staff', 
-          icon: Users, 
+      if (isDentalBiz) {
+        items.push({
+          name: 'Pacientes',
+          href: '/admin/pacientes',
+          icon: Users,
           section: 'GESTIÓN OPERATIVA',
           roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN']
         });
       }
+      if (!capabilities.courts) {
+        items.push({ 
+          name: isDentalBiz ? 'Especialistas' : 'Profesionales', 
+          href: '/admin/staff', 
+          icon: Users, 
+          section: 'GESTIÓN OPERATIVA',
+          roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] 
+        });
+      }
     }
     if (capabilities.services && !capabilities.courts && !isGymBiz) {
-      items.push({ name: 'Servicios', href: '/admin/servicios', icon: Scissors, section: 'GESTIÓN OPERATIVA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+      items.push({ 
+        name: isDentalBiz ? 'Tratamientos' : 'Servicios', 
+        href: '/admin/servicios', 
+        icon: isDentalBiz ? Smile : Scissors, 
+        section: 'GESTIÓN OPERATIVA', 
+        roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] 
+      });
     }
     if (capabilities.courts) {
       items.push({ name: 'Mis Canchas', href: '/admin/canchas', icon: Dribbble, section: 'GESTIÓN OPERATIVA' });
@@ -301,9 +366,37 @@ export default function AdminSidebar({
       items.push({ name: 'Categorías', href: '/admin/categorias', icon: Tags, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }
 
+    // Producción & Costos (Gastronomía, Cafetería, Pastelería, Manufactura)
+    if (capabilities.recipes || isCafeteriaBiz) {
+      items.push({ name: 'Recetas & Fórmulas', href: '/admin/recetas', icon: ChefHat, section: 'PRODUCCIÓN & COSTOS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
+    if (capabilities.production || isCafeteriaBiz) {
+      items.push({ name: 'Órdenes de Producción', href: '/admin/produccion', icon: Package, section: 'PRODUCCIÓN & COSTOS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
+    if (capabilities.costing || isCafeteriaBiz) {
+      items.push({ name: 'Costeo & Márgenes', href: '/admin/costos', icon: Calculator, section: 'PRODUCCIÓN & COSTOS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
+
+    // Abastecimiento & Bodegas
+    if (capabilities.purchases || isCafeteriaBiz) {
+      items.push({ name: 'Compras', href: '/admin/compras', icon: ShoppingBag, section: 'ABASTECIMIENTO & BODEGAS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+      items.push({ name: 'Proveedores', href: '/admin/proveedores', icon: Users, section: 'ABASTECIMIENTO & BODEGAS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+      items.push({ name: 'Cuentas por Pagar', href: '/admin/cuentas-por-pagar', icon: Receipt, section: 'ABASTECIMIENTO & BODEGAS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
+    if (capabilities.multi_warehouse || isCafeteriaBiz) {
+      items.push({ name: 'Bodegas & Almacenes', href: '/admin/bodegas', icon: Warehouse, section: 'ABASTECIMIENTO & BODEGAS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
+    if (capabilities.multi_warehouse || isCafeteriaBiz || capabilities.purchases) {
+      items.push({ name: 'Transferencias', href: '/admin/transferencias', icon: Truck, section: 'ABASTECIMIENTO & BODEGAS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
+
     // Marketing Capabilities (Universal)
     items.push({ name: 'Hero y Destacados', href: '/admin/hero-destacados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
-    items.push({ name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    if (capabilities.promotions) {
+      items.push({ name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    } else {
+      items.push({ name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', isLocked: true, lockedBadge: 'Pro', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
     if (capabilities.communications) {
       items.push({ name: 'Comunicaciones', href: '/admin/comunicacion', icon: MessageSquare, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     } else {
@@ -326,7 +419,9 @@ export default function AdminSidebar({
     } else {
       items.push({ name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'MARKETING', isLocked: true, lockedBadge: 'Pro' });
     }
+    items.push({ name: 'Misiones Citiox', href: '/admin/misiones-citiox', icon: Target, section: 'MARKETING' });
     items.push({ name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'MARKETING' });
+    items.push({ name: 'Resultados (Antes y Después)', href: '/admin/resultados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN', 'RECEPCIONISTA'] });
 
     // Administration
     items.push({ 
@@ -343,6 +438,12 @@ export default function AdminSidebar({
       section: 'ADMINISTRACIÓN', 
       roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] 
     });
+    if (capabilities.electronic_billing || isCafeteriaBiz) {
+      items.push({ name: 'Facturación SRI', href: '/admin/facturacion', icon: FileText, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
+    if (capabilities.payroll) {
+      items.push({ name: 'Nómina & IESS', href: '/admin/nomina', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
     if (capabilities.delivery) {
       items.push({ name: 'Repartidores', href: '/admin/logistica', icon: Truck, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     } else if (capabilities.orders) {
@@ -393,14 +494,24 @@ export default function AdminSidebar({
           isLocked: !capabilities.clinical_records && !isRealSuperAdmin,
           lockedBadge: 'Crecimiento'
         },
+        { 
+          name: 'Resultados (Antes y Después)', 
+          href: '/admin/resultados', 
+          icon: Sparkles, 
+          section: 'GESTIÓN CLÍNICA', 
+          roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN', 'RECEPCIONISTA', 'DENTISTA'] 
+        },
 
         // ── CATÁLOGO ──
-        { name: 'Servicios & Tarifario', href: '/admin/servicios', icon: Scissors, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
-        { name: 'Productos', href: '/admin/productos', icon: Sparkles, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
-        { name: 'Inventario', href: '/admin/inventario', icon: Package, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
-        { name: 'Categorías', href: '/admin/categorias', icon: Tags, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Servicios & Tarifario', href: '/admin/servicios', icon: ToothIcon, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        ...(capabilities.catalog ? [
+          { name: 'Productos', href: '/admin/productos', icon: Sparkles, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+          { name: 'Inventario', href: '/admin/inventario', icon: Package, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+          { name: 'Categorías', href: '/admin/categorias', icon: Tags, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        ] : []),
 
         // ── MARKETING & CRECIMIENTO ──
+        { name: 'Misiones Citiox', href: '/admin/misiones-citiox', icon: Target, section: 'MARKETING' },
         { name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'MARKETING' },
         { name: 'Hero y Destacados', href: '/admin/hero-destacados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
@@ -436,12 +547,14 @@ export default function AdminSidebar({
             if (cleanCode === 'historia-clinica' || cleanCode === 'clinical_records') return item.href === '/admin/historia-clinica';
             if (cleanCode === 'tratamientos' || cleanCode === 'treatments') return item.href === '/admin/tratamientos';
             if (cleanCode === 'documentos' || cleanCode === 'documents') return item.href === '/admin/documentos';
+            if (cleanCode === 'resultados' || cleanCode === 'results' || cleanCode === 'casos') return item.href === '/admin/resultados';
             if (cleanCode === 'servicios' || cleanCode === 'services') return item.href === '/admin/servicios';
             if (cleanCode === 'productos' || cleanCode === 'products') return item.href === '/admin/productos' || item.href === '/admin/inventario' || item.href === '/admin/categorias';
             if (cleanCode === 'usuarios' || cleanCode === 'personal') return item.href === '/admin/usuarios';
             if (cleanCode === 'caja' || cleanCode === 'cash') return item.href === '/admin/caja';
             if (cleanCode === 'reportes' || cleanCode === 'reports') return item.href === '/admin/reportes';
             if (cleanCode === 'misiones' || cleanCode === 'beneficios') return item.href === '/admin/misiones';
+            if (cleanCode === 'misiones-citiox' || cleanCode === 'citiox') return item.href === '/admin/misiones-citiox';
             if (cleanCode === 'config' || cleanCode === 'settings') return item.href.startsWith('/admin/config') || item.href === '/admin/sucursales' || item.href === '/admin/metodos-pago' || item.href === '/admin/perfil';
             return item.href.includes(cleanCode);
           });
@@ -470,6 +583,7 @@ export default function AdminSidebar({
         { name: 'Caja & Finanzas', href: '/admin/caja', icon: Wallet, section: 'GESTIÓN FINANCIERA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
 
         // ── MARKETING & COMUNIDAD ──
+        { name: 'Misiones Citiox', href: '/admin/misiones-citiox', icon: Target, section: 'MARKETING' },
         { name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'MARKETING' },
         { name: 'Hero y Destacados', href: '/admin/hero-destacados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Conoce el Gimnasio', href: '/admin/marketing/conoce-el-gym', icon: Building2, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
@@ -510,6 +624,7 @@ export default function AdminSidebar({
             if (cleanCode === 'caja' || cleanCode === 'cash') return item.href === '/admin/caja';
             if (cleanCode === 'ventas' || cleanCode === 'pos') return item.href === '/admin/ventas';
             if (cleanCode === 'misiones' || cleanCode === 'beneficios') return item.href === '/admin/misiones';
+            if (cleanCode === 'misiones-citiox' || cleanCode === 'citiox') return item.href === '/admin/misiones-citiox';
             if (cleanCode === 'reportes' || cleanCode === 'reports') return item.href === '/admin/reportes';
             if (cleanCode === 'config' || cleanCode === 'settings') return item.href.startsWith('/admin/config') || item.href === '/admin/sucursales' || item.href === '/admin/metodos-pago' || item.href === '/admin/perfil';
             return item.href.includes(cleanCode);
@@ -543,7 +658,17 @@ export default function AdminSidebar({
           if (cleanCode === 'mesas' || cleanCode === 'tables') return item.href === '/admin/mesas';
           if (cleanCode === 'pedidos' || cleanCode === 'pedidos-online' || cleanCode === 'delivery') return item.href.includes('/pedidos');
           if (cleanCode === 'caja' || cleanCode === 'cash') return item.href === '/admin/caja';
-          if (cleanCode === 'ventas' || cleanCode === 'pos') return item.href === '/admin/ventas';
+          if (cleanCode === 'ventas' || cleanCode === 'pos') return item.href === '/admin/ventas' || item.href === '/admin/pos';
+          if (cleanCode === 'recetas' || cleanCode === 'recipes') return item.href === '/admin/recetas';
+          if (cleanCode === 'produccion' || cleanCode === 'production') return item.href === '/admin/produccion';
+          if (cleanCode === 'costos' || cleanCode === 'costing') return item.href === '/admin/costos';
+          if (cleanCode === 'compras' || cleanCode === 'purchases') return item.href === '/admin/compras';
+          if (cleanCode === 'cuentas-por-pagar' || cleanCode === 'cxp' || cleanCode === 'payables') return item.href === '/admin/cuentas-por-pagar';
+          if (cleanCode === 'proveedores' || cleanCode === 'suppliers') return item.href === '/admin/proveedores';
+          if (cleanCode === 'bodegas' || cleanCode === 'warehouses') return item.href === '/admin/bodegas';
+          if (cleanCode === 'transferencias' || cleanCode === 'transfers') return item.href === '/admin/transferencias';
+          if (cleanCode === 'facturacion' || cleanCode === 'billing') return item.href === '/admin/facturacion';
+          if (cleanCode === 'nomina' || cleanCode === 'payroll') return item.href === '/admin/nomina';
           if (cleanCode === 'despacho' || cleanCode === 'dispatch') return item.href === '/admin/despacho';
           if (cleanCode === 'productos' || cleanCode === 'products') return item.href === '/admin/productos' || item.href === '/admin/categorias';
           if (cleanCode === 'inventario' || cleanCode === 'inventory') return item.href === '/admin/inventario';
@@ -560,6 +685,11 @@ export default function AdminSidebar({
           if (cleanCode === 'usuarios') return item.href === '/admin/usuarios';
           if (cleanCode === 'reportes' || cleanCode === 'reports') return item.href === '/admin/reportes';
           if (cleanCode === 'comunicacion' || cleanCode === 'comunicaciones' || cleanCode === 'communications') return item.href === '/admin/comunicacion';
+          if (cleanCode === 'ordenes-servicio' || cleanCode === 'ordenes' || cleanCode === 'service-orders') return item.href === '/admin/ordenes-servicio';
+          if (cleanCode === 'recepciones' || cleanCode === 'reception') return item.href === '/admin/recepciones';
+          if (cleanCode === 'misiones' || cleanCode === 'beneficios') return item.href === '/admin/misiones';
+          if (cleanCode === 'misiones-citiox' || cleanCode === 'citiox') return item.href === '/admin/misiones-citiox';
+          if (cleanCode === 'resultados' || cleanCode === 'results' || cleanCode === 'casos') return item.href === '/admin/resultados';
           if (cleanCode === 'config' || cleanCode === 'settings') return item.href.startsWith('/admin/config') || item.href === '/admin/sucursales' || item.href === '/admin/metodos-pago' || item.href === '/admin/perfil';
           return item.href.includes(cleanCode);
         });
@@ -584,6 +714,8 @@ export default function AdminSidebar({
   const baseOrder = [
     'CONTROL DE ACCESO & SOCIOS',
     'GESTIÓN OPERATIVA',
+    'PRODUCCIÓN & COSTOS',
+    'ABASTECIMIENTO & BODEGAS',
     'GESTIÓN CLÍNICA',
     'GESTIÓN FINANCIERA',
     'CATÁLOGO',
@@ -669,8 +801,8 @@ export default function AdminSidebar({
           </button>
         </div>
 
-        {/* Selector de Sucursal Universal con Soporte Multi-Sede */}
-        <BranchSelector primaryColor={primaryColor} userRole={role} />
+        {/* Selector de Sucursal y Bodega Universal con Soporte Multi-Sede */}
+        <BranchWarehouseSelector primaryColor={primaryColor} userRole={role} />
 
         {/* ── BOTÓN DE ACCESO RÁPIDO AL LANDING (LUGAR ESTRATÉGICO E INTUITIVO) ── */}
         {(businessSlug || (session?.user as any)?.slug) && (
@@ -727,7 +859,9 @@ export default function AdminSidebar({
                     <Link
                       key={`${secKey}-${item.href}-${item.name}`}
                       href={item.href}
-                      onClick={() => setIsOpen(false)}
+                      onClick={() => {
+                        setIsOpen(false);
+                      }}
                       className={cn(
                         "flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group relative",
                         isActive
