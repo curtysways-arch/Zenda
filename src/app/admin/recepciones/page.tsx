@@ -26,6 +26,14 @@ import {
   DollarSign,
   FileText,
   XCircle,
+  Filter,
+  Eye,
+  MessageCircle,
+  Check,
+  AlertTriangle,
+  ArrowUpRight,
+  TrendingUp,
+  Inbox
 } from 'lucide-react';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -883,165 +891,390 @@ export default function RecepcionesPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [showWizard, setShowWizard] = useState(false);
-  const [recepcionesHoy, setRecepcionesHoy] = useState<RecepcionRow[]>([]);
+  const [allOrders, setAllOrders] = useState<RecepcionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [waData, setWaData] = useState<{ phone: string; message: string; url: string } | null>(null);
+  const [timeFilter, setTimeFilter] = useState<'HOY' | 'SEMANA' | 'MES' | 'TODAS'>('HOY');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [negocio, setNegocio] = useState<any>(null);
 
-  const negocioId = (session?.user as any)?.negocioId || 'demo-canchas';
+  useEffect(() => {
+    fetch('/api/negocio')
+      .then(r => r.json())
+      .then(d => { if (d && d.id) setNegocio(d); })
+      .catch(() => {});
+  }, []);
 
-  const fetchRecepcionesHoy = useCallback(async () => {
+  const sessionNegocioId = (session?.user as any)?.negocioId;
+  const negocioId = negocio?.id || sessionNegocioId || '';
+
+  const fetchRecepciones = useCallback(async () => {
+    setLoading(true);
     try {
-      const res = await fetch(`/api/shoe-care/orders?businessId=${negocioId}`);
+      const url = negocioId ? `/api/shoe-care/orders?businessId=${negocioId}` : '/api/shoe-care/orders';
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        // Filtrar recepciones hechas hoy (modo LOCAL o estado RECIBIDO)
-        const todayStr = new Date().toISOString().split('T')[0];
-        const hoy = data.filter((p: any) => {
-          const createdStr = new Date(p.createdAt).toISOString().split('T')[0];
-          return createdStr === todayStr && (p.extraInfo?.modoIngreso === 'LOCAL' || p.estado === 'RECIBIDO');
-        });
-        setRecepcionesHoy(hoy);
+        // Incluir órdenes de recepción (modo LOCAL, tipoEntrega RETIRO o estado inicial RECIBIDO/PENDIENTE)
+        setAllOrders(Array.isArray(data) ? data : []);
       }
     } catch (err) {
-      console.error('Error cargando recepciones de hoy:', err);
+      console.error('Error cargando recepciones:', err);
     } finally {
       setLoading(false);
     }
   }, [negocioId]);
 
   useEffect(() => {
-    if (session) fetchRecepcionesHoy();
-  }, [session, fetchRecepcionesHoy]);
+    fetchRecepciones();
+  }, [fetchRecepciones]);
 
   const handleCreated = (orderId: string, whatsapp: any) => {
     setShowWizard(false);
     setWaData(whatsapp);
-    fetchRecepcionesHoy();
+    fetchRecepciones();
   };
 
+  // Filtrado temporal y por texto
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const filteredOrders = allOrders.filter(ord => {
+    const createdDate = new Date(ord.createdAt);
+    const createdStr = createdDate.toISOString().split('T')[0];
+
+    // Filtro temporal
+    let matchTime = true;
+    if (timeFilter === 'HOY') {
+      matchTime = createdStr === todayStr;
+    } else if (timeFilter === 'SEMANA') {
+      matchTime = createdDate >= startOfWeek;
+    } else if (timeFilter === 'MES') {
+      matchTime = createdDate >= startOfMonth;
+    }
+
+    // Filtro texto
+    const q = searchQuery.toLowerCase().trim();
+    const matchText = !q ||
+      (ord.nombreCliente || '').toLowerCase().includes(q) ||
+      (ord.telefonoCliente || '').includes(q) ||
+      (ord.numeroPedido || '').toString().includes(q) ||
+      (ord.extraInfo?.servicioNombre || '').toLowerCase().includes(q);
+
+    return matchTime && matchText;
+  });
+
+  // Métricas rápidas
+  const countHoy = allOrders.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === todayStr).length;
+  const countSemana = allOrders.filter(o => new Date(o.createdAt) >= startOfWeek).length;
+  const totalMontoHoy = allOrders
+    .filter(o => new Date(o.createdAt).toISOString().split('T')[0] === todayStr)
+    .reduce((sum, o) => sum + (o.total || 0), 0);
+
   return (
-    <div className="min-h-full bg-slate-50 p-6 space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
-            <Store className="w-6 h-6" />
+    <div className="min-h-full bg-slate-50/50 p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* ── BANNER CABECERA ──────────────────────────────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-xs">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-600/25 shrink-0">
+            <Store className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900">Módulo Recepciones</h1>
-            <p className="text-xs text-slate-500">Registro presencial de clientes Walk-in · ServiceEngine v1.0.0</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Módulo Recepciones
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+                Walk-In
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Recepción presencial de calzado y prendas · Generación rápida de órdenes en mostrador
+            </p>
           </div>
         </div>
 
-        <button
-          onClick={() => setShowWizard(true)}
-          className="px-5 py-3 bg-emerald-600 text-white rounded-2xl font-bold text-sm hover:bg-emerald-700 transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95"
-        >
-          <Plus className="w-5 h-5" /> Nueva Recepción
-        </button>
+        <div className="flex items-center gap-2.5 self-stretch sm:self-auto">
+          <button
+            onClick={() => router.push('/admin/ordenes-servicio')}
+            className="flex-1 sm:flex-none px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+          >
+            <Package className="w-4 h-4" /> Todas las Órdenes
+          </button>
+          <button
+            onClick={() => setShowWizard(true)}
+            className="flex-1 sm:flex-none px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-95"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" /> Nueva Recepción
+          </button>
+        </div>
       </div>
 
-      {/* Modal Notificación WhatsApp Post-Creación */}
+      {/* ── TARJETAS DE RESUMEN RÁPIDO ───────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+          <span className="text-[11px] font-black uppercase text-slate-400 block tracking-wider">Hoy</span>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-2xl font-black text-slate-900">{countHoy}</span>
+            <span className="text-xs font-bold text-emerald-600">${totalMontoHoy.toFixed(2)}</span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Ingresos presenciales</p>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+          <span className="text-[11px] font-black uppercase text-slate-400 block tracking-wider">Esta Semana</span>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-2xl font-black text-indigo-900">{countSemana}</span>
+            <span className="text-xs font-bold text-slate-400">7 días</span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Total recepciones</p>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+          <span className="text-[11px] font-black uppercase text-slate-400 block tracking-wider">Histórico</span>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-2xl font-black text-slate-900">{allOrders.length}</span>
+            <span className="text-xs font-bold text-purple-600">Registradas</span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Base total de órdenes</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-4 sm:p-5 rounded-2xl text-white shadow-md shadow-emerald-600/15 flex flex-col justify-between">
+          <span className="text-[11px] font-black uppercase tracking-wider text-emerald-100 block">Flujo Ágil</span>
+          <p className="text-xs font-bold leading-snug mt-1">
+            Crea la orden y compártela a WhatsApp al instante.
+          </p>
+          <button
+            onClick={() => setShowWizard(true)}
+            className="mt-2 text-left text-xs font-black underline underline-offset-2 hover:text-emerald-100 flex items-center gap-1"
+          >
+            + Ingreso rápido <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── CONTROLES Y FILTROS ─────────────────────────────────────────── */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row gap-3 items-center justify-between">
+        {/* Pestañas de rango temporal */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-full lg:w-auto overflow-x-auto">
+          {[
+            { id: 'HOY', label: 'Hoy', count: countHoy },
+            { id: 'SEMANA', label: 'Esta Semana', count: countSemana },
+            { id: 'MES', label: 'Este Mes' },
+            { id: 'TODAS', label: 'Todas', count: allOrders.length },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setTimeFilter(tab.id as any)}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
+                timeFilter === tab.id
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <span>{tab.label}</span>
+              {typeof tab.count === 'number' && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                  timeFilter === tab.id ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-600'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Buscador */}
+        <div className="relative w-full lg:w-80">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Buscar por cliente, teléfono o #..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+          />
+        </div>
+      </div>
+
+      {/* ── LISTADO / TABLA DE RECEPCIONES ─────────────────────────────────── */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-slate-900">
+              {timeFilter === 'HOY' ? 'Recepciones de Hoy' :
+               timeFilter === 'SEMANA' ? 'Recepciones de Esta Semana' :
+               timeFilter === 'MES' ? 'Recepciones de Este Mes' :
+               'Historial Completo de Recepciones'}
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {filteredOrders.length} {filteredOrders.length === 1 ? 'registro encontrado' : 'registros encontrados'}
+            </p>
+          </div>
+          <button
+            onClick={fetchRecepciones}
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition"
+            title="Refrescar"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="py-20 text-center text-slate-400 space-y-2">
+            <RefreshCw className="w-7 h-7 animate-spin mx-auto text-emerald-600" />
+            <p className="text-xs font-bold">Cargando recepciones...</p>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="py-16 px-4 text-center space-y-4 max-w-md mx-auto">
+            <div className="w-16 h-16 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto text-slate-400">
+              <Inbox className="w-8 h-8 stroke-[1.5]" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-slate-900">
+                {timeFilter === 'HOY' ? 'Sin ingresos registrados hoy' : 'No se encontraron recepciones'}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                {timeFilter === 'HOY'
+                  ? 'Aún no se ha registrado ningún cliente presencial en la jornada de hoy. Puedes ver el historial de esta semana o crear una nueva recepción.'
+                  : 'Prueba cambiando los filtros o buscando con otro término.'}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+              {timeFilter === 'HOY' && countSemana > 0 && (
+                <button
+                  onClick={() => setTimeFilter('SEMANA')}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+                >
+                  Ver recepciones de esta semana ({countSemana})
+                </button>
+              )}
+              <button
+                onClick={() => setShowWizard(true)}
+                className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Nueva Recepción
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {filteredOrders.map(r => {
+              const extra = (r.extraInfo as any) || {};
+              const pares = extra.cantidadPares || (Array.isArray(extra.articulos) ? extra.articulos.length : 1);
+              const articulosDesc = Array.isArray(extra.articulos) && extra.articulos.length > 0
+                ? extra.articulos.map((a: any) => `${a.cantidad || 1}x ${a.tipo || 'Calzado'}`).join(' · ')
+                : extra.servicioNombre || `${pares} artículo(s)`;
+              const cleanPhone = (r.telefonoCliente || '').replace(/\D/g, '');
+
+              return (
+                <div
+                  key={r.id}
+                  className="p-4 sm:p-5 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                >
+                  <div className="flex items-start gap-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-black text-sm shrink-0">
+                      {(r.nombreCliente || 'C').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono font-black text-emerald-600 text-xs">
+                          #{r.numeroPedido}
+                        </span>
+                        <h4 className="font-black text-slate-900 text-sm truncate">
+                          {r.nombreCliente}
+                        </h4>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-100 text-slate-600 border border-slate-200">
+                          {r.estado || 'RECIBIDO'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5 truncate">
+                        {articulosDesc}
+                      </p>
+                      <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
+                        <span>📱 {r.telefonoCliente}</span>
+                        <span>·</span>
+                        <span>🕒 {new Date(r.createdAt).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })} {new Date(r.createdAt).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                    <div className="text-left sm:text-right">
+                      <span className="text-xs font-black text-slate-900 block">
+                        ${(r.total || 0).toFixed(2)}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 block">
+                        {pares} {pares === 1 ? 'par' : 'pares'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {cleanPhone && (
+                        <a
+                          href={`https://wa.me/${cleanPhone}?text=Hola%20${encodeURIComponent(r.nombreCliente || '')}%2C%20te%20escribimos%20de%20BubbleWash%20sobre%20tu%20orden%20%23${r.numeroPedido}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="WhatsApp"
+                          className="p-2 rounded-xl bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 transition"
+                        >
+                          <MessageCircle size={15} />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => router.push(`/admin/service-orders/${r.id}`)}
+                        className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition flex items-center gap-1"
+                      >
+                        Abrir <ChevronRight size={13} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── MODAL NOTIFICACIÓN WHATSAPP POST-CREACIÓN ─────────────────────── */}
       {waData && (
-        <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl p-6 text-center max-w-sm w-full space-y-4 shadow-2xl">
             <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">¡Recepción Registrada!</h3>
-            <p className="text-xs text-slate-500">
-              La orden de servicio fue emitida en estado <strong>RECIBIDO</strong>. Puedes notificar al cliente por WhatsApp.
-            </p>
-            <div className="flex flex-col gap-2">
+            <div>
+              <h3 className="text-lg font-black text-slate-900">¡Recepción Registrada!</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                La orden fue creada en estado <strong>RECIBIDO</strong>. Puedes enviarle el comprobante al cliente por WhatsApp.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 pt-2">
               <a
                 href={waData.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-3 bg-emerald-500 text-white font-bold text-sm rounded-2xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 shadow-md"
+                className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20"
               >
                 <Phone className="w-4 h-4" /> Enviar WhatsApp
               </a>
               <button
                 onClick={() => setWaData(null)}
-                className="py-2.5 border border-slate-200 text-slate-600 font-semibold text-xs rounded-xl hover:bg-slate-50"
+                className="py-2.5 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-50"
               >
-                Continuar a Órdenes
+                Cerrar
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Tabla Recepciones de Hoy */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Recepciones de Hoy</h2>
-            <p className="text-xs text-slate-500">Ingresos presenciales registrados durante la jornada</p>
-          </div>
-          <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
-            {recepcionesHoy.length} recepciones hoy
-          </span>
-        </div>
-
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 bg-slate-50">
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Orden #</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Hora</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Cliente</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Servicio</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Monto Total</th>
-              <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-400">
-                  <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-600" />
-                  Cargando recepciones de hoy...
-                </td>
-              </tr>
-            ) : recepcionesHoy.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-400">
-                  <Store className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="font-semibold text-slate-600">Sin recepciones presenciales registradas hoy</p>
-                  <p className="text-xs text-slate-400 mt-1">Presiona "+ Nueva Recepción" para registrar un cliente Walk-in</p>
-                </td>
-              </tr>
-            ) : (
-              recepcionesHoy.map(r => (
-                <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3 font-bold text-slate-900">#{r.numeroPedido}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500">
-                    {new Date(r.createdAt).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-bold text-slate-900">{r.nombreCliente}</p>
-                    <p className="text-xs text-slate-400 font-mono">{r.telefonoCliente}</p>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-slate-600">
-                    {r.extraInfo?.servicioNombre || 'Lavado de Calzado'}
-                  </td>
-                  <td className="px-4 py-3 font-bold text-emerald-600">${r.total?.toFixed(2)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => router.push('/admin/ordenes-servicio')}
-                      className="px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors inline-flex items-center gap-1"
-                    >
-                      Abrir Orden <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Modal Wizard */}
+      {/* ── MODAL WIZARD DE RECEPCIÓN ────────────────────────────────────── */}
       {showWizard && (
         <NewRecepcionWizard
           negocioId={negocioId}
