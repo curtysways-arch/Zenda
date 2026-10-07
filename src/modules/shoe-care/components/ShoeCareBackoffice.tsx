@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import DynamicFavicon from '@/components/DynamicFavicon';
@@ -23,6 +23,10 @@ import {
   Clock, 
   AlertCircle, 
   Camera, 
+  Video,
+  Play,
+  UploadCloud,
+  Film,
   User, 
   Phone, 
   MapPin, 
@@ -49,7 +53,18 @@ import {
   ArrowUpRight,
   Store,
   Eye,
-  CheckCircle
+  CheckCircle,
+  Lock,
+  ArrowRight,
+  Package,
+  Zap,
+  MessageCircle,
+  Banknote,
+  WashingMachine,
+  Wind,
+  Sparkle,
+  PackageCheck,
+  SendHorizonal
 } from 'lucide-react';
 import MapSelectionModal from '@/components/public/MapSelectionModal';
 
@@ -92,14 +107,85 @@ const ADICIONALES_CATALOGO = [
   { id: 'desodorizacion', nombre: 'Tratamiento Antibacteriano & Desodorización', precio: 2.00 }
 ];
 
+export interface ReceptionItem {
+  id: string;
+  tipo: string;
+  servicioNombre: string;
+  precioUnitario: number;
+  cantidad: number;
+  notas: string;
+  fotos: string[];
+}
+
+const PRESET_ITEM_TYPES = [
+  'Sneakers / Calzado Deportivo',
+  'Zapatos de Gamuza / Nobuk',
+  'Zapatos de Cuero / Formales',
+  'Botas / Botines',
+  'Mochila / Bolso / Maletín',
+  'Gorra / Sombrero',
+  'Chaqueta / Casaca / Abrigo',
+  'Prenda de Vestir / Ropa',
+  'Edredón / Cobija',
+  'Maleta / Equipaje',
+  'Otro Artículo'
+];
+
 export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBackofficeProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const sessionNegocioId = (session?.user as any)?.negocioId;
   const [negocio, setNegocio] = useState<any>(negocioProp || {});
-  const negocioId = negocio?.id || negocioProp?.id || sessionNegocioId || 'demo-canchas';
+  const negocioId = negocio?.id || negocioProp?.id || sessionNegocioId || '';
+
+  useEffect(() => {
+    if (negocioProp?.id && negocioProp.id !== negocio?.id) {
+      setNegocio(negocioProp);
+    }
+  }, [negocioProp]);
+
+  useEffect(() => {
+    if (!negocio?.id && !negocioProp?.id && !sessionNegocioId) {
+      fetch('/api/negocio')
+        .then(r => r.json())
+        .then(d => {
+          if (d && d.id) {
+            setNegocio(d);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [negocio?.id, negocioProp?.id, sessionNegocioId]);
 
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [isPlanFree, setIsPlanFree] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/features')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.communications_module === false) {
+          setIsPlanFree(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const maskClientName = (name?: string) => {
+    if (!name) return 'Cliente';
+    if (!isPlanFree) return name;
+    const parts = name.trim().split(' ');
+    return parts.map(p => p.charAt(0) + '***').join(' ');
+  };
+
+  const maskClientPhone = (phone?: string) => {
+    if (!phone) return 'Sin teléfono';
+    if (!isPlanFree) return phone;
+    const clean = phone.trim();
+    if (clean.length <= 4) return '***';
+    return clean.slice(0, 3) + ' *** *** ' + clean.slice(-3);
+  };
+
   const [ordenes, setOrdenes] = useState<any[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -151,11 +237,22 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
   const [showOrderDetailModal, setShowOrderDetailModal] = useState<any>(null);
   const [showMapModal, setShowMapModal] = useState(false);
 
-  // Form Nueva Recepción en Local
+  // Form Nueva Recepción en Local (Multi-Item)
   const [receptionForm, setReceptionForm] = useState({
     telefonoCliente: '',
     nombreCliente: '',
     emailCliente: '',
+    items: [
+      {
+        id: 'item_1',
+        tipo: 'Sneakers / Calzado Deportivo',
+        servicioNombre: 'Lavado Completo',
+        precioUnitario: 6.00,
+        cantidad: 1,
+        notas: '',
+        fotos: []
+      }
+    ] as ReceptionItem[],
     servicioNombre: 'Lavado Completo',
     precioServicio: 6.00,
     cantidadPares: '1',
@@ -165,6 +262,166 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
     fechaEstimada: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
     horaEstimada: '17:00'
   });
+
+  const receptionTotalPares = useMemo(() => {
+    return receptionForm.items.reduce((acc, it) => acc + (parseInt(String(it.cantidad)) || 1), 0);
+  }, [receptionForm.items]);
+
+  const receptionTotalEstimado = useMemo(() => {
+    return receptionForm.items.reduce((acc, it) => acc + ((parseFloat(String(it.precioUnitario)) || 0) * (parseInt(String(it.cantidad)) || 1)), 0);
+  }, [receptionForm.items]);
+
+  const handleAddReceptionItem = () => {
+    const defaultSrv = effectiveServices[0] || { nombre: 'Lavado Completo', precio: 6.00 };
+    setReceptionForm(prev => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          tipo: 'Sneakers / Calzado Deportivo',
+          servicioNombre: defaultSrv.nombre,
+          precioUnitario: defaultSrv.precio,
+          cantidad: 1,
+          notas: '',
+          fotos: []
+        }
+      ]
+    }));
+  };
+
+  const handleRemoveReceptionItem = (idx: number) => {
+    if (receptionForm.items.length <= 1) return;
+    setReceptionForm(prev => {
+      const nextItems = prev.items.filter((_, i) => i !== idx);
+      const allFotos = nextItems.flatMap(it => it.fotos || []);
+      return {
+        ...prev,
+        items: nextItems,
+        fotosRecepcion: Array.from(new Set(allFotos))
+      };
+    });
+  };
+
+  const handleUpdateReceptionItem = (idx: number, patch: Partial<ReceptionItem>) => {
+    setReceptionForm(prev => {
+      const nextItems = [...prev.items];
+      nextItems[idx] = { ...nextItems[idx], ...patch };
+      return { ...prev, items: nextItems };
+    });
+  };
+
+  const handleRemovePhotoFromItem = (itemIdx: number, photoUrl: string) => {
+    setReceptionForm(prev => {
+      const nextItems = [...prev.items];
+      if (!nextItems[itemIdx]) return prev;
+      const currentItem = nextItems[itemIdx];
+      nextItems[itemIdx] = {
+        ...currentItem,
+        fotos: (currentItem.fotos || []).filter(u => u !== photoUrl)
+      };
+      const allFotos = nextItems.flatMap(it => it.fotos || []);
+      return {
+        ...prev,
+        items: nextItems,
+        fotosRecepcion: Array.from(new Set(allFotos))
+      };
+    });
+  };
+
+  // Estados para subida de fotos y video en recepción
+  const [clientSectionCollapsed, setClientSectionCollapsed] = useState(false);
+  const [itemDetailModalIdx, setItemDetailModalIdx] = useState<number | null>(null);
+  const [activeMediaItemIdx, setActiveMediaItemIdx] = useState<number | null>(null);
+  const [uploadingReceptionMedia, setUploadingReceptionMedia] = useState(false);
+  const [receptionUploadProgress, setReceptionUploadProgress] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [previewMediaModal, setPreviewMediaModal] = useState<string | null>(null);
+
+  const receptionCameraPhotoRef = useRef<HTMLInputElement | null>(null);
+  const receptionCameraVideoRef = useRef<HTMLInputElement | null>(null);
+  const receptionGalleryRef = useRef<HTMLInputElement | null>(null);
+
+  const isVideoMedia = (url: string) => /\.(mp4|webm|mov|m4v|ogg)(\?.*)?$/i.test(url) || url.includes('/video');
+
+  const triggerUploadForItem = (itemIdx: number, type: 'photo' | 'video' | 'gallery') => {
+    setActiveMediaItemIdx(itemIdx);
+    if (type === 'photo') receptionCameraPhotoRef.current?.click();
+    else if (type === 'video') receptionCameraVideoRef.current?.click();
+    else if (type === 'gallery') receptionGalleryRef.current?.click();
+  };
+
+  const handleUploadReceptionMedia = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setUploadingReceptionMedia(true);
+    setReceptionUploadProgress(`Preparando ${files.length} archivo(s)...`);
+    try {
+      const newUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setReceptionUploadProgress(`Subiendo archivo ${i + 1} de ${files.length}...`);
+
+        const isVideo = file.type?.startsWith('video/') || /\.(mp4|webm|mov|m4v|ogg)$/i.test(file.name);
+        const maxSizeBytes = isVideo ? 60 * 1024 * 1024 : 20 * 1024 * 1024;
+        if (file.size > maxSizeBytes) {
+          alert(`El archivo "${file.name}" supera el tamaño permitido (${isVideo ? '60MB para videos' : '20MB para fotos'}).`);
+          continue;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('category', 'order-inspection');
+
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Error al subir ${file.name}`);
+        }
+
+        const data = await res.json();
+        if (data.url) {
+          newUrls.push(data.url);
+        }
+      }
+
+      if (newUrls.length > 0) {
+        setReceptionForm(prev => {
+          if (activeMediaItemIdx !== null && prev.items[activeMediaItemIdx]) {
+            const nextItems = [...prev.items];
+            const currentItem = nextItems[activeMediaItemIdx];
+            nextItems[activeMediaItemIdx] = {
+              ...currentItem,
+              fotos: [...(currentItem.fotos || []), ...newUrls]
+            };
+            const allFotos = nextItems.flatMap(it => it.fotos || []);
+            return {
+              ...prev,
+              items: nextItems,
+              fotosRecepcion: Array.from(new Set(allFotos))
+            };
+          }
+          return {
+            ...prev,
+            fotosRecepcion: [...prev.fotosRecepcion, ...newUrls]
+          };
+        });
+      }
+    } catch (err: any) {
+      console.error('Error subiendo multimedia de recepción:', err);
+      alert(err.message || 'Error al procesar la multimedia');
+    } finally {
+      setUploadingReceptionMedia(false);
+      setReceptionUploadProgress('');
+      if (receptionCameraPhotoRef.current) receptionCameraPhotoRef.current.value = '';
+      if (receptionCameraVideoRef.current) receptionCameraVideoRef.current.value = '';
+      if (receptionGalleryRef.current) receptionGalleryRef.current.value = '';
+    }
+  };
 
   // Inicializar o ajustar servicio en receptionForm y newOrderForm con el catálogo real disponible
   useEffect(() => {
@@ -335,7 +592,10 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
 
   const handleSaveReception = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!receptionForm.nombreCliente || !receptionForm.telefonoCliente) return;
+    if (!receptionForm.nombreCliente || !receptionForm.telefonoCliente) {
+      alert('Por favor ingresa el nombre y teléfono del cliente.');
+      return;
+    }
 
     const todayStr = new Date().toISOString().split('T')[0];
     if (receptionForm.fechaEstimada < todayStr) {
@@ -345,6 +605,23 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
 
     setSubmitting(true);
     try {
+      const articulosPayload = receptionForm.items.map(it => ({
+        tipo: it.tipo || 'Artículo',
+        servicioNombre: it.servicioNombre || 'Servicio',
+        variante: it.notas || it.tipo || 'Estándar',
+        precioUnitario: parseFloat(String(it.precioUnitario)) || 0,
+        cantidad: parseInt(String(it.cantidad)) || 1,
+        notas: it.notas || '',
+        fotos: Array.isArray(it.fotos) ? it.fotos : []
+      }));
+
+      const mainServicioNombre = articulosPayload.length === 1
+        ? `${articulosPayload[0].cantidad}x ${articulosPayload[0].tipo} (${articulosPayload[0].servicioNombre})`
+        : `${articulosPayload.length} artículos: ${articulosPayload.map(a => `${a.cantidad}x ${a.tipo}`).join(', ')}`;
+
+      const allItemFotos = receptionForm.items.flatMap(it => it.fotos || []);
+      const combinedFotos = Array.from(new Set([...allItemFotos, ...(receptionForm.fotosRecepcion || [])]));
+
       const res = await fetch('/api/shoe-care/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -354,11 +631,12 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
           nombreCliente: receptionForm.nombreCliente,
           telefonoCliente: receptionForm.telefonoCliente,
           emailCliente: receptionForm.emailCliente,
-          cantidadPares: receptionForm.cantidadPares,
-          servicioNombre: receptionForm.servicioNombre,
-          precioServicio: receptionForm.precioServicio,
+          cantidadPares: receptionTotalPares,
+          servicioNombre: mainServicioNombre,
+          precioServicio: receptionTotalEstimado,
+          articulos: articulosPayload,
           observaciones: receptionForm.observaciones,
-          fotosRecepcion: receptionForm.fotosRecepcion,
+          fotosRecepcion: combinedFotos,
           fechaEstimadaEntrega: `${receptionForm.fechaEstimada}T${receptionForm.horaEstimada}:00`
         })
       });
@@ -367,12 +645,26 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
         const createdOrder = await res.json();
         setShowReceptionModal(false);
         setShowWhatsAppReceiptModal(createdOrder);
+        setClientSectionCollapsed(false);
+        setItemDetailModalIdx(null);
+        const defaultSrv = effectiveServices[0] || { nombre: 'Lavado Completo', precio: 6.00 };
         setReceptionForm({
           telefonoCliente: '',
           nombreCliente: '',
           emailCliente: '',
-          servicioNombre: 'Lavado Completo',
-          precioServicio: 6.00,
+          items: [
+            {
+              id: 'item_1',
+              tipo: 'Sneakers / Calzado Deportivo',
+              servicioNombre: defaultSrv.nombre,
+              precioUnitario: defaultSrv.precio,
+              cantidad: 1,
+              notas: '',
+              fotos: []
+            }
+          ],
+          servicioNombre: defaultSrv.nombre,
+          precioServicio: defaultSrv.precio,
           cantidadPares: '1',
           fotosRecepcion: [],
           fotoInputUrl: '',
@@ -381,9 +673,13 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
           horaEstimada: '17:00'
         });
         fetchAllData();
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        alert(errJson.error || 'Error creando orden de recepción');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Error creando recepción:', e);
+      alert(e.message || 'Error al procesar la recepción');
     } finally {
       setSubmitting(false);
     }
@@ -397,18 +693,36 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
     const horaFormatted = fechaObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     const marca = negocio?.nombre || 'BubbleWash';
 
-    return `Hola ${nombre}
+    const articulos = order?.extraInfo?.articulos || [];
+    let itemsTexto = '';
+    if (Array.isArray(articulos) && articulos.length > 0) {
+      itemsTexto = articulos.map((a: any) => {
+        const extraNote = a.notas ? ` (${a.notas})` : (a.variante && a.variante !== a.tipo ? ` (${a.variante})` : '');
+        const itemSubtotal = ((parseFloat(a.precioUnitario) || 0) * (parseInt(a.cantidad) || 1)).toFixed(2);
+        return `  • ${a.cantidad || 1}x ${a.tipo || 'Artículo'}: ${a.servicioNombre || 'Servicio'}${extraNote} - $${itemSubtotal} USD`;
+      }).join('\n');
+    } else if (Array.isArray(order?.items) && order.items.length > 0) {
+      itemsTexto = order.items.map((it: any) => `  • ${it.cantidad}x ${it.nombreProducto}`).join('\n');
+    } else {
+      itemsTexto = `  • ${order?.extraInfo?.cantidadPares || 1} artículo(s) / calzado`;
+    }
 
-Recibimos tus zapatos correctamente.
+    const totalStr = Number(order?.total || 0).toFixed(2);
 
-Orden:
-#${codigo}
+    return `Hola ${nombre} 👋
 
-Fecha estimada de entrega:
-${fechaFormatted}
-${horaFormatted}
+Confirmamos la recepción de tus prendas/artículos en ${marca}:
+📋 Orden: #${codigo}
 
-Te notificaremos cuando estén listos.
+Artículos recibidos:
+${itemsTexto}
+
+💰 Total estimado: $${totalStr} USD
+
+📅 Fecha estimada de entrega:
+${fechaFormatted} a las ${horaFormatted}
+
+Te notificaremos en cuanto estén listos para entrega. ¡Gracias por tu confianza!
 
 ${marca}`;
   };
@@ -487,12 +801,25 @@ ${marca}`;
   const clientesNuevos = clientes.filter(c => new Date(c.createdAt) > new Date(Date.now() - 86400000 * 7)).length;
   const clientesRecurrentes = clientes.filter(c => (c.totalOrdenes || 0) > 1).length;
 
-  // Filtrado de órdenes
+  // Filtrado de órdenes con grupos
+  const GRUPOS_ESTADOS: Record<string, string[]> = {
+    '__NUEVAS__': ['SOLICITADA','PENDIENTE_RETIRO','ESPERANDO_REPARTIDOR_RETIRO','ESPERANDO_ACEPTACION_REPARTIDOR','REPARTIDOR_EN_CAMINO'],
+    '__RECIBIDAS__': ['RECIBIDO','RETIRADO','RECOGIDO'],
+    '__EN_PROCESO__': ['INSPECCIONADO','EN_PROCESO','EN_LAVADO','EN_SECADO','EN_ACABADOS'],
+    '__LISTOS__': ['LISTO','LISTO_PARA_ENTREGA','ESPERANDO_REPARTIDOR_ENTREGA'],
+    '__EN_RUTA__': ['EN_RUTA','EN_RUTA_ENTREGA'],
+    '__CERRADAS__': ['ENTREGADO','FINALIZADA','CANCELADO','CANCELADA'],
+  };
+
   const filteredOrders = ordenes.filter(o => {
-    const matchStatus = statusFilter === 'TODOS' || o.estado === statusFilter;
-    const matchSearch = o.nombreCliente.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        o.telefonoCliente.includes(searchQuery) ||
-                        o.numeroPedido.toString().includes(searchQuery);
+    const matchStatus = statusFilter === 'TODOS'
+      ? true
+      : GRUPOS_ESTADOS[statusFilter]
+        ? GRUPOS_ESTADOS[statusFilter].includes(o.estado)
+        : o.estado === statusFilter;
+    const matchSearch = (o.nombreCliente || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (o.telefonoCliente || '').includes(searchQuery) ||
+                        (o.numeroPedido || '').toString().includes(searchQuery);
     return matchStatus && matchSearch;
   });
 
@@ -560,126 +887,251 @@ ${marca}`;
         ))}
       </div>
 
-      {/* Main Orders Section */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl p-6 md:p-8 space-y-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* ── ÓRDENES ─────────────────────────────────────────────── */}
+      <div className="space-y-5">
+        {/* Cabecera */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">Órdenes de Servicio ({filteredOrders.length})</h2>
-            <p className="text-xs text-slate-500 font-medium">Gestión de estados, inspección, cotización y entrega de calzado</p>
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">
+              Órdenes de Servicio
+              <span className="ml-2 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-sm font-bold">{filteredOrders.length}</span>
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">Gestiona el flujo completo de cada orden desde aquí</p>
           </div>
         </div>
 
-        {/* Filters & Search Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-          <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
+        {/* Filtros agrupados */}
+        <div className="flex flex-wrap gap-2 items-center">
+          {[
+            { key: 'TODOS', label: '📋 Todas', count: ordenes.length },
+            { key: '__NUEVAS__', label: '🆕 Nuevas', count: ordenes.filter(o => ['SOLICITADA','PENDIENTE_RETIRO','ESPERANDO_REPARTIDOR_RETIRO','ESPERANDO_ACEPTACION_REPARTIDOR','REPARTIDOR_EN_CAMINO'].includes(o.estado)).length },
+            { key: '__RECIBIDAS__', label: '📦 Recibidas', count: ordenes.filter(o => ['RECIBIDO','RETIRADO','RECOGIDO'].includes(o.estado)).length },
+            { key: '__EN_PROCESO__', label: '🧼 En Taller', count: ordenes.filter(o => ['INSPECCIONADO','EN_PROCESO','EN_LAVADO','EN_SECADO','EN_ACABADOS'].includes(o.estado)).length },
+            { key: '__LISTOS__', label: '✅ Listos', count: ordenes.filter(o => ['LISTO','LISTO_PARA_ENTREGA','ESPERANDO_REPARTIDOR_ENTREGA'].includes(o.estado)).length },
+            { key: '__EN_RUTA__', label: '🚴 En Ruta', count: ordenes.filter(o => ['EN_RUTA','EN_RUTA_ENTREGA'].includes(o.estado)).length },
+            { key: '__CERRADAS__', label: '🏁 Cerradas', count: ordenes.filter(o => ['ENTREGADO','FINALIZADA','CANCELADO','CANCELADA'].includes(o.estado)).length },
+          ].map(f => (
             <button
-              onClick={() => setStatusFilter('TODOS')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                statusFilter === 'TODOS' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+              key={f.key}
+              onClick={() => setStatusFilter(f.key)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                statusFilter === f.key
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-400'
               }`}
             >
-              Todos ({ordenes.length})
+              {f.label}
+              {f.count > 0 && (
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${statusFilter === f.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                  {f.count}
+                </span>
+              )}
             </button>
-            {ESTADOS_LISTA.map(st => (
-              <button
-                key={st.id}
-                onClick={() => setStatusFilter(st.id)}
-                className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                  statusFilter === st.id ? 'bg-emerald-600 text-white font-black shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                {st.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full sm:w-72">
-            <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
-            <input 
+          ))}
+          <div className="relative w-full sm:w-64 mt-1 sm:mt-0 sm:ml-auto">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
               type="text"
-              placeholder="Buscar cliente, teléfono o #..."
+              placeholder="Buscar cliente, tel. o #..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-emerald-500 shadow-xs"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-emerald-500"
             />
           </div>
         </div>
 
-        {/* Orders Table */}
+        {/* Grid de tarjetas de órdenes */}
         {loading ? (
-          <div className="flex justify-center py-16">
+          <div className="flex justify-center py-20">
             <Loader2 className="animate-spin text-emerald-600" size={32} />
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
-            <Footprints size={36} className="mx-auto text-slate-400" />
-            <h3 className="text-base font-black text-slate-800">No hay órdenes para mostrar</h3>
-            <p className="text-xs text-slate-500">Haz clic en "+ Nueva Orden de Servicio" para registrar un ingreso.</p>
+          <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 space-y-3">
+            <Footprints size={36} className="mx-auto text-slate-300" />
+            <h3 className="text-base font-black text-slate-700">Sin órdenes en este filtro</h3>
+            <p className="text-xs text-slate-400">Cambia el filtro o crea una nueva recepción.</p>
           </div>
         ) : (
-          <div className="border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-100 uppercase text-[10px] font-black text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="p-4">Número</th>
-                  <th className="p-4">Cliente</th>
-                  <th className="p-4">Teléfono</th>
-                  <th className="p-4">Pares</th>
-                  <th className="p-4">Estado</th>
-                  <th className="p-4">Recepción</th>
-                  <th className="p-4">Total</th>
-                  <th className="p-4 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 font-bold bg-white">
-                {filteredOrders.map(ord => {
-                  const stObj = ESTADOS_LISTA.find(s => s.id === ord.estado) || ESTADOS_LISTA[0];
-                  const extra = (ord.extraInfo as any) || {};
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredOrders.map(ord => {
+              const extra = (ord.extraInfo as any) || {};
+              const stObj = ESTADOS_LISTA.find(s => s.id === ord.estado) || ESTADOS_LISTA[0];
+              const pares = extra.cantidadPares || (Array.isArray(extra.articulos) ? extra.articulos.reduce((a: number, i: any) => a + (parseInt(i.cantidad) || 1), 0) : 1);
+              const phoneForWA = (ord.telefonoCliente || '').replace(/\D/g, '');
+              const articuloDesc = Array.isArray(extra.articulos) && extra.articulos.length > 0
+                ? extra.articulos.map((a: any) => `${a.cantidad}x ${a.tipo || 'Artículo'}`).join(' · ')
+                : ord.servicioNombre || `${pares} artículo(s)`;
 
-                  return (
-                    <tr key={ord.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-4 font-mono font-black text-emerald-600">#{ord.numeroPedido}</td>
-                      <td className="p-4 text-slate-900 font-black">{ord.nombreCliente}</td>
-                      <td className="p-4 font-mono text-slate-600">{ord.telefonoCliente}</td>
-                      <td className="p-4 text-slate-800">{extra.cantidadPares || 1} par(es)</td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${stObj.color}`}>
-                          {stObj.label}
-                        </span>
-                      </td>
-                      <td className="p-4 text-slate-500">{new Date(ord.createdAt).toLocaleDateString()}</td>
-                      <td className="p-4 text-emerald-700 font-black text-sm">${ord.total?.toFixed(2)}</td>
-                      <td className="p-4 text-right space-x-2">
-                        <button
-                          onClick={() => router.push(`/admin/service-orders/${ord.id}`)}
-                          className="px-3 py-1.5 bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-black text-[10px] uppercase transition-all cursor-pointer shadow-sm"
+              const ESTADOS_NUEVAS = ['SOLICITADA','PENDIENTE_RETIRO','ESPERANDO_REPARTIDOR_RETIRO','ESPERANDO_ACEPTACION_REPARTIDOR','REPARTIDOR_EN_CAMINO'];
+              const ESTADOS_RECIBIDAS = ['RECIBIDO','RETIRADO','RECOGIDO'];
+              const ESTADOS_EN_PROCESO = ['INSPECCIONADO','EN_PROCESO','EN_LAVADO','EN_SECADO','EN_ACABADOS'];
+              const ESTADOS_LISTO = ['LISTO','LISTO_PARA_ENTREGA','ESPERANDO_REPARTIDOR_ENTREGA'];
+              const ESTADOS_EN_RUTA = ['EN_RUTA','EN_RUTA_ENTREGA'];
+
+              // Acción principal según estado
+              let accionLabel = '';
+              let accionCls = '';
+              let accionFn: (() => void) | null = null;
+              let accionIcon: React.ReactNode = null;
+
+              // Acción secundaria (cobro, etc.)
+              let accion2Label = '';
+              let accion2Cls = '';
+              let accion2Fn: (() => void) | null = null;
+              let accion2Icon: React.ReactNode = null;
+
+              if (ESTADOS_NUEVAS.includes(ord.estado)) {
+                accionLabel = 'Marcar Recibido';
+                accionCls = 'bg-cyan-600 hover:bg-cyan-700 text-white';
+                accionIcon = <Package size={13} />;
+                accionFn = () => handleUpdateOrderStatus(ord.id, 'RECIBIDO');
+              } else if (ESTADOS_RECIBIDAS.includes(ord.estado)) {
+                accionLabel = 'Inspeccionar & Cotizar';
+                accionCls = 'bg-indigo-600 hover:bg-indigo-700 text-white';
+                accionIcon = <Zap size={13} />;
+                accionFn = () => {
+                  setShowInspectModal(ord);
+                  setInspectForm({
+                    nivelSuciedad: extra.nivelSuciedad || 'MEDIO',
+                    precioBase: ord.subtotal || 6.00,
+                    serviciosAdicionales: extra.serviciosAdicionales || [],
+                    costoRetiro: ord.costoEnvio || 1.50,
+                    costoEntrega: 1.50,
+                    totalEditado: ord.total || 9.00,
+                    fechaHoraEntregaEstimada: extra.fechaHoraEntregaEstimada || 'Mañana a las 5:00 PM',
+                    notasInspeccion: ''
+                  });
+                };
+              } else if (ord.estado === 'INSPECCIONADO') {
+                accionLabel = 'Iniciar Lavado';
+                accionCls = 'bg-indigo-600 hover:bg-indigo-700 text-white';
+                accionIcon = <ArrowRight size={13} />;
+                accionFn = () => handleUpdateOrderStatus(ord.id, 'EN_LAVADO');
+              } else if (ord.estado === 'EN_LAVADO') {
+                accionLabel = '→ Pasar a Secado';
+                accionCls = 'bg-violet-600 hover:bg-violet-700 text-white';
+                accionIcon = <ArrowRight size={13} />;
+                accionFn = () => handleUpdateOrderStatus(ord.id, 'EN_SECADO');
+              } else if (ord.estado === 'EN_SECADO') {
+                accionLabel = '→ Acabados';
+                accionCls = 'bg-emerald-600 hover:bg-emerald-700 text-white';
+                accionIcon = <ArrowRight size={13} />;
+                accionFn = () => handleUpdateOrderStatus(ord.id, 'EN_ACABADOS');
+              } else if (ord.estado === 'EN_ACABADOS' || ord.estado === 'EN_PROCESO') {
+                accionLabel = '✅ Marcar Listo';
+                accionCls = 'bg-emerald-600 hover:bg-emerald-700 text-white';
+                accionIcon = <CheckCircle size={13} />;
+                accionFn = () => handleUpdateOrderStatus(ord.id, 'LISTO_PARA_ENTREGA');
+              } else if (ESTADOS_LISTO.includes(ord.estado)) {
+                accionLabel = 'Entregar & Cobrar';
+                accionCls = 'bg-purple-600 hover:bg-purple-700 text-white';
+                accionIcon = <CheckCircle size={13} />;
+                accionFn = () => { setShowPayModal(ord); setPayForm({ metodoPago: 'EFECTIVO' }); };
+              } else if (ESTADOS_EN_RUTA.includes(ord.estado)) {
+                accionLabel = '✅ Confirmar Entrega';
+                accionCls = 'bg-purple-600 hover:bg-purple-700 text-white';
+                accionIcon = <CheckCircle size={13} />;
+                accionFn = () => handleUpdateOrderStatus(ord.id, 'ENTREGADO');
+                accion2Label = 'Cobrar';
+                accion2Cls = 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200';
+                accion2Icon = <Banknote size={13} />;
+                accion2Fn = () => { setShowPayModal(ord); setPayForm({ metodoPago: 'EFECTIVO' }); };
+              } else if (ord.estado === 'ENTREGADO') {
+                accionLabel = 'Cobrar & Cerrar';
+                accionCls = 'bg-emerald-600 hover:bg-emerald-700 text-white';
+                accionIcon = <Banknote size={13} />;
+                accionFn = () => { setShowPayModal(ord); setPayForm({ metodoPago: 'EFECTIVO' }); };
+              }
+
+              const borderAccent =
+                ESTADOS_NUEVAS.includes(ord.estado) ? 'border-l-amber-400' :
+                ESTADOS_RECIBIDAS.includes(ord.estado) ? 'border-l-cyan-400' :
+                ESTADOS_EN_PROCESO.includes(ord.estado) ? 'border-l-indigo-400' :
+                ESTADOS_LISTO.includes(ord.estado) ? 'border-l-emerald-500' :
+                ESTADOS_EN_RUTA.includes(ord.estado) ? 'border-l-orange-400' :
+                ord.estado === 'ENTREGADO' ? 'border-l-purple-400' :
+                'border-l-slate-300';
+
+              return (
+                <div key={ord.id} className={`bg-white rounded-2xl border border-slate-200 border-l-4 ${borderAccent} shadow-sm hover:shadow-md transition-all flex flex-col`}>
+                  {/* Header */}
+                  <div className="flex items-start justify-between px-4 pt-4 pb-2 gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-slate-700 text-sm shrink-0">
+                        {(ord.nombreCliente || 'C').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-black text-slate-900 text-sm leading-tight truncate">{maskClientName(ord.nombreCliente)}</p>
+                        <p className="text-[11px] text-slate-400">
+                          {isPlanFree
+                            ? <span className="blur-sm select-none">{maskClientPhone(ord.telefonoCliente)}</span>
+                            : ord.telefonoCliente}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="font-mono font-black text-emerald-600 text-sm">#{ord.numeroPedido}</span>
+                      <p className="text-[11px] text-slate-400">{new Date(ord.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
+                    </div>
+                  </div>
+
+                  {/* Descripción artículos */}
+                  <div className="px-4 pb-2">
+                    <p className="text-[11px] text-slate-500 line-clamp-2">{articuloDesc}</p>
+                  </div>
+
+                  {/* Estado + Total */}
+                  <div className="flex items-center justify-between px-4 pb-3 gap-2">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${stObj.color}`}>
+                      {stObj.label}
+                    </span>
+                    <span className="font-black text-slate-900">${(ord.total || 0).toFixed(2)}</span>
+                  </div>
+
+                  {/* Acciones */}
+                  <div className="border-t border-slate-100 px-3 py-2.5 flex flex-wrap gap-2 items-center">
+                    {accionFn && (
+                      <button
+                        onClick={accionFn}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${accionCls}`}
+                      >
+                        {accionIcon}
+                        {accionLabel}
+                      </button>
+                    )}
+                    {accion2Fn && (
+                      <button
+                        onClick={accion2Fn}
+                        className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${accion2Cls}`}
+                      >
+                        {accion2Icon}
+                        {accion2Label}
+                      </button>
+                    )}
+                    <div className="flex gap-1.5 ml-auto">
+                      {!isPlanFree && phoneForWA && (
+                        <a
+                          href={`https://wa.me/${phoneForWA}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="WhatsApp"
+                          className="p-2 rounded-xl bg-green-50 hover:bg-green-100 border border-green-200 text-green-600 transition-all"
                         >
-                          Workspace ➔
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowInspectModal(ord);
-                            setInspectForm({
-                              nivelSuciedad: extra.nivelSuciedad || 'MEDIO',
-                              precioBase: ord.subtotal || 6.00,
-                              serviciosAdicionales: extra.serviciosAdicionales || [],
-                              costoRetiro: ord.costoEnvio || 1.50,
-                              costoEntrega: 1.50,
-                              totalEditado: ord.total || 9.00,
-                              fechaHoraEntregaEstimada: extra.fechaHoraEntregaEstimada || 'Mañana a las 5:00 PM',
-                              notasInspeccion: ''
-                            });
-                          }}
-                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase shadow-xs transition-all cursor-pointer"
-                        >
-                          Inspeccionar
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          <MessageCircle size={14} />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => router.push(`/admin/service-orders/${ord.id}`)}
+                        title="Ver detalle"
+                        className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition-all"
+                      >
+                        <Eye size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -854,7 +1306,7 @@ ${marca}`;
                   <Footprints className="text-emerald-600" size={22} />
                   Inspección Física & Cotización (Orden #{showInspectModal.numeroPedido})
                 </h2>
-                <p className="text-xs text-slate-500 font-semibold">Cliente: <strong className="text-slate-900">{showInspectModal.nombreCliente}</strong></p>
+                <p className="text-xs text-slate-500 font-semibold">Cliente: <strong className="text-slate-900">{maskClientName(showInspectModal.nombreCliente)}</strong></p>
               </div>
 
               {/* Nivel de suciedad */}
@@ -972,7 +1424,7 @@ ${marca}`;
                   <h2 className="text-xl font-black text-slate-900 uppercase italic">
                     Detalle de Orden #{showOrderDetailModal.numeroPedido}
                   </h2>
-                  <span className="text-xs font-bold text-emerald-600">{showOrderDetailModal.nombreCliente} ({showOrderDetailModal.telefonoCliente})</span>
+                  <span className="text-xs font-bold text-emerald-600">{maskClientName(showOrderDetailModal.nombreCliente)} ({maskClientPhone(showOrderDetailModal.telefonoCliente)})</span>
                 </div>
                 <span className="text-xs font-mono bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 font-black">
                   ${showOrderDetailModal.total?.toFixed(2)}
@@ -1027,276 +1479,473 @@ ${marca}`;
         </div>
       )}
 
-      {/* 🏬 MODAL DE NUEVA RECEPCIÓN EN LOCAL */}
+      {/* 🏬 MODAL DE NUEVA RECEPCIÓN EN LOCAL - FORMATO COTIZACIÓN */}
       {showReceptionModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 sm:p-8 max-w-2xl w-full space-y-6 shadow-2xl relative max-h-[92vh] overflow-y-auto">
-            <button
-              onClick={() => setShowReceptionModal(false)}
-              className="absolute top-6 right-6 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors"
-            >
-              <X size={18} />
-            </button>
-
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-black uppercase tracking-wider rounded-full">
-                  Recepción de Mostrador
-                </span>
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[99999] flex flex-col overflow-hidden animate-in fade-in duration-200">
+          {/* BARRA SUPERIOR (HEADER ESTÁTICO) */}
+          <div className="h-16 px-4 sm:px-8 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-xs z-30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-black">
+                <Store size={20} />
               </div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <Store className="text-purple-600" size={24} />
-                + Nueva Recepción en Local
-              </h2>
-              <p className="text-xs text-slate-500 font-medium mt-1">
-                Registra la recepción física del calzado, datos del cliente, fotografías iniciales y fecha estimada.
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                    + Nueva Recepción / Cotización
+                  </h2>
+                  <span className="hidden sm:inline-flex px-2.5 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-black uppercase tracking-wider rounded-full border border-purple-200">
+                    Mostrador / Taller
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 font-medium hidden sm:block">
+                  Recepción compacta tipo cotización con detalle de productos e inspección fotográfica
+                </p>
+              </div>
             </div>
 
-            <form onSubmit={handleSaveReception} className="space-y-6">
-              {/* 1. DATOS DEL CLIENTE */}
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <User size={14} className="text-purple-600" />
-                    Datos del Cliente
-                  </span>
-                  {receptionForm.telefonoCliente && (
-                    clientes.some(c => c.telefono && c.telefono.includes(receptionForm.telefonoCliente.trim())) ? (
-                      <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full border border-emerald-200 flex items-center gap-1">
-                        <CheckCircle2 size={12} /> Cliente Registrado
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 bg-purple-100 text-purple-800 text-[10px] font-black rounded-full border border-purple-200">
-                        🆕 Nuevo Cliente
-                      </span>
-                    )
-                  )}
-                </div>
+            {/* Contador / Resumen rápido al centro */}
+            <div className="hidden md:flex items-center gap-3 bg-purple-50 px-4 py-1.5 rounded-full border border-purple-200">
+              <span className="text-xs font-bold text-purple-900">
+                <strong className="text-purple-700">{receptionTotalPares}</strong> {receptionTotalPares === 1 ? 'artículo' : 'artículos'}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-purple-300" />
+              <span className="text-xs font-black text-purple-700">
+                Total: ${receptionTotalEstimado.toFixed(2)} USD
+              </span>
+            </div>
 
-                {clientes && clientes.length > 0 && (
-                  <div className="space-y-1 bg-purple-100/60 p-3 rounded-xl border border-purple-200">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-purple-800 flex items-center justify-between">
-                      <span>👤 Cargar Cliente Registrado</span>
-                      <span className="text-[9px] text-purple-600 font-bold">({clientes.length} disponibles)</span>
-                    </label>
-                    <select
-                      onChange={(e) => {
-                        const selected = clientes.find(c => (c.id && c.id === e.target.value) || (c.telefono && c.telefono === e.target.value));
-                        if (selected) {
-                          setReceptionForm(prev => ({
-                            ...prev,
-                            nombreCliente: selected.nombre || prev.nombreCliente,
-                            telefonoCliente: selected.telefono || prev.telefonoCliente,
-                            emailCliente: selected.email || prev.emailCliente
-                          }));
-                        }
-                      }}
-                      className="w-full px-3 py-2 bg-white border border-purple-300 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500 shadow-xs"
-                    >
-                      <option value="">-- Seleccionar cliente de la lista --</option>
-                      {clientes.map((c, i) => (
-                        <option key={c.id || i} value={c.id || c.telefono}>
-                          {c.nombre} ({c.telefono})
-                        </option>
-                      ))}
-                    </select>
+            {/* Botones de acción derecha */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReceptionModal(false);
+                  setClientSectionCollapsed(false);
+                  setItemDetailModalIdx(null);
+                }}
+                className="px-3.5 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl text-xs font-black transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={handleSaveReception}
+                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-purple-600/25 transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+              >
+                {submitting ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                <span>Confirmar Orden</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReceptionModal(false);
+                  setClientSectionCollapsed(false);
+                  setItemDetailModalIdx(null);
+                }}
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer ml-1"
+                title="Cerrar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Inputs ocultos para Cámara, Video y Archivos vinculados a activeMediaItemIdx */}
+          <input
+            type="file"
+            ref={receptionCameraPhotoRef}
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={e => handleUploadReceptionMedia(e.target.files)}
+          />
+          <input
+            type="file"
+            ref={receptionCameraVideoRef}
+            accept="video/*"
+            capture="environment"
+            className="hidden"
+            onChange={e => handleUploadReceptionMedia(e.target.files)}
+          />
+          <input
+            type="file"
+            ref={receptionGalleryRef}
+            accept="image/*,video/*"
+            multiple
+            className="hidden"
+            onChange={e => handleUploadReceptionMedia(e.target.files)}
+          />
+
+          {/* CUERPO DEL MODAL (FORMATO COTIZACIÓN COMPACTA) */}
+          <form onSubmit={handleSaveReception} className="flex-1 overflow-y-auto bg-slate-100/70 p-4 sm:p-6 lg:p-8">
+            <div className="max-w-5xl mx-auto space-y-5 pb-8">
+              
+              {/* 1. ARRIBA: CLIENTE (SELECCIONAR / NUEVO, ESCONDE DATOS AL AÑADIR) */}
+              {clientSectionCollapsed && (receptionForm.nombreCliente || receptionForm.telefonoCliente) ? (
+                <div className="bg-white border border-emerald-200 bg-emerald-50/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shrink-0">
+                      {receptionForm.nombreCliente?.charAt(0)?.toUpperCase() || 'C'}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-slate-900 text-sm">
+                          {receptionForm.nombreCliente || 'Cliente'}
+                        </span>
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full border border-emerald-200">
+                          ✓ Cliente Asignado
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 font-medium mt-0.5">
+                        📱 {receptionCountryCode} {receptionForm.telefonoCliente} {receptionForm.emailCliente ? `· ✉️ ${receptionForm.emailCliente}` : ''}
+                      </p>
+                    </div>
                   </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Teléfono WhatsApp */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-500 block">WhatsApp / Teléfono *</label>
-                    <div className="flex gap-1.5">
-                      <select
-                        value={receptionCountryCode}
-                        onChange={(e) => setReceptionCountryCode(e.target.value)}
-                        className="px-2 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500 shadow-xs shrink-0"
+                  <button
+                    type="button"
+                    onClick={() => setClientSectionCollapsed(false)}
+                    className="self-start sm:self-auto px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <Edit3 size={13} />
+                    <span>Cambiar / Editar Cliente</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <User size={15} className="text-purple-600" />
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                        1. Cliente de la Orden
+                      </span>
+                    </div>
+                    {receptionForm.nombreCliente && receptionForm.telefonoCliente && (
+                      <button
+                        type="button"
+                        onClick={() => setClientSectionCollapsed(true)}
+                        className="px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
                       >
-                        {COUNTRY_CODES.map(c => (
-                          <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
-                        ))}
-                      </select>
-                      <div className="relative flex-1">
-                        <Phone size={14} className="absolute left-3 top-3 text-slate-400" />
-                        <input
-                          type="text"
-                          required
-                          placeholder="Ej: 0991234567"
-                          value={receptionForm.telefonoCliente}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const found = clientes.find(c => c.telefono && c.telefono.includes(val.trim()));
+                        <Check size={12} /> Esconder datos
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dropdown de cliente frecuente */}
+                  {clientes && clientes.length > 0 && (
+                    <div className="bg-purple-50/70 p-2.5 rounded-xl border border-purple-200 space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-purple-900 flex items-center justify-between">
+                        <span>👤 Seleccionar Cliente Frecuente</span>
+                        <span className="text-[9px] text-purple-600 font-bold">({clientes.length} registrados)</span>
+                      </label>
+                      <select
+                        onChange={(e) => {
+                          const selected = clientes.find(c => (c.id && c.id === e.target.value) || (c.telefono && c.telefono === e.target.value));
+                          if (selected) {
                             setReceptionForm(prev => ({
                               ...prev,
-                              telefonoCliente: val,
-                              nombreCliente: found ? found.nombre : prev.nombreCliente,
-                              emailCliente: found ? (found.email || prev.emailCliente) : prev.emailCliente
+                              nombreCliente: selected.nombre || prev.nombreCliente,
+                              telefonoCliente: selected.telefono || prev.telefonoCliente,
+                              emailCliente: selected.email || prev.emailCliente
                             }));
-                          }}
-                          className="w-full pl-8 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500 shadow-xs"
-                        />
+                            setClientSectionCollapsed(true);
+                          }
+                        }}
+                        className="w-full px-2.5 py-1.5 bg-white border border-purple-300 rounded-lg text-xs font-bold text-slate-900 outline-none focus:border-purple-500"
+                      >
+                        <option value="">-- Buscar / Seleccionar cliente registrado --</option>
+                        {clientes.map((c, i) => (
+                          <option key={c.id || i} value={c.id || c.telefono}>
+                            {c.nombre} ({c.telefono})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Inputs manuales: Teléfono, Nombre, Email */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div className="sm:col-span-4">
+                      <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">WhatsApp / Teléfono *</label>
+                      <div className="flex gap-1">
+                        <select
+                          value={receptionCountryCode}
+                          onChange={(e) => setReceptionCountryCode(e.target.value)}
+                          className="px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500 shrink-0"
+                        >
+                          {COUNTRY_CODES.map(c => (
+                            <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                          ))}
+                        </select>
+                        <div className="relative flex-1">
+                          <Phone size={13} className="absolute left-2.5 top-2.5 text-slate-400" />
+                          <input
+                            type="text"
+                            required
+                            placeholder="0991234567"
+                            value={receptionForm.telefonoCliente}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const found = clientes.find(c => c.telefono && c.telefono.includes(val.trim()));
+                              setReceptionForm(prev => ({
+                                ...prev,
+                                telefonoCliente: val,
+                                nombreCliente: found ? found.nombre : prev.nombreCliente,
+                                emailCliente: found ? (found.email || prev.emailCliente) : prev.emailCliente
+                              }));
+                            }}
+                            className="w-full pl-7 pr-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500 focus:bg-white"
+                          />
+                        </div>
                       </div>
+                    </div>
+
+                    <div className="sm:col-span-5">
+                      <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Nombre Completo *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej: Carlos Ramírez"
+                        value={receptionForm.nombreCliente}
+                        onChange={(e) => setReceptionForm({ ...receptionForm, nombreCliente: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500 focus:bg-white"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Email (Opcional)</label>
+                      <input
+                        type="email"
+                        placeholder="correo@ejemplo.com"
+                        value={receptionForm.emailCliente}
+                        onChange={(e) => setReceptionForm({ ...receptionForm, emailCliente: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-purple-500 focus:bg-white"
+                      />
                     </div>
                   </div>
 
-                  {/* Nombre Cliente */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-500 block">Nombre Completo *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ej: Carlos Ramírez"
-                      value={receptionForm.nombreCliente}
-                      onChange={(e) => setReceptionForm({ ...receptionForm, nombreCliente: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500 shadow-xs"
-                    />
+                  {receptionForm.nombreCliente && receptionForm.telefonoCliente && (
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setClientSectionCollapsed(true)}
+                        className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Check size={13} />
+                        <span>Confirmar Cliente & Ocultar</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 2. ABAJO: INGRESO DE PRODUCTOS TIPO LISTADO / COTIZACIÓN */}
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                <div className="px-4 sm:px-5 py-3.5 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Footprints size={16} className="text-purple-600" />
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                      2. Artículos & Servicios ({receptionForm.items.length})
+                    </span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleAddReceptionItem}
+                    className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                  >
+                    <Plus size={14} />
+                    <span>+ Agregar Ítem</span>
+                  </button>
                 </div>
 
-                {/* Email Opcional */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-slate-500 block">Correo Electrónico (Opcional)</label>
-                  <input
-                    type="email"
-                    placeholder="carlos@ejemplo.com"
-                    value={receptionForm.emailCliente}
-                    onChange={(e) => setReceptionForm({ ...receptionForm, emailCliente: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-purple-500 shadow-xs"
-                  />
+                {/* Tabla de Productos / Cotización */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-200">
+                      <tr>
+                        <th className="py-2.5 px-3 w-10 text-center">#</th>
+                        <th className="py-2.5 px-3 min-w-[190px]">Tipo de Artículo</th>
+                        <th className="py-2.5 px-3 min-w-[210px]">Servicio Requerido</th>
+                        <th className="py-2.5 px-3 w-20 text-center">Cant.</th>
+                        <th className="py-2.5 px-3 w-28">P. Unit ($)</th>
+                        <th className="py-2.5 px-3 w-24 text-right">Subtotal</th>
+                        <th className="py-2.5 px-3 min-w-[150px] text-center">Fotos & Detalles</th>
+                        <th className="py-2.5 px-3 w-10 text-center"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {receptionForm.items.map((item, idx) => {
+                        const subtotalItem = (parseFloat(String(item.precioUnitario)) || 0) * (parseInt(String(item.cantidad)) || 1);
+                        const hasMedia = item.fotos && item.fotos.length > 0;
+                        const hasNotes = Boolean(item.notas && item.notas.trim());
+
+                        return (
+                          <tr key={item.id || idx} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="py-2.5 px-3 text-center font-bold text-slate-400">
+                              {idx + 1}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <select
+                                value={item.tipo}
+                                onChange={(e) => handleUpdateReceptionItem(idx, { tipo: e.target.value })}
+                                className="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 outline-none focus:border-purple-500 transition"
+                              >
+                                {PRESET_ITEM_TYPES.map(tipo => (
+                                  <option key={tipo} value={tipo}>{tipo}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <select
+                                value={item.servicioNombre}
+                                onChange={(e) => {
+                                  const srvName = e.target.value;
+                                  const match = effectiveServices.find((s: any) => s.nombre === srvName);
+                                  handleUpdateReceptionItem(idx, {
+                                    servicioNombre: srvName,
+                                    precioUnitario: match ? match.precio : item.precioUnitario
+                                  });
+                                }}
+                                className="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 outline-none focus:border-purple-500 transition"
+                              >
+                                {effectiveServices.map((srv: any, sIdx: number) => (
+                                  <option key={srv.id || sIdx} value={srv.nombre}>
+                                    {srv.nombre} (${srv.precio.toFixed(2)} USD)
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              <input
+                                type="number"
+                                min={1}
+                                max={50}
+                                value={item.cantidad}
+                                onChange={(e) => handleUpdateReceptionItem(idx, { cantidad: parseInt(e.target.value) || 1 })}
+                                className="w-14 px-2 py-1.5 text-center bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-900 outline-none focus:border-purple-500"
+                              />
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <div className="relative">
+                                <span className="absolute left-2 top-1.5 text-slate-400 text-xs">$</span>
+                                <input
+                                  type="number"
+                                  step="0.50"
+                                  min={0}
+                                  value={item.precioUnitario}
+                                  onChange={(e) => handleUpdateReceptionItem(idx, { precioUnitario: parseFloat(e.target.value) || 0 })}
+                                  className="w-24 pl-5 pr-2 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-black text-purple-700 outline-none focus:border-purple-500"
+                                />
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-black text-slate-800">
+                              ${subtotalItem.toFixed(2)}
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setItemDetailModalIdx(idx)}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 mx-auto cursor-pointer ${
+                                  hasMedia || hasNotes
+                                    ? 'bg-purple-100 text-purple-800 border border-purple-200 hover:bg-purple-200'
+                                    : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
+                                }`}
+                                title="Ver / editar fotos y observaciones de este ítem"
+                              >
+                                <Camera size={13} className={hasMedia ? 'text-purple-600' : 'text-slate-400'} />
+                                <span>
+                                  {hasMedia ? `${item.fotos.length} foto${item.fotos.length > 1 ? 's' : ''}` : 'Fotos'}
+                                  {hasNotes ? ' · 📝' : ''}
+                                </span>
+                              </button>
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              {receptionForm.items.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveReceptionItem(idx)}
+                                  className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition cursor-pointer mx-auto"
+                                  title="Eliminar ítem"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
 
-              {/* 2. SERVICIO Y PARES */}
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-4">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                  <Footprints size={14} className="text-purple-600" />
-                  Servicio Requerido
-                </span>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2 space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-500 block">Tipo de Servicio *</label>
-                    <select
-                      value={receptionForm.servicioNombre}
-                      onChange={(e) => {
-                        const srvName = e.target.value;
-                        const match = effectiveServices.find((s: any) => s.nombre === srvName);
-                        setReceptionForm({
-                          ...receptionForm,
-                          servicioNombre: srvName,
-                          precioServicio: match ? match.precio : 6.00
-                        });
-                      }}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500 shadow-xs"
-                    >
-                      {effectiveServices.map((srv: any, idx: number) => (
-                        <option key={srv.id || idx} value={srv.nombre}>
-                          {srv.nombre} (${srv.precio.toFixed(2)} USD)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-500 block">Cantidad de Pares *</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={50}
-                      value={receptionForm.cantidadPares}
-                      onChange={(e) => setReceptionForm({ ...receptionForm, cantidadPares: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500 shadow-xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 flex items-center justify-between text-xs">
-                  <span className="font-bold text-purple-900">Total Estimado Inicial:</span>
-                  <span className="font-black text-purple-700 text-base">
-                    ${(receptionForm.precioServicio * (parseInt(receptionForm.cantidadPares) || 1)).toFixed(2)} USD
+                {/* Barra inferior de la tabla */}
+                <div className="p-3 bg-slate-50/70 border-t border-slate-200 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={handleAddReceptionItem}
+                    className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus size={14} /> + Agregar otro artículo a la cotización
+                  </button>
+                  <span className="text-xs text-slate-500 font-medium">
+                    Total artículos: <strong className="text-slate-900">{receptionTotalPares}</strong>
                   </span>
                 </div>
               </div>
 
-              {/* 3. FOTOGRAFÍAS DE RECEPCIÓN */}
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                  <Camera size={14} className="text-purple-600" />
-                  Fotografías de Recepción (Estado Inicial)
-                </span>
-
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="Pegar URL de foto del estado inicial..."
-                    value={receptionForm.fotoInputUrl}
-                    onChange={(e) => setReceptionForm({ ...receptionForm, fotoInputUrl: e.target.value })}
-                    className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-purple-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!receptionForm.fotoInputUrl.trim()) return;
-                      setReceptionForm({
-                        ...receptionForm,
-                        fotosRecepcion: [...receptionForm.fotosRecepcion, receptionForm.fotoInputUrl.trim()],
-                        fotoInputUrl: ''
-                      });
-                    }}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl transition cursor-pointer"
-                  >
-                    + Añadir
-                  </button>
-                </div>
-
-                {/* Previsualización de fotos */}
-                {receptionForm.fotosRecepcion.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {receptionForm.fotosRecepcion.map((url, idx) => (
-                      <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 shadow-xs group">
-                        <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setReceptionForm({
-                              ...receptionForm,
-                              fotosRecepcion: receptionForm.fotosRecepcion.filter((_, i) => i !== idx)
-                            });
-                          }}
-                          className="absolute top-1 right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center opacity-80 hover:opacity-100"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* 4. OBSERVACIONES & NOTAS */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-slate-500 block">Observaciones del Estado Inicial</label>
+              {/* 3. ABAJO: OBSERVACIONES GENERALES */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-2 shadow-xs">
+                <label className="text-xs font-black uppercase tracking-wider text-slate-800 block">
+                  3. Observaciones Generales de la Orden
+                </label>
                 <textarea
                   rows={2}
-                  placeholder="Detalles del calzado, suela, raspaduras o manchas observadas al recibir..."
+                  placeholder="Indicaciones especiales de entrega, notas para el taller, solicitud del cliente..."
                   value={receptionForm.observaciones}
                   onChange={(e) => setReceptionForm({ ...receptionForm, observaciones: e.target.value })}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-purple-500"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-purple-500 focus:bg-white"
                 />
               </div>
 
-              {/* 5. FECHA Y HORA ESTIMADA DE ENTREGA */}
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                  <Calendar size={14} className="text-purple-600" />
-                  Fecha y Hora Estimada de Entrega
-                </span>
+              {/* 4. ABAJO: TIEMPO DE ENTREGA Y FECHA */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar size={15} className="text-purple-600" />
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                      4. Tiempo de Entrega & Fecha
+                    </span>
+                  </div>
+                  {/* Presets rápidos */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { label: 'Mañana (+1d)', days: 1 },
+                      { label: '+2 Días', days: 2 },
+                      { label: '+3 Días', days: 3 },
+                      { label: '+5 Días', days: 5 },
+                      { label: '+1 Semana', days: 7 },
+                    ].map((preset) => (
+                      <button
+                        key={preset.days}
+                        type="button"
+                        onClick={() => {
+                          const targetDate = new Date(Date.now() + 86400000 * preset.days);
+                          setReceptionForm(prev => ({
+                            ...prev,
+                            fechaEstimada: targetDate.toISOString().split('T')[0]
+                          }));
+                        }}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-600 text-[10px] font-bold rounded-lg transition cursor-pointer"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-500 block">Fecha Estimada *</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Fecha Estimada *</label>
                     <input
                       type="date"
                       required
@@ -1311,42 +1960,200 @@ ${marca}`;
                         }
                         setReceptionForm({ ...receptionForm, fechaEstimada: selectedDate });
                       }}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-500 block">Hora Estimada *</label>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Hora Estimada *</label>
                     <input
                       type="time"
                       required
                       value={receptionForm.horaEstimada}
                       onChange={(e) => setReceptionForm({ ...receptionForm, horaEstimada: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Footer Modal */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowReceptionModal(false)}
-                  className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs uppercase tracking-widest rounded-2xl transition cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-8 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-purple-600/30 transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-                >
-                  {submitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                  Crear Orden de Servicio
-                </button>
+              {/* 5. ABAJO: RESUMEN Y CONFIRMACIÓN */}
+              <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-purple-300 uppercase tracking-wider">
+                      Resumen de Cotización
+                    </span>
+                    <span className="px-2 py-0.5 bg-white/10 text-white text-[10px] font-bold rounded-full">
+                      {receptionTotalPares} {receptionTotalPares === 1 ? 'artículo' : 'artículos'}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl sm:text-3xl font-black text-emerald-400">
+                      ${receptionTotalEstimado.toFixed(2)}
+                    </span>
+                    <span className="text-xs text-slate-300 font-semibold">USD Total Estimado</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowReceptionModal(false);
+                      setClientSectionCollapsed(false);
+                      setItemDetailModalIdx(null);
+                    }}
+                    className="px-4 py-2.5 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-purple-600/40 transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                  >
+                    {submitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                    <span>Confirmar Recepción</span>
+                  </button>
+                </div>
               </div>
-            </form>
-          </div>
+
+            </div>
+          </form>
+
+          {/* MODAL APARTE: DETALLES E INSPECCIÓN DEL ÍTEM */}
+          {itemDetailModalIdx !== null && receptionForm.items[itemDetailModalIdx] && (
+            <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+              <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-black uppercase tracking-wider rounded-md">
+                      Ítem #{itemDetailModalIdx + 1}
+                    </span>
+                    <h3 className="text-base font-black text-slate-900 mt-1">
+                      Detalles & Fotos de Inspección
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium">
+                      {receptionForm.items[itemDetailModalIdx].tipo} — {receptionForm.items[itemDetailModalIdx].servicioNombre}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setItemDetailModalIdx(null)}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition cursor-pointer"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Observaciones específicas del ítem */}
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-600 block">
+                    Observaciones / Estado de este Ítem
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Ej: Mancha de grasa en puntera derecha, suela despegada, raspadura en talón..."
+                    value={receptionForm.items[itemDetailModalIdx].notas || ''}
+                    onChange={(e) => handleUpdateReceptionItem(itemDetailModalIdx, { notas: e.target.value })}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 outline-none focus:border-purple-500 focus:bg-white"
+                  />
+                </div>
+
+                {/* Fotos & Video de este ítem */}
+                <div className="space-y-2.5">
+                  <label className="text-xs font-black uppercase text-slate-600 block flex items-center gap-1.5">
+                    <Camera size={14} className="text-purple-600" />
+                    Fotos y Video de Ingreso ({receptionForm.items[itemDetailModalIdx].fotos?.length || 0})
+                  </label>
+
+                  {/* Botones de captura */}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={uploadingReceptionMedia}
+                      onClick={() => triggerUploadForItem(itemDetailModalIdx, 'photo')}
+                      className="py-2 px-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Camera size={14} />
+                      <span>Tomar Foto</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={uploadingReceptionMedia}
+                      onClick={() => triggerUploadForItem(itemDetailModalIdx, 'video')}
+                      className="py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Video size={14} />
+                      <span>Grabar Video</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={uploadingReceptionMedia}
+                      onClick={() => triggerUploadForItem(itemDetailModalIdx, 'gallery')}
+                      className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border border-slate-200"
+                    >
+                      <UploadCloud size={14} />
+                      <span>Subir Archivo</span>
+                    </button>
+                  </div>
+
+                  {uploadingReceptionMedia && activeMediaItemIdx === itemDetailModalIdx && (
+                    <div className="p-2.5 bg-purple-50 border border-purple-200 rounded-xl flex items-center gap-2 text-xs text-purple-700 font-bold animate-pulse">
+                      <Loader2 size={14} className="animate-spin text-purple-600" />
+                      <span>{receptionUploadProgress || 'Subiendo archivo...'}</span>
+                    </div>
+                  )}
+
+                  {/* Galería de miniaturas */}
+                  {receptionForm.items[itemDetailModalIdx].fotos && receptionForm.items[itemDetailModalIdx].fotos.length > 0 ? (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
+                      {receptionForm.items[itemDetailModalIdx].fotos.map((url, fIdx) => {
+                        const isVid = isVideoMedia(url);
+                        return (
+                          <div key={fIdx} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 shadow-xs bg-slate-950 group">
+                            {isVid ? (
+                              <div onClick={() => setPreviewMediaModal(url)} className="w-full h-full flex items-center justify-center cursor-pointer relative">
+                                <video src={url} className="w-full h-full object-cover opacity-70" muted playsInline />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="w-7 h-7 rounded-full bg-purple-600/90 text-white flex items-center justify-center shadow-md">
+                                    <Play size={12} className="ml-0.5" />
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <img src={url} alt={`Foto ${fIdx + 1}`} onClick={() => setPreviewMediaModal(url)} className="w-full h-full object-cover cursor-pointer hover:scale-105 transition" />
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePhotoFromItem(itemDetailModalIdx, url)}
+                              className="absolute top-1 right-1 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center shadow-md cursor-pointer"
+                            >
+                              <X size={11} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="py-6 border border-dashed border-slate-200 rounded-xl text-center bg-slate-50/50">
+                      <p className="text-xs text-slate-400">Sin fotos adjuntas para este ítem.</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setItemDetailModalIdx(null)}
+                    className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase rounded-xl transition cursor-pointer"
+                  >
+                    Listo / Guardar Detalles
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1379,17 +2186,53 @@ ${marca}`;
                 Cerrar
               </button>
 
-              <a
-                href={`https://wa.me/${showWhatsAppReceiptModal.telefonoCliente}?text=${encodeURIComponent(generateWhatsAppMessage(showWhatsAppReceiptModal))}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setShowWhatsAppReceiptModal(null)}
-                className="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Phone size={16} />
-                Enviar WhatsApp
-              </a>
+              {isPlanFree ? (
+                <div className="py-3.5 px-4 bg-slate-100 border border-slate-200 text-slate-400 font-black text-xs uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed" title="WhatsApp disponible en Plan Pro">
+                  <Lock size={16} />
+                  WhatsApp (Plan Pro)
+                </div>
+              ) : (
+                <a
+                  href={`https://wa.me/${showWhatsAppReceiptModal.telefonoCliente}?text=${encodeURIComponent(generateWhatsAppMessage(showWhatsAppReceiptModal))}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowWhatsAppReceiptModal(null)}
+                  className="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Phone size={16} />
+                  Enviar WhatsApp
+                </a>
+              )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Previsualización de Multimedia (Foto o Video) */}
+      {previewMediaModal && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[999999] flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="relative max-w-3xl w-full max-h-[90vh] flex flex-col items-center justify-center">
+            <button
+              onClick={() => setPreviewMediaModal(null)}
+              className="absolute -top-12 right-0 text-white/80 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+            >
+              <X size={24} />
+            </button>
+            {isVideoMedia(previewMediaModal) ? (
+              <video 
+                src={previewMediaModal} 
+                controls 
+                autoPlay 
+                playsInline 
+                className="max-h-[80vh] max-w-full rounded-2xl shadow-2xl bg-black"
+              />
+            ) : (
+              <img 
+                src={previewMediaModal} 
+                alt="Vista previa" 
+                className="max-h-[80vh] max-w-full object-contain rounded-2xl shadow-2xl" 
+              />
+            )}
           </div>
         </div>
       )}
