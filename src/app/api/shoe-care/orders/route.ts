@@ -428,7 +428,7 @@ export async function POST(req: Request) {
           `💵 *Total Estimado: $${totalEstimadoFinal} USD*`,
           ``,
           `👉 Gestionar pedido en el panel:`,
-          `https://citiox.com/admin/lavado`
+          `https://citiox.com/admin/ordenes-servicio`
         ].filter(Boolean).join('\n');
 
         await sendWhatsAppMessage(cleanNegocio, msgNegocio, 'shoe_care_nueva_orden_negocio');

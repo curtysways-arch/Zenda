@@ -34,21 +34,27 @@ export async function GET(req: Request) {
                     telefonoCliente: true,
                     total: true,
                     estado: true,
-                    createdAt: true
+                    createdAt: true,
+                    direccionCliente: true
                 },
                 orderBy: { createdAt: 'desc' }
             })
         ]);
 
         // Mapa de pedidos agrupados por teléfono limpio
-        const pedidosPorTelefono = new Map<string, { count: number; total: number; nombre: string; fecha: Date }>();
+        const CERRADOS = ['ENTREGADO', 'FINALIZADO', 'FINALIZADA', 'COMPLETADO', 'CANCELADO', 'CANCELADA'];
+        const pedidosPorTelefono = new Map<string, { count: number; total: number; nombre: string; fecha: Date; primera: Date; abiertos: number; direccion: string | null }>();
         for (const p of pedidosDb) {
             const tel = (p.telefonoCliente || '').replace(/\D/g, '');
             if (!tel) continue;
 
-            const existing = pedidosPorTelefono.get(tel) || { count: 0, total: 0, nombre: p.nombreCliente || 'Cliente', fecha: p.createdAt };
+            // Los pedidos vienen del más reciente al más antiguo: "fecha" = última visita, "primera" = la primera.
+            const existing = pedidosPorTelefono.get(tel) || { count: 0, total: 0, nombre: p.nombreCliente || 'Cliente', fecha: p.createdAt, primera: p.createdAt, abiertos: 0, direccion: p.direccionCliente || null };
             existing.count += 1;
-            if (p.estado !== 'CANCELADO') {
+            existing.primera = p.createdAt;
+            if (!existing.direccion && p.direccionCliente) existing.direccion = p.direccionCliente;
+            if (!CERRADOS.includes(String(p.estado))) existing.abiertos += 1;
+            if (p.estado !== 'CANCELADO' && p.estado !== 'CANCELADA') {
                 existing.total += Number(p.total) || 0;
             }
             pedidosPorTelefono.set(tel, existing);
@@ -77,6 +83,9 @@ export async function GET(req: Request) {
             const pedidosGastado = infoPedidos?.total || 0;
 
             const totalGastadoFinal = citasGastado + pedidosGastado;
+            const ultimaCita = c.Appointment.reduce((max: number, a: any) => Math.max(max, a.fecha ? new Date(a.fecha).getTime() : 0), 0);
+            const ultimaPedido = infoPedidos?.fecha ? new Date(infoPedidos.fecha).getTime() : 0;
+            const ultima = Math.max(ultimaCita, ultimaPedido);
             const totalServiciosFinal = citasCount + pedidosCount;
 
             return {
@@ -94,7 +103,11 @@ export async function GET(req: Request) {
                 totalGastado: totalGastadoFinal.toFixed(2),
                 ratingPromedio: c.ratingPromedio || 0,
                 totalReviews: c.totalReviews || 0,
-                createdAt: c.createdAt
+                createdAt: c.createdAt,
+                ultimaVisita: ultima ? new Date(ultima) : null,
+                pedidosAbiertos: infoPedidos?.abiertos || 0,
+                direccion: infoPedidos?.direccion || c.direccionFacturacion || null,
+                origen: 'cliente'
             };
         });
 
@@ -116,7 +129,11 @@ export async function GET(req: Request) {
                     totalGastado: info.total.toFixed(2),
                     ratingPromedio: 0,
                     totalReviews: 0,
-                    createdAt: info.fecha
+                    createdAt: info.primera,
+                    ultimaVisita: info.fecha,
+                    pedidosAbiertos: info.abiertos,
+                    direccion: info.direccion,
+                    origen: 'pedidos'
                 });
             }
         }

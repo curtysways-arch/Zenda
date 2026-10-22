@@ -1,50 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import ShoeCareBackoffice from '@/modules/shoe-care/components/ShoeCareBackoffice';
+import { Suspense, useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import LaundryOrdersHub from '@/modules/shoe-care/components/laundry/LaundryOrdersHub';
 
+/** Órdenes de lavandería: una sola bandeja para órdenes a domicilio y del local. */
 export default function AdminOrdenesServicioPage() {
-  const { data: session, status } = useSession();
   const [negocio, setNegocio] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    async function loadNegocio() {
-      try {
-        const res = await fetch('/api/negocio');
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.id) {
-            setNegocio(data);
-          }
-        }
-      } catch (err) {
-        console.error('Error cargando negocio en ordenes-servicio:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadNegocio();
+    fetch('/api/negocio')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => (d?.id ? setNegocio(d) : setError('No se encontró tu negocio.')))
+      .catch(() => setError('No se pudo cargar tu negocio. Recarga la página.'));
   }, []);
 
-  if (status === 'loading' || loading) {
+  if (error) return <p className="p-10 text-center text-sm text-rose-700">{error}</p>;
+  if (!negocio) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-400 font-semibold">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-          <span>Cargando órdenes de servicio...</span>
-        </div>
+      <div className="flex h-[60vh] items-center justify-center text-slate-400">
+        <Loader2 className="animate-spin" size={28} />
       </div>
     );
   }
-
-  const sessionNegocioId = (session?.user as any)?.negocioId;
-  const effectiveNegocio = negocio || (sessionNegocioId ? {
-    id: sessionNegocioId,
-    nombre: session?.user?.name || 'Lavandería & Calzado',
-    slug: sessionNegocioId
-  } : undefined);
-
-  return <ShoeCareBackoffice negocio={effectiveNegocio} />;
+  return (
+    <Suspense fallback={null}>
+      <LaundryOrdersHub negocio={negocio} />
+    </Suspense>
+  );
 }

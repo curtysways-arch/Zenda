@@ -351,7 +351,9 @@ export default function AdminSidebar({
   useEffect(() => {
     async function fetchBadges() {
       try {
-        const resP = await fetch('/api/admin/pedidos/pending-count');
+        // En lavanderías el número es de órdenes que esperan una acción del local.
+        const laundry = biz ? isLaundryOrShoeCareBusiness(biz) : false;
+        const resP = await fetch(laundry ? '/api/admin/pedidos/pending-count?tipo=lavanderia' : '/api/admin/pedidos/pending-count');
         if (resP.ok) {
           const d = await resP.json();
           setPendingOrders(d.count || 0);
@@ -359,7 +361,7 @@ export default function AdminSidebar({
       } catch (_) {}
     }
     fetchBadges();
-  }, [pathname]);
+  }, [pathname, biz]);
 
   const vertical = useMemo(() => resolveVertical(biz, effectiveCaps), [biz, effectiveCaps]);
   const capabilities = useMemo(() => computeCapabilities(biz, effectiveCaps), [biz, effectiveCaps]);
@@ -431,6 +433,47 @@ export default function AdminSidebar({
         ...settingsItems({ payments: true, profileLabel: 'Datos del gimnasio' }),
       ];
       return { items, matcher: gymModuleMatch };
+    }
+
+    // ── LAVANDERÍA / CUIDADO DE CALZADO ──
+    // Una sola bandeja de órdenes (domicilio y local). Los pedidos y ventas de productos
+    // solo aparecen si el negocio tiene activa la tienda (add-on), y ahí no se mezclan las órdenes de lavado.
+    if (isShoeCare) {
+      const hasStore = Boolean(capabilities.orders || capabilities.catalog);
+      const items: MenuItem[] = [
+        { name: 'Inicio', href: '/admin', icon: LayoutDashboard, section: 'INICIO' },
+        { name: 'Órdenes', href: '/admin/ordenes-servicio', icon: ClipboardList, section: 'DIA_A_DIA', badge: pendingOrders > 0 ? pendingOrders : undefined },
+        { name: 'Recibir en el local', href: '/admin/recepciones', icon: ShoppingBag, section: 'DIA_A_DIA' },
+        ...(capabilities.pos ? [{ name: 'Punto de venta', href: '/admin/pos', icon: Coffee, section: 'DIA_A_DIA' as SectionKey }] : []),
+        ...(capabilities.orders ? [{ name: 'Pedidos de la tienda', href: '/admin/pedidos-online', icon: Bike, section: 'DIA_A_DIA' as SectionKey }] : []),
+
+        { name: 'Servicios y precios', href: '/admin/servicios', icon: Scissors, section: 'CATALOGO', roles: ADMIN_ROLES },
+        ...(hasStore ? [
+          { name: 'Productos', href: '/admin/productos', icon: Sparkles, section: 'CATALOGO' as SectionKey, roles: ADMIN_ROLES },
+          { name: 'Categorías', href: '/admin/categorias', icon: Tags, section: 'CATALOGO' as SectionKey, roles: ADMIN_ROLES },
+          { name: 'Inventario', href: '/admin/inventario', icon: Package, section: 'CATALOGO' as SectionKey, roles: ADMIN_ROLES },
+        ] : [
+          { name: 'Venta de productos', href: '/admin/plan#addons', icon: Sparkles, section: 'CATALOGO' as SectionKey, roles: ADMIN_ROLES, isLocked: true, lockedBadge: 'Add-on' },
+        ]),
+
+        { name: 'Clientes', href: '/admin/clientes', icon: Contact, section: 'CLIENTES_EQUIPO', roles: ADMIN_ROLES },
+        { name: 'Repartidores', href: '/admin/repartidores', icon: Truck, section: 'CLIENTES_EQUIPO', roles: ADMIN_ROLES },
+        { name: 'Usuarios y permisos', href: '/admin/usuarios', icon: ShieldCheck, section: 'CLIENTES_EQUIPO', roles: ADMIN_ROLES },
+
+        { name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'ATRAER', roles: ADMIN_ROLES, isLocked: !capabilities.promotions, lockedBadge: lockLabel },
+        { name: 'Mensajes y campañas', href: '/admin/comunicacion', icon: MessageSquare, section: 'ATRAER', roles: ADMIN_ROLES, isLocked: !capabilities.communications, lockedBadge: lockLabel },
+        { name: 'Club de beneficios', href: '/admin/misiones', icon: Trophy, section: 'ATRAER', isLocked: !capabilities.loyalty, lockedBadge: lockLabel },
+        { name: 'Gana días gratis', href: '/admin/misiones-citiox', icon: Target, section: 'INICIO' },
+        { name: 'Antes y después', href: '/admin/resultados', icon: Smile, section: 'MI_PAGINA', roles: [...ADMIN_ROLES, 'RECEPCIONISTA'] },
+
+        { name: 'Caja', href: '/admin/caja', icon: Wallet, section: 'DINERO' },
+        ...(hasStore || capabilities.pos ? [{ name: 'Ventas de la tienda', href: '/admin/ventas', icon: Store, section: 'DINERO' as SectionKey }] : []),
+        { name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'DINERO', roles: ADMIN_ROLES },
+        ...(capabilities.electronic_billing ? [{ name: 'Facturación SRI', href: '/admin/facturacion', icon: FileText, section: 'DINERO' as SectionKey, roles: ADMIN_ROLES }] : []),
+
+        ...settingsItems({ payments: capabilities.payments }),
+      ];
+      return { items, matcher: genericModuleMatch };
     }
 
     // ── RESTO DE VERTICALES ──

@@ -1,103 +1,55 @@
 import prisma from '@/lib/prisma';
-import PlantillasManagerClient from '@/components/superadmin/PlantillasManagerClient';
+import TemplateCatalogClient, { CatalogVertical } from '@/components/superadmin/TemplateCatalogClient';
+import { VERTICALS, templateVariants, verticalOf, variantOf } from '@/lib/templateCatalog';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-    title: 'Catálogo de Plantillas · Citiox Superadmin',
-    description: 'Gestiona las plantillas de Landing Pages y Paneles de Administración por tipo de negocio',
+    title: 'Plantillas · Citiox Superadmin',
+    description: 'Las páginas públicas reales de cada tipo de negocio, con vista previa en vivo',
 };
 
+/**
+ * Plantillas de página pública por tipo de negocio.
+ * Cada plantilla se previsualiza en vivo sobre un negocio de ese tipo (de preferencia un demo),
+ * forzando el diseño con ?diseno=<id> cuando corresponde.
+ */
 export default async function PlantillasPage() {
-    // 1. Cargar tipos de negocio activos
-    const businessTypesRaw = await prisma.businessType.findMany({
-        where: { active: true },
-        orderBy: { sortOrder: 'asc' }
-    });
-
-    // 2. Cargar plantillas de Landing
-    const landingTemplatesRaw = await prisma.businessLandingTemplate.findMany({
-        include: {
-            businessType: {
-                select: { id: true, name: true, slug: true, color: true, icon: true }
-            }
+    const negocios = await prisma.negocio.findMany({
+        select: {
+            id: true, nombre: true, slug: true, tipoNegocio: true, configuracion: true, isDemo: true, estado: true,
+            logoUrl: true, businessTypeId: true, BusinessType: { select: { name: true, slug: true } },
         },
-        orderBy: [
-            { isDefault: 'desc' },
-            { sortOrder: 'asc' },
-            { createdAt: 'desc' }
-        ]
+        orderBy: [{ isDemo: 'desc' }, { nombre: 'asc' }],
     });
 
-    // 3. Cargar plantillas de Admin
-    const adminTemplatesRaw = await prisma.businessAdminTemplate.findMany({
-        include: {
-            businessType: {
-                select: { id: true, name: true, slug: true, color: true, icon: true }
-            }
-        },
-        orderBy: [
-            { isDefault: 'desc' },
-            { sortOrder: 'asc' },
-            { createdAt: 'desc' }
-        ]
+    const variants = templateVariants();
+    const rows = negocios.map((n) => {
+        const vertical = verticalOf(n as any);
+        return {
+            id: n.id, nombre: n.nombre, slug: n.slug, isDemo: n.isDemo, activo: String(n.estado || 'ACTIVO').toUpperCase() === 'ACTIVO',
+            logoUrl: n.logoUrl, vertical, variant: variantOf(n as any, vertical), pinchos: (n.slug || '').toLowerCase().includes('pincho'),
+        };
     });
 
-    // Serializar fechas a strings para SSR seguro en Next.js
-    const businessTypes = businessTypesRaw.map(bt => ({
-        id: bt.id,
-        name: bt.name,
-        slug: bt.slug,
-        icon: bt.icon,
-        color: bt.color
-    }));
+    const verticals: CatalogVertical[] = VERTICALS.map((v) => {
+        const mine = rows.filter((r) => r.vertical === v.id);
+        return {
+            ...v,
+            negocios: mine.length,
+            demos: mine.filter((r) => r.isDemo).length,
+            variants: variants.filter((t) => t.verticalId === v.id).map((t) => ({
+                ...t,
+                enUso: mine.filter((r) => r.variant === t.id && !r.isDemo).length,
+                // Negocios donde se puede previsualizar: demos primero, luego activos.
+                vistaPrevia: mine
+                    .filter((r) => (t.soloPinchos ? r.pinchos : !r.pinchos || v.id !== 'tienda'))
+                    .sort((a, b) => Number(b.isDemo) - Number(a.isDemo) || Number(b.variant === t.id) - Number(a.variant === t.id) || Number(b.activo) - Number(a.activo))
+                    .slice(0, 12)
+                    .map((r) => ({ slug: r.slug, nombre: r.nombre, isDemo: r.isDemo, usaEsta: r.variant === t.id })),
+            })),
+        };
+    });
 
-    const landingTemplates = landingTemplatesRaw.map(lt => ({
-        id: lt.id,
-        businessTypeId: lt.businessTypeId,
-        name: lt.name,
-        slug: lt.slug,
-        description: lt.description,
-        component: lt.component,
-        previewImage: lt.previewImage,
-        version: lt.version,
-        active: lt.active,
-        isDefault: lt.isDefault,
-        sortOrder: lt.sortOrder,
-        businessType: {
-            id: lt.businessType.id,
-            name: lt.businessType.name,
-            slug: lt.businessType.slug,
-            color: lt.businessType.color,
-            icon: lt.businessType.icon
-        }
-    }));
-
-    const adminTemplates = adminTemplatesRaw.map(at => ({
-        id: at.id,
-        businessTypeId: at.businessTypeId,
-        name: at.name,
-        component: at.component,
-        layoutType: at.layoutType,
-        previewImage: at.previewImage,
-        version: at.version,
-        active: at.active,
-        isDefault: at.isDefault,
-        sortOrder: at.sortOrder,
-        businessType: {
-            id: at.businessType.id,
-            name: at.businessType.name,
-            slug: at.businessType.slug,
-            color: at.businessType.color,
-            icon: at.businessType.icon
-        }
-    }));
-
-    return (
-        <PlantillasManagerClient
-            initialBusinessTypes={businessTypes}
-            initialLandingTemplates={landingTemplates}
-            initialAdminTemplates={adminTemplates}
-        />
-    );
+    return <TemplateCatalogClient verticals={verticals} totalNegocios={rows.length} />;
 }

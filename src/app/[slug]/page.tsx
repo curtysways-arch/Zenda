@@ -25,6 +25,7 @@ import { ModuleResolver } from '@/lib/modules/ModuleResolver';
 import { resolveLandingContent } from '@/lib/landingContentResolver';
 import UniversalHeroCarousel from '@/components/public/UniversalHeroCarousel';
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import { pageExcerpt, pageImage } from '@/lib/customPages';
 
 /** Convierte Decimal → number y Date → ISO para pasar datos de Prisma a Client Components. */
@@ -1210,8 +1211,10 @@ export default async function PublicNegocioPage({
     const previewDesign = previewParam ? getLandingDesign(previewParam) : undefined;
     const activeDesignId = previewDesign ? previewDesign.id : landingState.activo;
 
-    if (!isGymModule && activeDesignId === 'esencia') {
-        const { default: SpaEsenciaLanding } = await import('@/components/public/landings/SpaEsenciaLanding');
+    if (!isGymModule && (activeDesignId === 'esencia' || activeDesignId === 'brillo')) {
+        const { default: SpaEsenciaLanding } = activeDesignId === 'brillo'
+            ? await import('@/components/public/landings/SalonBrilloLanding')
+            : await import('@/components/public/landings/SpaEsenciaLanding');
         return (
             <SpaEsenciaLanding
                 negocio={negocio}
@@ -1248,8 +1251,45 @@ export default async function PublicNegocioPage({
         );
     }
 
+    // ── Datos para la barra de acciones y la sección de ubicación ──
+    const waDigits = String(negocio.whatsapp || '').replace(/\D/g, '');
+    const waNumber = waDigits.startsWith('593') ? waDigits : waDigits.startsWith('0') ? `593${waDigits.slice(1)}` : waDigits ? `593${waDigits}` : '';
+    const mainWhatsapp = waNumber.length >= 11 ? `https://wa.me/${waNumber}?text=${encodeURIComponent(`Hola ${negocio.nombre}, quiero reservar una cita.`)}` : null;
+    const horarioGeneral = negocio.horarioApertura && negocio.horarioCierre ? `${negocio.horarioApertura} – ${negocio.horarioCierre}` : null;
+    const compactNum = (n: number) => (n > 999 ? `${(n / 1000).toFixed(1)}k` : String(n));
+    const mainCtaHref = isGymModule ? '#planes' : '#servicios-seccion';
+    const mainCtaText = isGymModule ? 'Ver planes' : 'Reservar cita';
+    // Texto legible sobre el color de la marca (rosado claro → texto oscuro).
+    const primaryInk = (() => {
+        const h = primaryHex.replace('#', '');
+        const f = h.length === 3 ? h.split('').map((c: string) => c + c).join('') : h;
+        const [r, g, b] = [0, 2, 4].map((i) => parseInt(f.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.179 ? '#1e1b2e' : '#ffffff';
+    })();
+
     return (
-        <main className="min-h-screen font-sans pb-32 md:pb-12 relative overflow-x-hidden" style={{ backgroundColor: neutralColor }}>
+        <main className="min-h-screen font-sans pb-32 md:pb-16 relative overflow-x-hidden" style={{ backgroundColor: neutralColor }}>
+            {/* Contenedor y ritmo de secciones (CSS normal: no depende de clases generadas) */}
+            <style>{`
+                .cx{max-width:1200px;margin-left:auto;margin-right:auto;padding-left:24px;padding-right:24px}
+                @media (min-width:768px){.cx{padding-left:32px;padding-right:32px}}
+                .cx-sec{margin-top:48px;scroll-margin-top:96px}
+                @media (min-width:768px){.cx-sec{margin-top:80px}}
+                .cx-bleed{margin-left:-24px;margin-right:-24px}
+                .cx-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+                @media (min-width:768px){.cx-stats{display:flex;flex-wrap:wrap;gap:4px}}
+                .cx-flush > section{padding-left:0 !important;padding-right:0 !important;margin-bottom:0 !important}
+                .cx-row{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none}
+                .cx-row::-webkit-scrollbar{display:none}
+                .cx-row > *{scroll-snap-align:start;flex-shrink:0}
+                @media (min-width:768px){
+                    .cx-grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}
+                    .cx-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible}
+                    .cx-loc{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}
+                    .cx-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+                }
+            `}</style>
+
             {/* Cabecera Flotante (Solo Móvil) */}
             <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between md:hidden bg-gradient-to-b from-white/98 via-white/90 to-transparent backdrop-blur-md shadow-[0_2px_15px_rgba(0,0,0,0.02)] border-b border-slate-100/5 transition-all">
                 <Link href={`/${slug}`} className="flex items-center gap-3">
@@ -1261,9 +1301,7 @@ export default async function PublicNegocioPage({
                         </div>
                     )}
                     <div className="flex flex-col">
-                        <span className="font-bold text-base leading-tight text-slate-900">
-                            {negocio.nombre}
-                        </span>
+                        <span className="font-bold text-base leading-tight text-slate-900">{negocio.nombre}</span>
                         {totalOpiniones > 0 && (
                             <div className="flex items-center gap-1 mt-1">
                                 <div className="flex gap-0.5">
@@ -1271,93 +1309,93 @@ export default async function PublicNegocioPage({
                                         <Star key={i} size={10} className={i < Math.round(promedioOpiniones) ? "text-amber-400" : "text-slate-200"} fill="currentColor" />
                                     ))}
                                 </div>
-                                <span className="text-xs text-slate-500 leading-none">
-                                    {promedioOpiniones.toFixed(1)} ({totalOpiniones > 999 ? `${(totalOpiniones / 1000).toFixed(1)}k` : totalOpiniones})
-                                </span>
+                                <span className="text-xs text-slate-500 leading-none">{promedioOpiniones.toFixed(1)} ({compactNum(totalOpiniones)})</span>
                             </div>
                         )}
                     </div>
                 </Link>
-
                 <NotificationBell slug={slug} initialUnreadCount={initialUnreadCount} />
             </header>
 
-            {/* Espaciador superior */}
-            <div className={nextAppointment ? "h-[116px]" : "h-[80px]"}></div>
+            {/* Espaciador superior (solo celular, por la cabecera fija) */}
+            <div className="h-[84px] md:h-6" />
 
-            {/* PRÓXIMA CITA ALERT BANNER */}
-            {nextAppointment && (
-                <div className="px-6 mb-6">
-                    <NextAppointmentBanner 
-                        appointment={nextAppointment}
-                        slug={slug}
-                        primaryColor={primaryColor}
+            <div className="cx">
+                {/* PRÓXIMA CITA */}
+                {nextAppointment && (
+                    <div className="mb-4">
+                        <NextAppointmentBanner appointment={nextAppointment} slug={slug} primaryColor={primaryColor} />
+                    </div>
+                )}
+
+                {/* 1. BANNERS (portada) */}
+                <section aria-label="Destacados">
+                    <UniversalHeroCarousel
+                        heroItems={resolvedLandingContent.hero}
+                        negocio={negocio}
+                        isOpenNow={isCurrentlyOpen}
+                        defaultImages={displayImages}
                     />
-                </div>
-            )}
+                </section>
 
-            {/* 2. HERO IMAGE CON CONTENIDO DINÁMICO */}
-            <section className="px-6 mb-6">
-                <UniversalHeroCarousel 
-                    heroItems={resolvedLandingContent.hero}
-                    negocio={negocio}
-                    isOpenNow={isCurrentlyOpen}
-                    defaultImages={displayImages}
-                />
-            </section>
-
-            {/* 3. TARJETAS DE CONFIANZA — solo se muestran los datos que existen (nada de "0 opiniones") */}
-            {(() => {
-                const compact = (n: number) => n > 999 ? `${(n / 1000).toFixed(1)}k` : String(n);
-                const itemsCount = isGymModule ? membershipPlans.length : filteredCanchas.length;
-                const cards: { key: string; node: any }[] = [];
-                if (totalOpiniones > 0) {
-                    cards.push({ key: 'op', node: (
-                        <button id="btn-opiniones" className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
-                            <Star size={16} fill="currentColor" style={{ color: primaryColor }} />
-                            <span className="text-sm font-bold text-slate-800 mt-1">{promedioOpiniones.toFixed(1)}</span>
-                            <span className="text-xs text-slate-500 mt-0.5">{compact(totalOpiniones)} {totalOpiniones === 1 ? 'opinión' : 'opiniones'}</span>
-                        </button>
-                    ) });
-                }
-                if (totalClientes > 0) {
-                    cards.push({ key: 'cl', node: (
-                        <button id="btn-fidelizacion" className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
-                            <Users size={16} style={{ color: primaryColor }} />
-                            <span className="text-sm font-bold text-slate-800 mt-1">{compact(totalClientes)}</span>
-                            <span className="text-xs text-slate-500 mt-0.5">{isGymModule ? 'Socios' : 'Clientes'}</span>
-                        </button>
-                    ) });
-                }
-                if (itemsCount > 0) {
-                    cards.push({ key: 'sv', node: (
-                        <a href={isGymModule ? "#planes" : "#servicios-seccion"} className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none no-underline">
-                            <Sparkles size={16} style={{ color: primaryColor }} />
-                            <span className="text-sm font-bold text-slate-800 mt-1">{itemsCount}</span>
-                            <span className="text-xs text-slate-500 mt-0.5">{isGymModule ? 'Planes' : 'Servicios'}</span>
-                        </a>
-                    ) });
-                }
-                if (negocio.ciudad) {
-                    cards.push({ key: 'ub', node: (
-                        <a href="#ubicacion" className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none no-underline">
-                            <MapPin size={16} style={{ color: primaryColor }} />
-                            <span className="text-sm font-bold text-slate-800 mt-1 truncate max-w-[80px]">{negocio.ciudad}</span>
-                            <span className="text-xs text-slate-500 mt-0.5">Ubicación</span>
-                        </a>
-                    ) });
-                }
-                if (cards.length === 0) return null;
-                const cols = ['', 'grid-cols-1', 'grid-cols-2', 'grid-cols-3', 'grid-cols-4'][cards.length];
-                return (
-                    <section className="px-6 mb-6">
-                        <div className={`grid ${cols} divide-x divide-slate-100 bg-white rounded-3xl py-3 border border-slate-100 shadow-sm`}>
-                            {cards.map(c => <div key={c.key} className="px-1">{c.node}</div>)}
+                {/* 2. BARRA DE CONFIANZA + ACCIONES */}
+                <section aria-label="Resumen" className="relative z-10 mx-auto -mt-6 w-[calc(100%-24px)] md:-mt-10 md:w-[calc(100%-64px)]">
+                    <div className="cx-actions gap-4 rounded-3xl bg-white p-4 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-900/5 md:p-5">
+                        <div className="cx-stats">
+                            {totalOpiniones > 0 && (
+                                <button id="btn-opiniones" className="flex shrink-0 items-center gap-3 rounded-2xl px-3 py-2 text-left transition hover:bg-slate-50 active:scale-95 bg-transparent border-0 cursor-pointer">
+                                    <span className="flex size-10 items-center justify-center rounded-xl" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 12%, white)`, color: primaryColor }}><Star size={18} fill="currentColor" /></span>
+                                    <span>
+                                        <span className="block text-lg font-bold leading-none text-slate-900">{promedioOpiniones.toFixed(1)}</span>
+                                        <span className="mt-1 block text-xs text-slate-500">{compactNum(totalOpiniones)} {totalOpiniones === 1 ? 'opinión' : 'opiniones'}</span>
+                                    </span>
+                                </button>
+                            )}
+                            {totalClientes > 0 && (
+                                <button id="btn-fidelizacion" className="flex shrink-0 items-center gap-3 rounded-2xl px-3 py-2 text-left transition hover:bg-slate-50 active:scale-95 bg-transparent border-0 cursor-pointer">
+                                    <span className="flex size-10 items-center justify-center rounded-xl" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 12%, white)`, color: primaryColor }}><Users size={18} /></span>
+                                    <span>
+                                        <span className="block text-lg font-bold leading-none text-slate-900">{compactNum(totalClientes)}</span>
+                                        <span className="mt-1 block text-xs text-slate-500">{isGymModule ? 'Socios' : 'Clientes'}</span>
+                                    </span>
+                                </button>
+                            )}
+                            {(isGymModule ? membershipPlans.length : filteredCanchas.length) > 0 && (
+                                <a href={mainCtaHref} className="flex shrink-0 items-center gap-3 rounded-2xl px-3 py-2 no-underline transition hover:bg-slate-50">
+                                    <span className="flex size-10 items-center justify-center rounded-xl" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 12%, white)`, color: primaryColor }}><Sparkles size={18} /></span>
+                                    <span>
+                                        <span className="block text-lg font-bold leading-none text-slate-900">{isGymModule ? membershipPlans.length : filteredCanchas.length}</span>
+                                        <span className="mt-1 block text-xs text-slate-500">{isGymModule ? 'Planes' : 'Servicios'}</span>
+                                    </span>
+                                </a>
+                            )}
+                            {(negocio.ciudad || horarioGeneral) && (
+                                <a href="#ubicacion" className="flex shrink-0 items-center gap-3 rounded-2xl px-3 py-2 no-underline transition hover:bg-slate-50">
+                                    <span className="flex size-10 items-center justify-center rounded-xl" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 12%, white)`, color: primaryColor }}><Clock size={18} /></span>
+                                    <span>
+                                        <span className={`block text-sm font-bold leading-none ${isCurrentlyOpen ? 'text-emerald-600' : 'text-slate-500'}`}>{isCurrentlyOpen ? 'Abierto ahora' : 'Cerrado ahora'}</span>
+                                        <span className="mt-1 block text-xs text-slate-500">{horarioGeneral || negocio.ciudad}</span>
+                                    </span>
+                                </a>
+                            )}
                         </div>
-                    </section>
-                );
-            })()}
+                        <div className="flex gap-2">
+                            <a href={mainCtaHref} className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold no-underline shadow-sm transition hover:brightness-110 active:scale-[0.98] md:flex-none" style={{ backgroundColor: primaryColor, color: primaryInk }}>
+                                <Calendar size={17} /> {mainCtaText}
+                            </a>
+                            {mainWhatsapp && (
+                                <a href={mainWhatsapp} target="_blank" rel="noopener noreferrer" aria-label="Escribir por WhatsApp" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-bold text-slate-800 no-underline transition hover:bg-slate-50">
+                                    <MessageCircle size={17} className="text-emerald-600" /> <span className="hidden sm:inline">WhatsApp</span>
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                    {negocio.mensajeBienvenida && (
+                        <p className="mx-auto mt-5 max-w-xl text-center font-serif text-[15px] italic leading-relaxed text-slate-500">“{negocio.mensajeBienvenida}”</p>
+                    )}
+                </section>
 
+                <div className="cx-bleed" style={{ marginTop: 24 }}>
             {/* BANNER ACCESO SOCIO GYM */}
             {isGymModule && (
                 <section className="px-6 mb-6">
@@ -1392,18 +1430,10 @@ export default async function PublicNegocioPage({
                 </section>
             )}
 
-            {/* 3. MENSAJE DE BIENVENIDA */}
-            {negocio.mensajeBienvenida && (
-                <section className="px-10 mb-6 text-center">
-                    <p className="text-xs font-serif italic text-slate-500 leading-relaxed max-w-[280px] mx-auto">
-                        "{negocio.mensajeBienvenida}"
-                    </p>
-                </section>
-            )}
+                </div>
 
-            {/* VISTA PARA GIMNASIOS: 1. Conoce el Gym -> 2. Promociones -> 3. Planes de Membresía */}
-            {isGymModule ? (
-                <>
+                {isGymModule ? (
+                    <div className="cx-sec cx-bleed">
                     {/* GYM — 1. CONOCE EL GIMNASIO (INSTALACIONES Y EQUIPOS) */}
                     {(gymAreas.length > 0 || gymEquipment.length > 0) && (
                         <section id="conoce-el-gym" className="mb-8 px-4 sm:px-6">
@@ -1464,370 +1494,196 @@ export default async function PublicNegocioPage({
                         whatsapp={negocio.whatsapp}
                         businessName={negocio.nombre}
                     />
-                </>
-            ) : (
-                <>
-                    {/* NEGOCIO REGULAR — 1. PROMOCIONES */}
-                    {promocionesActivas.length > 0 && (
-                        <section id="promociones" className="mb-6">
-                            <PromotionsSection 
-                                promociones={promocionesActivas} 
-                                slug={slug} 
+
+                    </div>
+                ) : (
+                    <>
+                        {/* 3. PROMOCIONES */}
+                        {promocionesActivas.length > 0 && (
+                            <section id="promociones" className="cx-sec cx-bleed">
+                                <PromotionsSection
+                                    promociones={promocionesActivas}
+                                    slug={slug}
+                                    primaryColor={primaryColor}
+                                    tertiaryColor={tertiaryColor}
+                                    textColor={textColor}
+                                    showPrices={negocio.mostrarPrecios !== false}
+                                    totalServicesCount={canchasConDisponibilidad.length}
+                                    isGym={false}
+                                />
+                            </section>
+                        )}
+
+                        {/* 4. SERVICIOS */}
+                        <section id="servicios-seccion" className="cx-sec">
+                            <HomeServicesClient
+                                filteredCanchas={filteredCanchas}
+                                slug={slug}
                                 primaryColor={primaryColor}
-                                tertiaryColor={tertiaryColor}
                                 textColor={textColor}
+                                tipoNegocio={negocio.tipoNegocio}
                                 showPrices={negocio.mostrarPrecios !== false}
-                                totalServicesCount={canchasConDisponibilidad.length}
-                                isGym={false}
                             />
                         </section>
-                    )}
+                    </>
+                )}
 
-                    {/* NEGOCIO REGULAR — 2. SERVICIOS */}
-                    <section id="servicios-seccion">
-                        <HomeServicesClient 
-                            filteredCanchas={filteredCanchas}
+                {/* 5. RESULTADOS REALES */}
+                {resultadosDestacados.length > 0 && (
+                    <section id="resultados" className="cx-sec">
+                        <SectionHead eyebrow="Hecho aquí" title="Resultados reales" color={primaryColor} action={{ href: `/${slug}/portafolio`, label: 'Ver portafolio' }} />
+                        <div className="cx-row cx-grid-4">
+                            {resultadosDestacados.slice(0, 8).map((item) => {
+                                const isGallery = item.type === 'GALLERY';
+                                return (
+                                    <Link key={item.id} href={`/${slug}/portafolio#trabajo-${item.id}`}
+                                        className="group relative block aspect-[4/5] w-[72%] overflow-hidden rounded-3xl bg-slate-100 sm:w-[45%] md:w-auto">
+                                        {!isGallery ? (
+                                            <span className="flex h-full">
+                                                <img src={item.beforeImage} className="h-full w-1/2 object-cover" alt="Antes" loading="lazy" />
+                                                <img src={item.afterImage} className="h-full w-1/2 border-l-2 border-white object-cover" alt="Después" loading="lazy" />
+                                            </span>
+                                        ) : (
+                                            <img src={item.gallery?.[0] || businessImage} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" alt={item.title} loading="lazy" />
+                                        )}
+                                        {!isGallery && <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-800">Antes · Después</span>}
+                                        {item.title && (
+                                            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4 pt-10 text-sm font-semibold text-white">{item.title}</span>
+                                        )}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
+
+                {/* 6. OPINIONES */}
+                {reviews.length > 0 && (
+                    <section id="opiniones" className="cx-sec">
+                        <SectionHead eyebrow="Testimonios" title="Lo que dicen nuestros clientes" color={primaryColor}
+                            aside={totalOpiniones > 0 ? (
+                                <button data-open-modal="modal-opiniones" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 cursor-pointer">
+                                    <Star size={15} className="text-amber-400" fill="currentColor" /> {promedioOpiniones.toFixed(1)} · Ver las {compactNum(totalOpiniones)}
+                                </button>
+                            ) : null} />
+                        <ReviewsCarousel reviews={reviews} primaryColor={primaryColor} textColor={textColor} />
+                    </section>
+                )}
+
+                {/* 7. PRODUCTOS */}
+                {(rawProductosActivos.length > 0 || initialSelectedProduct) && (
+                    <div className="cx-sec cx-flush">
+                        <PublicProductsBoutiqueSection
+                            productos={
+                                initialSelectedProduct && !rawProductosActivos.some((p: any) => p.id === initialSelectedProduct.id)
+                                    ? [initialSelectedProduct, ...rawProductosActivos]
+                                    : rawProductosActivos
+                            }
+                            negocio={negocio}
                             slug={slug}
                             primaryColor={primaryColor}
-                            textColor={textColor}
-                            tipoNegocio={negocio.tipoNegocio}
+                            initialSelectedProduct={initialSelectedProduct}
                         />
-                    </section>
-                </>
-            )}
-
-            {/* CURSOS Y TALLERES */}
-            {coursesModuleEnabled && cursosActivos.length > 0 && (
-                <section id="cursos" className="mb-6 px-6">
-                    <PublicCoursesSection 
-                        cursosActivos={cursosActivos} 
-                        businessSlug={slug}
-                        primaryColor={primaryColor}
-                        tertiaryColor={tertiaryColor}
-                        textColor={textColor}
-                        showPrices={negocio.mostrarPrecios !== false}
-                    />
-                </section>
-            )}
-
-            {/* 6. RESULTADOS REALES (Rediseñados para mostrar sólo la imagen y el título en un scroll horizontal) */}
-            {resultadosDestacados.length > 0 && (
-                <section id="resultados" className="px-6 mb-6">
-                    <div className="flex justify-between items-end mb-4">
-                        <div>
-                            <h3 className="text-2xl font-bold leading-none text-slate-900">Resultados Reales</h3>
-                        </div>
-                        <Link 
-                            href={`/${slug}/portafolio`}
-                            className="text-xs font-bold uppercase tracking-wide" 
-                            style={{ color: primaryColor }}
-                        >
-                            Ver todos
-                        </Link>
                     </div>
+                )}
 
-                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none px-1">
-                        {resultadosDestacados.map((item) => {
-                            const isGallery = item.type === 'GALLERY';
+                {/* 8. CURSOS Y TALLERES */}
+                {coursesModuleEnabled && cursosActivos.length > 0 && (
+                    <div className="cx-sec cx-flush">
+                        <PublicCoursesSection
+                            cursosActivos={cursosActivos}
+                            businessSlug={slug}
+                            primaryColor={primaryColor}
+                            tertiaryColor={tertiaryColor}
+                            textColor={textColor}
+                            showPrices={negocio.mostrarPrecios !== false}
+                        />
+                    </div>
+                )}
 
-                            return (
-                                <Link 
-                                    key={item.id} 
-                                    href={`/${slug}/portafolio#trabajo-${item.id}`}
-                                    className="group relative aspect-[4/3] w-[180px] sm:w-[220px] rounded-3xl overflow-hidden shrink-0 bg-slate-50 border border-slate-100 shadow-sm flex hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-                                >
-                                    {/* Si es transformación (Antes/Después), los mostramos lado a lado */}
-                                    {!isGallery ? (
-                                        <>
-                                            <div className="w-1/2 relative h-full">
-                                                <img src={item.beforeImage} className="w-full h-full object-cover" alt="Antes" />
-                                            </div>
-                                            <div className="w-1/2 relative h-full border-l border-white/60">
-                                                <img src={item.afterImage} className="w-full h-full object-cover" alt="Después" />
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <img src={item.gallery?.[0] || businessImage} className="w-full h-full object-cover" alt={item.title} />
-                                    )}
-                                    
-                                    {/* Badge del título centrado abajo */}
-                                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-md border border-slate-100/50 max-w-[90%] truncate">
-                                        <span className="text-xs font-bold text-slate-800 tracking-wide uppercase leading-none block text-center">
-                                             {item.title}
-                                        </span>
-                                    </div>
+                {/* 9. PÁGINAS PERSONALIZADAS */}
+                {paginasPersonalizadas.length > 0 && (
+                    <section id="paginas" className="cx-sec">
+                        <SectionHead eyebrow="Descubre más" title={isGymModule ? 'Conoce más del gimnasio' : 'Conoce más de nosotros'} color={primaryColor}
+                            action={paginasPersonalizadas.length > 3 ? { href: `/${slug}/paginas`, label: 'Ver todo' } : undefined} />
+                        <div className="cx-row cx-grid-3">
+                            {paginasPersonalizadas.slice(0, 6).map((page) => (
+                                <Link href={`/${slug}/pagina/${page.slug}`} key={page.id}
+                                    className="group flex w-[80%] flex-col overflow-hidden rounded-3xl bg-white ring-1 ring-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-lg sm:w-[46%] md:w-auto">
+                                    <span className="relative block aspect-[16/10] overflow-hidden bg-slate-100">
+                                        <img src={pageImage(page) || businessImage} alt={page.title} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                                    </span>
+                                    <span className="flex flex-1 flex-col p-5">
+                                        <span className="text-lg font-bold leading-snug text-slate-900">{page.title}</span>
+                                        {page.contentHtml && <span className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-slate-500">{pageExcerpt(page.contentHtml, 140)}</span>}
+                                        <span className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-semibold" style={{ color: primaryColor }}>Leer más <ArrowUpRight size={15} /></span>
+                                    </span>
                                 </Link>
-                            );
-                        })}
-                    </div>
-                </section>
-            )}
-
-            {/* 6B. PRODUCTOS (Ubicados debajo de Resultados Reales) */}
-            {(rawProductosActivos.length > 0 || initialSelectedProduct) && (
-                <PublicProductsBoutiqueSection 
-                    productos={
-                        initialSelectedProduct && !rawProductosActivos.some((p: any) => p.id === initialSelectedProduct.id)
-                            ? [initialSelectedProduct, ...rawProductosActivos]
-                            : rawProductosActivos
-                    }
-                    negocio={negocio}
-                    slug={slug}
-                    primaryColor={primaryColor}
-                    initialSelectedProduct={initialSelectedProduct}
-                />
-            )}
-
-            {/* 7. OPINIONES (ReviewsCarousel con slider dinámico) */}
-            {reviews.length > 0 && (
-                <section id="opiniones" className="px-6 mb-6">
-                    <div className="flex justify-between items-end mb-4">
-                        <div>
-                            <span className="text-xs font-bold uppercase tracking-wide mb-1 block" style={{ color: primaryColor }}>Testimonios</span>
-                            <h3 className="text-2xl font-bold leading-none text-slate-900">Opiniones</h3>
+                            ))}
                         </div>
-                    </div>
-                    <ReviewsCarousel 
-                        reviews={reviews} 
-                        primaryColor={primaryColor} 
-                        textColor={textColor} 
-                    />
-                </section>
-            )}
+                    </section>
+                )}
 
-            {/* PÁGINAS PERSONALIZADAS - BOUTIQUE EXPLORER */}
-            {paginasPersonalizadas.length > 0 && (
-                <section id="paginas" className="px-6 mb-6">
-                    <div className="flex justify-between items-end mb-4">
-                        <div>
-                            <span className="text-xs font-bold uppercase tracking-wide mb-2 block" style={{ color: primaryColor }}>Descubre más</span>
-                            <h3 className="text-2xl font-bold leading-none text-slate-900">Contenido Exclusivo</h3>
-                        </div>
-                    </div>
-                    
-                    <div className="flex flex-col gap-6">
-                        {paginasPersonalizadas.map((page) => (
-                            <Link 
-                                href={`/${slug}/pagina/${page.slug}`} 
-                                key={page.id}
-                                className="group relative w-full bg-white border border-slate-100/50 rounded-3xl overflow-hidden shadow-sm transition-all duration-500"
-                            >
-                                <div className="flex flex-col md:flex-row">
-                                    <div className="md:w-2/5 aspect-[16/10] md:aspect-square relative overflow-hidden">
-                                        <img 
-                                            src={pageImage(page) || businessImage} 
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s] ease-out"
-                                            alt={page.title}
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
-                                    </div>
-                                    
-                                    <div className="md:w-3/5 p-6 md:p-8 flex flex-col justify-center relative">
-                                        <div className="absolute top-6 right-6 size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-200 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-500">
-                                            <ArrowUpRight size={20} />
-                                        </div>
- 
-                                        <span className="text-xs font-bold uppercase tracking-wide mb-2 block" style={{ color: primaryColor }}>
-                                            {isGymModule ? 'Instalaciones & Más' : 'Especial'}
-                                        </span>
-                                        <h4 className="text-xl font-bold leading-tight mb-2 transition-colors text-slate-900">
-                                            {page.title}
-                                        </h4>
-                                        <p className="text-xs font-semibold text-slate-400 leading-relaxed mb-4 max-w-md line-clamp-2">
-                                            {page.contentHtml ? pageExcerpt(page.contentHtml, 150) : (isGymModule ? 'Conoce más sobre nuestro centro de entrenamiento, áreas y comunidad.' : 'Sumérgete en los detalles y rituales exclusivos que nos hacen únicos.')}
-                                        </p>
-                                        
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-px w-6 opacity-30" style={{ backgroundColor: primaryColor }} />
-                                            <span className="text-xs font-bold uppercase tracking-wide text-slate-700">
-                                                Leer artículo
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            {/* UBICACIONES */}
-            {resolvedUbicaciones.length > 0 && (
-                <section id="ubicacion" className="px-6 mb-12">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-pink-50 text-pink-500 rounded-2xl border border-pink-100/50">
-                            <MapPin size={20} className="stroke-[2.5]" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold tracking-tight text-slate-800 leading-none">Ubicación</h3>
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Encuéntranos fácilmente</p>
-                        </div>
-                    </div>
-                    
-                    <div className="space-y-8">
-                        {resolvedUbicaciones.map((sede: any) => (
-                            <div key={sede.id} className="bg-white rounded-3xl overflow-hidden border border-slate-100/70 shadow-sm flex flex-col">
-                                
-                                {/* Contenedor del Mapa con Botones e Imagen de Fachada */}
-                                <div className="relative w-full h-[240px] bg-slate-50 overflow-hidden">
-                                    <iframe 
-                                        width="100%" 
-                                        height="100%" 
-                                        style={{ border: 0, filter: 'contrast(1.03) brightness(0.98)' }} 
-                                        loading="lazy" 
-                                        allowFullScreen 
-                                        src={sede.embedSrc}
-                                    />
-                                    
-                                    {/* Botón flotante: Ver mapa (abajo derecha) */}
-                                    <a 
-                                        href={sede.navUrl} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer" 
-                                        className="absolute bottom-4 right-4 bg-white/95 hover:bg-white text-slate-800 border border-slate-100 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide shadow-md flex items-center gap-1.5 active:scale-95 transition-all z-10"
-                                    >
-                                        <Maximize size={10} className="stroke-[3]" />
-                                        Ver mapa
-                                    </a>
-
-                                    {/* Foto de la fachada (abajo izquierda) - Agrandada y Cliqueable */}
-                                    {sede.imagenUrl && (
-                                        <div className="absolute bottom-4 left-4 w-28 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-xl z-10 bg-slate-200 cursor-pointer active:scale-95 transition-transform hover:shadow-2xl">
-                                            <img 
-                                                src={sede.imagenUrl} 
-                                                alt="Fachada del local" 
-                                                className="w-full h-full object-cover foto-fachada-click"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Tarjeta Informativa Inferior */}
-                                {(() => {
-                                    const rawPhone = sede.telefono || "0991234567";
-                                    const cleanPhone = rawPhone.replace(/\D/g, "");
-                                    const formattedPhone = cleanPhone.startsWith("593") 
-                                        ? cleanPhone 
-                                        : cleanPhone.startsWith("0") 
-                                            ? `593${cleanPhone.slice(1)}` 
-                                            : `593${cleanPhone}`;
-                                    const whatsappUrl = `https://wa.me/${formattedPhone}`;
-
-                                    return (
-                                        <div className="p-6 bg-white border-b border-slate-50 flex flex-col md:flex-row items-stretch gap-6 md:gap-0">
-                                            {/* Sede y Dirección */}
-                                            <div className="flex-1 flex items-start gap-4">
-                                                <div className="p-3 bg-pink-50 text-pink-500 rounded-2xl border border-pink-100/30 flex items-center justify-center shrink-0">
-                                                    <MapPin size={20} className="stroke-[2.5]" />
+                {/* 10. UBICACIÓN */}
+                {resolvedUbicaciones.length > 0 && (
+                    <section id="ubicacion" className="cx-sec">
+                        <SectionHead eyebrow="Visítanos" title={resolvedUbicaciones.length > 1 ? 'Nuestras sedes' : 'Dónde estamos'} color={primaryColor} />
+                        <div className="space-y-6">
+                            {resolvedUbicaciones.map((sede: any) => {
+                                const telDigits = String(sede.telefono || '').replace(/\D/g, '');
+                                const telWa = telDigits ? (telDigits.startsWith('593') ? telDigits : telDigits.startsWith('0') ? `593${telDigits.slice(1)}` : `593${telDigits}`) : '';
+                                const horario = sede.horario || horarioGeneral;
+                                const extras = [
+                                    sede.tieneParqueadero && { icon: Car, label: 'Parqueadero' },
+                                    sede.tieneTransporte && { icon: Bus, label: 'Transporte cercano' },
+                                    sede.tieneZonaSegura && { icon: ShieldCheck, label: 'Zona segura' },
+                                    sede.tieneAccesoFacil && { icon: Accessibility, label: 'Acceso fácil' },
+                                ].filter(Boolean) as { icon: any; label: string }[];
+                                return (
+                                    <div key={sede.id} className="cx-loc overflow-hidden rounded-3xl bg-white ring-1 ring-slate-900/5">
+                                        <div className="relative min-h-[240px] bg-slate-100 md:min-h-[340px]">
+                                            {sede.embedSrc && <iframe title={`Mapa de ${sede.nombre || negocio.nombre}`} className="absolute inset-0 h-full w-full border-0" loading="lazy" allowFullScreen src={sede.embedSrc} />}
+                                            {sede.imagenUrl && (
+                                                <div className="absolute bottom-4 left-4 z-10 h-20 w-28 cursor-pointer overflow-hidden rounded-2xl border-2 border-white bg-slate-200 shadow-xl">
+                                                    <img src={sede.imagenUrl} alt="Fachada del local" className="foto-fachada-click h-full w-full object-cover" />
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <h4 className="font-bold text-slate-800 uppercase text-sm tracking-tight">{sede.nombre}</h4>
-                                                    <p className="text-xs text-slate-400 font-semibold leading-relaxed max-w-sm">
-                                                        {sede.direccion}
-                                                    </p>
-                                                    <a 
-                                                        href={sede.navUrl} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer" 
-                                                        className="inline-flex items-center gap-1 text-xs font-bold text-pink-500 hover:text-pink-600 uppercase tracking-wider pt-1.5 transition-colors"
-                                                    >
-                                                        Cómo llegar <span className="text-xs">→</span>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col gap-5 p-6 md:p-8">
+                                            {sede.nombre && <h4 className="text-xl font-bold text-slate-900">{sede.nombre}</h4>}
+                                            {sede.direccion && (
+                                                <p className="flex gap-3 text-[15px] leading-relaxed text-slate-700"><MapPin size={19} className="mt-0.5 shrink-0" style={{ color: primaryColor }} />{sede.direccion}</p>
+                                            )}
+                                            {horario && (
+                                                <p className="flex gap-3 text-[15px] text-slate-700"><Clock size={19} className="mt-0.5 shrink-0" style={{ color: primaryColor }} />
+                                                    <span>{horario}{isCurrentlyOpen ? <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">Abierto ahora</span> : null}</span>
+                                                </p>
+                                            )}
+                                            {sede.telefono && (
+                                                <p className="flex gap-3 text-[15px] text-slate-700"><Phone size={19} className="mt-0.5 shrink-0" style={{ color: primaryColor }} /><a href={`tel:${sede.telefono}`} className="hover:underline">{sede.telefono}</a></p>
+                                            )}
+                                            {extras.length > 0 && (
+                                                <ul className="flex flex-wrap gap-2">
+                                                    {extras.map((x) => <li key={x.label} className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 ring-1 ring-slate-100"><x.icon size={13} /> {x.label}</li>)}
+                                                </ul>
+                                            )}
+                                            <div className="mt-auto flex flex-wrap gap-2 pt-1">
+                                                {sede.navUrl && (
+                                                    <a href={sede.navUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold no-underline transition hover:brightness-110" style={{ backgroundColor: primaryColor, color: primaryInk }}>
+                                                        <Compass size={16} /> Cómo llegar
                                                     </a>
-                                                </div>
-                                            </div>
-
-                                            {/* Horario */}
-                                            <div className="flex-1 md:border-l border-slate-100 md:pl-6 flex items-start gap-4">
-                                                <div className="p-3 bg-pink-50/50 text-pink-500 rounded-2xl flex items-center justify-center shrink-0">
-                                                    <Clock size={20} className="stroke-[2.5]" />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Horario</h5>
-                                                    <p className="text-xs font-bold text-slate-800 leading-tight">
-                                                        {sede.horario ? (
-                                                            sede.horario.split(/(\d+:\d+\s*(?:AM|PM|am|pm))/).map((txt: string, idx: number) => {
-                                                                const isTime = /\d+:\d+\s*(?:AM|PM|am|pm)/.test(txt);
-                                                                return isTime ? <span key={idx} className="block text-xs text-slate-400 font-semibold mt-0.5">{txt}</span> : <span key={idx}>{txt}</span>;
-                                                            })
-                                                        ) : (
-                                                            <>
-                                                                Lun - Dom
-                                                                <span className="block text-xs text-slate-400 font-semibold mt-0.5">8:00 AM - 11:00 PM</span>
-                                                            </>
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {/* Teléfono */}
-                                            <div className="flex-1 md:border-l border-slate-100 md:pl-6 flex items-start gap-4">
-                                                <div className="p-3 bg-pink-50/50 text-pink-500 rounded-2xl flex items-center justify-center shrink-0">
-                                                    <Phone size={20} className="stroke-[2.5]" />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Teléfono</h5>
-                                                    <a 
-                                                        href={whatsappUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center text-xs font-bold text-slate-800 hover:text-pink-500 leading-tight transition-colors"
-                                                    >
-                                                        {sede.telefono || "099 123 4567"}
-                                                        <span className="text-xs text-emerald-600 font-bold bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 ml-2 uppercase tracking-wider">WhatsApp</span>
+                                                )}
+                                                {telWa.length >= 11 && (
+                                                    <a href={`https://wa.me/${telWa}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-800 no-underline transition hover:bg-slate-50">
+                                                        <MessageCircle size={16} className="text-emerald-600" /> WhatsApp
                                                     </a>
-                                                </div>
+                                                )}
                                             </div>
                                         </div>
-                                    );
-                                })()}
-
-                                {/* Barra de Características / Servicios de Valor Agregado (si hay al menos uno habilitado) */}
-                                {(sede.tieneParqueadero || sede.tieneTransporte || sede.tieneZonaSegura || sede.tieneAccesoFacil) && (
-                                    <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex flex-nowrap overflow-x-auto gap-4 scrollbar-none items-center justify-start md:justify-around">
-                                        {/* Parqueadero */}
-                                        {sede.tieneParqueadero && (
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
-                                                    <Car size={14} className="stroke-[2.5]" />
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Parqueadero Disponible</span>
-                                            </div>
-                                        )}
-
-                                        {/* Transporte */}
-                                        {sede.tieneTransporte && (
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
-                                                    <Bus size={14} className="stroke-[2.5]" />
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Transporte Cercano</span>
-                                            </div>
-                                        )}
-
-                                        {/* Zona Segura */}
-                                        {sede.tieneZonaSegura && (
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
-                                                    <ShieldCheck size={14} className="stroke-[2.5]" />
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Zona Segura</span>
-                                            </div>
-                                        )}
-
-                                        {/* Acceso Fácil */}
-                                        {sede.tieneAccesoFacil && (
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
-                                                    <Accessibility size={14} className="stroke-[2.5]" />
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Acceso Fácil</span>
-                                            </div>
-                                        )}
                                     </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                                );
+                            })}
+                        </div>
 
                     {/* Modal para ampliar foto de fachada */}
                     <div 
@@ -1910,8 +1766,35 @@ export default async function PublicNegocioPage({
                             `
                         }}
                     />
+
+                    </section>
+                )}
+
+                {/* 11. CIERRE */}
+                <section className="cx-sec mb-4">
+                    <div className="relative overflow-hidden rounded-[32px] px-6 py-12 text-center md:px-12 md:py-16" style={{ backgroundColor: primaryColor, color: primaryInk }}>
+                        <div className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-white/10" aria-hidden />
+                        <div className="pointer-events-none absolute -bottom-20 -left-10 size-56 rounded-full bg-black/10" aria-hidden />
+                        <p className="relative text-sm font-semibold uppercase tracking-[0.18em] opacity-75">{negocio.nombre}</p>
+                        <h2 className="relative mx-auto mt-3 max-w-2xl text-3xl font-bold leading-tight md:text-5xl">
+                            {isGymModule ? 'Empieza a entrenar esta semana' : 'Tu próxima cita, en un minuto'}
+                        </h2>
+                        <p className="relative mx-auto mt-3 max-w-md text-[15px] opacity-85">
+                            {isGymModule ? 'Elige tu plan y te esperamos.' : 'Elige el servicio, mira los horarios libres y reserva desde tu celular.'}
+                        </p>
+                        <div className="relative mt-8 flex flex-wrap justify-center gap-3">
+                            <a href={mainCtaHref} className="inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-bold no-underline shadow-sm transition hover:opacity-90" style={{ backgroundColor: primaryInk, color: primaryInk === '#ffffff' ? primaryColor : '#ffffff' }}>
+                                <Calendar size={17} /> {mainCtaText}
+                            </a>
+                            {mainWhatsapp && (
+                                <a href={mainWhatsapp} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-2xl border px-6 py-3.5 text-sm font-bold no-underline transition hover:opacity-80" style={{ borderColor: 'currentColor', color: primaryInk }}>
+                                    <MessageCircle size={17} /> WhatsApp
+                                </a>
+                            )}
+                        </div>
+                    </div>
                 </section>
-            )}
+            </div>
 
             {/* Script optimizado de Next.js para scroll suave seguro sin cambiar el historial en la PWA */}
             <Script 
@@ -1999,12 +1882,26 @@ export default async function PublicNegocioPage({
                                 }
                             }
                             
+                            function setupOpeners() {
+                                document.querySelectorAll('[data-open-modal]').forEach(function(btn) {
+                                    if (btn.getAttribute('data-listener-attached')) return;
+                                    btn.setAttribute('data-listener-attached', 'true');
+                                    btn.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        var modal = document.getElementById(btn.getAttribute('data-open-modal'));
+                                        if (modal && modal.showModal) modal.showModal();
+                                    });
+                                });
+                            }
+
                             setupSmoothScroll();
                             setupModals();
+                            setupOpeners();
                             
                             var timer = setInterval(function() {
                                 setupSmoothScroll();
                                 setupModals();
+                                setupOpeners();
                             }, 1000);
                             setTimeout(function() { clearInterval(timer); }, 10000);
                         })();
@@ -2179,5 +2076,23 @@ export default async function PublicNegocioPage({
                 />
             )}
         </main>
+    );
+}
+
+/** Encabezado de sección común de la landing clásica: antetítulo, título y una acción opcional. */
+function SectionHead({ eyebrow, title, color, action, aside }: { eyebrow: string; title: string; color: string; action?: { href: string; label: string }; aside?: ReactNode }) {
+    return (
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3 md:mb-7">
+            <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color }}>{eyebrow}</p>
+                <h2 className="mt-1.5 text-2xl font-bold leading-tight tracking-tight text-slate-900 md:text-[2rem]">{title}</h2>
+            </div>
+            {aside}
+            {action && (
+                <Link href={action.href} className="inline-flex items-center gap-1 text-sm font-semibold" style={{ color }}>
+                    {action.label} <ChevronRight size={16} />
+                </Link>
+            )}
+        </div>
     );
 }

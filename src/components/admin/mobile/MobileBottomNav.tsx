@@ -96,8 +96,8 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
         navItems = [
             { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
             { name: 'Órdenes', href: '/admin/ordenes-servicio', icon: ClipboardList },
-            { name: 'Recepción', href: '/admin/recepciones', icon: ShoppingBag },
-            { name: 'Ventas', href: '/admin/ventas', icon: Store },
+            { name: 'Recibir', href: '/admin/recepciones', icon: ShoppingBag },
+            { name: 'Clientes', href: '/admin/clientes', icon: Users },
             { name: 'Menú', isAction: true, icon: Menu },
         ];
     } else if (isRestaurant) {
@@ -139,9 +139,11 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
     useEffect(() => {
         const fetchPending = async () => {
             try {
-                const url = (isStore || isRestaurant || isShoeCare) 
-                    ? '/api/admin/pedidos/pending-count' 
-                    : '/api/appointments/pending-count';
+                const url = isShoeCare
+                    ? '/api/admin/pedidos/pending-count?tipo=lavanderia'
+                    : (isStore || isRestaurant)
+                        ? '/api/admin/pedidos/pending-count'
+                        : '/api/appointments/pending-count';
                 const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
@@ -216,7 +218,7 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
                                 {item.name}
                             </span>
                             
-                            {(item.name === 'Agenda' || item.name === 'Pedidos' || item.name === 'Reservas') && pendingCount > 0 && (
+                            {(item.name === 'Agenda' || item.name === 'Pedidos' || item.name === 'Reservas' || item.name === 'Órdenes') && pendingCount > 0 && (
                                 <span className="absolute top-1.5 right-1/4 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-xs font-semibold rounded-full flex items-center justify-center border-2 border-white">
                                     {pendingCount}
                                 </span>

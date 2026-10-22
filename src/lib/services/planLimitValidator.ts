@@ -165,22 +165,28 @@ export const planLimitValidator = {
         }
 
         const clientUnlockedCount: Record<string, number> = {};
+        const clientAppointmentCount: Record<string, number> = {};
         for (const app of appointments) {
             if (!app.clienteId) continue;
+            clientAppointmentCount[app.clienteId] = (clientAppointmentCount[app.clienteId] || 0) + 1;
             if (!lockedIds.has(app.id)) {
                 clientUnlockedCount[app.clienteId] = (clientUnlockedCount[app.clienteId] || 0) + 1;
             }
         }
 
+        // Solo se oculta a quien tiene citas y TODAS quedaron fuera del límite del plan.
+        // Los clientes que solo tienen órdenes/pedidos (lavandería, tienda) no dependen del límite de citas.
         return clients.map(c => {
+            const citas = clientAppointmentCount[c.id] || 0;
             const hasUnlocked = (clientUnlockedCount[c.id] || 0) > 0;
-            if (!hasUnlocked && c.totalReservas > 0) {
+            if (citas > 0 && !hasUnlocked) {
                 return {
                     ...c,
                     nombre: 'Cliente Bloqueado (Plan Excedido)',
                     telefono: '*** *** ***',
                     email: '***@***.***',
-                    isLocked: true
+                    isLocked: true,
+                    lockReason: 'PLAN_LIMIT'
                 };
             }
             return c;

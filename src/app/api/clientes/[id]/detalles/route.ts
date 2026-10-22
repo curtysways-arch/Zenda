@@ -1,14 +1,13 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
 
 export async function GET(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
@@ -21,7 +20,7 @@ export async function GET(
             where: { id }
         });
 
-        if (!cliente) {
+        if (!cliente || !negocioId || cliente.negocioId !== negocioId) {
             return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
         }
 

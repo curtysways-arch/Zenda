@@ -31,6 +31,10 @@ export interface VerticalItem {
     bullets: string[];
     createLabel: string;
     createHref: string;
+    /** Opcional: '_blank' para abrir el botón principal en otra pestaña. */
+    createTarget?: string;
+    /** Opcional: texto del botón principal (por defecto "Crear mi app gratis"). */
+    ctaText?: string;
     demoUrl: string;
     demoTitle: string;
     demoTag: string;

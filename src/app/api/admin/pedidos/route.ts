@@ -46,8 +46,14 @@ export async function GET(req: Request) {
             },
             orderBy: { createdAt: 'desc' }
         });
+        // Las órdenes de lavandería (tienen modoIngreso) se gestionan en /admin/ordenes-servicio:
+        // aquí solo van los pedidos de productos, para no mezclarlas con la tienda.
+        const soloProductos = pedidos.filter((p: any) => {
+            const ex = typeof p.extraInfo === 'string' ? (() => { try { return JSON.parse(p.extraInfo); } catch { return {}; } })() : (p.extraInfo || {});
+            return !ex.modoIngreso;
+        });
         const { AccessPolicyService } = await import('@/core/security/AccessPolicyService');
-        const protectedPedidos = await AccessPolicyService.protectOrders(negocioId, pedidos);
+        const protectedPedidos = await AccessPolicyService.protectOrders(negocioId, soloProductos);
         return NextResponse.json(protectedPedidos);
     } catch (e) {
         console.error('[API_PEDIDOS_GET]', e);

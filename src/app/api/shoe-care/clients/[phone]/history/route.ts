@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireBusinessAccess } from '@/lib/auth/requireBusinessAccess';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,17 +10,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ phone: s
     const { searchParams } = new URL(req.url);
     const businessId = searchParams.get('businessId') || searchParams.get('negocioId');
 
-    let whereClause: any = { telefonoCliente: phone };
-    if (businessId) whereClause.negocioId = businessId;
+    // Historial de un cliente: solo el personal de ese negocio.
+    if (!businessId) return NextResponse.json({ error: 'Falta el negocio.' }, { status: 400 });
+    const access = await requireBusinessAccess(businessId);
+    if (!access.ok) return access.response;
+
+    const whereClause: any = { telefonoCliente: phone, negocioId: businessId };
 
     const ordenes = await prisma.pedido.findMany({
       where: whereClause,
       orderBy: { createdAt: 'desc' }
     });
 
-    const cliente = businessId 
-      ? await prisma.cliente.findUnique({ where: { telefono_negocioId: { telefono: phone, negocioId: businessId } } })
-      : await prisma.cliente.findFirst({ where: { telefono: phone } });
+    const cliente = await prisma.cliente.findUnique({ where: { telefono_negocioId: { telefono: phone, negocioId: businessId } } });
 
     const totalSpent = ordenes.reduce((sum, o) => sum + (o.estado === 'ENTREGADO' ? o.total : 0), 0);
     const totalOrders = ordenes.length;

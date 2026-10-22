@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Clock, Star, Heart } from 'lucide-react';
+import { Clock, Heart, ChevronRight, CalendarCheck } from 'lucide-react';
 import { getServicePrimaryImage } from '@/lib/serviceImageHelper';
 
 interface HomeServicesClientProps {
@@ -11,139 +11,115 @@ interface HomeServicesClientProps {
     primaryColor: string;
     textColor: string;
     tipoNegocio?: string;
+    showPrices?: boolean;
 }
 
+/**
+ * Servicios de la landing clásica: carrusel en celular, cuadrícula en computadora.
+ * Cada tarjeta lleva al detalle del servicio, donde se reserva.
+ */
 export default function HomeServicesClient({
     filteredCanchas,
     slug,
     primaryColor,
-    textColor,
     tipoNegocio,
+    showPrices = true,
 }: HomeServicesClientProps) {
     const [favorites, setFavorites] = useState<string[]>([]);
-    const [isMounted, setIsMounted] = useState(false);
 
-    // Cargar favoritos del localStorage
     useEffect(() => {
-        setIsMounted(true);
-        const stored = localStorage.getItem(`fav_services_${slug}`);
-        if (stored) {
-            try {
-                setFavorites(JSON.parse(stored));
-            } catch (e) {
-                console.error("Error parsing stored favorites in Home:", e);
-            }
-        }
+        try {
+            const stored = localStorage.getItem(`fav_services_${slug}`);
+            if (stored) setFavorites(JSON.parse(stored));
+        } catch { /* sin almacenamiento */ }
     }, [slug]);
 
-    // Función para alternar favorito
     const toggleFavorite = (serviceId: string, event: React.MouseEvent) => {
-        event.stopPropagation(); // Evitar redirección general de la tarjeta
+        event.stopPropagation();
         event.preventDefault();
-
-        let updated: string[];
-        if (favorites.includes(serviceId)) {
-            updated = favorites.filter(id => id !== serviceId);
-        } else {
-            updated = [...favorites, serviceId];
-        }
-
+        const updated = favorites.includes(serviceId) ? favorites.filter((id) => id !== serviceId) : [...favorites, serviceId];
         setFavorites(updated);
-        localStorage.setItem(`fav_services_${slug}`, JSON.stringify(updated));
+        try { localStorage.setItem(`fav_services_${slug}`, JSON.stringify(updated)); } catch { /* sin almacenamiento */ }
     };
 
+    // Texto legible sobre el color de la marca.
+    const ink = (() => {
+        if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(primaryColor)) return '#ffffff';
+        const h = primaryColor.slice(1);
+        const f = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+        const [r, g, b] = [0, 2, 4].map((i) => parseInt(f.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.179 ? '#1e1b2e' : '#ffffff';
+    })();
+    const list = filteredCanchas.slice(0, 8);
+    const precios = filteredCanchas.map((s: any) => Number(s.precio) || 0).filter((n: number) => n > 0);
+    const desde = precios.length ? Math.min(...precios) : 0;
+    const money = (n: any) => `$${(Number(n) || 0).toFixed(Number(n) % 1 ? 2 : 0)}`;
+
     return (
-        <section id="servicios" className="px-6 mb-6">
-            <div className="flex justify-between items-end mb-4">
+        <div id="servicios">
+            <style>{`
+                .hs-row{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none}
+                .hs-row::-webkit-scrollbar{display:none}
+                .hs-row > *{scroll-snap-align:start;flex-shrink:0;width:78%}
+                @media (min-width:640px){.hs-row > *{width:46%}}
+                @media (min-width:768px){.hs-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}.hs-row > *{width:auto}}
+            `}</style>
+
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3 md:mb-7">
                 <div>
-                    <h3 className="text-2xl font-bold leading-none text-slate-900">Nuestros Servicios</h3>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: primaryColor }}>
+                        {showPrices && desde > 0 ? `Servicios desde ${money(desde)}` : 'Servicios'}
+                    </p>
+                    <h2 className="mt-1.5 text-2xl font-bold leading-tight tracking-tight text-slate-900 md:text-[2rem]">Elige tu servicio</h2>
                 </div>
                 {filteredCanchas.length > 0 && (
-                    <Link 
-                        href={`/${slug}/servicios`}
-                        className="text-xs font-bold uppercase tracking-wide" 
-                        style={{ color: primaryColor }}
-                    >
-                        VER TODOS
+                    <Link href={`/${slug}/servicios`} className="inline-flex items-center gap-1 text-sm font-semibold" style={{ color: primaryColor }}>
+                        Ver los {filteredCanchas.length} <ChevronRight size={16} />
                     </Link>
                 )}
             </div>
 
-            <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-none px-1">
-                {filteredCanchas.slice(0, 4).map((service: any, index: number) => {
-                    
-                    const isFavorite = favorites.includes(service.id);
-
-                    return (
-                        <div 
-                            key={service.id} 
-                            className="relative bg-white rounded-3xl border border-slate-100 shadow-sm p-4 flex flex-col justify-between min-w-[280px] max-w-[280px] shrink-0 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-                        >
-                            {/* Link invisible absoluto que cubre todo el contenedor */}
-                            <Link 
-                                href={`/${slug}/servicio/${service.id}`}
-                                className="absolute inset-0 z-10 rounded-3xl"
-                            />
-
-                            {/* Imagen del servicio */}
-                            <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden mb-4 bg-slate-50">
-                                <img 
-                                    src={getServicePrimaryImage(service, 'medium', tipoNegocio)} 
-                                    className="w-full h-full object-cover" 
-                                    alt={service.nombre} 
-                                />
-                                {/* Icono Corazón (Favoritos) */}
-                                <button 
-                                    onClick={(e) => toggleFavorite(service.id, e)}
-                                    className="absolute top-3 right-3 size-8 rounded-full bg-white/90 backdrop-blur-sm border border-slate-100 flex items-center justify-center active:scale-95 transition-all z-20"
-                                    style={{ color: isFavorite ? primaryColor : '#94a3b8' }}
-                                >
-                                    <Heart 
-                                        size={14} 
-                                        fill={isFavorite ? primaryColor : "none"} 
-                                        strokeWidth={2.5} 
-                                    />
-                                </button>
-                            </div>
-
-                            {/* Contenido */}
-                            <div className="flex-1 flex flex-col justify-between px-1">
-                                <div>
-                                    <h4 className="font-bold text-[17px] leading-snug line-clamp-2 text-slate-900">
-                                        {service.nombre}
-                                    </h4>
-                                    
-                                    {/* Info line */}
-                                    <div className="flex items-center gap-4 mt-2.5 mb-3 text-slate-400 text-xs font-bold">
-                                        <span className="flex items-center gap-1">
-                                            <Clock size={12} className="text-slate-400" />
-                                            {service.duracion || service.duracionMinutos || 60} min
+            {list.length === 0 ? (
+                <p className="rounded-3xl bg-white p-6 text-center text-sm text-slate-500 ring-1 ring-slate-900/5">Pronto publicaremos nuestros servicios.</p>
+            ) : (
+                <div className="hs-row">
+                    {list.map((service: any) => {
+                        const isFavorite = favorites.includes(service.id);
+                        const duracion = service.duracion || service.duracionMinutos;
+                        const precio = Number(service.precio) || 0;
+                        return (
+                            <div key={service.id}
+                                className="group relative flex flex-col overflow-hidden rounded-3xl bg-white ring-1 ring-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.35)]">
+                                <Link href={`/${slug}/servicio/${service.id}`} className="absolute inset-0 z-10 rounded-3xl" aria-label={`Ver y reservar ${service.nombre}`} />
+                                <span className="relative block aspect-[4/3] overflow-hidden bg-slate-100">
+                                    <img src={getServicePrimaryImage(service, 'medium', tipoNegocio)} alt={service.nombre} loading="lazy"
+                                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                                    <button type="button" onClick={(e) => toggleFavorite(service.id, e)} aria-pressed={isFavorite}
+                                        aria-label={isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+                                        className="absolute right-3 top-3 z-20 flex size-9 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm transition active:scale-95"
+                                        style={{ color: isFavorite ? primaryColor : '#94a3b8' }}>
+                                        <Heart size={16} fill={isFavorite ? primaryColor : 'none'} strokeWidth={2.4} />
+                                    </button>
+                                </span>
+                                <span className="flex flex-1 flex-col p-4">
+                                    <span className="line-clamp-2 text-[16px] font-bold leading-snug text-slate-900">{service.nombre}</span>
+                                    {duracion ? (
+                                        <span className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-slate-500"><Clock size={12} /> {duracion} min</span>
+                                    ) : null}
+                                    <span className="mt-auto flex items-center justify-between gap-2 pt-4">
+                                        {showPrices ? (
+                                            <span className="text-xl font-bold tabular-nums text-slate-900">{precio > 0 ? money(precio) : 'Consultar'}</span>
+                                        ) : <span />}
+                                        <span className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition group-hover:brightness-110" style={{ backgroundColor: primaryColor, color: ink }}>
+                                            <CalendarCheck size={14} /> Reservar
                                         </span>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    {/* Precio */}
-                                    <div className="text-2xl font-bold mb-3" style={{ color: primaryColor }}>
-                                        ${service.precio}
-                                    </div>
-
-                                    {/* Botón Ver detalles (Visual, no enlace anidado) */}
-                                    <div 
-                                        className="block w-full text-center py-3 rounded-2xl border text-xs font-bold uppercase tracking-wide bg-white shadow-sm"
-                                        style={{ 
-                                            borderColor: `${primaryColor}26`, 
-                                            color: primaryColor 
-                                        }}
-                                    >
-                                        Ver detalles
-                                    </div>
-                                </div>
+                                    </span>
+                                </span>
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </section>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
     );
 }

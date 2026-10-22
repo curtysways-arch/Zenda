@@ -1,16 +1,6 @@
-import ShoeCareBackoffice from '@/modules/shoe-care/components/ShoeCareBackoffice';
+import { redirect } from 'next/navigation';
 
-export const metadata = {
-  title: 'Backoffice Shoe Care Operations — CitiOx',
-  description: 'Administrador oficial del módulo de órdenes de servicio de calzado y lavado.'
-};
-
+/** Ruta antigua (los WhatsApp de órdenes nuevas enlazan aquí): ahora todo está en Órdenes. */
 export default function AdminLavadoPage() {
-  const negocioDemo = {
-    id: 'demo-canchas',
-    nombre: 'Sneaker Wash Premium',
-    slug: 'demo-canchas'
-  };
-
-  return <ShoeCareBackoffice negocio={negocioDemo} />;
+  redirect('/admin/ordenes-servicio');
 }

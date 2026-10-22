@@ -169,8 +169,8 @@ export default function DemoViewer({
           <a href={current.demoUrl} target="_blank" rel="noopener noreferrer" className="hidden size-10 items-center justify-center rounded-full text-slate-300 transition hover:bg-white/10 hover:text-white sm:flex" title="Abrir en una pestaña nueva" aria-label="Abrir en una pestaña nueva">
             <ExternalLink size={18} />
           </a>
-          <Link href={current.createHref} className="hidden items-center gap-1.5 whitespace-nowrap rounded-full bg-[#0066FF] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0052cc] sm:inline-flex">
-            Crear mi app gratis <ArrowRight size={15} />
+          <Link href={current.createHref} target={current.createTarget} className="hidden items-center gap-1.5 whitespace-nowrap rounded-full bg-[#0066FF] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0052cc] sm:inline-flex">
+            {current.ctaText || 'Crear mi app gratis'} <ArrowRight size={15} />
           </Link>
         </div>
       </header>
@@ -194,8 +194,8 @@ export default function DemoViewer({
           </ul>
 
           <div className="mt-auto space-y-3 pt-8">
-            <Link href={current.createHref} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0066FF] py-3.5 text-[15px] font-semibold text-white transition hover:bg-[#0052cc]">
-              {current.createLabel} gratis <ArrowRight size={16} />
+            <Link href={current.createHref} target={current.createTarget} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0066FF] py-3.5 text-[15px] font-semibold text-white transition hover:bg-[#0052cc]">
+              {current.ctaText || `${current.createLabel} gratis`} <ArrowRight size={16} />
             </Link>
             <p className="text-center text-xs text-slate-500">Toca y navega el ejemplo: así lo verían tus clientes.</p>
             <div className="flex items-center justify-between border-t border-white/10 pt-4 text-sm">
@@ -262,8 +262,8 @@ export default function DemoViewer({
 
       {/* ── Botón fijo en celular ─────────────────────────────────────── */}
       <div className="flex shrink-0 gap-2 border-t border-white/10 bg-slate-950 p-3 sm:hidden">
-        <Link href={current.createHref} className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#0066FF] py-3 text-[15px] font-semibold text-white">
-          Crear mi app como esta <ArrowRight size={16} />
+        <Link href={current.createHref} target={current.createTarget} className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#0066FF] py-3 text-[15px] font-semibold text-white">
+          {current.ctaText || 'Crear mi app como esta'} <ArrowRight size={16} />
         </Link>
       </div>
 
@@ -282,8 +282,8 @@ export default function DemoViewer({
                 </li>
               ))}
             </ul>
-            <Link href={current.createHref} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#0066FF] py-3.5 font-semibold text-white">
-              {current.createLabel} gratis <ArrowRight size={16} />
+            <Link href={current.createHref} target={current.createTarget} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#0066FF] py-3.5 font-semibold text-white">
+              {current.ctaText || `${current.createLabel} gratis`} <ArrowRight size={16} />
             </Link>
             <button type="button" onClick={() => setShowInfo(false)} className="mt-2 w-full py-3 text-sm font-medium text-slate-500">Seguir viendo el ejemplo</button>
           </div>

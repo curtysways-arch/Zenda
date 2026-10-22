@@ -56,6 +56,16 @@ export const LANDING_DESIGNS: LandingDesign[] = [
         etiqueta: 'Nuevo',
         portada: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=800&auto=format&fit=crop&q=70',
     },
+    {
+        id: 'brillo',
+        nombre: 'Brillo',
+        descripcion: 'Para salones de uñas y peluquería. Estilo revista de belleza con una carta de tonos en el color de tu marca, precios "desde" claros y tus trabajos reales al frente para que la clienta reserve sin dudar.',
+        destacados: ['Servicios separados en Uñas y Cabello, con precio y duración', 'Galería de trabajos, antes y después', 'Elige a tu especialista y reserva en un minuto'],
+        familias: ['servicios'],
+        precio: 19,
+        etiqueta: 'Nuevo',
+        portada: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&auto=format&fit=crop&q=70',
+    },
 ];
 
 export const DEFAULT_LANDING_DESIGN = 'clasico';
