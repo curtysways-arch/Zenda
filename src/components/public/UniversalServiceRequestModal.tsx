@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import PhoneInput from '@/components/ui/PhoneInput';
 import MapSelectionModal from '@/components/public/MapSelectionModal';
+import { calculateDeliveryCost } from '@/core/delivery/DeliveryPricing';
 
 export interface ArticleItem {
   id: string;
@@ -164,7 +165,7 @@ export default function UniversalServiceRequestModal({
     }
   }, [negocio?.slug]);
 
-  // Cálculo Dinámico del Costo de Retiro / Entrega por Distancia GPS (Haversine)
+  // Cálculo Dinámico del Costo de Recogida + Entrega por Distancia GPS (Haversine × 2)
   const costoEnvioCalculado = useMemo(() => {
     let configMap: Record<string, any> = {};
     if (negocio?.configuracion) {
@@ -180,23 +181,28 @@ export default function UniversalServiceRequestModal({
     if (coords.lat && coords.lng) {
       const latNegocio = configMap.latitudNegocio ? parseFloat(configMap.latitudNegocio) : (negocio?.latitud || -0.180653);
       const lngNegocio = configMap.longitudNegocio ? parseFloat(configMap.longitudNegocio) : (negocio?.longitud || -78.467838);
-
-      const R = 6371; // Radio de la Tierra en km
-      const dLat = (coords.lat - latNegocio) * (Math.PI / 180);
-      const dLon = (coords.lng - lngNegocio) * (Math.PI / 180);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(latNegocio * (Math.PI / 180)) * Math.cos(coords.lat * (Math.PI / 180)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const distanceKm = R * c;
-
       const kmCostRate = configMap.costoEnvioPorKm !== undefined ? parseFloat(configMap.costoEnvioPorKm) : 0.30;
-      return parseFloat((baseCost + distanceKm * kmCostRate).toFixed(2));
+
+      const pricing = calculateDeliveryCost(
+        latNegocio,
+        lngNegocio,
+        coords.lat,
+        coords.lng,
+        {
+          enabled: true,
+          baseCost,
+          costPerKm: kmCostRate,
+          tipoNegocio: 'LAVANDERIA',
+          isRoundTrip: true
+        }
+      );
+      return pricing.deliveryCost;
     }
 
-    return baseCost;
+    // Sin ubicación todavía: una tarifa base por cada viaje (retiro + entrega)
+    return Math.round(baseCost * 2 * 100) / 100;
   }, [formCliente.modo, coords.lat, coords.lng, negocio]);
+  const costoPorViaje = Math.round((costoEnvioCalculado / 2) * 100) / 100;
 
   // Horarios pasados para HOY
   const isSlotDisabled = (slot: typeof TIME_SLOTS[0]) => {
@@ -533,7 +539,7 @@ export default function UniversalServiceRequestModal({
                 <AlertCircle size={24} />
               </div>
               <div>
-                <h4 className="text-base font-black text-slate-900">¿Salir de la solicitud?</h4>
+                <h4 className="text-base font-bold text-slate-900">¿Salir de la solicitud?</h4>
                 <p className="text-xs text-slate-500 font-medium mt-1">Perderás la información que has ingresado en este formulario.</p>
               </div>
               <div className="flex gap-2 pt-1">
@@ -567,10 +573,10 @@ export default function UniversalServiceRequestModal({
               <CheckCircle2 size={42} />
             </div>
             <div className="space-y-2">
-              <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-full text-[10px] font-black uppercase tracking-widest inline-block">
+              <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-full text-xs font-bold uppercase tracking-wide inline-block">
                 Solicitud Recibida con Éxito
               </span>
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                 ¡Solicitud #{successOrder.numeroPedido || 'BW-001'}!
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-md mx-auto leading-relaxed">
@@ -587,7 +593,7 @@ export default function UniversalServiceRequestModal({
                 <span className="text-slate-500 font-medium">Horario preferido:</span>
                 <strong className="text-slate-800">{selectedDayOption === 'HOY' ? 'Hoy' : selectedDayOption === 'MANANA' ? 'Mañana' : 'Pasado mañana'}</strong>
               </div>
-              <div className="flex justify-between border-t border-slate-200/60 pt-2 font-black text-purple-900">
+              <div className="flex justify-between border-t border-slate-200/60 pt-2 font-bold text-purple-900">
                 <span>Total Estimado:</span>
                 <span className="font-mono text-sm">${totalEstimado.toFixed(2)} USD</span>
               </div>
@@ -596,7 +602,7 @@ export default function UniversalServiceRequestModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-full max-w-md py-4 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-600/25 cursor-pointer transition-all active:scale-98"
+              className="w-full max-w-md py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-600/25 cursor-pointer transition-all active:scale-98"
             >
               Entendido y Ver Mis Órdenes
             </button>
@@ -609,17 +615,17 @@ export default function UniversalServiceRequestModal({
             </div>
 
             <div className="space-y-2">
-              <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200/80 rounded-full text-[10px] font-black uppercase tracking-widest inline-block">
+              <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200/80 rounded-full text-xs font-bold uppercase tracking-wide inline-block">
                 Verificación WhatsApp Requerida
               </span>
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                 Confirma tu número
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-md mx-auto leading-relaxed">
                 Para registrar tu pedido e iniciar tu sesión de forma segura, ingresa el código de 6 dígitos que enviamos por WhatsApp al número:
               </p>
               <div className="flex items-center justify-center gap-2 pt-1">
-                <span className="font-mono font-black text-sm text-slate-900 bg-slate-100 px-3.5 py-1.5 rounded-xl border border-slate-200">
+                <span className="font-mono font-bold text-sm text-slate-900 bg-slate-100 px-3.5 py-1.5 rounded-xl border border-slate-200">
                   {formCliente.telefono}
                 </span>
                 <button
@@ -650,7 +656,7 @@ export default function UniversalServiceRequestModal({
 
             <div className="max-w-xs mx-auto space-y-4">
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">
                   Código de 6 dígitos
                 </label>
                 <input
@@ -662,7 +668,7 @@ export default function UniversalServiceRequestModal({
                   value={otpInput}
                   onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
                   placeholder="••••••"
-                  className="w-full text-center tracking-[0.5em] font-mono text-3xl font-black py-3.5 px-4 bg-slate-50 border-2 border-purple-300 focus:border-purple-600 rounded-2xl outline-none text-slate-900 transition-colors shadow-inner"
+                  className="w-full text-center tracking-wide font-mono text-3xl font-bold py-3.5 px-4 bg-slate-50 border-2 border-purple-300 focus:border-purple-600 rounded-2xl outline-none text-slate-900 transition-colors shadow-inner"
                 />
               </div>
 
@@ -670,7 +676,7 @@ export default function UniversalServiceRequestModal({
                 type="button"
                 disabled={otpLoading || submitting || otpInput.trim().length < 6}
                 onClick={handleVerifyOtpAndSubmit}
-                className="w-full py-4 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-600/25 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+                className="w-full py-4 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-600/25 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
               >
                 {(otpLoading || submitting) ? (
                   <>
@@ -695,7 +701,7 @@ export default function UniversalServiceRequestModal({
                 </button>
 
                 {otpCountdown > 0 ? (
-                  <span className="text-slate-400 font-medium text-[11px]">
+                  <span className="text-slate-400 font-medium text-xs">
                     Reenviar en {otpCountdown}s
                   </span>
                 ) : (
@@ -703,7 +709,7 @@ export default function UniversalServiceRequestModal({
                     type="button"
                     onClick={handleRequestOtp}
                     disabled={otpLoading}
-                    className="text-purple-600 hover:text-purple-800 font-bold underline cursor-pointer text-[11px]"
+                    className="text-purple-600 hover:text-purple-800 font-bold underline cursor-pointer text-xs"
                   >
                     Reenviar código
                   </button>
@@ -718,7 +724,7 @@ export default function UniversalServiceRequestModal({
             <div className="px-5 sm:px-7 pt-5 sm:pt-6 pb-4 border-b border-slate-100 shrink-0 bg-white">
               <div className="flex items-center gap-2 text-purple-600 mb-2">
                 <Truck size={18} />
-                <span className="text-[10px] font-black uppercase tracking-widest text-purple-600">
+                <span className="text-xs font-bold uppercase tracking-wide text-purple-600">
                   Lavandería & Calzado Profesional
                 </span>
               </div>
@@ -742,18 +748,18 @@ export default function UniversalServiceRequestModal({
 
                   return (
                     <div key={s.num} className="flex flex-col items-center gap-1.5 relative z-10 bg-white px-2">
-                      <div className={`size-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                        isPassed 
-                          ? 'bg-purple-600 text-white shadow-xs' 
-                          : isCurrent 
-                            ? 'bg-purple-600 text-white ring-4 ring-purple-100 shadow-md' 
-                            : 'bg-slate-100 text-slate-400 border border-slate-200'
-                      }`}>
+                      <div className={`size-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+ isPassed 
+ ? 'bg-purple-600 text-white shadow-xs' 
+ : isCurrent 
+ ? 'bg-purple-600 text-white ring-4 ring-purple-100 shadow-md' 
+ : 'bg-slate-100 text-slate-400 border border-slate-200'
+ }`}>
                         {isPassed ? <Check size={14} /> : s.num}
                       </div>
-                      <span className={`text-[10px] font-extrabold uppercase tracking-wider ${
-                        isCurrent ? 'text-purple-900' : isPassed ? 'text-slate-700' : 'text-slate-400'
-                      }`}>
+                      <span className={`text-xs font-extrabold uppercase tracking-wider ${
+ isCurrent ? 'text-purple-900' : isPassed ? 'text-slate-700' : 'text-slate-400'
+ }`}>
                         {s.label}
                       </span>
                     </div>
@@ -764,10 +770,10 @@ export default function UniversalServiceRequestModal({
               {/* STEPPER COMPACTO MÓVIL */}
               <div className="sm:hidden flex items-center justify-between pt-1">
                 <div>
-                  <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">
+                  <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">
                     Paso {step} de 4
                   </span>
-                  <h3 className="text-xs font-black uppercase text-slate-900">
+                  <h3 className="text-xs font-bold uppercase text-slate-900">
                     {step === 1 && 'Ubicación & Retiro'}
                     {step === 2 && `Artículos (${articulos.length})`}
                     {step === 3 && 'Revisión de Solicitud'}
@@ -801,7 +807,7 @@ export default function UniversalServiceRequestModal({
               {step === 1 && (
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
                       ¿Dónde recogemos tus artículos?
                     </h3>
                     <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -815,8 +821,8 @@ export default function UniversalServiceRequestModal({
                       <Truck size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="block text-xs font-black text-purple-950">Servicio de Retiro a Domicilio</span>
-                      <span className="text-[11px] text-purple-700 font-medium leading-tight block">
+                      <span className="block text-xs font-bold text-purple-950">Servicio de Retiro a Domicilio</span>
+                      <span className="text-xs text-purple-700 font-medium leading-tight block">
                         Vamos a tu dirección a retirar tus artículos y te los regresamos como nuevos a tu puerta.
                       </span>
                     </div>
@@ -824,20 +830,20 @@ export default function UniversalServiceRequestModal({
 
                   {/* Datos del Cliente */}
                   <div className="space-y-3 pt-1">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
                       Datos de Contacto
                     </span>
 
                     {isCustomerLoggedIn && formCliente.nombre ? (
                       <div className="p-3.5 bg-purple-50/80 border border-purple-200/80 rounded-2xl flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="size-9 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center">
+                          <div className="size-9 rounded-xl bg-purple-600 text-white font-bold text-xs flex items-center justify-center">
                             {formCliente.nombre.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <span className="text-[9px] font-black uppercase text-purple-700 block">Sesión Iniciada</span>
+                            <span className="text-xs font-bold uppercase text-purple-700 block">Sesión Iniciada</span>
                             <p className="text-xs font-bold text-slate-900">
-                              {formCliente.nombre} <span className="text-slate-500 font-mono text-[11px]">({formCliente.telefono})</span>
+                              {formCliente.nombre} <span className="text-slate-500 font-mono text-xs">({formCliente.telefono})</span>
                             </p>
                           </div>
                         </div>
@@ -845,7 +851,7 @@ export default function UniversalServiceRequestModal({
                     ) : (
                       <div className="space-y-3">
                         <div>
-                          <label className="text-[11px] font-black uppercase text-slate-500 block mb-1">
+                          <label className="text-xs font-bold uppercase text-slate-500 block mb-1">
                             Nombre Completo *
                           </label>
                           <input 
@@ -858,7 +864,7 @@ export default function UniversalServiceRequestModal({
                             }`}
                           />
                           {validationErrors.nombre && (
-                            <p className="text-[10px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                            <p className="text-xs font-bold text-rose-600 mt-1 flex items-center gap-1">
                               <AlertCircle size={12} /> {validationErrors.nombre}
                             </p>
                           )}
@@ -873,7 +879,7 @@ export default function UniversalServiceRequestModal({
                             required
                           />
                           {validationErrors.telefono && (
-                            <p className="text-[10px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                            <p className="text-xs font-bold text-rose-600 mt-1 flex items-center gap-1">
                               <AlertCircle size={12} /> {validationErrors.telefono}
                             </p>
                           )}
@@ -885,7 +891,7 @@ export default function UniversalServiceRequestModal({
                   {/* Ubicación GPS & Dirección de Retiro */}
                   <div className="space-y-3 pt-2 border-t border-slate-100">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                         <MapPin size={14} className="text-purple-600" />
                         Dirección de Retiro
                       </span>
@@ -893,7 +899,7 @@ export default function UniversalServiceRequestModal({
                       <button
                         type="button"
                         onClick={() => setShowMapModal(true)}
-                        className="text-[11px] font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 hover:bg-purple-100 transition-all shadow-2xs"
+                        className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 hover:bg-purple-100 transition-all shadow-2xs"
                       >
                         <MapIcon size={12} />
                         {coords.lat ? '📍 Cambiar en Mapa' : '📍 Ubicar en Mapa GPS'}
@@ -907,7 +913,7 @@ export default function UniversalServiceRequestModal({
                           <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
                           GPS: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
                         </span>
-                        <span className="text-[10px] bg-emerald-600 text-white font-extrabold px-2 py-0.5 rounded-md shrink-0">
+                        <span className="text-xs bg-emerald-600 text-white font-extrabold px-2 py-0.5 rounded-md shrink-0">
                           Fijado
                         </span>
                       </div>
@@ -918,7 +924,7 @@ export default function UniversalServiceRequestModal({
                     )}
 
                     <div>
-                      <label className="text-[11px] font-black uppercase text-slate-500 block mb-1">
+                      <label className="text-xs font-bold uppercase text-slate-500 block mb-1">
                         Dirección Principal *
                       </label>
                       <input 
@@ -931,14 +937,14 @@ export default function UniversalServiceRequestModal({
                         }`}
                       />
                       {validationErrors.direccion && (
-                        <p className="text-[10px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                        <p className="text-xs font-bold text-rose-600 mt-1 flex items-center gap-1">
                           <AlertCircle size={12} /> {validationErrors.direccion}
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <label className="text-[11px] font-black uppercase text-slate-500 block mb-1">
+                      <label className="text-xs font-bold uppercase text-slate-500 block mb-1">
                         Referencia de Ubicación *
                       </label>
                       <input 
@@ -951,7 +957,7 @@ export default function UniversalServiceRequestModal({
                         }`}
                       />
                       {validationErrors.referencia && (
-                        <p className="text-[10px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                        <p className="text-xs font-bold text-rose-600 mt-1 flex items-center gap-1">
                           <AlertCircle size={12} /> {validationErrors.referencia}
                         </p>
                       )}
@@ -960,7 +966,7 @@ export default function UniversalServiceRequestModal({
 
                   {/* Selección de Horario */}
                   <div className="space-y-2.5 pt-2 border-t border-slate-100">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
                       Día y Franja Horaria Preferida
                     </span>
 
@@ -974,11 +980,11 @@ export default function UniversalServiceRequestModal({
                           key={d.id}
                           type="button"
                           onClick={() => setSelectedDayOption(d.id as any)}
-                          className={`py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                            selectedDayOption === d.id 
-                              ? 'bg-purple-600 text-white shadow-xs' 
-                              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                          }`}
+                          className={`py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+ selectedDayOption === d.id 
+ ? 'bg-purple-600 text-white shadow-xs' 
+ : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+ }`}
                         >
                           {d.label}
                         </button>
@@ -996,14 +1002,14 @@ export default function UniversalServiceRequestModal({
                             disabled={disabled}
                             onClick={() => setSelectedSlot(slot.id)}
                             className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
-                              disabled 
-                                ? 'opacity-40 bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed line-through'
-                                : isSelected 
-                                  ? 'bg-purple-50 border-purple-600 text-purple-900 font-black ring-1 ring-purple-600 cursor-pointer' 
-                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-purple-300 cursor-pointer'
-                            }`}
+ disabled 
+ ? 'opacity-40 bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed line-through'
+ : isSelected 
+ ? 'bg-purple-50 border-purple-600 text-purple-900 font-bold ring-1 ring-purple-600 cursor-pointer' 
+ : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-purple-300 cursor-pointer'
+ }`}
                           >
-                            <span className="block text-[10px] text-purple-600 font-medium">{slot.icon}</span>
+                            <span className="block text-xs text-purple-600 font-medium">{slot.icon}</span>
                             <span>{slot.label} {disabled ? '(Pasado)' : ''}</span>
                           </button>
                         );
@@ -1020,7 +1026,7 @@ export default function UniversalServiceRequestModal({
                 <div className="space-y-4 animate-in fade-in duration-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
                         ¿Qué deseas lavar?
                       </h3>
                       <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -1031,7 +1037,7 @@ export default function UniversalServiceRequestModal({
                     <button
                       type="button"
                       onClick={handleAddArticle}
-                      className="py-2 px-3.5 bg-purple-100 hover:bg-purple-200 text-purple-800 font-black text-xs rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                      className="py-2 px-3.5 bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-2xs"
                     >
                       <Plus size={15} />
                       <span className="hidden sm:inline">Agregar artículo</span>
@@ -1053,7 +1059,7 @@ export default function UniversalServiceRequestModal({
                       return (
                         <div key={art.id} className="p-4 sm:p-5 bg-slate-50 border border-slate-200/90 rounded-3xl space-y-3.5 relative group shadow-2xs">
                           <div className="flex items-center justify-between border-b border-slate-200/70 pb-2.5">
-                            <span className="text-xs font-black uppercase text-purple-700 flex items-center gap-1.5">
+                            <span className="text-xs font-bold uppercase text-purple-700 flex items-center gap-1.5">
                               <Package size={16} /> Artículo #{index + 1}
                             </span>
                             {articulos.length > 1 && (
@@ -1071,7 +1077,7 @@ export default function UniversalServiceRequestModal({
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                             {/* Tipo de Artículo */}
                             <div>
-                              <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                              <label className="text-xs font-bold uppercase text-slate-500 block mb-1">
                                 Tipo de Artículo
                               </label>
                               <select
@@ -1087,14 +1093,14 @@ export default function UniversalServiceRequestModal({
 
                             {/* Cantidad */}
                             <div>
-                              <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                              <label className="text-xs font-bold uppercase text-slate-500 block mb-1">
                                 Cantidad
                               </label>
                               <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-2 py-1 shadow-2xs">
                                 <button
                                   type="button"
                                   onClick={() => handleUpdateArticle(art.id, 'cantidad', Math.max(1, art.cantidad - 1))}
-                                  className="size-7 text-slate-600 hover:text-slate-950 hover:bg-slate-100 rounded-lg font-black text-sm flex items-center justify-center transition-colors cursor-pointer"
+                                  className="size-7 text-slate-600 hover:text-slate-950 hover:bg-slate-100 rounded-lg font-bold text-sm flex items-center justify-center transition-colors cursor-pointer"
                                 >
                                   -
                                 </button>
@@ -1104,7 +1110,7 @@ export default function UniversalServiceRequestModal({
                                 <button
                                   type="button"
                                   onClick={() => handleUpdateArticle(art.id, 'cantidad', art.cantidad + 1)}
-                                  className="size-7 text-slate-600 hover:text-slate-950 hover:bg-slate-100 rounded-lg font-black text-sm flex items-center justify-center transition-colors cursor-pointer"
+                                  className="size-7 text-slate-600 hover:text-slate-950 hover:bg-slate-100 rounded-lg font-bold text-sm flex items-center justify-center transition-colors cursor-pointer"
                                 >
                                   +
                                 </button>
@@ -1113,7 +1119,7 @@ export default function UniversalServiceRequestModal({
 
                             {/* Variante / Material */}
                             <div>
-                              <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                              <label className="text-xs font-bold uppercase text-slate-500 block mb-1">
                                 Variante / Material
                               </label>
                               <input
@@ -1127,7 +1133,7 @@ export default function UniversalServiceRequestModal({
 
                             {/* Servicio Solicitado */}
                             <div>
-                              <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                              <label className="text-xs font-bold uppercase text-slate-500 block mb-1">
                                 Servicio Solicitado
                               </label>
                               <select
@@ -1147,7 +1153,7 @@ export default function UniversalServiceRequestModal({
                           {/* Extras Configurables del Servicio */}
                           {serviceExtrasConfigured.length > 0 && (
                             <div className="pt-1">
-                              <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1.5">
+                              <label className="text-xs font-bold uppercase text-slate-500 block mb-1.5">
                                 Extras Opcionales
                               </label>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -1163,14 +1169,14 @@ export default function UniversalServiceRequestModal({
                                           : [...art.extras, { id: ex.id || ex.nombre, nombre: ex.nombre || ex.label, precio: parseFloat(ex.precio || 0) }];
                                         handleUpdateArticle(art.id, 'extras', updated);
                                       }}
-                                      className={`px-3 py-2 rounded-xl border text-left text-[11px] font-medium transition-all flex items-center justify-between cursor-pointer ${
-                                        isSelected 
-                                          ? 'bg-purple-100 border-purple-400 text-purple-950 font-bold shadow-2xs' 
-                                          : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                                      }`}
+                                      className={`px-3 py-2 rounded-xl border text-left text-xs font-medium transition-all flex items-center justify-between cursor-pointer ${
+ isSelected 
+ ? 'bg-purple-100 border-purple-400 text-purple-950 font-bold shadow-2xs' 
+ : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+ }`}
                                     >
                                       <span className="truncate">{ex.nombre || ex.label}</span>
-                                      <span className="font-mono text-[10px] text-purple-700 ml-1 font-bold">
+                                      <span className="font-mono text-xs text-purple-700 ml-1 font-bold">
                                         +${parseFloat(ex.precio || 0).toFixed(2)}
                                       </span>
                                     </button>
@@ -1182,7 +1188,7 @@ export default function UniversalServiceRequestModal({
 
                           {/* Observaciones / Estado */}
                           <div>
-                            <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                            <label className="text-xs font-bold uppercase text-slate-500 block mb-1">
                               Observaciones / Estado del Artículo
                             </label>
                             <input
@@ -1197,11 +1203,11 @@ export default function UniversalServiceRequestModal({
                           {/* Fotos del Artículo */}
                           <div className="space-y-2 pt-1 border-t border-slate-200/50">
                             <div className="flex items-center justify-between">
-                              <label className="text-[10px] font-bold uppercase text-slate-500 flex items-center gap-1">
+                              <label className="text-xs font-bold uppercase text-slate-500 flex items-center gap-1">
                                 <Camera size={13} className="text-purple-600" />
                                 Fotos del Artículo ({art.fotos.length})
                               </label>
-                              <label className="text-[10px] font-black text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-200/80 cursor-pointer transition-colors">
+                              <label className="text-xs font-bold text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-200/80 cursor-pointer transition-colors">
                                 + Subir Foto
                                 <input
                                   type="file"
@@ -1221,7 +1227,7 @@ export default function UniversalServiceRequestModal({
                                     <button
                                       type="button"
                                       onClick={() => handleRemovePhoto(art.id, pIdx)}
-                                      className="absolute top-1 right-1 size-5 rounded-full bg-slate-950/80 text-white flex items-center justify-center text-[10px] hover:bg-rose-600 transition-colors"
+                                      className="absolute top-1 right-1 size-5 rounded-full bg-slate-950/80 text-white flex items-center justify-center text-xs hover:bg-rose-600 transition-colors"
                                     >
                                       ✕
                                     </button>
@@ -1239,17 +1245,20 @@ export default function UniversalServiceRequestModal({
                   <div className="bg-purple-50/70 p-4 rounded-2xl border border-purple-100 space-y-2 text-xs">
                     <div className="flex justify-between font-bold text-slate-700">
                       <span>Artículos ({totalArticulosCantidad}):</span>
-                      <span className="font-mono font-black">${subtotalServicios.toFixed(2)}</span>
+                      <span className="font-mono font-bold">${subtotalServicios.toFixed(2)}</span>
                     </div>
 
                     <div className="flex justify-between font-bold text-slate-700">
-                      <span>Retiro / Entrega (GPS):</span>
-                      <span className="font-mono font-black">${costoEnvioCalculado.toFixed(2)}</span>
+                      <span>Envío (2 viajes):</span>
+                      <span className="font-mono font-bold">${costoEnvioCalculado.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-500 -mt-1">
+                      <span>Retiro ${costoPorViaje.toFixed(2)} + entrega ${costoPorViaje.toFixed(2)}</span>
                     </div>
 
                     <div className="border-t border-purple-200/70 pt-2 flex justify-between items-baseline">
-                      <span className="font-black uppercase text-purple-950">Total Estimado</span>
-                      <span className="text-xl font-black text-purple-950 font-mono">${totalEstimado.toFixed(2)} USD</span>
+                      <span className="font-bold uppercase text-purple-950">Total Estimado</span>
+                      <span className="text-xl font-bold text-purple-950 font-mono">${totalEstimado.toFixed(2)} USD</span>
                     </div>
                   </div>
                 </div>
@@ -1261,7 +1270,7 @@ export default function UniversalServiceRequestModal({
               {step === 3 && (
                 <div className="space-y-4 animate-in fade-in duration-200">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
                       Revisa tu solicitud
                     </h3>
                     <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -1272,14 +1281,14 @@ export default function UniversalServiceRequestModal({
                   {/* Bloque 1: Ubicación & Logística */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2.5">
                     <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                      <span className="text-xs font-black uppercase text-purple-800 flex items-center gap-1.5">
+                      <span className="text-xs font-bold uppercase text-purple-800 flex items-center gap-1.5">
                         <Truck size={15} className="text-purple-600" />
                         Retiro a Domicilio
                       </span>
                       <button
                         type="button"
                         onClick={() => setStep(1)}
-                        className="text-[11px] font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-purple-200 shadow-2xs"
+                        className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-purple-200 shadow-2xs"
                       >
                         <Edit3 size={12} />
                         <span>Editar</span>
@@ -1299,14 +1308,14 @@ export default function UniversalServiceRequestModal({
                   {/* Bloque 2: Artículos Desglosados */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                      <span className="text-xs font-black uppercase text-purple-800 flex items-center gap-1.5">
+                      <span className="text-xs font-bold uppercase text-purple-800 flex items-center gap-1.5">
                         <Package size={15} className="text-purple-600" />
                         Artículos a Lavar ({totalArticulosCantidad})
                       </span>
                       <button
                         type="button"
                         onClick={() => setStep(2)}
-                        className="text-[11px] font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-purple-200 shadow-2xs"
+                        className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-purple-200 shadow-2xs"
                       >
                         <Edit3 size={12} />
                         <span>Editar artículos</span>
@@ -1325,7 +1334,7 @@ export default function UniversalServiceRequestModal({
                                 <h4 className="font-extrabold text-slate-900">
                                   {art.tipo} ({art.variante}) × {art.cantidad}
                                 </h4>
-                                <p className="text-slate-600 font-medium text-[11px]">
+                                <p className="text-slate-600 font-medium text-xs">
                                   {art.servicioNombre}
                                   {art.extras.length > 0 && ` + ${art.extras.map(e => e.nombre).join(', ')}`}
                                 </p>
@@ -1336,7 +1345,7 @@ export default function UniversalServiceRequestModal({
                             </div>
 
                             {art.observaciones && (
-                              <p className="text-[11px] text-slate-500 italic">
+                              <p className="text-xs text-slate-500 ">
                                 Nota: "{art.observaciones}"
                               </p>
                             )}
@@ -1346,7 +1355,7 @@ export default function UniversalServiceRequestModal({
                                 {art.fotos.map((f, fIdx) => (
                                   <img key={fIdx} src={f} alt="Foto" className="size-8 rounded-lg object-cover border border-slate-200" />
                                 ))}
-                                <span className="text-[10px] font-bold text-slate-400 ml-1">
+                                <span className="text-xs font-bold text-slate-400 ml-1">
                                   {art.fotos.length} {art.fotos.length === 1 ? 'foto' : 'fotos'}
                                 </span>
                               </div>
@@ -1365,24 +1374,27 @@ export default function UniversalServiceRequestModal({
                     </div>
 
                     <div className="flex justify-between font-bold text-slate-700">
-                      <span>Retiro / Entrega a Domicilio:</span>
+                      <span>Envío (2 viajes):</span>
                       <span className="font-mono">${costoEnvioCalculado.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-500 -mt-1">
+                      <span>Retiro ${costoPorViaje.toFixed(2)} + entrega ${costoPorViaje.toFixed(2)}</span>
                     </div>
 
                     <div className="border-t border-purple-200/70 pt-2 flex justify-between items-baseline">
                       <div>
-                        <span className="text-xs font-black uppercase text-purple-950 block">TOTAL ESTIMADO</span>
+                        <span className="text-xs font-bold uppercase text-purple-950 block">Total estimado</span>
                         {tieneEvaluacion ? (
-                          <span className="text-[10px] text-amber-700 font-bold flex items-center gap-1 mt-0.5">
+                          <span className="text-xs text-amber-700 font-bold flex items-center gap-1 mt-0.5">
                             <Info size={11} /> Precio sujeto a confirmación tras inspección en taller.
                           </span>
                         ) : (
-                          <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1 mt-0.5">
+                          <span className="text-xs text-emerald-700 font-bold flex items-center gap-1 mt-0.5">
                             <ShieldCheck size={11} /> Calculado con las tarifas del negocio.
                           </span>
                         )}
                       </div>
-                      <span className="text-2xl font-black text-purple-950 font-mono">
+                      <span className="text-2xl font-bold text-purple-950 font-mono">
                         ${totalEstimado.toFixed(2)}
                       </span>
                     </div>
@@ -1400,7 +1412,7 @@ export default function UniversalServiceRequestModal({
                   </div>
 
                   <div>
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
                       Confirma tu solicitud
                     </h3>
                     <p className="text-xs text-slate-500 font-medium mt-1 max-w-sm mx-auto">
@@ -1418,8 +1430,8 @@ export default function UniversalServiceRequestModal({
                   {/* Resumen Compacto Final */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left text-xs space-y-2 max-w-md mx-auto">
                     <div className="flex justify-between items-center pb-2 border-b border-slate-200/70">
-                      <span className="font-black text-slate-800 uppercase tracking-wider">Estado</span>
-                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-black text-[10px]">
+                      <span className="font-bold text-slate-800 uppercase tracking-wider">Estado</span>
+                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold text-xs">
                         ✓ Solicitud Lista
                       </span>
                     </div>
@@ -1441,13 +1453,13 @@ export default function UniversalServiceRequestModal({
 
                     <div className="flex justify-between border-t border-slate-200/70 pt-2">
                       <span className="font-extrabold text-slate-900">Total Estimado:</span>
-                      <span className="font-mono text-base font-black text-purple-700">
+                      <span className="font-mono text-base font-bold text-purple-700">
                         ${totalEstimado.toFixed(2)} USD
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-slate-500 font-medium max-w-sm mx-auto">
+                  <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto">
                     Al confirmar, nuestro equipo recibirá la orden y te escribirá por WhatsApp para coordinar los detalles.
                   </p>
                 </div>
@@ -1480,7 +1492,7 @@ export default function UniversalServiceRequestModal({
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="py-3.5 px-7 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-purple-600/25 transition-all cursor-pointer flex items-center gap-2 active:scale-98 ml-auto"
+                  className="py-3.5 px-7 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-purple-600/25 transition-all cursor-pointer flex items-center gap-2 active:scale-98 ml-auto"
                 >
                   <span>Continuar</span>
                   <ChevronRight size={16} />
@@ -1490,7 +1502,7 @@ export default function UniversalServiceRequestModal({
                   type="button"
                   onClick={handleConfirmSubmit}
                   disabled={submitting || otpLoading}
-                  className="py-4 px-8 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-600/30 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98 flex-1 sm:flex-initial ml-auto"
+                  className="py-4 px-8 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-600/30 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98 flex-1 sm:flex-initial ml-auto"
                 >
                   {submitting || otpLoading ? (
                     <>
@@ -1516,12 +1528,20 @@ export default function UniversalServiceRequestModal({
         onClose={() => setShowMapModal(false)}
         initialLat={coords.lat}
         initialLng={coords.lng}
-        onConfirmLocation={(lat, lng, address) => {
+        initialReference={formCliente.referencia}
+        onConfirmLocation={(lat, lng, address, ref) => {
           setCoords({ lat, lng });
           setFormCliente(prev => ({
             ...prev,
-            direccion: address || prev.direccion
+            direccion: address || prev.direccion,
+            referencia: ref || prev.referencia,
           }));
+          setValidationErrors(prev => {
+            const next = { ...prev };
+            if (address || formCliente.direccion) delete next.direccion;
+            if (ref || formCliente.referencia) delete next.referencia;
+            return next;
+          });
           setShowMapModal(false);
         }}
       />

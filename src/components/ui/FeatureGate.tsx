@@ -62,14 +62,14 @@ export default function FeatureGate({ feature, children, fallbackMessage }: Feat
                         <Lock size={20} className="stroke-[2.5px]" />
                     </div>
                     <div>
-                        <h4 className="text-gray-900 font-black text-sm uppercase tracking-tight">
+                        <h4 className="text-gray-900 font-bold text-sm uppercase tracking-tight">
                             Función Premium
                         </h4>
                         <p className="text-gray-400 text-xs mt-1 max-w-[200px]">
                             {fallbackMessage || "Actualiza a un plan superior para desbloquear esta funcionalidad."}
                         </p>
                     </div>
-                    <Link href="/admin/plan" className="mt-2 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black px-6 py-2.5 rounded-full uppercase tracking-widest transition-colors shadow-lg shadow-amber-500/30">
+                    <Link href="/admin/plan" className="mt-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-6 py-2.5 rounded-full uppercase tracking-wide transition-colors shadow-lg shadow-amber-500/30">
                         Mejorar Plan
                     </Link>
                 </div>

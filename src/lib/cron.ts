@@ -206,53 +206,9 @@ export async function sendUpcomingReminders() {
  * Busca suscripciones que vencen pronto y notifica al negocio
  */
 export async function sendSubscriptionReminders() {
-    const now = new Date();
-    const startOfToday = new Date(now.setHours(0, 0, 0, 0));
-
-    // Buscar suscripciones que venzan pronto y no se les haya notificado hoy
-    const suscripciones = await prisma.suscripcion.findMany({
-        where: {
-            estado: { in: ['activa', 'trial'] },
-            OR: [
-                { lastReminderSent: null },
-                { lastReminderSent: { lt: startOfToday } }
-            ]
-        },
-        include: { Negocio: true }
-    });
-
-    let count = 0;
-    for (const sub of suscripciones) {
-        if (!sub.Negocio?.whatsapp) continue;
-
-        const diffTime = sub.fechaFin.getTime() - Date.now();
-        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        // Notificar en hitos: 7 días, 3 días, 1 día y el día del vencimiento (0) o vencido (<0)
-        const hitos = [7, 3, 1, 0];
-        const debeNotificar = hitos.includes(diasRestantes) || (diasRestantes < 0 && diasRestantes > -3); // Notificar hasta 3 días después de vencido
-
-        if (debeNotificar) {
-            try {
-                await notificationService.sendSubscriptionExpiryReminder(
-                    sub.negocioId,
-                    sub.Negocio.whatsapp,
-                    sub.Negocio.nombre,
-                    diasRestantes,
-                    sub.fechaFin
-                );
-
-                await prisma.suscripcion.update({
-                    where: { id: sub.id },
-                    data: { lastReminderSent: new Date() }
-                });
-                count++;
-            } catch (e) {
-                console.error(`Error enviando aviso sub a ${sub.Negocio.nombre}:`, e);
-            }
-        }
-    }
-    return count;
+    // Avisos según el ciclo único (prueba 30 días → gracia 7 días → pausa). Ver lib/subscription/reminders.
+    const { sendLifecycleReminders } = await import('@/lib/subscription/reminders');
+    return sendLifecycleReminders();
 }
 
 /**
@@ -446,7 +402,12 @@ export async function autoExpirePendingAppointments() {
  * 2. Pasa de 'active' a 'grace_period' si fechaFin ya pasó.
  * 3. Pasa de 'grace_period' a 'downgraded' (plan BEGIN) si pasaron 7 días desde fechaFin.
  */
+/** @deprecated El vencimiento ahora se calcula por fechas (lib/subscription/lifecycle): prueba → 7 días de gracia → pausa. */
 export async function processExpiredSubscriptions() {
+    return 0;
+}
+
+async function legacyProcessExpiredSubscriptions_unused() {
     const now = new Date();
     
     // 1. Encontrar suscripciones trial o active que ya expiraron por fecha

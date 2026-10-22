@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import WysiwygEditor from '@/components/admin/WysiwygEditor';
-import { ChevronLeft, Save, Globe, EyeOff, Loader2, Sparkles, FileText, Trash2, Upload, ImagePlus, Link2, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Save, Globe, EyeOff, Loader2, Sparkles, FileText, Trash2, Upload, ImagePlus, Link2, ChevronDown, Layout } from 'lucide-react';
 import Link from 'next/link';
 import ImageUploader from '@/components/ui/ImageUploader';
 
@@ -17,6 +17,8 @@ export default function PaginaEditor() {
     const [featuredImage, setFeaturedImage] = useState<string | null>(null);
     const [imageMediaId, setImageMediaId] = useState<string | null>(null);
     const [status, setStatus] = useState<'draft' | 'published'>('draft');
+    const [posicion, setPosicion] = useState<'top' | 'bottom'>('top');
+    const [orden, setOrden] = useState<number>(1);
     const [buttonText, setButtonText] = useState('');
     const [buttonUrl, setButtonUrl] = useState('');
     const [availableLinks, setAvailableLinks] = useState<{ canchas: any[], promociones: any[], cursos: any[] }>({ canchas: [], promociones: [], cursos: [] });
@@ -47,6 +49,8 @@ export default function PaginaEditor() {
                          setTitle(data.title);
                          setContent(data.contentHtml);
                          setStatus(data.status);
+                         setPosicion(data.posicion || (data.slug === 'como-funciona' ? 'top' : 'bottom'));
+                         setOrden(data.orden ?? 1);
                          setFeaturedImage(data.imageMedia?.url || data.featuredImage);
                          setImageMediaId(data.imageMediaId || null);
                          setButtonText(data.buttonText || '');
@@ -103,6 +107,8 @@ export default function PaginaEditor() {
                     title,
                     contentHtml: content,
                     status,
+                    posicion,
+                    orden: Number(orden) || 1,
                     featuredImage,
                     imageMediaId,
                     buttonText,
@@ -145,10 +151,10 @@ export default function PaginaEditor() {
                         <ChevronLeft size={16} />
                     </Link>
                     <div>
-                        <h1 className="text-lg font-black text-slate-900 tracking-tight uppercase leading-none">
+                        <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none">
                             {isEditing ? 'Editar Página' : 'Nueva Página'}
                         </h1>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Editor de contenido</p>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wide mt-0.5">Editor de contenido</p>
                     </div>
                 </div>
 
@@ -157,7 +163,7 @@ export default function PaginaEditor() {
                     <button
                         type="button"
                         onClick={() => setStatus('draft')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${status === 'draft' ? 'bg-orange-50 text-orange-600' : 'text-slate-400'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${status === 'draft' ? 'bg-orange-50 text-orange-600' : 'text-slate-400'}`}
                     >
                         <EyeOff size={10} />
                         <span className="hidden sm:inline">Borrador</span>
@@ -165,7 +171,7 @@ export default function PaginaEditor() {
                     <button
                         type="button"
                         onClick={() => setStatus('published')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${status === 'published' ? 'shadow-sm' : 'text-slate-400'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${status === 'published' ? 'shadow-sm' : 'text-slate-400'}`}
                         style={status === 'published' ? { backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' } : {}}
                     >
                         <Globe size={10} />
@@ -177,7 +183,7 @@ export default function PaginaEditor() {
             <form id="page-form" onSubmit={handleSubmit} className="space-y-3">
                 {/* Título */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Título de la Página</label>
+                    <label className="text-xs font-bold uppercase tracking-wide text-slate-400">Título de la Página</label>
                     <input
                         type="text"
                         placeholder="Ej: Nuestra Escuela de Spa"
@@ -190,13 +196,13 @@ export default function PaginaEditor() {
 
                 {/* Editor de contenido */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Cuerpo del Contenido</label>
+                    <label className="text-xs font-bold uppercase tracking-wide text-slate-400">Cuerpo del Contenido</label>
                     <WysiwygEditor value={content} onChange={setContent} />
                 </div>
 
                 {/* Imagen de portada */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Imagen de Portada <span className="text-slate-300">(Opcional)</span></label>
+                    <label className="text-xs font-bold uppercase tracking-wide text-slate-400">Imagen de Portada <span className="text-slate-300">(Opcional)</span></label>
                     <ImageUploader
                         category="page"
                         currentUrl={featuredImage || ''}
@@ -213,15 +219,77 @@ export default function PaginaEditor() {
                     />
                 </div>
 
+                {/* Ubicación en la Landing */}
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-4">
+                    <div className="flex items-center gap-2 border-b border-gray-50 pb-2">
+                        <Layout size={14} className="text-purple-600" />
+                        <div>
+                            <label className="text-xs font-bold uppercase tracking-wide text-slate-900 block">Ubicación en la Landing</label>
+                            <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block">Zona donde aparecerá la sección</span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setPosicion('top')}
+                            className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer ${
+                                posicion === 'top'
+                                    ? 'border-purple-600 bg-purple-50/70 shadow-xs'
+                                    : 'border-slate-100 bg-slate-50 hover:bg-slate-100/60'
+                            }`}
+                        >
+                            <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                                ⬆️ Zona Superior
+                            </span>
+                            <span className="text-xs text-slate-500 font-medium leading-tight">
+                                Arriba, bajo el banner
+                            </span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setPosicion('bottom')}
+                            className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer ${
+                                posicion === 'bottom'
+                                    ? 'border-purple-600 bg-purple-50/70 shadow-xs'
+                                    : 'border-slate-100 bg-slate-50 hover:bg-slate-100/60'
+                            }`}
+                        >
+                            <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                                ⬇️ Zona Inferior
+                            </span>
+                            <span className="text-xs text-slate-500 font-medium leading-tight">
+                                Abajo del catálogo
+                            </span>
+                        </button>
+                    </div>
+
+                    <div className="pt-2 border-t border-gray-50 flex items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                            <span className="text-xs font-bold uppercase tracking-wide text-slate-700 block">Orden numérico</span>
+                            <span className="text-xs text-slate-400 font-medium block">Prioridad en su zona</span>
+                        </div>
+                        <input
+                            type="number"
+                            min={1}
+                            max={99}
+                            value={orden}
+                            onChange={(e) => setOrden(parseInt(e.target.value) || 1)}
+                            className="w-16 bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-2 text-center text-xs font-bold text-slate-900 outline-none focus:border-purple-500"
+                        />
+                    </div>
+                </div>
+
                 {/* Botón de acción */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
                     <div className="flex items-center gap-2">
                         <Link2 size={13} className="text-orange-400" />
-                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Botón de Acción <span className="text-slate-300">(Opcional)</span></label>
+                        <label className="text-xs font-bold uppercase tracking-wide text-slate-400">Botón de Acción <span className="text-slate-300">(Opcional)</span></label>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
-                            <span className="text-[9px] font-black uppercase text-slate-400">Texto</span>
+                            <span className="text-xs font-bold uppercase text-slate-400">Texto</span>
                             <input
                                 type="text"
                                 placeholder="Ver más..."
@@ -231,7 +299,7 @@ export default function PaginaEditor() {
                             />
                         </div>
                         <div className="space-y-1">
-                            <span className="text-[9px] font-black uppercase text-slate-400">Destino</span>
+                            <span className="text-xs font-bold uppercase text-slate-400">Destino</span>
                             <div className="relative">
                                 <select
                                     className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 px-3 text-xs font-bold text-slate-900 outline-none appearance-none pr-6"
@@ -281,7 +349,7 @@ export default function PaginaEditor() {
                     type="submit"
                     form="page-form"
                     disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 py-4 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-2 py-4 text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-xl active:scale-95 disabled:opacity-50"
                     style={{ backgroundColor: 'var(--primary-color)' }}
                 >
                     {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}

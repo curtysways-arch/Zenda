@@ -143,7 +143,7 @@ export default function ItemDetailModal({
           {item.badge && (
             <div
               style={{ backgroundColor: primaryColor }}
-              className="absolute bottom-3 left-3 z-20 px-3 py-1 rounded-xl text-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-1.5 border border-white/20"
+              className="absolute bottom-3 left-3 z-20 px-3 py-1 rounded-xl text-white font-bold text-xs uppercase tracking-wider shadow-lg flex items-center gap-1.5 border border-white/20"
             >
               <Flame className="w-3.5 h-3.5 text-white" />
               <span>{item.badge}</span>
@@ -156,18 +156,18 @@ export default function ItemDetailModal({
           {/* Categoría y Título */}
           <div className="space-y-1">
             {item.category && (
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block">
                 {item.category}
               </span>
             )}
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
               {item.title}
             </h2>
           </div>
 
           {/* Desglose de Precio y Descuento */}
           <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-            <span style={{ color: primaryColor }} className="text-xl sm:text-2xl font-black">
+            <span style={{ color: primaryColor }} className="text-xl sm:text-2xl font-bold">
               ${item.price.toFixed(2)}
             </span>
 
@@ -176,7 +176,7 @@ export default function ItemDetailModal({
                 <span className="text-xs font-bold text-slate-400 line-through">
                   ${item.originalPrice.toFixed(2)}
                 </span>
-                <span className="bg-rose-100 text-rose-700 text-[10px] font-black px-2 py-0.5 rounded-lg border border-rose-200">
+                <span className="bg-rose-100 text-rose-700 text-xs font-bold px-2 py-0.5 rounded-lg border border-rose-200">
                   Ahorras ${discountAmount.toFixed(2)} ({discountPercentage}% OFF)
                 </span>
               </div>
@@ -186,7 +186,7 @@ export default function ItemDetailModal({
           {/* Descripción Completa */}
           {shouldShowDescription && (
             <div className="space-y-1">
-              <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider">
+              <span className="text-xs font-bold uppercase text-slate-500 tracking-wider">
                 Descripción
               </span>
               <p className="text-xs text-slate-600 leading-relaxed font-medium">
@@ -198,7 +198,7 @@ export default function ItemDetailModal({
           {/* Componentes Incluidos en la Promoción / Combo */}
           {displayIncludedItems && displayIncludedItems.length > 0 && (
             <div className="space-y-2 pt-1 border-t border-slate-100">
-              <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
                 <Sparkles style={{ color: primaryColor }} className="w-3.5 h-3.5" />
                 Incluye en esta Promoción
               </span>
@@ -215,7 +215,7 @@ export default function ItemDetailModal({
 
           {/* Campo de Notas Adicionales / Instrucciones */}
           <div className="space-y-1 pt-1">
-            <label className="text-[11px] font-black uppercase text-slate-500 tracking-wider">
+            <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">
               Instrucciones Especiales (Opcional)
             </label>
             <input
@@ -235,18 +235,18 @@ export default function ItemDetailModal({
             <button
               type="button"
               onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-              className="w-8 h-8 bg-white text-slate-800 rounded-xl font-black text-sm flex items-center justify-center shadow-2xs hover:bg-slate-200 cursor-pointer active:scale-95 transition-all"
+              className="w-8 h-8 bg-white text-slate-800 rounded-xl font-bold text-sm flex items-center justify-center shadow-2xs hover:bg-slate-200 cursor-pointer active:scale-95 transition-all"
             >
               <Minus className="w-4 h-4" />
             </button>
-            <span className="w-8 text-center text-sm font-black text-slate-900">
+            <span className="w-8 text-center text-sm font-bold text-slate-900">
               {quantity}
             </span>
             <button
               type="button"
               onClick={() => setQuantity(prev => prev + 1)}
               style={{ backgroundColor: primaryColor, color: '#ffffff' }}
-              className="w-8 h-8 text-white rounded-xl font-black text-sm flex items-center justify-center shadow-2xs cursor-pointer active:scale-95 transition-all"
+              className="w-8 h-8 text-white rounded-xl font-bold text-sm flex items-center justify-center shadow-2xs cursor-pointer active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4 text-white" />
             </button>
@@ -257,13 +257,13 @@ export default function ItemDetailModal({
             type="button"
             onClick={handleAdd}
             style={{ backgroundColor: primaryColor, color: '#ffffff' }}
-            className="flex-1 py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+            className="flex-1 py-3.5 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between hover:opacity-95 active:scale-95 transition-all cursor-pointer"
           >
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-4 h-4 text-white" />
               <span>Agregar al Pedido</span>
             </div>
-            <span className="text-sm font-black">${totalPrice.toFixed(2)}</span>
+            <span className="text-sm font-bold">${totalPrice.toFixed(2)}</span>
           </button>
         </div>
       </div>

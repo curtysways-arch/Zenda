@@ -140,7 +140,17 @@ model Cliente {
   gymAttendances  GymAttendance[]
   gymClassBookings GymClassBooking[]
 
+  // Datos tributarios y de facturación electrónica
+  identificacion       String?
+  tipoIdentificacion   String?         @default("CEDULA")
+  razonSocial          String?
+  direccionFacturacion String?
+  emailFacturacion     String?
+  telefonoFacturacion  String?
+
   @@unique([telefono, negocioId])
+  @@index([negocioId, identificacion])
+  @@index([identificacion])
 }
 
 model CommentResultado {
@@ -443,6 +453,19 @@ model Negocio {
   gymAttendances             GymAttendance[]
   gymClasses                 GymClass[]
   gymClassBookings           GymClassBooking[]
+  // ─── MOTORES EMPRESARIALES CITIOX ─────────────────────────────────────────────
+  warehouses                 Warehouse[]
+  inventoryTransfers         InventoryTransfer[]
+  suppliers                  Supplier[]
+  purchaseOrders             PurchaseOrder[]
+  accountsPayable            AccountPayable[]
+  recipes                    Recipe[]
+  productionOrders           ProductionOrder[]
+  taxConfiguration           TaxConfiguration?
+  electronicInvoices         ElectronicInvoice[]
+  employees                  Employee[]
+  payrollSlips               PayrollSlip[]
+  cashMovements              CashMovement[]
 }
 
 model OtpCode {
@@ -470,6 +493,8 @@ model Page {
   buttonText    String?
   buttonUrl     String?
   status        String   @default("draft")
+  posicion      String?  @default("top")
+  orden         Int?     @default(1)
   createdAt     DateTime @default(now())
   updatedAt     DateTime
   Negocio       Negocio  @relation(fields: [businessId], references: [id])
@@ -812,6 +837,7 @@ model Suscripcion {
   Negocio               Negocio             @relation(fields: [negocioId], references: [id])
   Plan                  Plan                @relation(fields: [planId], references: [id])
   subscriptionAddons    SubscriptionAddon[]
+  pricingOverrides      SubscriptionPricingOverride[]
 }
 
 model Ubicacion {
@@ -2665,7 +2691,7 @@ model Producto {
   precio            Float
   imagenUrl         String?
   activo            Boolean            @default(true)
-  stock             Int? // Opcional para control de stock
+  stock             Decimal?          @default(0.0000)
   sku               String? // Código de barra/referencia principal
   tieneVariantes    Boolean            @default(false)
   orden             Int                @default(0)
@@ -2680,6 +2706,21 @@ model Producto {
   variantes         ProductoVariante[]
   branchProducts    BranchProduct[]
   branchInventories BranchInventory[]
+  // ─── CAMPOS MOTOR DE RECETAS & COSTEO ─────────────────────────────────────────
+  tipoProducto      String             @default("VENTA") // "VENTA" | "MATERIA_PRIMA" | "SEMIELABORADO" | "TERMINADO" | "INSUMO" | "NO_INVENTARIABLE"
+  unidadMedida      String             @default("UNIDAD") // "UNIDAD" | "KG" | "G" | "L" | "ML" | "PAQUETE"
+  costoUnitario     Float              @default(0.0)
+  costoPromedio           Decimal?
+  costStatus              String?           @default("UNKNOWN")
+  costSource              String?
+  unidadMedidaBase        String?
+  uomStatus               String?           @default("PENDING_REVIEW")
+  densidadGPerMl          Decimal?
+  negativeStockAdjustment Decimal?          @default(0.0)
+
+  metodoElaboracion String? // "PREVIA" | "AL_MOMENTO" | null
+  recetas           Recipe[]           @relation("ProductoRecetasElaborado")
+  recetaItems       RecipeItem[]       @relation("ProductoRecetaIngrediente")
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
@@ -2748,8 +2789,8 @@ model PedidoItem {
   varianteNombre String?
   sku            String?
   nombreProducto String
-  precioUnitario Float
-  cantidad       Int
+  precioUnitario Decimal
+  cantidad       Decimal
   pedido         Pedido    @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
   producto       Producto? @relation(fields: [productoId], references: [id], onDelete: SetNull)
 
@@ -3711,10 +3752,12 @@ model Branch {
   latitude   Float?
   longitude  Float?
   timezone   String   @default("America/Guayaquil")
-  active     Boolean  @default(true)
-  isMain     Boolean  @default(false)
-  settings   Json?
-  createdAt  DateTime @default(now())
+  active           Boolean  @default(true)
+  isMain           Boolean  @default(false)
+  isCentralKitchen Boolean  @default(false)
+  branchType       String   @default("STORE")
+  settings         Json?
+  createdAt        DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -3725,6 +3768,8 @@ model Branch {
   branchServices BranchService[]
   inventory      BranchInventory[]
   inventoryMoves InventoryMovement[]
+  purchaseOrders PurchaseOrder[]
+  accountsPayable AccountPayable[]
   tables         RestaurantTable[]
   orders         Pedido[]
   appointments   Appointment[]
@@ -3829,10 +3874,12 @@ model BranchInventory {
   productId  String
   varianteId String?
   businessId String
-  stock      Int      @default(0)
-  minStock   Int      @default(0)
-  maxStock   Int?
-  createdAt  DateTime @default(now())
+  stock      Decimal  @default(0.0000)
+  minStock   Decimal  @default(0.0000)
+  maxStock      Decimal?
+  costoPromedio Decimal?
+  lastKnownCost Decimal?
+  createdAt     DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   branch   Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
@@ -3846,16 +3893,22 @@ model BranchInventory {
 }
 
 model InventoryMovement {
-  id         String   @id @default(uuid())
-  businessId String
-  branchId   String
-  productId  String
-  varianteId String?
-  quantity   Int
-  type       String // "INICIAL" | "ENTRADA" | "SALIDA" | "AJUSTE" | "VENTA" | "TRANSFERENCIA_SALIDA" | "TRANSFERENCIA_ENTRADA"
-  reference  String?
-  createdBy  String?
-  createdAt  DateTime @default(now())
+  id            String   @id @default(uuid())
+  businessId    String
+  branchId      String
+  productId     String
+  varianteId    String?
+  quantity      Decimal
+  type          String // "INICIAL" | "ENTRADA" | "SALIDA" | "AJUSTE" | "VENTA" | "TRANSFERENCIA_SALIDA" | "TRANSFERENCIA_ENTRADA" | "COMPRA" | "CONSUMO_PRODUCCION" | "INGRESO_PRODUCCION"
+  reference     String?
+  createdBy     String?
+  unitCost      Decimal?
+  totalCost     Float?
+  reason        String?
+  sourceDocType String? // "VENTA" | "COMPRA" | "PRODUCCION" | "AJUSTE" | "TRANSFERENCIA"
+  sourceDocId   String?
+  warehouseId   String?
+  createdAt     DateTime @default(now())
 
   branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
   negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -3885,26 +3938,32 @@ model CashRegister {
 }
 
 model CashRegisterSession {
-  id             String    @id @default(uuid())
-  businessId     String
-  branchId       String
-  cashRegisterId String
-  openedBy       String
-  openedAt       DateTime  @default(now())
-  openingAmount  Float     @default(0)
-  closedBy       String?
-  closedAt       DateTime?
-  closingAmount  Float?
-  expectedAmount Float?
-  difference     Float?
-  status         String    @default("OPEN") // "OPEN" | "CLOSED"
-  notes          String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id               String         @id @default(uuid())
+  businessId       String
+  branchId         String
+  cashRegisterId   String
+  openedBy         String
+  openedAt         DateTime       @default(now())
+  openingAmount    Float          @default(0)
+  closedBy         String?
+  closedAt         DateTime?
+  closingAmount    Float?
+  expectedAmount   Float?
+  difference       Float?
+  cashExpected     Float?         @default(0)
+  cardExpected     Float?         @default(0)
+  transferExpected Float?         @default(0)
+  otherExpected    Float?         @default(0)
+  cashCounted      Float?
+  status           String         @default("OPEN") // "OPEN" | "CLOSED"
+  notes            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
-  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
-  negocio      Negocio      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch       Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  cashRegister CashRegister   @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+  negocio      Negocio        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  movements    CashMovement[]
 
   @@index([businessId])
   @@index([branchId])
@@ -4017,6 +4076,52 @@ model SubscriptionAddonHistory {
   @@index([businessId])
   @@index([subscriptionId])
   @@index([addonId])
+  @@index([createdAt])
+}
+
+// ─── SUBSISTEMA DE PRECIOS NEGOCIADOS POR SUSCRIPCIÓN (OVERRIDE & AUDITORÍA) ───
+
+model SubscriptionPricingOverride {
+  id             String    @id @default(uuid())
+  subscriptionId String
+  type           String    // 'TEMPORARY' | 'PERMANENT'
+  amount         Float     // Monto negociado pactado (ej. 5.00)
+  currency       String    @default("USD")
+
+  totalCycles    Int?      // null si es PERMANENT, número entero >= 1 si es TEMPORARY
+  currentCycle   Int       @default(1)
+
+  startAt        DateTime  @default(now())
+  endAt          DateTime?
+  status         String    @default("ACTIVE") // 'ACTIVE' | 'EXPIRED' | 'CANCELLED' | 'SUPERSEDED'
+
+  reason         String?   // Motivo de la negociación comercial
+  createdBy      String?   // Superadmin responsable
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  subscription   Suscripcion @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([status])
+}
+
+model SubscriptionPricingAudit {
+  id             String    @id @default(uuid())
+  subscriptionId String
+  businessId     String
+  action         String    // 'NEGOTIATED_PRICE_CREATED' | 'NEGOTIATED_PRICE_UPDATED' | 'NEGOTIATED_PRICE_CANCELLED' | 'NEGOTIATED_PRICE_EXPIRED' | 'NEGOTIATED_PRICE_APPLIED' | 'NEGOTIATED_PRICE_REVERTED'
+  previousPrice  Float?
+  newPrice       Float
+  overrideType   String?   // 'TEMPORARY' | 'PERMANENT'
+  durationCycles Int?
+  cycleNumber    Int?
+  reason         String?
+  userId         String?
+  createdAt      DateTime  @default(now())
+
+  @@index([subscriptionId])
+  @@index([businessId])
   @@index([createdAt])
 }
 
@@ -4358,3 +4463,462 @@ model GymEquipment {
   @@index([areaId])
   @@index([businessId, active])
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOTORES EMPRESARIALES CITIOX: CAJA, INVENTARIO, COMPRAS, PRODUCCIÓN, SRI, NÓMINA
+// ─────────────────────────────────────────────────────────────────────────────
+
+model CashMovement {
+  id            String              @id @default(uuid())
+  sessionId     String
+  businessId    String
+  type          String // "INGRESO_MANUAL" | "EGRESO_GASTO" | "RETIRO_DEPOSITO" | "VENTA_EFECTIVO" | "DEVOLUCION_EFECTIVO"
+  amount        Float
+  paymentMethod String              @default("EFECTIVO")
+  concept       String
+  reference     String?
+  userId        String?
+  userName      String?
+  createdAt     DateTime            @default(now())
+
+  session CashRegisterSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  negocio Negocio             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([businessId])
+  @@index([createdAt])
+}
+
+model Warehouse {
+  id         String   @id @default(uuid())
+  businessId String
+  branchId   String?
+  name       String
+  code       String?
+  type       String   @default("GENERAL")
+  isDefault  Boolean  @default(false)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  stocks         WarehouseStock[]
+  transfersFrom  InventoryTransfer[] @relation("TransferSource")
+  transfersTo    InventoryTransfer[] @relation("TransferTarget")
+
+  @@index([businessId])
+  @@index([type, branchId])
+}
+
+model WarehouseStock {
+  id          String   @id @default(uuid())
+  warehouseId String
+  productId   String
+  variantId   String?
+  quantity    Decimal  @default(0.0000)
+  minStock    Decimal  @default(0.0000)
+  maxStock    Decimal?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@unique([warehouseId, productId, variantId])
+  @@index([warehouseId])
+  @@index([productId])
+}
+
+model InventoryTransfer {
+  id                String    @id @default(uuid())
+  businessId        String
+  sourceId          String
+  targetId          String
+  sourceBranchId    String?
+  sourceWarehouseId String?
+  targetBranchId    String?
+  targetWarehouseId String?
+  status            String    @default("COMPLETED") // "DRAFT" | "DISPATCHED" | "IN_TRANSIT" | "COMPLETED" | "CANCELLED"
+  notes             String?
+  dispatchedAt      DateTime?
+  dispatchedById    String?
+  dispatchedByName  String?
+  receivedAt        DateTime?
+  receivedById      String?
+  receivedByName    String?
+  idempotencyKey    String?
+  createdById       String?
+  createdByName     String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  business Negocio                 @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  source   Warehouse               @relation("TransferSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target   Warehouse               @relation("TransferTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  items    InventoryTransferItem[]
+
+  @@index([businessId])
+  @@index([sourceBranchId, targetBranchId])
+  @@index([status])
+  @@index([idempotencyKey])
+}
+
+model InventoryTransferItem {
+  id            String   @id @default(uuid())
+  transferId    String
+  productId     String
+  variantId     String?
+  dispatchedQty Decimal  @default(0.0000)
+  receivedQty   Decimal  @default(0.0000)
+  lossQty       Decimal  @default(0.0000)
+  lossReason    String?
+  unitCost      Decimal  @default(0.000000)
+  totalCost     Decimal  @default(0.00)
+
+  transfer InventoryTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+
+  @@index([transferId])
+}
+
+model Supplier {
+  id             String   @id @default(uuid())
+  businessId     String
+  taxId          String // RUC / Cédula
+  taxIdType      String   @default("RUC")
+  name           String // Razón Social
+  commercialName String?
+  contactPerson  String?
+  email          String?
+  phone          String?
+  address        String?
+  notes          String?
+  paymentTerms   String?  @default("CONTADO")
+  creditDays     Int?     @default(0)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  negocio         Negocio          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  orders          PurchaseOrder[]
+  accountsPayable AccountPayable[]
+
+  @@unique([businessId, taxId])
+  @@index([businessId])
+}
+
+model PurchaseOrder {
+  id             String    @id @default(uuid())
+  businessId     String
+  branchId       String?
+  supplierId     String
+  orderNumber    String?   // Consecutivo OC-00001
+  invoiceNumber  String?   // Número de factura del proveedor
+  status         String    @default("DRAFT") // "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CANCELLED"
+  issueDate      DateTime  @default(now())
+  expectedDate   DateTime?
+  receptionDate  DateTime?
+  currency       String    @default("USD")
+  subtotal       Float     @default(0)
+  discount       Float     @default(0)
+  shippingCost   Float     @default(0)
+  otherCosts     Float     @default(0)
+  taxAmount      Float     @default(0)
+  total          Float     @default(0)
+  paymentMethod  String    @default("TRANSFERENCIA") // "EFECTIVO" | "TRANSFERENCIA" | "CREDITO"
+  paymentStatus  String    @default("PAID") // "PENDING" | "PAID"
+  warehouseId    String?
+  notes          String?
+  createdById    String?
+  createdByName  String?
+  approvedById   String?
+  approvedByName String?
+  approvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  negocio        Negocio             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch         Branch?             @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  supplier       Supplier            @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  items          PurchaseOrderItem[]
+  accountPayable AccountPayable?
+
+  @@index([businessId])
+  @@index([branchId])
+  @@index([supplierId])
+  @@index([status])
+}
+
+model PurchaseOrderItem {
+  id               String  @id @default(uuid())
+  purchaseOrderId  String
+  productId        String
+  variantId        String?
+  productName      String
+  unit             String  @default("UNIDAD")
+  quantity         Float
+  receivedQuantity Float   @default(0)
+  unitCost         Float
+  discount         Float   @default(0)
+  landedUnitCost   Float?
+  taxRate          Float   @default(0.15) // IVA Ecuador (15%)
+  subtotal         Float
+  total            Float
+
+  order PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseOrderId])
+}
+
+model AccountPayable {
+  id             String    @id @default(uuid())
+  businessId     String
+  supplierId     String
+  purchaseId     String?   @unique
+  branchId       String?
+  invoiceNumber  String?
+  issueDate      DateTime  @default(now())
+  dueDate        DateTime
+  originalAmount Float
+  paidAmount     Float     @default(0)
+  balance        Float
+  status         String    @default("PENDING") // "PENDING" | "PARTIALLY_PAID" | "PAID" | "OVERDUE" | "CANCELLED"
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  negocio  Negocio                 @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier Supplier                @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  purchase PurchaseOrder?          @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  branch   Branch?                 @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  payments AccountPayablePayment[]
+
+  @@index([businessId])
+  @@index([supplierId])
+  @@index([branchId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model AccountPayablePayment {
+  id               String   @id @default(uuid())
+  payableId        String
+  businessId       String
+  paymentDate      DateTime @default(now())
+  amount           Float
+  paymentMethod    String   @default("TRANSFERENCIA") // "EFECTIVO" | "TRANSFERENCIA" | "CHEQUE" | "OTRO"
+  reference        String?
+  notes            String?
+  registeredById   String?
+  registeredByName String?
+  createdAt        DateTime @default(now())
+
+  payable AccountPayable @relation(fields: [payableId], references: [id], onDelete: Cascade)
+
+  @@index([payableId])
+  @@index([businessId])
+}
+
+model Recipe {
+  id            String   @id @default(uuid())
+  businessId    String
+  productId     String // Producto elaborado
+  name          String
+  yieldQuantity Float    @default(1) // Rendimiento de lote
+  yieldUnit     String   @default("UNIDAD")
+  prepTimeMin   Int      @default(0)
+  estimatedLoss Float    @default(0) // Merma estimada en %
+  extraCost     Float    @default(0) // Costo adicional de preparación/empaque
+  version       Int      @default(1)
+  active        Boolean  @default(true)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  negocio  Negocio           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  producto Producto          @relation("ProductoRecetasElaborado", fields: [productId], references: [id], onDelete: Cascade)
+  items    RecipeItem[]
+  orders   ProductionOrder[]
+
+  @@index([businessId])
+  @@index([productId])
+}
+
+model RecipeItem {
+  id            String  @id @default(uuid())
+  recipeId      String
+  ingredientId  String // Materia prima o semielaborado
+  quantity      Float
+  unit          String  @default("UNIDAD")
+  estimatedCost Float   @default(0)
+
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient Producto @relation("ProductoRecetaIngrediente", fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+  @@index([ingredientId])
+}
+
+model ProductionOrder {
+  id                String    @id @default(uuid())
+  businessId        String
+  recipeId          String
+  code              String?
+  status            String    @default("PLANNED") // "DRAFT" | "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "REVERSED"
+  branchId          String?
+  costStatus        String    @default("KNOWN")
+  reversalOfId      String?
+  reversalReason    String?
+  targetQuantity    Decimal
+  actualQuantity    Decimal?
+  wasteQuantity     Decimal?  @default(0.0000)
+  estimatedCost     Decimal   @default(0.00)
+  actualCost        Decimal?
+  unitCostReal      Decimal?
+  sourceWarehouseId String?
+  targetWarehouseId String?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  operatorId        String?
+  operatorName      String?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  negocio Negocio               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  recipe  Recipe                @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  items   ProductionOrderItem[]
+
+  @@index([businessId])
+  @@index([recipeId])
+  @@index([status])
+  @@index([branchId])
+}
+
+model ProductionOrderItem {
+  id                String  @id @default(uuid())
+  productionOrderId String
+  ingredientId      String
+  plannedQuantity   Decimal
+  actualQuantity    Decimal
+  unit              String  @default("UNIDAD")
+  unitCost          Decimal   @default(0.000000)
+  totalCost         Decimal   @default(0.00)
+
+  order ProductionOrder @relation(fields: [productionOrderId], references: [id], onDelete: Cascade)
+
+  @@index([productionOrderId])
+}
+
+model TaxConfiguration {
+  id                    String   @id @default(uuid())
+  businessId            String   @unique
+  ruc                   String
+  razonSocial           String
+  nombreComercial       String?
+  dirMatriz             String
+  dirEstablecimiento    String?
+  codEstablecimiento    String   @default("001")
+  codPuntoEmision       String   @default("001")
+  ambiente              Int      @default(1) // 1=PRUEBAS, 2=PRODUCCIÓN
+  tipoEmision           Int      @default(1)
+  obligadoContabilidad  Boolean  @default(false)
+  contribuyenteEspecial String?
+  regimenRimpe          Boolean  @default(true)
+  secuencialFactura     Int      @default(1)
+  secuencialNotaCredito Int      @default(1)
+  certificadoNombre     String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model ElectronicInvoice {
+  id                 String    @id @default(uuid())
+  businessId         String
+  orderId            String?
+  tipoComprobante    String    @default("01") // 01=FACTURA, 04=NOTA CREDITO
+  secuencial         String
+  claveAcceso        String    @unique
+  fechaEmision       DateTime  @default(now())
+  clienteId          String?
+  tipoIdentificacion String    @default("05")
+  identificacion     String
+  razonSocialCliente String
+  direccionCliente   String?
+  emailCliente       String?
+  subtotal           Float
+  subtotalSinImp     Float
+  descuento          Float     @default(0)
+  iva15              Float     @default(0)
+  propina            Float     @default(0)
+  importeTotal       Float
+  formaPago          String    @default("01")
+  estadoSRI          String    @default("PENDIENTE") // "PENDIENTE" | "FIRMADO" | "AUTORIZADO" | "RECHAZADO"
+  numeroAutorizacion String?
+  fechaAutorizacion  DateTime?
+  xmlFirmado         String?
+  mensajeError       String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([claveAcceso])
+  @@index([estadoSRI])
+}
+
+model Employee {
+  id            String        @id @default(uuid())
+  businessId    String
+  taxId         String
+  fullName      String
+  position      String
+  department    String?
+  phone         String?
+  email         String?
+  hireDate      DateTime      @default(now())
+  baseSalary    Float         @default(460.0)
+  active        Boolean       @default(true)
+  paymentMethod String        @default("TRANSFERENCIA")
+  bankName      String?
+  bankAccount   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  negocio Negocio       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  slips   PayrollSlip[]
+
+  @@unique([businessId, taxId])
+  @@index([businessId])
+}
+
+model PayrollSlip {
+  id              String    @id @default(uuid())
+  businessId      String
+  employeeId      String
+  period          String
+  baseSalary      Float
+  extraHours      Float     @default(0)
+  bonuses         Float     @default(0)
+  advances        Float     @default(0)
+  iessDeduction   Float     @default(0)
+  otherDeductions Float     @default(0)
+  grossSalary     Float
+  netSalary       Float
+  status          String    @default("DRAFT") // "DRAFT" | "APPROVED" | "PAID"
+  paidAt          DateTime?
+  approvedById    String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  negocio  Negocio  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([employeeId])
+  @@index([period])
+}
+

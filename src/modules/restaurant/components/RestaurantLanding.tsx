@@ -225,6 +225,12 @@ function RestaurantLandingContent({
   const miniMapInstanceRef = useRef<any>(null);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && !window.matchMedia('(display-mode: standalone)').matches && !(window.navigator as any).standalone) {
+      try {
+        localStorage.removeItem('pwa_installed');
+      } catch (_) {}
+    }
+
     setIsPWAInstalledState(isPWAInstalled());
     const handlePWAChange = (avail: boolean) => {
       setCanInstallPWA(avail);
@@ -521,518 +527,358 @@ function RestaurantLandingContent({
     }
   };
 
+  // ── Menú agrupado por categoría (en el orden del admin; lo que no tiene categoría va al final) ──
+  const menuSections = React.useMemo(() => {
+    const active = products.filter((p) => p.activo !== false);
+    const byCat: { id: string; nombre: string; items: Product[] }[] = categories
+      .map((c) => ({
+        id: c.id,
+        nombre: c.nombre,
+        items: active.filter((p) => p.categoriaId === c.id || p.categoria?.id === c.id),
+      }))
+      .filter((s) => s.items.length > 0);
+    const used = new Set(byCat.flatMap((s) => s.items.map((p) => p.id)));
+    const rest = active.filter((p) => !used.has(p.id));
+    if (rest.length) byCat.push({ id: 'otros', nombre: byCat.length ? 'Otros' : 'Nuestro menú', items: rest });
+    return byCat;
+  }, [products, categories]);
+
+  const [activeMenuSection, setActiveMenuSection] = useState<string>('');
+  useEffect(() => {
+    if (activeNavTab !== 'inicio' || menuSections.length < 2) return;
+    const els = Array.from(document.querySelectorAll('[data-menu-section]')) as HTMLElement[];
+    if (!els.length) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveMenuSection((visible[0].target as HTMLElement).dataset.menuSection || '');
+      },
+      { rootMargin: '-140px 0px -55% 0px' }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [activeNavTab, menuSections]);
+
+  const scrollToMenuSection = (id: string) => {
+    setActiveMenuSection(id);
+    document.getElementById(`menu-sec-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // ── Abierto / cerrado según el horario configurado ──
+  const openInfo = React.useMemo(() => {
+    const ap = String(negocio?.horarioApertura || '');
+    const ci = String(negocio?.horarioCierre || '');
+    const toMin = (t: string) => {
+      const m = t.match(/^(\d{1,2}):(\d{2})/);
+      return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+    };
+    const a = toMin(ap), c = toMin(ci);
+    if (a === null || c === null) return { open: true, label: 'Abierto' };
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const open = c > a ? cur >= a && cur < c : cur >= a || cur < c;
+    return open ? { open, label: `Abierto · cierra ${ci.slice(0, 5)}` } : { open, label: `Cerrado · abre ${ap.slice(0, 5)}` };
+  }, [negocio?.horarioApertura, negocio?.horarioCierre]);
+
+  const defaultDelivery = Number(config?.costoEnvio) || 2.5;
+
   return (
     <div
       style={{ backgroundColor: cn, color: '#0f172a' }}
       className="min-h-screen w-full font-sans antialiased pb-28 select-none md:pt-[84px]"
     >
-      {/* ── 1. BARRA SUPERIOR MÓVIL (HEADER APLICANDO COLOR CONFIGURADO EN EL ADMIN) ── */}
-      <div 
-        style={{ 
-          backgroundColor: headerBg, 
-          borderColor: headerBorder 
-        }}
-        className="block md:hidden sticky top-0 z-30 px-3 sm:px-5 py-3 border-b shadow-xs w-full max-w-4xl mx-auto transition-colors duration-200"
+      {/* ── 1. ENCABEZADO MÓVIL: marca del restaurante + cómo recibir el pedido + carrito ── */}
+      <div
+        style={{ backgroundColor: headerBg, borderColor: headerBorder }}
+        className="block md:hidden sticky top-0 z-30 px-4 py-2.5 border-b w-full"
       >
-        <div className="flex items-center justify-between gap-2">
-          {/* Lado Izquierdo: Menú Hamburguesa + Saludo de Usuario */}
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
+          {negocio?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={negocio.logoUrl} alt="" className="w-10 h-10 rounded-xl object-cover bg-white ring-1 ring-black/5 shrink-0" />
+          ) : (
+            <div style={{ backgroundColor: cp }} className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0">
+              <Utensils className="w-5 h-5" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p style={{ color: headerText }} className="font-bold text-[15px] leading-tight truncate">{negocio?.nombre}</p>
             <button
               type="button"
               onClick={() => setShowChannelModal(true)}
-              style={{ backgroundColor: headerBtnBg, color: headerText }}
-              className="p-2 rounded-xl transition-all border border-transparent cursor-pointer"
+              style={{ color: headerSubText }}
+              className="text-xs font-medium flex items-center gap-1 mt-0.5"
             >
-              <Menu className="w-5 h-5" style={{ color: headerText }} />
-            </button>
-
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span style={{ color: headerText }} className="font-extrabold text-sm tracking-tight">
-                  ¡Hola, {customerData?.nombre || 'Carlos Caicedo'}!
-                </span>
-                <span className="text-sm">👋</span>
-              </div>
-              <p style={{ color: headerSubText }} className="text-[11px] font-medium leading-none mt-0.5">
-                ¿Qué se te antoja hoy?
-              </p>
-            </div>
-          </div>
-
-          {/* Lado Derecho: Notificaciones + Carrito Flotante */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              style={{ backgroundColor: headerBtnBg, color: headerText }}
-              className="relative p-2 rounded-xl transition-all border border-transparent cursor-pointer"
-            >
-              <Bell className="w-4 h-4" style={{ color: headerText }} />
-              <span
-                style={{ backgroundColor: cp, color: '#ffffff' }}
-                className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center shadow-xs"
-              >
-                2
+              {deliveryType === 'DOMICILIO' ? <Truck className="w-3.5 h-3.5" /> : <Store className="w-3.5 h-3.5" />}
+              <span className="truncate max-w-[180px]">
+                {deliveryType === 'DOMICILIO'
+                  ? (customerData?.direccion ? `Entregar en ${customerData.direccion}` : 'Envío a domicilio')
+                  : 'Retiro en el local'}
               </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowCartDrawer(true)}
-              style={{ backgroundColor: headerBtnBg, color: headerText }}
-              className="relative p-2 rounded-xl transition-all border border-transparent cursor-pointer"
-            >
-              <ShoppingBag className="w-4 h-4" style={{ color: headerText }} />
-              {totalItemsCount > 0 && (
-                <span
-                  style={{ backgroundColor: cp, color: '#ffffff' }}
-                  className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full text-[10px] font-black flex items-center justify-center shadow-xs"
-                >
-                  {totalItemsCount}
-                </span>
-              )}
+              <ChevronRight className="w-3 h-3 rotate-90" />
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowCartDrawer(true)}
+            style={{ backgroundColor: headerBtnBg, color: headerText }}
+            className="relative w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            aria-label="Ver mi pedido"
+          >
+            <ShoppingBag className="w-5 h-5" />
+            {totalItemsCount > 0 && (
+              <span style={{ backgroundColor: cp }} className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+                {totalItemsCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
       {/* ── CONTENEDOR PRINCIPAL ── */}
-      <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 pt-3 space-y-4">
+      <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
         {/* ── PESTAÑA 1: INICIO ── */}
         {activeNavTab === 'inicio' && (
           <>
-            {/* BANNER HERO */}
-            <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-800/80 min-h-[165px] sm:min-h-[195px] max-h-[210px] flex items-center bg-slate-950">
-              <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-                <img
-                  src={activeSlide.image}
-                  alt={activeSlide.titleText}
-                  className="w-full h-full object-cover object-center scale-105 transition-all duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/75 to-transparent" />
-              </div>
-
-              {/* Etiqueta Flotante Circular con Precio Dinámico */}
+            {/* PORTADA */}
+            <section className="relative w-full rounded-3xl overflow-hidden bg-slate-900 aspect-[16/10] sm:aspect-[21/8]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                key={activeSlide.image}
+                src={activeSlide.image}
+                alt={activeSlide.titleText}
+                className="absolute inset-0 w-full h-full object-cover animate-in fade-in duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
               {activeSlide.priceLabel && (
-                <div
-                  style={{ backgroundColor: cp, color: '#ffffff' }}
-                  className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
-                >
-                  {activeSlide.hasVariants && (
-                    <span className="text-[8px] uppercase tracking-tighter leading-tight opacity-90">DESDE</span>
-                  )}
-                  <span className="text-xs font-black leading-none">
-                    {activeSlide.priceLabel.replace(/^Desde\s+/i, '')}
-                  </span>
-                </div>
-              )}
-
-              <div className="relative z-10 w-3/4 sm:w-2/3 p-4 sm:p-6 space-y-1.5 flex flex-col justify-center">
-                <span style={{ color: cp }} className="text-[9px] font-black uppercase tracking-widest block">
-                  {activeSlide.tagText}
+                <span style={{ backgroundColor: cp }} className="absolute top-3 right-3 px-3 py-1 rounded-full text-white text-sm font-bold shadow-lg">
+                  {activeSlide.hasVariants ? 'Desde ' : ''}{activeSlide.priceLabel.replace(/^Desde\s+/i, '')}
                 </span>
-
-                <h2 className="text-white text-lg sm:text-xl font-black tracking-tight leading-tight">
-                  {activeSlide.titleText}
-                </h2>
-
+              )}
+              <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
+                <h2 className="text-white text-xl sm:text-3xl font-bold leading-tight max-w-lg">{activeSlide.titleText}</h2>
                 {activeSlide.descText && (
-                  <p className="text-slate-300 text-[10px] font-normal leading-relaxed line-clamp-2 max-w-[260px]">
-                    {activeSlide.descText}
-                  </p>
+                  <p className="text-white/85 text-sm mt-1 line-clamp-2 max-w-md">{activeSlide.descText}</p>
                 )}
-
-                {activeSlide.isButtonEnabled && (
-                  <div className="pt-1">
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  {activeSlide.isButtonEnabled ? (
                     <button
                       type="button"
                       onClick={() => handleHeroButtonClick(activeSlide)}
-                      style={{ backgroundColor: cp, color: '#ffffff' }}
-                      className="px-4 py-1.5 rounded-full text-[11px] font-black text-white shadow-lg flex items-center gap-1 hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                      className="px-4 py-2 rounded-full bg-white text-slate-900 text-sm font-semibold flex items-center gap-1.5 active:scale-95 transition"
                     >
-                      <span>{activeSlide.buttonText}</span>
-                      <ArrowRight className="w-3 h-3" />
+                      {/servicio/i.test(activeSlide.buttonText) ? 'Ver menú' : activeSlide.buttonText}
+                      <ArrowRight className="w-4 h-4" />
                     </button>
-                  </div>
+                  ) : <span />}
+                  {displayHeroSlides.length > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      {displayHeroSlides.map((s, idx) => {
+                        const on = idx === activeSlideIndex;
+                        return (
+                          <button
+                            key={s.id || idx}
+                            type="button"
+                            aria-label={`Portada ${idx + 1}`}
+                            onClick={() => setCurrentSlideIndex(idx)}
+                            className={`h-1.5 rounded-full transition-all ${on ? 'w-5 bg-white' : 'w-1.5 bg-white/50'}`}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* DATOS DEL LOCAL + CÓMO RECIBIR EL PEDIDO */}
+            <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-3.5 space-y-3">
+              <div className="flex items-center gap-2 flex-wrap text-sm">
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${openInfo.open ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${openInfo.open ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                  {openInfo.label}
+                </span>
+                {negocio?.direccion && (
+                  <span className="inline-flex items-center gap-1 text-xs text-slate-500 min-w-0">
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{negocio.direccion}</span>
+                  </span>
                 )}
               </div>
-
-              {displayHeroSlides.length > 1 && (
-                <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
-                  {displayHeroSlides.map((s, idx) => {
-                    const isActive = idx === currentSlideIndex % displayHeroSlides.length;
-                    return (
-                      <button
-                        key={s.id || idx}
-                        type="button"
-                        onClick={() => setCurrentSlideIndex(idx)}
-                        style={{ backgroundColor: isActive ? cp : undefined }}
-                        className={`transition-all duration-300 ${
-                          isActive ? 'w-5 h-1.5 rounded-full shadow-sm' : 'w-1.5 h-1.5 rounded-full bg-white/40 hover:bg-white/70'
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* CATEGORÍAS HORIZONTALES */}
-            <div>
-              <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory('TODOS')}
-                  style={{
-                    borderColor: selectedCategory === 'TODOS' ? cp : '#e2e8f0',
-                    color: selectedCategory === 'TODOS' ? cp : '#334155',
-                    backgroundColor: '#ffffff'
-                  }}
-                  className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs cursor-pointer ${
-                    selectedCategory === 'TODOS' ? 'shadow-md border-2' : ''
-                  }`}
-                >
-                  <span className="text-xl mb-0.5">🍔</span>
-                  <span
-                    style={{ color: selectedCategory === 'TODOS' ? cp : '#334155' }}
-                    className="text-[10px] font-extrabold whitespace-nowrap"
-                  >
-                    Hamburguesas
-                  </span>
-                </button>
-
-                {categories.map((cat) => {
-                  const isActive = selectedCategory === cat.id || selectedCategory === cat.nombre;
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: 'DOMICILIO', label: 'A domicilio', sub: `Envío desde $${defaultDelivery.toFixed(2)}`, Icon: Truck },
+                  { key: 'RETIRO', label: 'Retiro en local', sub: 'Sin costo de envío', Icon: Store },
+                ] as const).map((opt) => {
+                  const on = deliveryType === opt.key;
                   return (
                     <button
-                      key={cat.id}
+                      key={opt.key}
                       type="button"
-                      onClick={() => setSelectedCategory(cat.id)}
-                      style={{
-                        borderColor: isActive ? cp : '#e2e8f0',
-                        color: isActive ? cp : '#334155',
-                        backgroundColor: '#ffffff'
+                      onClick={() => {
+                        setDeliveryType(opt.key as any);
+                        if (opt.key === 'DOMICILIO' && !customerData?.direccion) setShowChannelModal(true);
                       }}
-                      className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs cursor-pointer ${
-                        isActive ? 'shadow-md border-2' : ''
-                      }`}
+                      style={on ? { borderColor: cp, backgroundColor: `${cp}0D` } : undefined}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 text-left transition ${on ? '' : 'border-slate-100 hover:border-slate-200'}`}
                     >
-                      <span className="text-xl mb-0.5">{cat.icono || '🍲'}</span>
-                      <span
-                        style={{ color: isActive ? cp : '#334155' }}
-                        className="text-[10px] font-extrabold whitespace-nowrap"
-                      >
-                        {cat.nombre}
+                      <span style={on ? { backgroundColor: cp, color: '#fff' } : undefined} className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${on ? '' : 'bg-slate-100 text-slate-500'}`}>
+                        <opt.Icon className="w-4 h-4" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-slate-900 leading-tight">{opt.label}</span>
+                        <span className="block text-[11px] text-slate-500 truncate">{opt.sub}</span>
                       </span>
                     </button>
                   );
                 })}
               </div>
-            </div>
+            </section>
 
-            {/* MÓDULO DE BENEFICIOS */}
-            <div
-              style={{ backgroundColor: '#fff8f5', borderColor: 'rgba(254, 215, 170, 0.7)' }}
-              className="rounded-2xl border p-2.5 flex items-center justify-between shadow-2xs text-xs"
-            >
-              <div className="flex items-center gap-2 flex-1 justify-center px-1">
-                <div style={{ color: cp }} className="shrink-0">
-                  <Truck className="w-5 h-5" />
+            {/* PROMOCIONES (solo si existen) */}
+            {displayPromotions.length > 0 && (
+              <section className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Flame style={{ color: cp }} className="w-5 h-5" /> Promociones
+                  </h3>
+                  <button type="button" onClick={() => setActiveNavTab('ofertas')} style={{ color: cp }} className="text-sm font-semibold flex items-center">
+                    Ver todas <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
-                <div className="text-left">
-                  <span style={{ color: '#0f172a' }} className="font-extrabold block leading-tight text-[11px]">
-                    Envío rápido
-                  </span>
-                  <span style={{ color: '#475569' }} className="text-[9px] block leading-none mt-0.5">
-                    30–45 min
-                  </span>
-                </div>
-              </div>
-
-              <div className="h-7 w-[1px] bg-orange-200/60 shrink-0" />
-
-              <div className="flex items-center gap-2 flex-1 justify-center px-1">
-                <div style={{ color: cp }} className="shrink-0">
-                  <Percent className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <span style={{ color: '#0f172a' }} className="font-extrabold block leading-tight text-[11px]">
-                    Promociones
-                  </span>
-                  <span style={{ color: '#475569' }} className="text-[9px] block leading-none mt-0.5">
-                    Todos los días
-                  </span>
-                </div>
-              </div>
-
-              <div className="h-7 w-[1px] bg-orange-200/60 shrink-0" />
-
-              <div className="flex items-center gap-2 flex-1 justify-center px-1">
-                <div style={{ color: cp }} className="shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <span style={{ color: '#0f172a' }} className="font-extrabold block leading-tight text-[11px]">
-                    Pago seguro
-                  </span>
-                  <span style={{ color: '#475569' }} className="text-[9px] block leading-none mt-0.5">
-                    100% protegido
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* SECCIÓN PROMOCIONES Y OFERTAS */}
-            <div className="space-y-3 pt-2 pb-1">
-              <div className="flex items-center justify-between">
-                <h3 style={{ color: '#0f172a' }} className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
-                  <Flame style={{ color: cp }} className="w-5 h-5" />
-                  Promociones Especiales
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setActiveNavTab('ofertas')}
-                  style={{ color: cp }}
-                  className="text-xs font-extrabold hover:underline flex items-center gap-0.5 cursor-pointer"
-                >
-                  <span>Ver todas</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              {displayPromotions.length > 0 ? (
-                <>
-                  {/* Banner de Promociones de Envío / Descuento */}
-                  {promoBannerTitle && (
-                    <div
-                      onClick={handlePromoBannerClick}
-                      style={{ backgroundColor: cs || '#1e293b' }}
-                      className="rounded-2xl p-3.5 text-white shadow-md flex items-center justify-between relative overflow-hidden border border-slate-800 cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all group"
+                <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-none snap-x">
+                  {displayPromotions.map((promo) => (
+                    <button
+                      key={promo.id}
+                      type="button"
+                      onClick={() => handleOpenPromoDetail(promo)}
+                      className="snap-start shrink-0 w-[250px] text-left bg-white rounded-2xl ring-1 ring-slate-100 overflow-hidden active:scale-[0.99] transition"
                     >
-                      <div className="flex items-center gap-3 relative z-10">
-                        <div
-                          style={{ backgroundColor: cp, color: '#ffffff' }}
-                          className="w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0 group-hover:scale-105 transition-transform"
-                        >
-                          <span className="text-[8px] leading-tight">OFERTA</span>
-                          <Percent className="w-4 h-4 mt-0.5 text-white" />
-                        </div>
-                        <div>
-                          <h4 className="font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight text-white group-hover:text-amber-300 transition-colors flex items-center gap-1.5">
-                            <span>{promoBannerTitle}</span>
-                          </h4>
-                          {promoBannerDesc && (
-                            <p style={{ color: cp }} className="text-[11px] font-bold mt-0.5">
-                              {promoBannerDesc}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="relative z-10 shrink-0 flex items-center gap-1.5">
-                        <span
-                          style={{ backgroundColor: `${cp}20`, color: cp, borderColor: `${cp}40` }}
-                          className="px-2.5 py-1 rounded-xl text-[10px] font-black border flex items-center gap-1"
-                        >
-                          <Tag className="w-3 h-3" />
-                          <span>{promoBannerBadge}</span>
+                      <div className="relative h-28 bg-slate-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={promo.image} alt="" className="w-full h-full object-cover" />
+                        <span style={{ backgroundColor: cp }} className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[11px] font-bold text-white">
+                          {promo.badge || 'PROMO'}
                         </span>
-                        <ChevronRight className="w-4 h-4 text-white/70 group-hover:translate-x-1 group-hover:text-white transition-all" />
                       </div>
-                    </div>
-                  )}
-
-                  {/* Carrusel Horizontal de Promociones */}
-                  <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
-                    {displayPromotions.map((promo) => (
-                      <div
-                        key={promo.id}
-                        onClick={() => handleOpenPromoDetail(promo)}
-                        style={{ backgroundColor: '#ffffff' }}
-                        className="rounded-2xl border border-slate-100 shadow-sm p-3 flex items-center gap-3 min-w-[260px] max-w-[290px] shrink-0 hover:shadow-md transition-all relative overflow-hidden cursor-pointer group"
-                      >
-                        <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
-                          <img src={promo.image} alt={promo.title || 'Promoción'} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                          <div style={{ backgroundColor: cp }} className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs">
-                            {promo.badge || 'PROMO'}
-                          </div>
-                        </div>
-
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <h5 style={{ color: '#0f172a' }} className="text-xs font-black truncate group-hover:text-orange-600 transition-colors">
-                            {promo.title}
-                          </h5>
-                          <p style={{ color: '#64748b' }} className="text-[10px] font-medium line-clamp-1">
-                            {promo.description}
-                          </p>
-
-                          <div className="flex items-center justify-between pt-0.5">
-                            <div className="flex items-center gap-1.5">
-                              {promo.price && (
-                                <span style={{ color: cp }} className="text-xs font-black">
-                                  ${promo.price.toFixed(2)}
-                                </span>
-                              )}
-                              {promo.originalPrice && (
-                                <span style={{ color: '#94a3b8' }} className="text-[10px] font-bold line-through">
-                                  ${promo.originalPrice.toFixed(2)}
-                                </span>
-                              )}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenPromoDetail(promo);
-                              }}
-                              style={{ backgroundColor: cp, color: '#ffffff' }}
-                              className="px-2.5 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
-                            >
-                              <Eye className="w-3 h-3 text-white" />
-                              <span>Ver Detalle</span>
-                            </button>
-                          </div>
+                      <div className="p-3">
+                        <p className="text-sm font-semibold text-slate-900 truncate">{promo.title}</p>
+                        <div className="mt-1 flex items-center gap-2">
+                          {promo.price ? <span style={{ color: cp }} className="text-sm font-bold">${Number(promo.price).toFixed(2)}</span> : null}
+                          {promo.originalPrice ? <span className="text-xs text-slate-400 line-through">${Number(promo.originalPrice).toFixed(2)}</span> : null}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div style={{ backgroundColor: '#ffffff' }} className="text-center py-6 rounded-2xl border border-slate-100 p-4 space-y-1">
-                  <Flame className="w-6 h-6 text-slate-300 mx-auto" />
-                  <h4 style={{ color: '#334155' }} className="font-bold text-xs">No hay promociones activas en este momento</h4>
-                  <p style={{ color: '#64748b' }} className="text-[10px]">Consulta nuestro menú principal para ver los platillos disponibles.</p>
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
+              </section>
+            )}
 
-            {/* SECCIÓN RECOMENDADOS PARA TI */}
-            <div id="seccion-menu-productos" className="space-y-3 pt-1">
-              <div className="flex items-center justify-between">
-                <h3 style={{ color: '#0f172a' }} className="text-base sm:text-lg font-black tracking-tight">
-                  Recomendados para ti
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory('TODOS')}
-                  style={{ color: cp }}
-                  className="text-xs font-extrabold flex items-center gap-0.5 hover:underline cursor-pointer"
+            {/* MENÚ COMPLETO POR CATEGORÍAS */}
+            <section id="seccion-menu-productos" className="space-y-3">
+              <h3 className="text-lg font-bold text-slate-900">Menú</h3>
+
+              {menuSections.length > 1 && (
+                <div
+                  style={{ backgroundColor: cn }}
+                  className="sticky top-[61px] md:top-[84px] z-20 -mx-4 px-4 py-2 flex gap-2 overflow-x-auto scrollbar-none"
                 >
-                  <span>Ver todo</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              {filteredProducts.length === 0 ? (
-                <div style={{ backgroundColor: '#ffffff' }} className="text-center py-8 rounded-2xl border border-slate-100 p-6 space-y-2">
-                  <Utensils className="w-8 h-8 text-slate-300 mx-auto" />
-                  <h4 style={{ color: '#334155' }} className="font-bold text-xs">No encontramos platillos disponibles</h4>
-                  <p style={{ color: '#64748b' }} className="text-[11px]">Intenta seleccionar otra categoría.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {filteredProducts.map((prod) => {
-                    const qtyInCart = getItemQuantity(prod.id);
-                    const isFav = !!favorites[prod.id];
-
+                  {menuSections.map((sec) => {
+                    const on = activeMenuSection === sec.id;
                     return (
-                      <div
-                        key={prod.id}
-                        onClick={() => handleOpenProductDetail(prod)}
-                        style={{ backgroundColor: '#ffffff' }}
-                        className="rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all cursor-pointer"
+                      <button
+                        key={sec.id}
+                        type="button"
+                        onClick={() => scrollToMenuSection(sec.id)}
+                        style={on ? { backgroundColor: cp, color: '#fff', borderColor: cp } : undefined}
+                        className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-semibold border transition ${on ? '' : 'bg-white text-slate-600 border-slate-200'}`}
                       >
-                        <div className="relative w-full h-32 sm:h-36 bg-slate-100 overflow-hidden">
-                          {prod.imagenUrl ? (
-                            <img
-                              src={prod.imagenUrl}
-                              alt={prod.nombre}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-2xl">🍲</div>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={(e) => toggleFavorite(prod.id, e)}
-                            className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/40 backdrop-blur-xs text-white hover:bg-slate-900/60 transition-all cursor-pointer"
-                          >
-                            <Heart
-                              className={`w-3.5 h-3.5 transition-colors ${
-                                isFav ? 'fill-red-500 text-red-500' : 'text-white'
-                              }`}
-                            />
-                          </button>
-                        </div>
-
-                        <div className="p-3 flex flex-col flex-1 justify-between space-y-2">
-                          <div>
-                            <h4 style={{ color: '#0f172a' }} className="font-extrabold text-xs line-clamp-1 group-hover:text-orange-600 transition-colors">
-                              {prod.nombre}
-                            </h4>
-                            {prod.descripcion && (
-                              <p style={{ color: '#64748b' }} className="text-[10px] font-medium line-clamp-2 mt-0.5">
-                                {prod.descripcion}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                            <span style={{ color: cp }} className="font-black text-xs sm:text-sm">
-                              ${prod.precio.toFixed(2)}
-                            </span>
-
-                            {qtyInCart > 0 ? (
-                              <div
-                                onClick={(e) => e.stopPropagation()}
-                                className="flex items-center gap-1 bg-slate-100 rounded-xl p-0.5"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => decrementQuantity(prod.id)}
-                                  className="w-5 h-5 bg-white text-slate-700 rounded-lg font-bold text-xs flex items-center justify-center shadow-xs hover:bg-slate-200 cursor-pointer"
-                                >
-                                  -
-                                </button>
-                                <span style={{ color: '#0f172a' }} className="text-[11px] font-black px-1">
-                                  {qtyInCart}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => addToCart({
-                                    id: prod.id,
-                                    nombre: prod.nombre,
-                                    precio: prod.precio,
-                                    imagenUrl: prod.imagenUrl
-                                  })}
-                                  style={{ backgroundColor: cp, color: '#ffffff' }}
-                                  className="w-5 h-5 rounded-lg font-bold text-xs flex items-center justify-center shadow-xs text-white cursor-pointer"
-                                >
-                                  +
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenProductDetail(prod);
-                                }}
-                                style={{ backgroundColor: cp, color: '#ffffff' }}
-                                className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center font-extrabold shadow-md hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
-                              >
-                                <Plus className="w-3.5 h-3.5 text-white" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                        {sec.nombre}
+                      </button>
                     );
                   })}
                 </div>
               )}
-            </div>
+
+              {menuSections.length === 0 ? (
+                <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-8 text-center">
+                  <Utensils className="w-8 h-8 text-slate-300 mx-auto" />
+                  <p className="font-semibold text-slate-800 mt-2">El menú se está preparando</p>
+                  <p className="text-sm text-slate-500">Vuelve pronto para ver nuestros platos.</p>
+                </div>
+              ) : (
+                menuSections.map((sec) => (
+                  <div key={sec.id} id={`menu-sec-${sec.id}`} data-menu-section={sec.id} className="scroll-mt-32 md:scroll-mt-40 space-y-2">
+                    <h4 className="text-base font-bold text-slate-900 pt-2">
+                      {sec.nombre} <span className="text-slate-400 font-normal text-sm">· {sec.items.length}</span>
+                    </h4>
+                    <div className="grid md:grid-cols-2 gap-2.5">
+                      {sec.items.map((prod) => {
+                        const qty = getItemQuantity(prod.id);
+                        const desc = cleanDescriptionText(prod.descripcion);
+                        const hasDeal = prod.precioAnterior && prod.precioAnterior > prod.precio;
+                        return (
+                          <div
+                            key={prod.id}
+                            onClick={() => handleOpenProductDetail(prod)}
+                            className="bg-white rounded-2xl ring-1 ring-slate-100 hover:ring-slate-200 p-3 flex gap-3 cursor-pointer transition"
+                          >
+                            <div className="flex-1 min-w-0 flex flex-col">
+                              <p className="font-semibold text-slate-900 leading-snug">{prod.nombre}</p>
+                              {desc && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{desc}</p>}
+                              <div className="mt-auto pt-2 flex items-center gap-2">
+                                <span className="font-bold text-slate-900">${Number(prod.precio).toFixed(2)}</span>
+                                {hasDeal && <span className="text-xs text-slate-400 line-through">${Number(prod.precioAnterior).toFixed(2)}</span>}
+                                {hasDeal && <span style={{ color: cp, backgroundColor: `${cp}14` }} className="text-[10px] font-bold px-1.5 py-0.5 rounded">OFERTA</span>}
+                              </div>
+                            </div>
+                            <div className="relative shrink-0">
+                              {prod.imagenUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={prod.imagenUrl} alt="" loading="lazy" className="w-24 h-24 rounded-xl object-cover bg-slate-100" />
+                              ) : (
+                                <div className="w-24 h-24 rounded-xl bg-slate-100 flex items-center justify-center">
+                                  <Utensils className="w-6 h-6 text-slate-300" />
+                                </div>
+                              )}
+                              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2" onClick={(e) => e.stopPropagation()}>
+                                {qty > 0 ? (
+                                  <div className="flex items-center bg-white rounded-full shadow-md ring-1 ring-slate-200">
+                                    <button type="button" aria-label="Quitar uno" onClick={() => decrementQuantity(prod.id)} className="w-7 h-7 flex items-center justify-center text-slate-700">
+                                      <Minus className="w-3.5 h-3.5" />
+                                    </button>
+                                    <span className="text-sm font-bold w-5 text-center">{qty}</span>
+                                    <button
+                                      type="button"
+                                      aria-label="Agregar uno"
+                                      onClick={() => addToCart({ id: prod.id, nombre: prod.nombre, precio: prod.precio, imagenUrl: prod.imagenUrl })}
+                                      style={{ color: cp }}
+                                      className="w-7 h-7 flex items-center justify-center"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    aria-label={`Agregar ${prod.nombre}`}
+                                    onClick={() => handleOpenProductDetail(prod)}
+                                    style={{ backgroundColor: cp }}
+                                    className="w-8 h-8 rounded-full text-white shadow-md flex items-center justify-center active:scale-95 transition"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </section>
           </>
         )}
 
@@ -1040,7 +886,7 @@ function RestaurantLandingContent({
         {activeNavTab === 'ofertas' && (
           <div className="space-y-4 pb-6">
             <div className="border-b border-slate-200 pb-3">
-              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Flame style={{ color: cp }} className="w-5 h-5" />
                 Ofertas y Promociones Especiales
               </h2>
@@ -1059,10 +905,10 @@ function RestaurantLandingContent({
                     className="rounded-3xl p-5 text-white shadow-lg flex items-center justify-between relative overflow-hidden border border-slate-800 cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all group"
                   >
                     <div className="space-y-1 relative z-10 max-w-xs">
-                      <span style={{ backgroundColor: cp }} className="text-[9px] font-black text-white px-2 py-0.5 rounded-md uppercase tracking-widest inline-block">
+                      <span style={{ backgroundColor: cp }} className="text-xs font-bold text-white px-2 py-0.5 rounded-md uppercase tracking-wide inline-block">
                         PROMOCIÓN DEL DÍA
                       </span>
-                      <h3 className="text-base sm:text-lg font-black text-white leading-tight group-hover:text-amber-300 transition-colors flex items-center gap-2">
+                      <h3 className="text-base sm:text-lg font-bold text-white leading-tight group-hover:text-amber-300 transition-colors flex items-center gap-2">
                         <span>{promoBannerTitle}</span>
                         <ChevronRight className="w-5 h-5 text-white/70 group-hover:translate-x-1 group-hover:text-white transition-all" />
                       </h3>
@@ -1075,9 +921,9 @@ function RestaurantLandingContent({
 
                     <div
                       style={{ backgroundColor: cp, color: '#ffffff' }}
-                      className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center font-black text-center shadow-xl rotate-[6deg] shrink-0 border-2 border-white/20 group-hover:scale-105 transition-transform"
+                      className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center font-bold text-center shadow-xl rotate-[6deg] shrink-0 border-2 border-white/20 group-hover:scale-105 transition-transform"
                     >
-                      <span className="text-[9px] leading-tight">OFERTA</span>
+                      <span className="text-xs leading-tight">Oferta</span>
                       <Percent className="w-5 h-5" />
                     </div>
                   </div>
@@ -1096,7 +942,7 @@ function RestaurantLandingContent({
                         <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden shrink-0 relative">
                           <img src={promo.image} alt={promo.title || 'Promoción'} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                           {promo.badge && (
-                            <div style={{ backgroundColor: cp }} className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs">
+                            <div style={{ backgroundColor: cp }} className="absolute top-1 left-1 text-xs font-bold text-white px-1.5 py-0.5 rounded-md shadow-xs">
                               {promo.badge}
                             </div>
                           )}
@@ -1115,7 +961,7 @@ function RestaurantLandingContent({
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                         <div className="flex items-center gap-2">
                           {promo.price && (
-                            <span style={{ color: cp }} className="text-base font-black">
+                            <span style={{ color: cp }} className="text-base font-bold">
                               ${promo.price.toFixed(2)}
                             </span>
                           )}
@@ -1133,7 +979,7 @@ function RestaurantLandingContent({
                             handleOpenPromoDetail(promo);
                           }}
                           style={{ backgroundColor: cp, color: '#ffffff' }}
-                          className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+                          className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5 text-white" />
                           <span>Ver Oferta</span>
@@ -1146,7 +992,7 @@ function RestaurantLandingContent({
             ) : (
               <div className="bg-white rounded-3xl p-8 border border-slate-200/80 text-center space-y-2">
                 <Flame className="w-8 h-8 text-slate-300 mx-auto" />
-                <h3 className="text-base font-black text-slate-800">No hay ofertas publicadas actualmente</h3>
+                <h3 className="text-base font-bold text-slate-800">No hay ofertas publicadas actualmente</h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
                   Las promociones especiales y combos creados desde el panel de administración aparecerán en esta sección.
                 </p>
@@ -1159,7 +1005,7 @@ function RestaurantLandingContent({
         {activeNavTab === 'pedidos' && (
           <div className="space-y-4 pb-6">
             <div className="border-b border-slate-200 pb-3">
-              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <ClipboardList style={{ color: cp }} className="w-5 h-5" />
                 Mis Pedidos
               </h2>
@@ -1173,7 +1019,7 @@ function RestaurantLandingContent({
                 <PackageCheck className="w-8 h-8" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-black text-slate-800">¡Tu historial está actualizado!</h3>
+                <h3 className="text-base font-bold text-slate-800">¡Tu historial está actualizado!</h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
                   Tus pedidos confirmados aparecerán en esta sección con su estado en tiempo real.
                 </p>
@@ -1182,7 +1028,7 @@ function RestaurantLandingContent({
                 type="button"
                 onClick={() => setActiveNavTab('inicio')}
                 style={{ backgroundColor: cp, color: '#ffffff' }}
-                className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md active:scale-95 transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-md active:scale-95 transition-all cursor-pointer"
               >
                 Realizar un Pedido
               </button>
@@ -1202,7 +1048,7 @@ function RestaurantLandingContent({
                   <div className="relative shrink-0">
                     <div 
                       style={{ backgroundColor: cp }} 
-                      className="w-16 h-16 rounded-full text-white font-black flex items-center justify-center text-2xl shadow-md border-2 border-white"
+                      className="w-16 h-16 rounded-full text-white font-bold flex items-center justify-center text-2xl shadow-md border-2 border-white"
                     >
                       {displayName ? displayName.charAt(0).toUpperCase() : 'U'}
                     </div>
@@ -1219,11 +1065,11 @@ function RestaurantLandingContent({
                   {/* Información de usuario */}
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-black text-slate-900 leading-snug">
+                      <h3 className="text-base font-bold text-slate-900 leading-snug">
                         {displayName}
                       </h3>
                       {userLevelTag && (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border flex items-center gap-1 ${userLevelTag.color}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1 ${userLevelTag.color}`}>
                           <span>{userLevelTag.icon}</span>
                           <span>{userLevelTag.label}</span>
                         </span>
@@ -1259,11 +1105,11 @@ function RestaurantLandingContent({
                     <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
                       <ShoppingBag size={14} />
                     </span>
-                    <span className="text-[10px] font-black uppercase text-slate-400">Pedidos</span>
+                    <span className="text-xs font-bold uppercase text-slate-400">Pedidos</span>
                   </div>
                   <div>
-                    <span className="text-base font-black text-slate-900 block leading-tight">{realOrdersCount}</span>
-                    <span className="text-[10px] font-medium text-slate-400 block">Realizados</span>
+                    <span className="text-base font-bold text-slate-900 block leading-tight">{realOrdersCount}</span>
+                    <span className="text-xs font-medium text-slate-400 block">Realizados</span>
                   </div>
                 </button>
 
@@ -1276,11 +1122,11 @@ function RestaurantLandingContent({
                     <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
                       <Star size={14} />
                     </span>
-                    <span className="text-[10px] font-black uppercase text-slate-400">Puntos</span>
+                    <span className="text-xs font-bold uppercase text-slate-400">Puntos</span>
                   </div>
                   <div>
-                    <span className="text-base font-black text-slate-900 block leading-tight">{realPointsCount}</span>
-                    <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
+                    <span className="text-base font-bold text-slate-900 block leading-tight">{realPointsCount}</span>
+                    <span className="text-xs font-medium text-slate-400 block">Disponibles</span>
                   </div>
                 </button>
 
@@ -1293,11 +1139,11 @@ function RestaurantLandingContent({
                     <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
                       <Tag size={14} />
                     </span>
-                    <span className="text-[10px] font-black uppercase text-slate-400">Cupones</span>
+                    <span className="text-xs font-bold uppercase text-slate-400">Cupones</span>
                   </div>
                   <div>
-                    <span className="text-base font-black text-slate-900 block leading-tight">{realCuponesCount}</span>
-                    <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
+                    <span className="text-base font-bold text-slate-900 block leading-tight">{realCuponesCount}</span>
+                    <span className="text-xs font-medium text-slate-400 block">Disponibles</span>
                   </div>
                 </button>
               </div>
@@ -1310,12 +1156,12 @@ function RestaurantLandingContent({
                       <MapPin size={18} />
                     </span>
                     <div className="space-y-1">
-                      <span className="text-[11px] font-black uppercase text-slate-500 block tracking-wider">Dirección registrada</span>
-                      <p className="text-xs font-black text-slate-900 leading-snug">
+                      <span className="text-xs font-bold uppercase text-slate-500 block tracking-wider">Dirección registrada</span>
+                      <p className="text-xs font-bold text-slate-900 leading-snug">
                         {displayAddress}
                       </p>
                       {displayReference && (
-                        <p className="text-[11px] text-slate-500 font-medium">Ref: {displayReference}</p>
+                        <p className="text-xs text-slate-500 font-medium">Ref: {displayReference}</p>
                       )}
                     </div>
                   </div>
@@ -1330,10 +1176,10 @@ function RestaurantLandingContent({
                 <button
                   type="button"
                   onClick={() => setShowMapModal(true)}
-                  className="w-full py-3 px-4 bg-red-50 hover:bg-red-100/70 text-red-600 font-black text-xs uppercase tracking-wider rounded-2xl border border-red-100 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 bg-red-50 hover:bg-red-100/70 text-red-600 font-bold text-xs uppercase tracking-wider rounded-2xl border border-red-100 transition-colors cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Compass size={16} />
-                  <span>ACTUALIZAR UBICACIÓN EN EL MAPA</span>
+                  <span>Actualizar ubicación en el mapa</span>
                 </button>
               </div>
 
@@ -1343,15 +1189,22 @@ function RestaurantLandingContent({
             <div className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 rounded-3xl p-4.5 text-white shadow-lg space-y-3 relative overflow-hidden">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-2xl shrink-0 shadow-inner">
-                    📱
+                  <div className="w-12 h-12 rounded-2xl bg-white p-1.5 backdrop-blur-md border border-white/40 flex items-center justify-center shrink-0 shadow-md overflow-hidden">
+                    <img
+                      src={negocio?.logoUrl || '/citiox-icon.png'}
+                      alt={negocio?.nombre || 'CitiOx'}
+                      className="w-full h-full object-contain rounded-xl"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/citiox-icon.png';
+                      }}
+                    />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-200 block">App del Restaurante</span>
-                    <h4 className="text-sm font-black text-white leading-tight">
+                    <span className="text-xs font-bold uppercase tracking-wide text-amber-200 block">App del Restaurante</span>
+                    <h4 className="text-sm font-bold text-white leading-tight">
                       {isPWAInstalledState ? '¡Ya tienes la App instalada!' : `Descarga la App de ${negocio?.nombre || 'nuestro restaurante'}`}
                     </h4>
-                    <p className="text-[11px] text-white/90 font-medium leading-tight mt-0.5">
+                    <p className="text-xs text-white/90 font-medium leading-tight mt-0.5">
                       {isPWAInstalledState 
                         ? 'Disfruta de la máxima velocidad al pedir tu comida y notificaciones en tiempo real.' 
                         : 'Instala nuestra aplicación oficial para pedir en 1-clic, seguir el estado de tu pedido en vivo y obtener ofertas exclusivas.'}
@@ -1364,13 +1217,13 @@ function RestaurantLandingContent({
                 <button
                   type="button"
                   onClick={handleInstallPWA}
-                  className="w-full py-3 bg-white hover:bg-slate-50 text-red-600 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-95 border border-white"
+                  className="w-full py-3 bg-white hover:bg-slate-50 text-red-600 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-95 border border-white"
                 >
                   <Smartphone size={16} />
                   <span>Instalar App Gratis en mi Celular</span>
                 </button>
               ) : (
-                <div className="py-2 px-3 bg-white/15 rounded-xl border border-white/20 flex items-center justify-center gap-2 text-[11px] font-bold text-emerald-200">
+                <div className="py-2 px-3 bg-white/15 rounded-xl border border-white/20 flex items-center justify-center gap-2 text-xs font-bold text-emerald-200">
                   <CheckCircle2 size={15} />
                   <span>App lista y activa en tu dispositivo</span>
                 </div>
@@ -1379,7 +1232,7 @@ function RestaurantLandingContent({
 
             {/* LISTADO DE OPCIONES "MI CUENTA" */}
             <div className="bg-white rounded-3xl p-2 shadow-xs border border-slate-200 space-y-1">
-              <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider px-4 pt-3 pb-1">Mi cuenta</h3>
+              <h3 className="text-xs font-bold uppercase text-slate-900 tracking-wider px-4 pt-3 pb-1">Mi cuenta</h3>
 
               {[
                 { id: 'personal_info', label: 'Información personal', desc: 'Actualiza tus datos personales', icon: User, color: 'bg-red-50 text-red-600' },
@@ -1402,8 +1255,8 @@ function RestaurantLandingContent({
                         <IconComponent size={18} />
                       </span>
                       <div>
-                        <span className="text-xs font-black text-slate-900 block leading-tight">{item.label}</span>
-                        <span className="text-[11px] text-slate-500 font-medium block mt-0.5">{item.desc}</span>
+                        <span className="text-xs font-bold text-slate-900 block leading-tight">{item.label}</span>
+                        <span className="text-xs text-slate-500 font-medium block mt-0.5">{item.desc}</span>
                       </div>
                     </div>
 
@@ -1424,13 +1277,13 @@ function RestaurantLandingContent({
             type="button"
             onClick={() => setShowCartDrawer(true)}
             style={{ backgroundColor: cp, color: '#ffffff' }}
-            className="pointer-events-auto w-full py-3 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-2xl hover:opacity-95 active:scale-95 transition-all text-white cursor-pointer"
+            className="pointer-events-auto w-full py-3 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-between shadow-2xl hover:opacity-95 active:scale-95 transition-all text-white cursor-pointer"
           >
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-4 h-4 text-white" />
               <span>Ver mi pedido ({totalItemsCount})</span>
             </div>
-            <span className="text-xs font-black">${total.toFixed(2)}</span>
+            <span className="text-xs font-bold">${total.toFixed(2)}</span>
           </button>
         </div>
       )}
@@ -1446,7 +1299,7 @@ function RestaurantLandingContent({
         <button
           type="button"
           onClick={() => setActiveNavTab('inicio')}
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors cursor-pointer"
+          className="flex flex-col items-center gap-0.5 text-xs font-bold transition-colors cursor-pointer"
           style={{ color: activeNavTab === 'inicio' ? cp : navUnselectedText }}
         >
           <Home className="w-4 h-4" />
@@ -1456,7 +1309,7 @@ function RestaurantLandingContent({
         <button
           type="button"
           onClick={() => setActiveNavTab('ofertas')}
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors cursor-pointer"
+          className="flex flex-col items-center gap-0.5 text-xs font-bold transition-colors cursor-pointer"
           style={{ color: activeNavTab === 'ofertas' ? cp : navUnselectedText }}
         >
           <Tag className="w-4 h-4" />
@@ -1466,7 +1319,7 @@ function RestaurantLandingContent({
         <button
           type="button"
           onClick={() => setActiveNavTab('pedidos')}
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors cursor-pointer"
+          className="flex flex-col items-center gap-0.5 text-xs font-bold transition-colors cursor-pointer"
           style={{ color: activeNavTab === 'pedidos' ? cp : navUnselectedText }}
         >
           <ClipboardList className="w-4 h-4" />
@@ -1476,7 +1329,7 @@ function RestaurantLandingContent({
         <button
           type="button"
           onClick={() => setActiveNavTab('cuenta')}
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors cursor-pointer"
+          className="flex flex-col items-center gap-0.5 text-xs font-bold transition-colors cursor-pointer"
           style={{ color: activeNavTab === 'cuenta' ? cp : navUnselectedText }}
         >
           <User className="w-4 h-4" />
@@ -1500,7 +1353,7 @@ function RestaurantLandingContent({
         <div className="fixed inset-0 z-[999] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <MapPin style={{ color: cp }} className="w-5 h-5" />
                 Dirección de Entrega
               </h3>
@@ -1518,9 +1371,9 @@ function RestaurantLandingContent({
               <button
                 type="button"
                 onClick={() => setDeliveryType('DOMICILIO')}
-                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  deliveryType === 'DOMICILIO' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
-                }`}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+ deliveryType === 'DOMICILIO' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+ }`}
               >
                 <Truck className="w-4 h-4" style={{ color: deliveryType === 'DOMICILIO' ? cp : undefined }} />
                 <span>A Domicilio</span>
@@ -1528,9 +1381,9 @@ function RestaurantLandingContent({
               <button
                 type="button"
                 onClick={() => setDeliveryType('RETIRO')}
-                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  deliveryType === 'RETIRO' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
-                }`}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+ deliveryType === 'RETIRO' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+ }`}
               >
                 <Store className="w-4 h-4" style={{ color: deliveryType === 'RETIRO' ? cp : undefined }} />
                 <span>Para Llevar</span>
@@ -1545,14 +1398,14 @@ function RestaurantLandingContent({
                     setShowChannelModal(false);
                     setShowMapModal(true);
                   }}
-                  className="w-full py-3 px-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+                  className="w-full py-3 px-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
                 >
                   <Navigation className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>📍 Abrir Mapa para Fijar Ubicación y Referencia</span>
                 </button>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-slate-400">Calle / Dirección Exacta *</label>
+                  <label className="text-xs font-bold uppercase text-slate-400">Calle / Dirección Exacta *</label>
                   <input
                     type="text"
                     placeholder="Ej: Av. Principal #123 y Calle 4"
@@ -1569,7 +1422,7 @@ function RestaurantLandingContent({
                 type="button"
                 onClick={() => setShowChannelModal(false)}
                 style={{ backgroundColor: cp, color: '#ffffff' }}
-                className="w-full py-3 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
+                className="w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
               >
                 Guardar y Continuar
               </button>
@@ -1616,7 +1469,7 @@ function RestaurantLandingContent({
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <User className="w-5 h-5 text-red-600" />
-                <h3 className="font-black text-sm uppercase text-slate-900">Información Personal</h3>
+                <h3 className="font-bold text-sm uppercase text-slate-900">Información Personal</h3>
               </div>
               <button type="button" onClick={() => setAccountActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
                 <X className="w-5 h-5" />
@@ -1625,7 +1478,7 @@ function RestaurantLandingContent({
 
             <form onSubmit={(e) => { e.preventDefault(); setAccountActiveModal(null); }} className="space-y-4 text-xs">
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Nombre Completo</label>
+                <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Nombre Completo</label>
                 <input
                   type="text"
                   required
@@ -1636,7 +1489,7 @@ function RestaurantLandingContent({
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Correo Electrónico</label>
+                <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Correo Electrónico</label>
                 <input
                   type="email"
                   value={customerData?.email || ''}
@@ -1646,7 +1499,7 @@ function RestaurantLandingContent({
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Teléfono Móvil</label>
+                <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Teléfono Móvil</label>
                 <input
                   type="text"
                   value={customerData?.telefono || ''}
@@ -1659,7 +1512,7 @@ function RestaurantLandingContent({
                 <button type="button" onClick={() => setAccountActiveModal(null)} className="py-2.5 px-4 bg-slate-100 text-slate-700 font-bold rounded-xl">
                   Cancelar
                 </button>
-                <button type="submit" style={{ backgroundColor: cp }} className="py-2.5 px-5 text-white font-black rounded-xl shadow-md">
+                <button type="submit" style={{ backgroundColor: cp }} className="py-2.5 px-5 text-white font-bold rounded-xl shadow-md">
                   Guardar Cambios
                 </button>
               </div>
@@ -1674,7 +1527,7 @@ function RestaurantLandingContent({
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-red-600" />
-                <h3 className="font-black text-sm uppercase text-slate-900">Métodos de Pago</h3>
+                <h3 className="font-bold text-sm uppercase text-slate-900">Métodos de Pago</h3>
               </div>
               <button type="button" onClick={() => setAccountActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
                 <X className="w-5 h-5" />
@@ -1686,8 +1539,8 @@ function RestaurantLandingContent({
                 <div className="flex items-center gap-3">
                   <span className="text-xl">💵</span>
                   <div>
-                    <span className="font-black text-slate-900 block">Efectivo al Recibir</span>
-                    <span className="text-[10px] text-slate-400 font-medium">Pago directo al entregador</span>
+                    <span className="font-bold text-slate-900 block">Efectivo al Recibir</span>
+                    <span className="text-xs text-slate-400 font-medium">Pago directo al entregador</span>
                   </div>
                 </div>
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
@@ -1697,15 +1550,15 @@ function RestaurantLandingContent({
                 <div className="flex items-center gap-3">
                   <span className="text-xl">🏦</span>
                   <div>
-                    <span className="font-black text-slate-900 block">Transferencia Bancaria</span>
-                    <span className="text-[10px] text-slate-400 font-medium">Comprobante por WhatsApp</span>
+                    <span className="font-bold text-slate-900 block">Transferencia Bancaria</span>
+                    <span className="text-xs text-slate-400 font-medium">Comprobante por WhatsApp</span>
                   </div>
                 </div>
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
               </div>
             </div>
 
-            <p className="text-[10px] text-slate-400 italic text-center">
+            <p className="text-xs text-slate-400 text-center">
               🔒 Métodos de pago seguros y protegidos por el establecimiento.
             </p>
           </div>
@@ -1718,7 +1571,7 @@ function RestaurantLandingContent({
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <HelpCircle className="w-5 h-5 text-red-600" />
-                <h3 className="font-black text-sm uppercase text-slate-900">Ayuda y Soporte</h3>
+                <h3 className="font-bold text-sm uppercase text-slate-900">Ayuda y Soporte</h3>
               </div>
               <button type="button" onClick={() => setAccountActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
                 <X className="w-5 h-5" />
@@ -1732,7 +1585,7 @@ function RestaurantLandingContent({
                 href={`https://wa.me/593959997521?text=Hola,%20necesito%20soporte%20con%20mi%20pedido%20en%20${encodeURIComponent(negocio?.nombre || 'Restaurante')}`}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-md flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase rounded-2xl shadow-md flex items-center justify-center gap-2"
               >
                 <MessageSquare size={16} /> Contactar Soporte WhatsApp
               </a>

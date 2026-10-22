@@ -122,7 +122,7 @@ export default function ConfirmacionReservaPage({
         return (
             <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
                 <div className="w-16 h-16 border-4 border-gray-100 border-t-primary animate-spin rounded-full mb-4" style={{ borderTopColor: primaryColor }}></div>
-                <p className="text-sm font-black text-gray-400 uppercase tracking-widest animate-pulse">Confirmando tu reserva...</p>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-wide animate-pulse">Confirmando tu reserva...</p>
             </div>
         );
     }
@@ -168,7 +168,7 @@ export default function ConfirmacionReservaPage({
             
             <div className="w-full max-w-lg space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
                 {/* Header Éxito */}
-                <div className="bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl shadow-gray-200/50 border border-gray-100 text-center relative overflow-hidden">
+                <div className="bg-white rounded-3xl p-8 md:p-10 shadow-2xl shadow-gray-200/50 border border-gray-100 text-center relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-2" style={{ backgroundColor: isCancha ? '#1dc95c' : primaryColor }}></div>
                     <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-5 ring-8 ring-gray-50 shadow-inner overflow-hidden" style={{ backgroundColor: isCancha ? '#1dc95c15' : `${primaryColor}15` }}>
                         {(appointment?.negocio?.logoUrl || appointment?.negocio?.logo) ? (
@@ -184,7 +184,7 @@ export default function ConfirmacionReservaPage({
                         )}
                     </div>
                     
-                    <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter leading-tight italic uppercase">
+                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight leading-tight ">
                         {isConfirmed ? (
                             <>¡{isDental ? 'Cita' : 'Reserva'} <br /> <span className="text-emerald-500">Confirmada!</span></>
                         ) : isCancelled ? (
@@ -205,7 +205,7 @@ export default function ConfirmacionReservaPage({
 
                 {/* NUEVO BLOQUE EXCLUSIVO PARA DENTAL: CITA PENDIENTE DE CONFIRMACIÓN (SIN SEÑA POR DEFECTO) */}
                 {isPending && isDental && !dentalExplicitDeposit && (
-                    <div className="bg-gradient-to-br from-amber-50/90 via-white to-sky-50/70 rounded-[2.5rem] p-7 border-2 border-amber-200/80 shadow-xl space-y-6 relative overflow-hidden text-left animate-in fade-in duration-300">
+                    <div className="bg-gradient-to-br from-amber-50/90 via-white to-sky-50/70 rounded-3xl p-7 border-2 border-amber-200/80 shadow-xl space-y-6 relative overflow-hidden text-left animate-in fade-in duration-300">
                         <div className="absolute top-0 right-0 w-36 h-36 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" style={{ backgroundColor: `${primaryColor}20` }} />
                         
                         <div className="flex items-center justify-between border-b border-amber-100 pb-4">
@@ -217,15 +217,15 @@ export default function ConfirmacionReservaPage({
                                     <Clock size={20} className="animate-pulse" />
                                 </div>
                                 <div>
-                                    <span className="text-[9px] font-black uppercase tracking-widest block leading-none text-amber-700">
+                                    <span className="text-xs font-bold uppercase tracking-wide block leading-none text-amber-700">
                                         ESTADO DE TU CITA
                                     </span>
-                                    <h3 className="text-sm sm:text-base font-black text-slate-900 italic uppercase mt-0.5 tracking-tight">
+                                    <h3 className="text-sm sm:text-base font-bold text-slate-900 uppercase mt-0.5 tracking-tight">
                                         ⏳ CITA PENDIENTE DE CONFIRMACIÓN
                                     </h3>
                                 </div>
                             </div>
-                            <span className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-800 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest shrink-0">
+                            <span className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-800 border border-amber-500/30 text-xs font-bold uppercase tracking-wide shrink-0">
                                 PENDIENTE
                             </span>
                         </div>
@@ -234,7 +234,7 @@ export default function ConfirmacionReservaPage({
                             <p className="text-xs sm:text-sm font-bold text-slate-700 leading-relaxed">
                                 El consultorio ha recibido tu solicitud de cita. Revisarán la disponibilidad y te enviarán la confirmación.
                             </p>
-                            <div className="flex items-center gap-2.5 text-[11px] font-semibold text-slate-600 bg-white/90 p-3.5 rounded-2xl border border-amber-100 shadow-xs">
+                            <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-600 bg-white/90 p-3.5 rounded-2xl border border-amber-100 shadow-xs">
                                 <Sparkles size={16} className="shrink-0 text-amber-500" />
                                 <span>Tu horario queda reservado temporalmente mientras el consultorio revisa la solicitud.</span>
                             </div>
@@ -244,18 +244,18 @@ export default function ConfirmacionReservaPage({
                         {precioTotalNum > 0 && (
                             <div className="pt-3 border-t border-amber-100 flex items-center justify-between">
                                 <div>
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block">
                                         TOTAL ESTIMADO
                                     </span>
-                                    <span className="text-2xl font-black text-slate-900 italic tracking-tight">
+                                    <span className="text-2xl font-bold text-slate-900 tracking-tight">
                                         ${precioTotalNum.toFixed(2)}
                                     </span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block">
                                         PAGO
                                     </span>
-                                    <span className="text-xs font-black uppercase text-amber-800 bg-amber-100/80 px-3 py-1 rounded-full border border-amber-200 inline-block mt-0.5">
+                                    <span className="text-xs font-bold uppercase text-amber-800 bg-amber-100/80 px-3 py-1 rounded-full border border-amber-200 inline-block mt-0.5">
                                         Pendiente en consultorio
                                     </span>
                                 </div>
@@ -266,7 +266,7 @@ export default function ConfirmacionReservaPage({
 
                 {/* TARJETA DE SEÑA / PAGO PARA CONFIRMAR RESERVA (CANCHAS Y OTROS NEGOCIOS CON SEÑA) */}
                 {isPending && (!isDental || dentalExplicitDeposit) && (
-                    <div className="bg-gradient-to-br from-emerald-950 via-slate-900 to-[#07090f] text-white rounded-[2.5rem] p-7 border border-emerald-500/30 shadow-2xl space-y-6 relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-emerald-950 via-slate-900 to-[#07090f] text-white rounded-3xl p-7 border border-emerald-500/30 shadow-2xl space-y-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                         
                         <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -275,20 +275,20 @@ export default function ConfirmacionReservaPage({
                                     <Clock size={18} className="animate-pulse" />
                                 </div>
                                 <div>
-                                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest block leading-none">ACCIÓN REQUERIDA</span>
-                                    <h3 className="text-sm font-black text-white italic uppercase mt-0.5">Seña para Confirmar Reserva</h3>
+                                    <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide block leading-none">Acción requerida</span>
+                                    <h3 className="text-sm font-bold text-white uppercase mt-0.5">Seña para Confirmar Reserva</h3>
                                 </div>
                             </div>
-                            <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest">
+                            <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold uppercase tracking-wide">
                                 {porcentajeSena}% SEÑA
                             </span>
                         </div>
 
                         <div className="flex items-baseline justify-between">
                             <div>
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">MONTO DE SEÑA</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-1">Monto de seña</span>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-4xl font-black text-emerald-400 italic tracking-tighter">${montoSena.toFixed(2)}</span>
+                                    <span className="text-4xl font-bold text-emerald-400 tracking-tight">${montoSena.toFixed(2)}</span>
                                     <span className="text-xs text-slate-400 font-bold">de ${precioTotalNum.toFixed(2)} Total</span>
                                 </div>
                             </div>
@@ -298,7 +298,7 @@ export default function ConfirmacionReservaPage({
                             {paymentUrl && (
                                 <a
                                     href={paymentUrl}
-                                    className="w-full h-15 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs tracking-widest uppercase transition-all shadow-xl shadow-emerald-500/20"
+                                    className="w-full h-15 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-bold rounded-2xl flex items-center justify-center gap-3 text-xs tracking-wide uppercase transition-all shadow-xl shadow-emerald-500/20"
                                 >
                                     <CreditCard size={18} />
                                     PAGAR SEÑA AHORA (${montoSena.toFixed(2)})
@@ -310,7 +310,7 @@ export default function ConfirmacionReservaPage({
                                     href={`https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola! 👋 Acabo de hacer la reserva de las ${appointment?.service?.nombre || 'Cancha'} para el ${appointment?.fecha ? format(new Date(appointment.fecha), "d/MM", { locale: es }) : ''} a las ${appointment?.horaInicio || ''} HS. Mi ID de reserva es #${(appointment?.id || id).slice(-4).toUpperCase()}. Adjunto mi comprobante de seña ($${montoSena.toFixed(2)}).`)}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-full h-14 bg-white/10 hover:bg-white/15 active:scale-95 text-emerald-400 border border-emerald-500/30 font-black rounded-2xl flex items-center justify-center gap-3 text-xs tracking-widest uppercase transition-all"
+                                    className="w-full h-14 bg-white/10 hover:bg-white/15 active:scale-95 text-emerald-400 border border-emerald-500/30 font-bold rounded-2xl flex items-center justify-center gap-3 text-xs tracking-wide uppercase transition-all"
                                 >
                                     <MessageSquare size={18} />
                                     ENVIAR COMPROBANTE DE SEÑA
@@ -322,12 +322,12 @@ export default function ConfirmacionReservaPage({
 
                 {/* Banner de estado PENDIENTE / CONFIRMADO (para negocios que no son Dental sin seña) */}
                 {!error && appointment && isPending && !paymentUrl && (!isDental || dentalExplicitDeposit) && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
+                    <div className="bg-amber-50 border border-amber-200 rounded-3xl px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
                         <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
                             <Clock size={20} className="text-amber-500" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest leading-none mb-1.5">
+                            <p className="text-xs font-bold text-amber-600 uppercase tracking-wide leading-none mb-1.5">
                                 ⏳ Pendiente de Confirmación
                             </p>
                             <p className="text-xs font-bold text-amber-700 leading-relaxed">
@@ -341,22 +341,22 @@ export default function ConfirmacionReservaPage({
                 )}
 
                 {/* Detalles del Turno */}
-                <div className="bg-white rounded-[3rem] p-8 shadow-xl border border-gray-100 space-y-6">
+                <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 space-y-6">
                     <div className="flex items-center gap-2 mb-2">
                         <Sparkles size={14} className={isCancha ? 'text-emerald-500' : ''} style={{ color: isCancha ? '#1dc95c' : primaryColor }} />
-                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide">
                             {isCancha ? 'Resumen de tu Reserva' : 'Resumen de tu Cita'}
                         </h3>
                     </div>
 
                     {error ? (
-                        <div className="bg-red-50 p-6 rounded-[2rem] border border-red-100 text-center">
+                        <div className="bg-red-50 p-6 rounded-3xl border border-red-100 text-center">
                             <AlertCircle className="mx-auto text-red-400 mb-2" size={32} />
                             <p className="text-red-600 font-bold text-sm mb-1">No pudimos cargar los detalles</p>
-                            <p className="text-[10px] text-red-400 uppercase tracking-tighter mb-4">ID: {id}</p>
+                            <p className="text-xs text-red-400 uppercase tracking-tight mb-4">ID: {id}</p>
                             <button 
                                 onClick={() => window.location.reload()}
-                                className="px-6 py-2 bg-white border border-red-200 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-red-50 transition"
+                                className="px-6 py-2 bg-white border border-red-200 text-red-600 rounded-full text-xs font-bold uppercase tracking-wide hover:bg-red-50 transition"
                             >
                                 Reintentar
                             </button>
@@ -364,7 +364,7 @@ export default function ConfirmacionReservaPage({
                     ) : (
                         <div className="space-y-4">
                             {/* Cancha / Servicio */}
-                            <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
+                            <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-gray-100">
                                         {isDental ? (
@@ -376,10 +376,10 @@ export default function ConfirmacionReservaPage({
                                         )}
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide leading-none mb-1">
                                             {isCancha ? 'Cancha' : isDental ? 'Tratamiento' : 'Servicio'}
                                         </p>
-                                        <p className="text-base font-black text-gray-900 leading-none">{appointment?.service?.nombre || (isDental ? 'Tratamiento Dental' : 'Servicio')}</p>
+                                        <p className="text-base font-bold text-gray-900 leading-none">{appointment?.service?.nombre || (isDental ? 'Tratamiento Dental' : 'Servicio')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -389,24 +389,24 @@ export default function ConfirmacionReservaPage({
                                 const packInfo = parsePackInfo(appointment);
                                 if (!packInfo) return null;
                                 return (
-                                    <div className="p-5 bg-gradient-to-br from-indigo-50/90 via-sky-50/70 to-blue-50/80 rounded-[2rem] border-2 border-indigo-200/80 space-y-3 shadow-xs animate-in fade-in duration-300">
+                                    <div className="p-5 bg-gradient-to-br from-indigo-50/90 via-sky-50/70 to-blue-50/80 rounded-3xl border-2 border-indigo-200/80 space-y-3 shadow-xs animate-in fade-in duration-300">
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2">
-                                                <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-indigo-600 text-white shadow-xs">
+                                                <span className="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-600 text-white shadow-xs">
                                                     📦 Pack Promocional
                                                 </span>
-                                                <span className="text-xs font-black text-slate-900 uppercase italic">
+                                                <span className="text-xs font-bold text-slate-900 uppercase ">
                                                     {packInfo.titulo}
                                                 </span>
                                             </div>
                                         </div>
                                         {packInfo.descripcion && (
-                                            <p className="text-[11px] text-slate-600 font-medium leading-relaxed bg-white/70 p-2.5 rounded-xl border border-indigo-100/60">
+                                            <p className="text-xs text-slate-600 font-medium leading-relaxed bg-white/70 p-2.5 rounded-xl border border-indigo-100/60">
                                                 {packInfo.descripcion}
                                             </p>
                                         )}
                                         <div className="space-y-1.5 pt-1">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-indigo-900">
+                                            <p className="text-xs font-bold uppercase tracking-wide text-indigo-900">
                                                 Tratamientos incluidos en esta cita:
                                             </p>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -424,11 +424,11 @@ export default function ConfirmacionReservaPage({
 
                             {/* Fecha y Hora */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100">
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-2">Fecha</p>
+                                <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide leading-none mb-2">Fecha</p>
                                     <div className="flex items-center gap-2">
                                         <Calendar size={14} className={isCancha ? 'text-emerald-500' : ''} style={{ color: isCancha ? '#1dc95c' : primaryColor }} />
-                                        <p className="text-sm font-black text-gray-900 leading-none">
+                                        <p className="text-sm font-bold text-gray-900 leading-none">
                                             {appointment?.fecha ? (() => {
                                                 try {
                                                     const date = new Date(appointment.fecha);
@@ -444,18 +444,18 @@ export default function ConfirmacionReservaPage({
                                         </p>
                                     </div>
                                 </div>
-                                <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100">
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-2">Horario</p>
+                                <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide leading-none mb-2">Horario</p>
                                     <div className="flex items-center gap-2">
                                         <Clock size={14} className={isCancha ? 'text-emerald-500' : ''} style={{ color: isCancha ? '#1dc95c' : primaryColor }} />
-                                        <p className="text-sm font-black text-gray-900 leading-none italic">{appointment?.horaInicio || '--:--'} HS</p>
+                                        <p className="text-sm font-bold text-gray-900 leading-none ">{appointment?.horaInicio || '--:--'} HS</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Especialista (SOLO SI NO ES CANCHA Y TIENE STAFF REAL) */}
                             {!isCancha && appointment?.staff && appointment?.staff?.nombre !== 'Cualquier profesional' && (
-                                <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center gap-4">
+                                <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100 flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                                         {(appointment?.staff?.imageMedia || appointment?.staff?.avatar) ? (
                                             <img 
@@ -470,8 +470,8 @@ export default function ConfirmacionReservaPage({
                                         )}
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">Tu Especialista</p>
-                                        <p className="text-sm font-black text-gray-900 leading-none">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide leading-none mb-1.5">Tu Especialista</p>
+                                        <p className="text-sm font-bold text-gray-900 leading-none">
                                             {appointment?.staff?.name || appointment?.staff?.nombre}
                                         </p>
                                     </div>
@@ -480,16 +480,16 @@ export default function ConfirmacionReservaPage({
 
                             {/* Total Estimado de la Cita */}
                             {precioTotalNum > 0 && (
-                                <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
+                                <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100 flex items-center justify-between">
                                     <div>
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide leading-none mb-1">
                                             {isCancha ? 'Total Reserva' : 'Total Estimado'}
                                         </p>
-                                        <p className="text-base font-black text-gray-900 leading-none">
+                                        <p className="text-base font-bold text-gray-900 leading-none">
                                             ${precioTotalNum.toFixed(2)}
                                         </p>
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-500 bg-white px-3 py-1 rounded-full border border-gray-100">
+                                    <span className="text-xs font-bold text-slate-500 bg-white px-3 py-1 rounded-full border border-gray-100">
                                         {isDental ? 'Pago en consultorio' : 'Tarifa total'}
                                     </span>
                                 </div>
@@ -497,10 +497,10 @@ export default function ConfirmacionReservaPage({
 
                             {/* Ubicación */}
                             {(appointment?.service?.ubicacion || appointment?.negocio?.direccion) && (
-                                <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-start gap-4">
+                                <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100 flex items-start gap-4">
                                     <MapPin size={16} className="text-gray-400 mt-1 shrink-0" />
                                     <div>
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-2">Ubicación</p>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide leading-none mb-2">Ubicación</p>
                                         <p className="text-xs font-bold text-gray-600">
                                             {appointment?.service?.ubicacion?.direccion || appointment?.negocio?.direccion}
                                         </p>
@@ -517,7 +517,7 @@ export default function ConfirmacionReservaPage({
                     
                     <Link
                         href={`/${slug}/mis-reservas`}
-                        className="w-full py-6 bg-gray-900 text-white font-black rounded-[2rem] flex items-center justify-center gap-3 hover:bg-gray-800 transition shadow-2xl uppercase text-xs tracking-widest"
+                        className="w-full py-6 bg-gray-900 text-white font-bold rounded-3xl flex items-center justify-center gap-3 hover:bg-gray-800 transition shadow-2xl uppercase text-xs tracking-wide"
                     >
                         {isCancha ? 'Ver todas mis reservas' : 'Ver todas mis citas'}
                         <ArrowRight size={16} />
@@ -525,7 +525,7 @@ export default function ConfirmacionReservaPage({
 
                     <Link
                         href={`/${slug}`}
-                        className="w-full py-5 bg-white text-gray-400 font-bold rounded-[2rem] flex items-center justify-center gap-2 hover:bg-gray-50 transition border border-gray-100 uppercase text-[10px] tracking-[0.2em]"
+                        className="w-full py-5 bg-white text-gray-400 font-bold rounded-3xl flex items-center justify-center gap-2 hover:bg-gray-50 transition border border-gray-100 uppercase text-xs tracking-wide"
                     >
                         Volver al inicio
                     </Link>

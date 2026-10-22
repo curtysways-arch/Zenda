@@ -32,10 +32,10 @@ export default function TorneosPage() {
             <Trophy className="size-7" />
           </div>
           <div>
-            <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2.5 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide bg-amber-500/10 px-2.5 py-0.5 rounded-full">
               Módulo SPORTS_COURTS
             </span>
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white italic tracking-tight mt-1">
+            <h1 className="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
               Torneos & Ligas Deportivas
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
@@ -46,7 +46,7 @@ export default function TorneosPage() {
 
         <button
           onClick={() => alert("🏆 Crear nuevo torneo deportivo")}
-          className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2"
+          className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2"
         >
           <Plus className="size-4" />
           Crear Nuevo Torneo

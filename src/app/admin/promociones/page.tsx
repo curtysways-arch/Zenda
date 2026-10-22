@@ -7,6 +7,7 @@ import { getPromotions } from '@/app/actions/promotionActions';
 import PromocionesHybridView from '@/components/admin/promotions/PromocionesHybridView';
 import { EntitlementsService } from '@/core/entitlements/EntitlementsService';
 import GymPromocionesView from '@/components/admin/gym/GymPromocionesView';
+import PromotionsUpsellWrapper from '@/components/admin/promotions/PromotionsUpsellWrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,11 +83,13 @@ export default async function PromocionesPage() {
     ]);
 
     return (
-      <GymPromocionesView
-        initialPromotions={gymPromos}
-        membershipPlans={membershipPlans}
-        negocio={rawNegocio}
-      />
+      <PromotionsUpsellWrapper>
+        <GymPromocionesView
+          initialPromotions={gymPromos}
+          membershipPlans={membershipPlans}
+          negocio={rawNegocio}
+        />
+      </PromotionsUpsellWrapper>
     );
   }
 
@@ -260,71 +263,92 @@ export default async function PromocionesPage() {
   }
 
   // ── PREPARAR DATOS DE SERVICIOS (Si aplica) ──────────────────────────────────
+  const negocioWithServices = {
+    ...rawNegocio,
+    services: rawNegocio.Service || []
+  };
+
   let formattedServicePromotions: any[] = [];
   if (hasServices) {
     const promotionsData = await getPromotions(negocioId);
 
     formattedServicePromotions = promotionsData.map((promo: any) => ({
+      ...promo,
       id: promo.id,
       titulo: promo.titulo || promo.title || '',
       descripcion: promo.descripcion || promo.description || '',
       imagenUrl: promo.imagenUrl || promo.imageUrl || undefined,
-      estado: promo.estaActivo ? 'activa' : 'inactiva',
+      estado: (promo.estado === 'activa' || promo.estado === 'ACTIVA' || promo.estaActivo) ? 'activa' : (promo.estado === 'caducada' ? 'caducada' : 'borrador'),
       precioPromo: promo.precioPromo || promo.promoPrice || undefined,
-      precioAnterior: promo.Servicio?.precio ? Number(promo.Servicio.precio) : undefined,
-      tipoPromo: promo.tipoDescuento === 'PORCENTAJE' ? `${promo.valorDescuento}% OFF` : `$${promo.valorDescuento} OFF`,
+      precioAnterior: promo.Servicio?.precio ? Number(promo.Servicio.precio) : promo.precioAnterior,
+      tipoPromo: promo.tipoDescuento === 'PORCENTAJE' ? `${promo.valorDescuento}% OFF` : (promo.tipoPromo || `$${promo.valorDescuento || 0} OFF`),
       shareCount: promo._count?.Reserva || 0,
       title: promo.titulo || promo.title || '',
       description: promo.descripcion || promo.description || '',
-      serviceId: promo.servicioId,
-      serviceName: promo.Servicio?.nombre || 'Servicio General',
+      serviceId: promo.servicioId || (promo.services && promo.services[0]?.id),
+      serviceName: promo.Servicio?.nombre || (promo.services && promo.services[0]?.nombre) || 'Servicio General',
       discountType: promo.tipoDescuento === 'PORCENTAJE' ? ('PERCENTAGE' as const) : ('FIXED' as const),
       discountValue: promo.valorDescuento,
       promoPrice: promo.precioPromo || promo.promoPrice || undefined,
       startDate: promo.fechaInicio ? (typeof promo.fechaInicio === 'string' ? promo.fechaInicio : promo.fechaInicio.toISOString()) : undefined,
       endDate: promo.fechaFin ? (typeof promo.fechaFin === 'string' ? promo.fechaFin : promo.fechaFin.toISOString()) : undefined,
-      isActive: Boolean(promo.estaActivo),
+      isActive: Boolean(promo.estado === 'activa' || promo.estado === 'ACTIVA' || promo.estaActivo),
       usageCount: promo._count?.Reserva || 0,
-      imageUrl: promo.imagenUrl || promo.imageUrl || undefined
+      imageUrl: promo.imagenUrl || promo.imageUrl || undefined,
+      services: promo.services || (promo.Servicio ? [promo.Servicio] : []),
+      serviceIds: (promo.services && promo.services.length > 0) ? promo.services.map((s: any) => s.id) : (promo.servicioId ? [promo.servicioId] : []),
+      fechaInicio: promo.fechaInicio,
+      fechaFin: promo.fechaFin,
+      diasValidos: promo.diasValidos,
+      horaInicioValida: promo.horaInicioValida,
+      horaFinValida: promo.horaFinValida,
     }));
   }
 
   // ── RENDERIZADO SEGÚN LA CAPACIDAD DEL NEGOCIO ────────────────────────────────
 
-  // 1. Negocio Híbrido (Servicios + Productos, ej. Aura Spa con Venta de Productos activa o Bubble Wash)
-  if (isHybrid) {
-    const prefersProductPromos = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA' || formattedServicePromotions.length === 0;
+  const renderContent = () => {
+    // 1. Negocio Híbrido (Servicios + Productos, ej. Aura Spa con Venta de Productos activa o Bubble Wash)
+    if (isHybrid) {
+      const prefersProductPromos = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA' || formattedServicePromotions.length === 0;
+      return (
+        <PromocionesHybridView
+          initialServicePromotions={formattedServicePromotions}
+          initialProductPromotions={formattedProductPromotions}
+          products={products}
+          categories={categories}
+          initialMetrics={productMetrics}
+          negocio={negocioWithServices}
+          defaultTab={prefersProductPromos ? "PRODUCTOS" : "SERVICIOS"}
+        />
+      );
+    }
+
+    // 2. Negocio Exclusivo de Servicios (Spa o Peluquería tradicional sin productos)
+    if (hasServices) {
+      return (
+        <PromotionClient
+          initialPromotions={formattedServicePromotions}
+          negocio={negocioWithServices}
+        />
+      );
+    }
+
+    // 3. Negocio Exclusivo de Productos (Restaurante o Tienda tradicional)
     return (
-      <PromocionesHybridView
-        initialServicePromotions={formattedServicePromotions}
-        initialProductPromotions={formattedProductPromotions}
+      <PromotionDashboard
+        initialPromotions={formattedProductPromotions}
         products={products}
         categories={categories}
         initialMetrics={productMetrics}
-        negocio={rawNegocio}
-        defaultTab={prefersProductPromos ? "PRODUCTOS" : "SERVICIOS"}
+        negocio={negocioWithServices}
       />
     );
-  }
+  };
 
-  // 2. Negocio Exclusivo de Servicios (Spa o Peluquería tradicional sin productos)
-  if (hasServices) {
-    return (
-      <PromotionClient
-        initialPromotions={formattedServicePromotions}
-        negocio={rawNegocio}
-      />
-    );
-  }
-
-  // 3. Negocio Exclusivo de Productos (Restaurante o Tienda tradicional)
   return (
-    <PromotionDashboard
-      initialPromotions={formattedProductPromotions}
-      products={products}
-      categories={categories}
-      initialMetrics={productMetrics}
-      negocio={rawNegocio}
-    />
+    <PromotionsUpsellWrapper>
+      {renderContent()}
+    </PromotionsUpsellWrapper>
   );
 }

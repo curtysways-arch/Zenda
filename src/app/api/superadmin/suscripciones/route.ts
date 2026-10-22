@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTeamContext } from "@/lib/admin/teamGuard";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import crypto from "crypto";
-import { getFounderConfig } from "@/lib/services/planService";
+import { getFounderConfig, planService } from "@/lib/services/planService";
+import { addDays, TRIAL_DAYS } from "@/lib/subscription/lifecycle";
 
 async function isSuperAdmin() {
-    const session = await getServerSession(authOptions);
-    console.log("SUPERADMIN_CHECK_SESSION:", JSON.stringify(session?.user || "null"));
-    // Para propósitos de este desarrollo local, permitimos el acceso tal como en las otras APIs de superadmin.
-    return true;
+    // Usuario del equipo Citiox; el permiso de cada acción lo valida el middleware (lib/admin/teamAccessMap)
+    return Boolean(await getTeamContext());
 }
 
 export async function POST(req: NextRequest) {
@@ -65,12 +65,12 @@ export async function POST(req: NextRequest) {
         } else if (action === 'EXTEND' && dias) {
             fechaFin.setDate(fechaFin.getDate() + dias);
             tipoCambio = 'manual';
+        } else if (action === 'START_TRIAL') {
+            // Prueba estándar de 30 días desde hoy
+            fechaFin = addDays(new Date(), TRIAL_DAYS);
         } else if (action === 'CHANGE_PLAN') {
-            if (isAnnual) {
-                fechaFin.setFullYear(fechaFin.getFullYear() + 1);
-            } else {
-                fechaFin.setMonth(fechaFin.getMonth() + 1);
-            }
+            // Cambiar de plan no regala tiempo ni reinicia la prueba: se conservan las fechas
+            if (currentSub?.fechaFin) fechaFin = new Date(currentSub.fechaFin);
             tipoCambio = currentSub
                 ? (newPlan.price > (currentSub.Plan?.price || 0) ? 'upgrade' : 'downgrade')
                 : 'manual';
@@ -84,30 +84,33 @@ export async function POST(req: NextRequest) {
         let lockedPrice: number | null = currentSub?.lockedPrice ?? null;
 
         if (action === 'SET_FOUNDER') {
-            const { founderLockedPrice, founderMax } = await getFounderConfig();
-            const activeFoundersCount = await (prisma.suscripcion as any).count({
-                where: { isFounder: true, estado: { in: ['active', 'activa', 'ACTIVA'] } }
-            });
-            if (activeFoundersCount >= founderMax && !isFounder) {
-                return NextResponse.json({ error: `Ya se alcanzó el límite de ${founderMax} fundadores` }, { status: 400 });
-            }
-            isFounder = true;
+            // Cupos y precio del programa de fundadores del tipo de negocio
             const customPrice = body.lockedPrice !== undefined ? parseFloat(String(body.lockedPrice)) : null;
-            lockedPrice = (customPrice !== null && !isNaN(customPrice)) ? customPrice : founderLockedPrice;
-            if (!founderPosition) {
-                founderPosition = activeFoundersCount + 1;
-            }
+            const r = await planService.grantFounderManually(negocioId, customPrice);
+            if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
+            isFounder = true;
+            founderPosition = r.position ?? null;
+            lockedPrice = r.lockedPrice ?? null;
             tipoCambio = 'set_founder';
         } else if (action === 'REMOVE_FOUNDER') {
+            await planService.removeFounder(negocioId);
             isFounder = false;
             founderPosition = null;
             lockedPrice = null;
             tipoCambio = 'remove_founder';
         }
 
+        // Estado: renovar = activo; iniciar prueba = prueba; cancelar = cancelada.
+        // Cambiar de plan, extender días o marcar fundador conservan el estado actual (una prueba sigue siendo prueba).
         const estadoFinal = action === 'CANCEL'
             ? 'canceled'
-            : (action === 'START_TRIAL' ? 'trial' : 'activa');
+            : action === 'START_TRIAL'
+                ? 'trial'
+                : (action === 'RENEW' || action === 'RENEW_ANNUAL')
+                    ? 'active'
+                    : (currentSub?.estado && !['expired', 'vencida', 'canceled', 'cancelada'].includes(String(currentSub.estado).toLowerCase())
+                        ? currentSub.estado
+                        : (fechaFin > new Date() ? 'active' : (currentSub?.estado || 'trial')));
 
         const suscripcion = await (prisma as any).suscripcion.upsert({
             where: { negocioId },
@@ -118,6 +121,7 @@ export async function POST(req: NextRequest) {
                 isFounder,
                 founderPosition,
                 lockedPrice,
+                trial_inicio: action === 'START_TRIAL' ? new Date() : undefined,
                 trial_fin: action === 'START_TRIAL' ? fechaFin : undefined,
                 updatedAt: new Date()
             },

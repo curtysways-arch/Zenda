@@ -248,11 +248,11 @@ export default function ComboBuilder({
               </button>
             )}
             <Utensils className="size-5 text-amber-500" />
-            <h2 className="text-xl font-black text-slate-900 uppercase italic">
+            <h2 className="text-xl font-bold text-slate-900 ">
               {isEditing ? '✏️ Editar Combo / Pack de Productos' : '✨ Constructor Visual de Combos'}
             </h2>
             {isEditing && (
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-amber-100 text-amber-900 rounded-lg">
+              <span className="text-xs font-bold uppercase px-2 py-0.5 bg-amber-100 text-amber-900 rounded-lg">
                 Editando ID: {initialData.id.slice(0, 10)}...
               </span>
             )}
@@ -273,10 +273,10 @@ export default function ComboBuilder({
             </button>
           )}
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-right">
-            <span className="text-[10px] text-amber-800 font-extrabold uppercase block">Precio Combo Sugerido</span>
-            <span className="text-xl font-black text-amber-600">${comboPrice.toFixed(2)}</span>
+            <span className="text-xs text-amber-800 font-extrabold uppercase block">Precio Combo Sugerido</span>
+            <span className="text-xl font-bold text-amber-600">${comboPrice.toFixed(2)}</span>
             {normalTotalPrice > 0 && (
-              <span className="text-[10px] text-slate-400 line-through block font-bold">Antes: ${normalTotalPrice.toFixed(2)}</span>
+              <span className="text-xs text-slate-400 line-through block font-bold">Antes: ${normalTotalPrice.toFixed(2)}</span>
             )}
           </div>
         </div>
@@ -287,7 +287,7 @@ export default function ComboBuilder({
         <div className="md:col-span-2 space-y-5">
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-1.5">Nombre del Combo / Pack</label>
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">Nombre del Combo / Pack</label>
               <input
                 type="text"
                 value={comboName}
@@ -298,7 +298,7 @@ export default function ComboBuilder({
             </div>
 
             <div>
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-1.5">Descripción Promocional</label>
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">Descripción Promocional</label>
               <input
                 type="text"
                 value={comboDescription}
@@ -309,7 +309,7 @@ export default function ComboBuilder({
             </div>
 
             <div>
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-1.5">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
                 URL de Imagen del Combo (Opcional)
               </label>
               <div className="relative">
@@ -328,10 +328,10 @@ export default function ComboBuilder({
           {/* Filtros de Productos */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider block">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                 Selecciona los Productos Incluidos ({selectedProductIds.length} seleccionados)
               </label>
-              <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+              <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
                 {selectedProductIds.length} artículo{selectedProductIds.length === 1 ? '' : 's'} en el combo
               </span>
             </div>
@@ -365,7 +365,7 @@ export default function ComboBuilder({
             {/* Grid de Productos con scroll */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
               {filteredProducts.length === 0 ? (
-                <div className="col-span-2 py-8 text-center text-slate-400 text-xs italic">
+                <div className="col-span-2 py-8 text-center text-slate-400 text-xs ">
                   No se encontraron productos con ese filtro.
                 </div>
               ) : (
@@ -395,12 +395,12 @@ export default function ComboBuilder({
                         )}
                         <div className="truncate">
                           <span className="font-extrabold text-slate-900 block truncate">{p.nombre}</span>
-                          <span className="text-[10px] text-slate-400 font-semibold">${(Number(p.precio) || 0).toFixed(2)}</span>
+                          <span className="text-xs text-slate-400 font-semibold">${(Number(p.precio) || 0).toFixed(2)}</span>
                         </div>
                       </div>
-                      <span className={`size-6 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
-                        isSelected ? 'bg-amber-500 text-white shadow-xs' : 'bg-slate-200 text-slate-400'
-                      }`}>
+                      <span className={`size-6 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
+ isSelected ? 'bg-amber-500 text-white shadow-xs' : 'bg-slate-200 text-slate-400'
+ }`}>
                         {isSelected ? '✓' : '+'}
                       </span>
                     </div>
@@ -416,7 +416,7 @@ export default function ComboBuilder({
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-amber-400">
               <Sparkles className="size-4" />
-              <span className="text-xs font-black uppercase tracking-wider">Previsualización del Combo</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Previsualización del Combo</span>
             </div>
 
             {/* Imagen del Combo */}
@@ -431,27 +431,27 @@ export default function ComboBuilder({
             )}
 
             <div className="space-y-2">
-              <h3 className="text-lg font-black text-white leading-tight">{comboName || 'Combo Nombre'}</h3>
+              <h3 className="text-lg font-bold text-white leading-tight">{comboName || 'Combo Nombre'}</h3>
               <p className="text-slate-300 text-xs leading-relaxed font-medium">{comboDescription}</p>
             </div>
 
             <div className="bg-white/10 p-3.5 rounded-2xl border border-white/15 space-y-2 text-xs">
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black uppercase text-amber-300 block">
+                <span className="text-xs font-bold uppercase text-amber-300 block">
                   Artículos Incluidos ({selectedProducts.length}):
                 </span>
                 {normalTotalPrice > 0 && (
-                  <span className="text-[10px] text-slate-400 font-mono">
+                  <span className="text-xs text-slate-400 font-mono">
                     Suma: ${normalTotalPrice.toFixed(2)}
                   </span>
                 )}
               </div>
               {selectedProducts.length === 0 ? (
-                <p className="text-slate-400 text-xs italic">Ningún producto seleccionado</p>
+                <p className="text-slate-400 text-xs ">Ningún producto seleccionado</p>
               ) : (
                 <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
                   {selectedProducts.map(p => (
-                    <div key={p.id} className="flex justify-between items-center text-slate-200 font-bold text-[11px] gap-2">
+                    <div key={p.id} className="flex justify-between items-center text-slate-200 font-bold text-xs gap-2">
                       <span className="truncate">• {p.nombre}</span>
                       <span className="text-slate-400 font-mono shrink-0">${(Number(p.precio) || 0).toFixed(2)}</span>
                     </div>
@@ -467,10 +467,10 @@ export default function ComboBuilder({
                 step="0.5"
                 value={comboPrice}
                 onChange={e => setComboPrice(parseFloat(e.target.value) || 0)}
-                className="w-full p-2.5 bg-black/40 border border-amber-500/50 rounded-xl text-right text-xl font-black text-amber-400 focus:outline-none"
+                className="w-full p-2.5 bg-black/40 border border-amber-500/50 rounded-xl text-right text-xl font-bold text-amber-400 focus:outline-none"
               />
               {savings > 0 && (
-                <span className="text-[10px] text-emerald-400 font-extrabold block">
+                <span className="text-xs text-emerald-400 font-extrabold block">
                   🎉 ¡El cliente ahorra ${savings.toFixed(2)}!
                 </span>
               )}
@@ -481,7 +481,7 @@ export default function ComboBuilder({
             <button
               type="button"
               onClick={handleSave}
-              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-xl cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs uppercase rounded-2xl shadow-xl cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2"
             >
               <Check className="size-4" />
               <span>{isEditing ? 'Guardar Cambios del Combo' : 'Guardar & Activar Combo'}</span>

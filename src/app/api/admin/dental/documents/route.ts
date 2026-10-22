@@ -1,101 +1,146 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { getDentalContext, jsonError, cleanText, findOwnedRecord, resolveRecord } from '@/modules/dental/server/context';
+import { clinicalUrlOwner, deleteClinicalFile } from '@/modules/dental/server/clinicalFiles';
 
 export const dynamic = 'force-dynamic';
 
-async function getSessionNegocioId() {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user) return null;
+const TYPES = ['RADIOGRAFIA', 'FOTO_CLINICA', 'EXAMEN', 'CONSENTIMIENTO', 'RECETA', 'OTRO'];
 
-  let negocioId = (session.user as any).negocioId;
-  if (!negocioId && session.user.email) {
-    const u = await prisma.usuario.findUnique({ where: { email: session.user.email } });
-    negocioId = u?.negocioId;
-  }
-  return negocioId || null;
+/** Solo se aceptan archivos subidos por la plataforma (rutas propias) o URLs https. */
+function isSafeUrl(url: string) {
+  return url.startsWith('/') ? !url.startsWith('//') : /^https:\/\//i.test(url);
 }
 
 export async function GET(req: NextRequest) {
   try {
-    const negocioId = await getSessionNegocioId();
-    if (!negocioId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const access = await getDentalContext();
+    if (!access.ok) return access.response;
+    const { negocioId } = access.ctx;
 
     const { searchParams } = new URL(req.url);
+    const where: any = { negocioId };
     const clinicalRecordId = searchParams.get('clinicalRecordId');
-    const tipo = searchParams.get('tipo');
-
-    const whereClause: any = { negocioId };
     if (clinicalRecordId) {
-      whereClause.clinicalRecordId = clinicalRecordId;
+      const rec = await findOwnedRecord(negocioId, clinicalRecordId);
+      if (!rec) return jsonError('Historia clínica no encontrada.', 404);
+      where.clinicalRecordId = rec.id;
     }
-    if (tipo) {
-      whereClause.tipo = tipo;
-    }
+    const tipo = searchParams.get('tipo');
+    if (tipo && TYPES.includes(tipo)) where.tipo = tipo;
 
     const documents = await prisma.clinicalDocument.findMany({
-      where: whereClause,
+      where,
       include: {
-        ClinicalRecord: {
-          include: {
-            Cliente: { select: { id: true, nombre: true } }
-          }
-        }
+        ClinicalRecord: { select: { id: true, clienteId: true, Cliente: { select: { id: true, nombre: true } } } },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 1000,
     });
-
     return NextResponse.json({ success: true, documents });
-  } catch (err: any) {
+  } catch (err) {
     console.error('Error en GET /api/admin/dental/documents:', err);
-    return NextResponse.json({ error: err.message || 'Error interno' }, { status: 500 });
+    return jsonError('No se pudieron cargar los archivos.', 500);
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const negocioId = await getSessionNegocioId();
-    if (!negocioId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const access = await getDentalContext();
+    if (!access.ok) return access.response;
+    const { negocioId } = access.ctx;
+
+    const body = await req.json().catch(() => ({}));
+    const titulo = cleanText(body.titulo, 150);
+    const archivoUrl = cleanText(body.archivoUrl, 1000);
+    if (!titulo) return jsonError('Ponle un nombre al archivo.');
+    if (!archivoUrl || !isSafeUrl(archivoUrl)) return jsonError('El archivo no es válido.');
+    const owner = clinicalUrlOwner(archivoUrl);
+    if (owner && owner !== negocioId) return jsonError('El archivo no pertenece a la clínica.', 403);
+
+    const record = await resolveRecord(negocioId, body);
+    if (!record) return jsonError('Paciente o historia clínica no encontrados.', 404);
+
+    let mediaId: string | null = null;
+    if (body.mediaId) {
+      const media = await prisma.media.findUnique({ where: { id: String(body.mediaId) } }).catch(() => null);
+      // Solo se enlaza si el registro de Media existe; si no, se guarda únicamente la URL.
+      mediaId = media ? String(body.mediaId) : null;
     }
 
-    const body = await req.json();
-    const { clinicalRecordId, mediaId, tipo, titulo, descripcion, archivoUrl, mimeType, tamanoBytes } = body;
-
-    if (!clinicalRecordId || !titulo || !archivoUrl) {
-      return NextResponse.json({ error: 'clinicalRecordId, titulo y archivoUrl son requeridos' }, { status: 400 });
-    }
-
-    // Verificar seguridad: registro clínico pertenece al negocio
-    const record = await prisma.clinicalRecord.findUnique({
-      where: { id: clinicalRecordId },
-      select: { id: true, negocioId: true }
-    });
-
-    if (!record || record.negocioId !== negocioId) {
-      return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
-    }
-
+    const size = Number(body.tamanoBytes);
     const doc = await prisma.clinicalDocument.create({
       data: {
         negocioId,
-        clinicalRecordId,
-        mediaId: mediaId || null,
-        tipo: tipo || 'OTRO',
+        clinicalRecordId: record.id,
+        mediaId,
+        tipo: TYPES.includes(body.tipo) ? body.tipo : 'OTRO',
         titulo,
-        descripcion: descripcion || null,
+        descripcion: cleanText(body.descripcion, 500),
         archivoUrl,
-        mimeType: mimeType || null,
-        tamanoBytes: tamanoBytes || null
-      }
+        mimeType: cleanText(body.mimeType, 100),
+        tamanoBytes: Number.isFinite(size) && size > 0 ? Math.round(size) : null,
+      },
     });
 
-    return NextResponse.json({ success: true, document: doc });
-  } catch (err: any) {
+    await prisma.clinicalRecord.update({ where: { id: record.id }, data: { updatedAt: new Date() } }).catch(() => {});
+
+    return NextResponse.json({ success: true, document: doc }, { status: 201 });
+  } catch (err) {
     console.error('Error en POST /api/admin/dental/documents:', err);
-    return NextResponse.json({ error: err.message || 'Error interno' }, { status: 500 });
+    return jsonError('No se pudo guardar el archivo.', 500);
+  }
+}
+
+/** PATCH — renombrar o cambiar el tipo de un archivo. */
+export async function PATCH(req: NextRequest) {
+  try {
+    const access = await getDentalContext();
+    if (!access.ok) return access.response;
+    const { negocioId } = access.ctx;
+
+    const body = await req.json().catch(() => ({}));
+    const id = typeof body.id === 'string' ? body.id : '';
+    const existing = await prisma.clinicalDocument.findUnique({ where: { id }, select: { negocioId: true } });
+    if (!existing || existing.negocioId !== negocioId) return jsonError('Archivo no encontrado.', 404);
+
+    const data: Record<string, unknown> = {};
+    if (body.titulo !== undefined) {
+      const t = cleanText(body.titulo, 150);
+      if (!t) return jsonError('El nombre no puede quedar vacío.');
+      data.titulo = t;
+    }
+    if (body.tipo !== undefined) {
+      if (!TYPES.includes(body.tipo)) return jsonError('Tipo de archivo no válido.');
+      data.tipo = body.tipo;
+    }
+    if (body.descripcion !== undefined) data.descripcion = cleanText(body.descripcion, 500);
+
+    const doc = await prisma.clinicalDocument.update({ where: { id }, data });
+    return NextResponse.json({ success: true, document: doc });
+  } catch (err) {
+    console.error('Error en PATCH /api/admin/dental/documents:', err);
+    return jsonError('No se pudo actualizar el archivo.', 500);
+  }
+}
+
+/** DELETE — quita el archivo de la ficha del paciente. */
+export async function DELETE(req: NextRequest) {
+  try {
+    const access = await getDentalContext();
+    if (!access.ok) return access.response;
+    const { negocioId } = access.ctx;
+
+    const id = new URL(req.url).searchParams.get('id') || '';
+    const existing = await prisma.clinicalDocument.findUnique({ where: { id }, select: { negocioId: true, archivoUrl: true } });
+    if (!existing || existing.negocioId !== negocioId) return jsonError('Archivo no encontrado.', 404);
+
+    await prisma.clinicalDocument.delete({ where: { id } });
+    // Los archivos privados se borran del disco; los antiguos de /api/media se conservan.
+    await deleteClinicalFile(existing.archivoUrl);
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Error en DELETE /api/admin/dental/documents:', err);
+    return jsonError('No se pudo eliminar el archivo.', 500);
   }
 }

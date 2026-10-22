@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || (session.user as any).role !== 'SUPERADMIN') {
+        const session = await getEffectiveAdminSession();
+        const user = session?.user as any;
+        const role = user?.role;
+        const roles = user?.roles || [];
+        const isSuper = role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'ADMIN' || roles.includes('SUPERADMIN') || user?.isAdminUser;
+        if (!session || !isSuper) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
@@ -45,7 +48,14 @@ export async function GET(req: Request) {
             plansMap[key] = `[ADD-ON] ${name}`;
         }
 
+        const { getLandingDesign } = await import('@/lib/landingDesigns');
         const enrichedPayments = pendingPayments.map(p => {
+            if (p.plan_id.startsWith('LANDING:')) {
+                const design = getLandingDesign(p.plan_id.slice('LANDING:'.length));
+                const label = `[DISEÑO] Página ${design?.nombre || p.plan_id.slice(8)}`;
+                plansMap[p.plan_id] = label;
+                return { ...p, itemType: 'ADDON', itemName: label };
+            }
             const isAddon = p.plan_id.startsWith('ADDON:') || Boolean(addonsMap[p.plan_id]);
             return {
                 ...p,

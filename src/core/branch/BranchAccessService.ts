@@ -49,7 +49,8 @@ export class BranchAccessService {
   public static async requireBranchAccess(
     user: AuthContext | null | undefined,
     businessId: string,
-    branchId: string
+    branchId: string,
+    prismaClient?: any
   ): Promise<void> {
     await this.requireBusinessAccess(user, businessId);
 
@@ -67,10 +68,12 @@ export class BranchAccessService {
       throw new Response('No tienes permisos para operar en todas las sedes simultáneamente', { status: 403 });
     }
 
+    const client = prismaClient || prisma;
+
     // Si es OWNER del negocio, tiene acceso irrestricto a todas las sucursales de su negocio
     if (userRole === 'OWNER' || userRole === 'ADMIN') {
       // Verificar que la sucursal pertenezca efectivamente a su negocio
-      const branch = await prisma.branch.findFirst({
+      const branch = await client.branch.findFirst({
         where: { id: branchId, businessId }
       });
       if (!branch) {
@@ -81,7 +84,7 @@ export class BranchAccessService {
 
     // Para usuarios operativos (STAFF, RECEPCIONISTA, MESERO, etc.):
     // Debe existir un registro explícito en BranchAccess
-    const access = await prisma.branchAccess.findFirst({
+    const access = await client.branchAccess.findFirst({
       where: {
         userId: user!.id,
         branchId,

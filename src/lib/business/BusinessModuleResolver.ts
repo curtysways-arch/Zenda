@@ -22,9 +22,15 @@ export type BusinessModule =
 
 const MODULES_BY_TYPE: Record<string, BusinessModule[]> = {
     RESERVA: ['APPOINTMENTS', 'SERVICES', 'LOYALTY', 'COUPONS'],
+    ODONTOLOGIA: ['APPOINTMENTS', 'SERVICES', 'LOYALTY', 'COUPONS'],
+    DENTAL: ['APPOINTMENTS', 'SERVICES', 'LOYALTY', 'COUPONS'],
+    CLINICA: ['APPOINTMENTS', 'SERVICES', 'LOYALTY', 'COUPONS'],
     PRODUCTOS: ['CATALOG', 'ORDERS', 'DELIVERY', 'LOYALTY', 'COUPONS'],
     RESTAURANT: ['CATALOG', 'ORDERS', 'DELIVERY', 'LOYALTY', 'COUPONS'],  // alias de PRODUCTOS
     SHOE_CARE: ['ORDERS', 'DELIVERY', 'SERVICES', 'LOYALTY', 'COUPONS'],
+    LAVANDERIA: ['ORDERS', 'DELIVERY', 'SERVICES', 'LOYALTY', 'COUPONS'],
+    LAVANDERIAS: ['ORDERS', 'DELIVERY', 'SERVICES', 'LOYALTY', 'COUPONS'],
+    LAUNDRY: ['ORDERS', 'DELIVERY', 'SERVICES', 'LOYALTY', 'COUPONS'],
     SPORTS_COURTS: ['RESERVATIONS', 'ACADEMY', 'ACADEMIA', 'LOYALTY', 'COUPONS'],
     ACADEMIA: ['ACADEMY', 'ACADEMIA', 'COUPONS'],
     GIMNASIO: ['MEMBERSHIPS', 'ACCESS', 'ATTENDANCE', 'LOYALTY', 'COUPONS'],
@@ -53,7 +59,7 @@ export function resolveBusinessModules(tipoNegocio?: string | null): BusinessMod
     if (normalizedType.includes('PRODUCT') || normalizedType.includes('TIENDA') || normalizedType.includes('ECOMMERCE') || normalizedType.includes('COMIDA') || normalizedType.includes('RESTAUR') || normalizedType.includes('FOOD') || normalizedType.includes('DELIVERY')) {
         return MODULES_BY_TYPE['PRODUCTOS'];
     }
-    if (normalizedType.includes('LAVADO') || normalizedType.includes('SNEAKER') || normalizedType.includes('CALZADO') || normalizedType.includes('SHOE')) {
+    if (normalizedType.includes('LAVAD') || normalizedType.includes('LAVANDERIA') || normalizedType.includes('LAUNDR') || normalizedType.includes('SNEAKER') || normalizedType.includes('CALZADO') || normalizedType.includes('SHOE') || normalizedType.includes('WASH') || normalizedType.includes('BUBBLE') || normalizedType.includes('TINTORERIA')) {
         return MODULES_BY_TYPE['SHOE_CARE'];
     }
     if (normalizedType.includes('CANCHA') || normalizedType.includes('SPORT') || normalizedType.includes('PADEL') || normalizedType.includes('FUTBOL')) {

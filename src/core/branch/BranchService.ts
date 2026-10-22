@@ -16,6 +16,8 @@ export interface CreateBranchInput {
   phone?: string;
   email?: string;
   mapUrl?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   imagenUrl?: string;
   horario?: string;
   tieneParqueadero?: boolean;
@@ -33,6 +35,8 @@ export interface UpdateBranchInput {
   phone?: string;
   email?: string;
   mapUrl?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   imagenUrl?: string;
   horario?: string;
   tieneParqueadero?: boolean;
@@ -41,6 +45,24 @@ export interface UpdateBranchInput {
   tieneAccesoFacil?: boolean;
   isDefault?: boolean;
   active?: boolean;
+}
+
+export function extractCoordsFromMapUrl(url?: string | null): { lat: number; lng: number } | null {
+  if (!url) return null;
+  const decoded = decodeURIComponent(url);
+  const match =
+    decoded.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
+    decoded.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/) ||
+    decoded.match(/\/search\/(-?\d+\.\d+),[^\d-]*(-?\d+\.\d+)/) ||
+    decoded.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if (match) {
+    const lat = parseFloat(match[1]);
+    const lng = parseFloat(match[2]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { lat, lng };
+    }
+  }
+  return null;
 }
 
 function slugify(text: string): string {
@@ -155,6 +177,13 @@ export class BranchService {
       if (input.tieneZonaSegura !== undefined) settingsData.tieneZonaSegura = Boolean(input.tieneZonaSegura);
       if (input.tieneAccesoFacil !== undefined) settingsData.tieneAccesoFacil = Boolean(input.tieneAccesoFacil);
 
+      // Extraer coordenadas si vienen de mapUrl o inputs
+      const coordsFromUrl = extractCoordsFromMapUrl(input.mapUrl);
+      const finalLat = input.latitude !== undefined ? input.latitude : coordsFromUrl?.lat;
+      const finalLng = input.longitude !== undefined ? input.longitude : coordsFromUrl?.lng;
+      if (finalLat !== undefined && finalLat !== null) settingsData.latitude = finalLat;
+      if (finalLng !== undefined && finalLng !== null) settingsData.longitude = finalLng;
+
       // Crear la nueva sucursal
       const newBranch = await tx.branch.create({
         data: {
@@ -164,11 +193,27 @@ export class BranchService {
           code: input.code?.trim() || null,
           address: input.address?.trim() || null,
           phone: input.phone?.trim() || null,
+          latitude: finalLat ?? null,
+          longitude: finalLng ?? null,
           isMain: shouldBeMain,
           active: true,
           settings: Object.keys(settingsData).length > 0 ? settingsData : undefined
         }
       });
+
+      // Si es la sucursal matriz/principal, sincronizar la dirección central del negocio
+      if (shouldBeMain && input.address) {
+        try {
+          await tx.negocio.update({
+            where: { id: businessId },
+            data: {
+              direccion: input.address?.trim() || undefined
+            }
+          });
+        } catch (eNegocioSync) {
+          console.warn('[BRANCH_NEGOCIO_SYNC_WARN]', eNegocioSync);
+        }
+      }
 
       // Sincronizar con modelo Ubicacion para retrocompatibilidad con landings/canchas/servicios
       try {
@@ -298,6 +343,15 @@ export class BranchService {
       if (input.tieneZonaSegura !== undefined) existingSettings.tieneZonaSegura = Boolean(input.tieneZonaSegura);
       if (input.tieneAccesoFacil !== undefined) existingSettings.tieneAccesoFacil = Boolean(input.tieneAccesoFacil);
 
+      // Extraer coordenadas si vienen de mapUrl o inputs
+      const coordsFromUrl = input.mapUrl !== undefined ? extractCoordsFromMapUrl(input.mapUrl) : null;
+      const finalLat = input.latitude !== undefined ? input.latitude : (coordsFromUrl ? coordsFromUrl.lat : undefined);
+      const finalLng = input.longitude !== undefined ? input.longitude : (coordsFromUrl ? coordsFromUrl.lng : undefined);
+      if (finalLat !== undefined) existingSettings.latitude = finalLat;
+      if (finalLng !== undefined) existingSettings.longitude = finalLng;
+
+      const isMainBranch = input.isDefault !== undefined ? input.isDefault : existing.isMain;
+
       const updatedBranch = await tx.branch.update({
         where: { id: branchId },
         data: {
@@ -305,11 +359,29 @@ export class BranchService {
           ...(input.code !== undefined ? { code: input.code.trim() || null } : {}),
           ...(input.address !== undefined ? { address: input.address?.trim() || null } : {}),
           ...(input.phone !== undefined ? { phone: input.phone?.trim() || null } : {}),
+          ...(finalLat !== undefined ? { latitude: finalLat } : {}),
+          ...(finalLng !== undefined ? { longitude: finalLng } : {}),
           ...(input.isDefault !== undefined ? { isMain: input.isDefault } : {}),
           ...(input.active !== undefined ? { active: input.active } : {}),
           settings: existingSettings
         }
       });
+
+      // Si es la sucursal matriz, sincronizar los datos principales del negocio
+      if (isMainBranch && (input.address !== undefined || input.phone !== undefined || input.city !== undefined)) {
+        try {
+          await tx.negocio.update({
+            where: { id: businessId },
+            data: {
+              ...(input.address !== undefined ? { direccion: input.address?.trim() || null } : {}),
+              ...(input.phone !== undefined ? { whatsapp: input.phone?.trim() || null } : {}),
+              ...(input.city !== undefined ? { ciudad: input.city?.trim() || null } : {}),
+            }
+          });
+        } catch (eNegocioSync) {
+          console.warn('[BRANCH_NEGOCIO_SYNC_UPDATE_WARN]', eNegocioSync);
+        }
+      }
 
       // Sincronizar con modelo Ubicacion
       try {

@@ -19,7 +19,7 @@ export default function ServiciosImportarPage() {
                     <ArrowLeft size={20} />
                 </Link>
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
                         Importador de Servicios
                     </h1>
                     <p className="text-xs sm:text-sm font-medium text-gray-500">

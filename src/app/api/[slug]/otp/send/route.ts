@@ -29,11 +29,12 @@ export async function POST(
         const digitsOnly = telefono.replace(/\D/g, '');                // Solo dígitos
         const localNoZero = localTelefono.replace(/^0+/, '');          // Sin ceros iniciales
 
-        const tipoNegocio = (negocio as any).tipoNegocio || 'PRODUCTOS';
+        const tipoNegocio = ((negocio as any).tipoNegocio || 'PRODUCTOS').toUpperCase();
         const isGym = tipoNegocio === 'GIMNASIO' || tipoNegocio === 'GYM' || slug.includes('fitness') || slug.includes('gym');
+        const isLaundry = tipoNegocio === 'LAVANDERIA' || tipoNegocio === 'LAVANDERIAS' || tipoNegocio === 'LAUNDRY' || tipoNegocio === 'SHOE_CARE' || slug.includes('lavad') || slug.includes('bubble');
 
-        // Para checkout/adquisición de membresía o registro nuevo, siempre se permite enviar OTP
-        let hasAccess = purpose === 'MEMBERSHIP_CHECKOUT' || isRegistration === true;
+        // Para checkout/adquisición de membresía, registro nuevo, lavanderías o ecommerce, se permite enviar OTP
+        let hasAccess = purpose === 'MEMBERSHIP_CHECKOUT' || isRegistration === true || isLaundry || tipoNegocio === 'PRODUCTOS' || tipoNegocio === 'RESTAURANTE';
 
         if (!hasAccess) {
             try {
@@ -65,13 +66,30 @@ export async function POST(
                         });
                         hasAccess = !!mem || clientes.length > 0;
                     } else {
-                        // Verificar reservas en este negocio
+                        // Verificar reservas en este negocio si es negocio de citas
                         const reservas: any[] = await prisma.$queryRawUnsafe(
                             `SELECT id FROM Reserva WHERE negocioId = '${negocio.id}' AND clienteId IN (${clienteIds.map((id: string) => `'${id}'`).join(',')}) LIMIT 1`
                         );
                         hasAccess = reservas.length > 0;
 
-                        // Si no tiene reservas, buscar inscripciones
+                        // Si no tiene reservas, buscar pedidos
+                        if (!hasAccess) {
+                            const pedidoMatch = await prisma.pedido.findFirst({
+                                where: {
+                                    negocioId: negocio.id,
+                                    OR: [
+                                        { telefonoCliente: telefono },
+                                        { telefonoCliente: localTelefono },
+                                        { telefonoCliente: digitsOnly },
+                                        { telefonoCliente: { endsWith: localNoZero } }
+                                    ]
+                                },
+                                select: { id: true }
+                            });
+                            hasAccess = !!pedidoMatch;
+                        }
+
+                        // Si no tiene reservas ni pedidos, buscar inscripciones
                         if (!hasAccess) {
                             try {
                                 const p = prisma as any;
@@ -90,6 +108,23 @@ export async function POST(
                             } catch (_) {}
                         }
                     }
+                } else {
+                    // Si no está en tabla Cliente, buscar si tiene pedidos registrados
+                    const pedidoMatch = await prisma.pedido.findFirst({
+                        where: {
+                            negocioId: negocio.id,
+                            OR: [
+                                { telefonoCliente: telefono },
+                                { telefonoCliente: localTelefono },
+                                { telefonoCliente: digitsOnly },
+                                { telefonoCliente: { endsWith: localNoZero } }
+                            ]
+                        },
+                        select: { id: true }
+                    });
+                    if (pedidoMatch) {
+                        hasAccess = true;
+                    }
                 }
             } catch (lookupErr) {
                 console.error("[OTP Send] Error buscando cliente:", lookupErr);
@@ -97,10 +132,10 @@ export async function POST(
             }
         }
 
-        if (!hasAccess && tipoNegocio !== 'PRODUCTOS' && tipoNegocio !== 'SHOE_CARE') {
+        if (!hasAccess && tipoNegocio !== 'PRODUCTOS' && !isLaundry) {
             const notFoundMsg = isGym
                 ? "No encontramos una cuenta de socio registrada con este número. Selecciona una membresía para registrarte."
-                : "No encontramos reservas con ese número. Verifica que sea el número con el que agendaste tu cita.";
+                : "No encontramos registros con este número en el sistema.";
             return NextResponse.json({
                 error: notFoundMsg
             }, { status: 404 });

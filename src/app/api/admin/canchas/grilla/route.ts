@@ -4,6 +4,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { CourtBookingService } from '@/modules/sports-courts/services/courtBookingService';
+import { loadBusy } from '@/lib/courts/busy';
+import { overlaps } from '@/lib/courts/slots';
+
+const todayEc = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guayaquil' }).format(new Date());
 
 export async function GET(request: Request) {
   try {
@@ -14,18 +18,30 @@ export async function GET(request: Request) {
 
     const negocioId = (session.user as any).negocioId;
     const { searchParams } = new URL(request.url);
-    const dateStr = searchParams.get('date') || new Date().toISOString().split('T')[0];
+    const dateStr = searchParams.get('date') || todayEc();
 
     const resources = await CourtBookingService.getCourts(negocioId);
     const appointments = await CourtBookingService.getCourtAppointments(negocioId, dateStr);
     const stats = await CourtBookingService.getDailyStats(negocioId, dateStr, resources.length);
+    const [timeoutCfg, negocio] = await Promise.all([
+      prisma.configuracion.findUnique({ where: { clave_negocioId: { clave: 'BOOKING_TIMEOUT', negocioId } } }).catch(() => null),
+      prisma.negocio.findUnique({ where: { id: negocioId }, select: { horarioApertura: true, horarioCierre: true } }),
+    ]);
+    const bookingTimeout = timeoutCfg ? parseInt(timeoutCfg.valor) || 0 : 10;
 
     return NextResponse.json({
       success: true,
       selectedDate: dateStr,
+      today: todayEc(),
       resources,
       appointments,
       stats,
+      settings: {
+        autoConfirm: bookingTimeout === 0,
+        minutosParaConfirmar: bookingTimeout,
+        apertura: negocio?.horarioApertura || '08:00',
+        cierre: negocio?.horarioCierre || '22:00',
+      },
     });
   } catch (error: any) {
     console.error('Error fetching court grid data:', error);
@@ -49,6 +65,13 @@ export async function POST(request: Request) {
       const { fecha, horaInicio, horaFin, canchaId, motivo } = body;
       if (!fecha || !horaInicio || !horaFin || !canchaId) {
         return NextResponse.json({ error: 'Faltan campos para el bloqueo' }, { status: 400 });
+      }
+
+      const own = await prisma.service.findFirst({ where: { id: canchaId, negocioId }, select: { id: true } });
+      if (!own) return NextResponse.json({ error: 'Cancha no encontrada' }, { status: 404 });
+      const ocupado = (await loadBusy(negocioId, fecha, [canchaId])).get(canchaId) || [];
+      if (overlaps(horaInicio, horaFin, ocupado.filter((b) => b.motivo === 'Reservada'))) {
+        return NextResponse.json({ error: 'Hay una reserva en ese horario. Cancélala o muévela antes de bloquear.' }, { status: 409 });
       }
 
       const [year, month, day] = fecha.split('-').map(Number);
@@ -107,6 +130,18 @@ export async function POST(request: Request) {
 
       const [year, month, day] = fecha.split('-').map(Number);
       const fechaUTC = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+
+      const court = await prisma.service.findFirst({ where: { id: canchaId, negocioId }, select: { id: true, precio: true } });
+      if (!court) return NextResponse.json({ error: 'Cancha no encontrada' }, { status: 404 });
+      {
+        const [hh, mm] = cleanHoraInicio.split(':').map(Number);
+        const fin = (hh || 0) * 60 + (mm || 0) + (Number(duracion) || 60);
+        const finStr = horaFin ? normalizeTime(horaFin) : `${String(Math.floor(fin / 60) % 24).padStart(2, '0')}:${String(fin % 60).padStart(2, '0')}`;
+        const ocupado = (await loadBusy(negocioId, fecha, [canchaId])).get(canchaId) || [];
+        if (overlaps(cleanHoraInicio, finStr, ocupado)) {
+          return NextResponse.json({ error: 'Ese horario ya está ocupado en esta cancha.' }, { status: 409 });
+        }
+      }
 
       // Buscar o crear cliente sin que rompa por restricciones únicas
       const rawPhone = (clienteTelefono || '').toString().trim();
@@ -178,6 +213,17 @@ export async function POST(request: Request) {
       });
 
       return NextResponse.json({ success: true, reserva });
+    }
+
+    // Acción: confirmar reservas automáticamente o a mano
+    if (action === 'SET_AUTO_CONFIRM') {
+      const minutos = body.autoConfirm ? 0 : Math.min(240, Math.max(5, Number(body.minutos) || 30));
+      await prisma.configuracion.upsert({
+        where: { clave_negocioId: { clave: 'BOOKING_TIMEOUT', negocioId } },
+        update: { valor: String(minutos) },
+        create: { id: `cfg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, clave: 'BOOKING_TIMEOUT', valor: String(minutos), negocioId },
+      });
+      return NextResponse.json({ success: true, autoConfirm: minutos === 0, minutosParaConfirmar: minutos });
     }
 
     return NextResponse.json({ error: 'Acción no reconocida' }, { status: 400 });

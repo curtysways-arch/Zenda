@@ -11,12 +11,35 @@ export async function getNegocioBySlug(slug: string) {
                     include: {
                         Imagen: true,
                         imageMedia: true,
+                        Staff: {
+                            where: { active: true },
+                            include: { imageMedia: true }
+                        },
                         PromotionToService: {
                             include: {
-                                Promotion: true
+                                Promotion: {
+                                    include: {
+                                        PromotionToService: {
+                                            include: {
+                                                Service: {
+                                                    select: {
+                                                        id: true,
+                                                        nombre: true,
+                                                        duracion: true,
+                                                        precio: true
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
+                },
+                Staff: {
+                    where: { active: true },
+                    include: { imageMedia: true }
                 },
                 Imagen: true
             }
@@ -38,13 +61,59 @@ export async function getNegocioBySlug(slug: string) {
             };
         }
 
+        if (!negocio && (slug === 'demo-canchas' || slug === 'canchas-demo')) {
+            return {
+                id: 'demo-canchas-id',
+                nombre: 'Complejo Deportivo El Dorado',
+                slug: slug,
+                tipoNegocio: 'SPORTS_COURTS',
+                colorPrimario: '#059669',
+                colorSecundario: '#047857',
+                colorTexto: '#ffffff',
+                whatsapp: '0991234567',
+                mostrarPrecios: true,
+                services: [
+                    { id: 'c1', nombre: 'Cancha 1 (Pádel Cristal)', precio: 30, duracion: 90, estaActivo: true },
+                    { id: 'c2', nombre: 'Cancha 2 (Pádel Panorámica)', precio: 30, duracion: 90, estaActivo: true },
+                    { id: 'c3', nombre: 'Cancha Fútbol 7 (Sintética)', precio: 45, duracion: 60, estaActivo: true },
+                ],
+                imagenes: []
+            };
+        }
+
+        if (!negocio && (slug === 'symechas-peluquera' || slug === 'demo-spa')) {
+            return {
+                id: 'demo-servicios-id',
+                nombre: 'Symechas Salón & Spa',
+                slug: slug,
+                tipoNegocio: 'SPA',
+                colorPrimario: '#e11d48',
+                colorSecundario: '#be123c',
+                colorTexto: '#ffffff',
+                whatsapp: '0991234567',
+                mostrarPrecios: true,
+                services: [
+                    { id: 's1', nombre: 'Corte de Cabello & Styling', precio: 15, duracion: 45, estaActivo: true },
+                    { id: 's2', nombre: 'Balayage & Mechas Iluminadas', precio: 65, duracion: 180, estaActivo: true },
+                    { id: 's3', nombre: 'Manicura Spa & Gel Semi', precio: 20, duracion: 60, estaActivo: true },
+                    { id: 's4', nombre: 'Tratamiento Capilar Keratina', precio: 50, duracion: 120, estaActivo: true },
+                ],
+                imagenes: []
+            };
+        }
+
         if (negocio) {
             // Mapear de vuelta a las propiedades originales
             negocio.services = negocio.Service?.map((s: any) => ({
                 ...s,
+                descripcion: s.extraInfo?.descripcion || s.descripcion || '',
+                tiempoEntrega: s.extraInfo?.tiempoEntrega || (s.duracion >= 1440 ? `${Math.round(s.duracion / 1440)} días` : (s.duracion > 60 ? `${Math.round(s.duracion / 60)} hrs` : '48 horas (2 días)')),
+                imagenUrl: s.imageMedia?.url || s.Imagen?.[0]?.url || s.imagenUrl || s.extraInfo?.imagenUrl || '',
                 imagenes: s.Imagen || [],
                 imageMedia: s.imageMedia || null,
-                promociones: s.PromotionToService?.map((pts: any) => pts.Promotion).filter(Boolean) || []
+                Staff: s.Staff || [],
+                promociones: s.PromotionToService?.map((pts: any) => pts.Promotion).filter(Boolean) || [],
+                itemsIncluidos: s.extraInfo?.itemsIncluidos || s.extraInfo?.queIncluye || []
             })) || [];
             negocio.imagenes = negocio.Imagen || [];
             delete negocio.Service;
@@ -138,6 +207,15 @@ export async function getNegocioBySlug(slug: string) {
                 });
 
                 if (branches && branches.length > 0) {
+                    const mainBranch = branches.find((b: any) => b.isMain) || branches[0];
+                    if (mainBranch) {
+                        if (mainBranch.address) negocio.direccion = mainBranch.address;
+                        if (mainBranch.phone) {
+                            negocio.telefono = mainBranch.phone;
+                            negocio.whatsapp = mainBranch.phone;
+                        }
+                    }
+
                     negocio.ubicaciones = branches.map((b: any) => {
                         let settingsObj: any = {};
                         if (typeof b.settings === 'string') {
@@ -152,7 +230,13 @@ export async function getNegocioBySlug(slug: string) {
                             nombre: b.name,
                             direccion: b.address || '',
                             telefono: b.phone || '',
-                            mapUrl: settingsObj.mapUrl || b.address || '',
+                            mapUrl: (settingsObj.mapUrl && (settingsObj.mapUrl.startsWith('http://') || settingsObj.mapUrl.startsWith('https://')))
+                                ? settingsObj.mapUrl
+                                : (b.latitude && b.longitude)
+                                    ? `https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}`
+                                    : (b.address)
+                                        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.address + (settingsObj.city ? `, ${settingsObj.city}` : ''))}`
+                                        : '',
                             imagenUrl: settingsObj.imagenUrl || '',
                             isMain: b.isMain,
                             ciudad: settingsObj.city || negocio.ciudad || ''

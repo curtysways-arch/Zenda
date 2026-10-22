@@ -187,7 +187,7 @@ export default function SuperAdminCuentasClient() {
         <div className="space-y-8">
             <div className="flex justify-between items-center">
                 <div>
-                    <h3 className="text-lg font-bold text-white uppercase tracking-widest italic">
+                    <h3 className="text-lg font-bold text-white tracking-wide ">
                         Cuentas de Recepción
                     </h3>
                     <p className="text-xs text-slate-400 font-medium">
@@ -196,7 +196,7 @@ export default function SuperAdminCuentasClient() {
                 </div>
                 <button
                     onClick={openCreateModal}
-                    className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest px-5 py-3 rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
+                    className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-wide px-5 py-3 rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
                 >
                     <Plus size={16} />
                     Agregar Cuenta
@@ -204,7 +204,7 @@ export default function SuperAdminCuentasClient() {
             </div>
 
             {accounts.length === 0 ? (
-                <div className="bg-slate-900 border border-white/5 rounded-[2rem] p-16 text-center shadow-md flex flex-col items-center justify-center space-y-4">
+                <div className="bg-slate-900 border border-white/5 rounded-2xl p-16 text-center shadow-md flex flex-col items-center justify-center space-y-4">
                     <div className="p-4 bg-white/5 text-slate-400 rounded-full">
                         <Landmark size={36} />
                     </div>
@@ -218,11 +218,11 @@ export default function SuperAdminCuentasClient() {
                     {accounts.map(account => (
                         <div 
                             key={account.id} 
-                            className={`bg-slate-900 border transition-all duration-300 rounded-[2rem] p-6 flex flex-col justify-between space-y-6 ${
-                                account.activo 
-                                    ? 'border-white/5 hover:border-emerald-500/20' 
-                                    : 'border-white/5 opacity-60 hover:opacity-80'
-                            }`}
+                            className={`bg-slate-900 border transition-all duration-300 rounded-2xl p-6 flex flex-col justify-between space-y-6 ${
+ account.activo 
+ ? 'border-white/5 hover:border-emerald-500/20' 
+ : 'border-white/5 opacity-60 hover:opacity-80'
+ }`}
                         >
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-center gap-4">
@@ -238,10 +238,10 @@ export default function SuperAdminCuentasClient() {
                                         )}
                                     </div>
                                     <div>
-                                        <h4 className="text-md font-black text-white uppercase tracking-tight leading-none mb-1">
+                                        <h4 className="text-md font-bold text-white uppercase tracking-tight leading-none mb-1">
                                             {account.banco}
                                         </h4>
-                                        <span className="text-[10px] font-black tracking-widest text-emerald-500 uppercase">
+                                        <span className="text-xs font-bold tracking-wide text-emerald-500 uppercase">
                                             {account.nombreCuenta}
                                         </span>
                                     </div>
@@ -261,7 +261,7 @@ export default function SuperAdminCuentasClient() {
                             </div>
 
                             <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
-                                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Número de Cuenta</span>
+                                <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-0.5">Número de Cuenta</span>
                                 <span className="text-md font-mono font-bold text-white tracking-wider">
                                     {account.numeroCuenta}
                                 </span>
@@ -271,7 +271,7 @@ export default function SuperAdminCuentasClient() {
                                 <button
                                     onClick={() => openEditModal(account)}
                                     disabled={actionLoading}
-                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white font-black text-[10px] uppercase tracking-widest py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/5 transition-all active:scale-95"
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold text-xs uppercase tracking-wide py-3 rounded-xl flex items-center justify-center gap-1.5 border border-white/5 transition-all active:scale-95"
                                 >
                                     <Edit2 size={12} />
                                     Editar
@@ -279,7 +279,7 @@ export default function SuperAdminCuentasClient() {
                                 <button
                                     onClick={() => handleDelete(account.id, account.banco)}
                                     disabled={actionLoading}
-                                    className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-black text-[10px] uppercase tracking-widest py-3 rounded-xl flex items-center justify-center gap-1.5 border border-rose-500/10 transition-all active:scale-95"
+                                    className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-xs uppercase tracking-wide py-3 rounded-xl flex items-center justify-center gap-1.5 border border-rose-500/10 transition-all active:scale-95"
                                 >
                                     <Trash2 size={12} />
                                     Eliminar
@@ -293,14 +293,14 @@ export default function SuperAdminCuentasClient() {
             {/* Modal de Formulario Crear/Editar */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="bg-slate-900 border border-white/10 w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                    <div className="bg-slate-900 border border-white/10 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
                         
                         <div className="p-6 md:p-8 border-b border-white/5 flex justify-between items-center bg-slate-950/20">
                             <div>
-                                <h3 className="text-xl font-black text-white uppercase tracking-tight italic">
+                                <h3 className="text-xl font-bold text-white tracking-tight ">
                                     {editingAccount ? 'Editar Cuenta' : 'Agregar Cuenta'}
                                 </h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mt-1">
                                     Define los parámetros de cobro del sistema
                                 </p>
                             </div>
@@ -315,7 +315,7 @@ export default function SuperAdminCuentasClient() {
                         <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
                             {/* Banco y presets */}
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Banco de la Cuenta *</label>
+                                <label className="block text-xs font-bold uppercase tracking-wide text-slate-400">Banco de la Cuenta *</label>
                                 <select
                                     value={banco}
                                     onChange={e => handlePresetChange(e.target.value)}
@@ -344,7 +344,7 @@ export default function SuperAdminCuentasClient() {
 
                             {/* Logo */}
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Logo del Banco (URL o Base64)</label>
+                                <label className="block text-xs font-bold uppercase tracking-wide text-slate-400">Logo del Banco (URL o Base64)</label>
                                 <input 
                                     type="text"
                                     placeholder="https://ejemplo.com/logo.png o preset cargado"
@@ -356,7 +356,7 @@ export default function SuperAdminCuentasClient() {
 
                             {/* Titular y Tipo */}
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre/Titular de Cuenta *</label>
+                                <label className="block text-xs font-bold uppercase tracking-wide text-slate-400">Nombre/Titular de Cuenta *</label>
                                 <input 
                                     type="text"
                                     placeholder="Ej: Ahorros - CitiOx S.A."
@@ -369,7 +369,7 @@ export default function SuperAdminCuentasClient() {
 
                             {/* Número de Cuenta */}
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Número de Cuenta *</label>
+                                <label className="block text-xs font-bold uppercase tracking-wide text-slate-400">Número de Cuenta *</label>
                                 <input 
                                     type="text"
                                     placeholder="Ej: 2200334455"
@@ -389,7 +389,7 @@ export default function SuperAdminCuentasClient() {
                                     onChange={e => setActivo(e.target.checked)}
                                     className="size-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500 accent-emerald-500 cursor-pointer"
                                 />
-                                <label htmlFor="activo" className="text-xs font-bold text-slate-300 uppercase tracking-widest cursor-pointer select-none">
+                                <label htmlFor="activo" className="text-xs font-bold text-slate-300 uppercase tracking-wide cursor-pointer select-none">
                                     Cuenta Activa y Visible
                                 </label>
                             </div>
@@ -398,7 +398,7 @@ export default function SuperAdminCuentasClient() {
                             <button
                                 type="submit"
                                 disabled={actionLoading}
-                                className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+                                className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-wide py-4 rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
                             >
                                 {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                                 {editingAccount ? 'Actualizar Cuenta' : 'Guardar Cuenta'}

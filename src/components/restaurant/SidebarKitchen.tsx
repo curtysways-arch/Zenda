@@ -31,8 +31,8 @@ export default function SidebarKitchen({ slug, activePath = '/admin' }: SidebarK
             <UtensilsCrossed className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="font-black text-white text-sm tracking-tight leading-tight">Restaurant Studio</h2>
-            <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Business Blueprint</p>
+            <h2 className="font-bold text-white text-sm tracking-tight leading-tight">Restaurant Studio</h2>
+            <p className="text-xs text-amber-400 font-bold uppercase tracking-wider">Business Blueprint</p>
           </div>
         </div>
 
@@ -57,7 +57,7 @@ export default function SidebarKitchen({ slug, activePath = '/admin' }: SidebarK
       </div>
 
       <div className="p-4 border-t border-slate-800/80 text-center">
-        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Citiox Platform v2.0</span>
+        <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">Citiox Platform v2.0</span>
       </div>
     </aside>
   );

@@ -1,622 +1,333 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useEffect, useState, use } from 'react';
 import {
-  Truck,
-  ShieldCheck,
-  Phone,
-  CheckCircle2,
-  AlertCircle,
-  FileText,
-  Camera,
-  Bike,
-  Car,
-  Footprints,
-  User,
-  MapPin,
-  Calendar,
-  Lock,
-  ArrowRight,
-  RefreshCw,
-  UploadCloud,
+  Loader2, Check, ShieldCheck, AlertTriangle, Bike, Car, Footprints, Truck, Camera, ArrowRight, ArrowLeft, Clock, UploadCloud, FileText, X,
 } from 'lucide-react';
 
-interface InvitationData {
-  id: string;
-  status: 'PENDING' | 'USED' | 'EXPIRED';
-  telefono: string;
+type Mode = 'REGISTRO' | 'CORREGIR' | 'UNIRSE' | 'EN_REVISION' | 'APROBADO';
+
+interface InviteData {
+  mode: Mode;
+  negocio: { id: string; nombre: string; logoUrl?: string | null; colorPrimario?: string | null; ciudad?: string | null };
   expiresAt: string;
-  negocio: {
-    id: string;
-    nombre: string;
-    logoUrl?: string;
-    colorPrimario?: string;
-  };
-  resource: {
-    id: string;
-    name: string;
-    profile: {
-      tipoVehiculo?: string;
-      verificationStatus: string;
-      activo?: boolean;
-    };
-  };
+  telefono: string;
+  motivoRechazo: string | null;
+  repartidor: { nombre: string; tipoVehiculo: string; datos: Record<string, string> | null; documentosEnArchivo: string[] };
 }
+
+const VEHICLES = [
+  { id: 'MOTO', label: 'Moto', icon: Bike },
+  { id: 'AUTO', label: 'Auto', icon: Car },
+  { id: 'BICICLETA', label: 'Bicicleta', icon: Bike },
+  { id: 'A_PIE', label: 'A pie', icon: Footprints },
+  { id: 'CAMION', label: 'Camioneta', icon: Truck },
+];
+
+const EMPTY = {
+  name: '', documento: '', fechaNacimiento: '', direccion: '', email: '', contactoEmergencia: '',
+  tipoVehiculo: 'MOTO', marca: '', modelo: '', color: '', placa: '', anio: '',
+  selfieUrl: '', cedulaFrenteUrl: '', cedulaReversoUrl: '', licenciaUrl: '', matriculaUrl: '', fotoVehiculoUrl: '',
+};
+
+const inputCls = 'w-full !px-3 !py-2.5 !text-[15px] !rounded-lg !border !border-slate-200 !bg-white text-slate-900 placeholder:text-slate-400 focus:!border-slate-900 outline-none';
 
 export default function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
+  const [data, setData] = useState<InviteData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode | null>(null);
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState({ ...EMPTY });
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  // Estados de pantalla: 'LOADING' | 'ERROR' | 'WELCOME' | 'OTP' | 'FORM' | 'SUBMITTED'
-  const [step, setStep] = useState<'LOADING' | 'ERROR' | 'WELCOME' | 'OTP' | 'FORM' | 'SUBMITTED'>('LOADING');
-  const [invitation, setInvitation] = useState<InvitationData | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  // OTP state
-  const [otpCode, setOtpCode] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [otpError, setOtpError] = useState('');
-  const [waOtpUrl, setWaOtpUrl] = useState<string | null>(null);
-
-  // Formulario del repartidor
-  const [form, setForm] = useState({
-    name: '',
-    documento: '',
-    fechaNacimiento: '',
-    direccion: '',
-    email: '',
-    contactoEmergencia: '',
-    tipoVehiculo: 'MOTO',
-    vehiculo: '',
-    marca: '',
-    modelo: '',
-    color: '',
-    placa: '',
-    anio: '',
-    // Documentos (URL / Base64 sim)
-    cedulaFrenteUrl: '',
-    cedulaReversoUrl: '',
-    licenciaUrl: '',
-    matriculaUrl: '',
-    fotoVehiculoUrl: '',
-    selfieUrl: '',
-  });
-
-  const [submitting, setSubmitting] = useState(false);
-
-  // Cargar datos de la invitación
   useEffect(() => {
-    async function loadInvitation() {
+    (async () => {
       try {
-        const res = await fetch(`/api/logistics/invitations/${token}`);
-        const data = await res.json();
-
-        if (!res.ok) {
-          setErrorMessage(data.error || 'Invitación inválida');
-          setStep('ERROR');
-        } else {
-          setInvitation(data);
-          setForm(f => ({
-            ...f,
-            name: data.resource.name || '',
-            tipoVehiculo: data.resource.profile?.tipoVehiculo || 'MOTO',
-          }));
-
-          if (data.resource?.profile?.verificationStatus === 'PENDING_VERIFICATION' || data.status === 'USED') {
-            setStep('SUBMITTED');
-          } else {
-            setStep('WELCOME');
-          }
-        }
-      } catch {
-        setErrorMessage('Error conectando con el servidor');
-        setStep('ERROR');
+        const res = await fetch(`/api/logistics/invitations/${token}`, { cache: 'no-store' });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Invitación no válida');
+        setData(d);
+        setMode(d.mode);
+        setForm((f) => ({ ...f, name: d.repartidor.nombre || '', tipoVehiculo: d.repartidor.tipoVehiculo || 'MOTO', ...(d.repartidor.datos || {}) }));
+      } catch (e: any) {
+        setError(e.message);
       }
-    }
-    loadInvitation();
+    })();
   }, [token]);
 
-  // Enviar OTP por WhatsApp
-  const handleSendOtp = async () => {
-    if (!invitation) return;
-    setOtpLoading(true);
-    setOtpError('');
+  const color = data?.negocio.colorPrimario || '#0f172a';
+  const motorizado = ['MOTO', 'AUTO', 'CAMION'].includes(form.tipoVehiculo);
+  const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const upload = async (field: string, file?: File | null) => {
+    if (!file) return;
+    setUploading(field);
+    setFormError(null);
     try {
-      const res = await fetch('/api/auth/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telefono: invitation.telefono,
-          negocioId: invitation.negocio.id,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al enviar OTP');
-      setOtpSent(true);
-      if (data.whatsapp?.url) setWaOtpUrl(data.whatsapp.url);
+      const fd = new FormData();
+      fd.append('token', token);
+      fd.append('docType', field);
+      fd.append('file', file);
+      const res = await fetch('/api/logistics/invitations/upload', { method: 'POST', body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'No se pudo subir el archivo');
+      setForm((f) => ({ ...f, [field]: d.url }));
     } catch (e: any) {
-      setOtpError(e.message || 'Error enviando código de verificación');
+      setFormError(e.message);
     } finally {
-      setOtpLoading(false);
+      setUploading(null);
     }
   };
 
-  // Validar OTP
-  const handleVerifyOtp = async () => {
-    if (!invitation || !otpCode.trim()) return;
-    setOtpLoading(true);
-    setOtpError('');
+  const steps = ['Tus datos', 'Tu vehículo', 'Documentos'];
+  const validateStep = (): string | null => {
+    if (step === 0) {
+      if (form.name.trim().length < 3) return 'Escribe tu nombre completo.';
+      if (form.documento.trim().length < 6) return 'Escribe tu número de cédula.';
+    }
+    if (step === 1 && motorizado && !form.placa.trim()) return 'Escribe la placa de tu vehículo.';
+    if (step === 2) {
+      if (!form.selfieUrl) return 'Falta tu foto de perfil.';
+      if (!form.cedulaFrenteUrl || !form.cedulaReversoUrl) return 'Faltan las fotos de tu cédula (frente y reverso).';
+      if (motorizado && !form.licenciaUrl) return 'Falta la foto de tu licencia.';
+      if (form.tipoVehiculo !== 'A_PIE' && !form.fotoVehiculoUrl) return 'Falta la foto de tu vehículo.';
+    }
+    return null;
+  };
+
+  const next = async () => {
+    const err = validateStep();
+    setFormError(err);
+    if (err) return;
+    if (step < 2) { setStep(step + 1); window.scrollTo({ top: 0 }); return; }
+    setSaving(true);
     try {
-      const res = await fetch('/api/auth/otp', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telefono: invitation.telefono,
-          code: otpCode,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Código incorrecto');
-      setStep('FORM');
+      const res = await fetch(`/api/logistics/invitations/${token}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'No se pudo enviar');
+      setMode('EN_REVISION');
     } catch (e: any) {
-      setOtpError(e.message || 'Código de 6 dígitos inválido');
+      setFormError(e.message);
     } finally {
-      setOtpLoading(false);
+      setSaving(false);
     }
   };
 
-  // Simulación de carga de archivos privadas
-  const handleSimulateFileUpload = (field: string, filename: string) => {
-    const fakeUrl = `/uploads/private/${token}_${field}_${Date.now()}.png`;
-    setForm(f => ({ ...f, [field]: fakeUrl }));
-  };
-
-  // Enviar Expediente Completo (Documentación Obligatoria)
-  const handleSubmitForm = async () => {
-    if (!form.name.trim() || !form.documento.trim()) {
-      alert('Por favor completa tu nombre completo y número de cédula/DNI.');
-      return;
-    }
-
-    if (form.tipoVehiculo !== 'A_PIE' && !form.placa.trim()) {
-      alert('Por favor ingresa la placa de tu vehículo.');
-      return;
-    }
-
-    // Validación OBLIGATORIA de Documentación Adjunta
-    const missingDocs: string[] = [];
-    if (!form.cedulaFrenteUrl) missingDocs.push('Cédula (Frente)');
-    if (!form.cedulaReversoUrl) missingDocs.push('Cédula (Reverso)');
-    if (!form.licenciaUrl && form.tipoVehiculo !== 'A_PIE' && form.tipoVehiculo !== 'BICICLETA') missingDocs.push('Licencia de Conducir');
-    if (!form.fotoVehiculoUrl && form.tipoVehiculo !== 'A_PIE') missingDocs.push('Foto del Vehículo');
-    if (!form.selfieUrl) missingDocs.push('Foto de Perfil / Selfie');
-
-    if (missingDocs.length > 0) {
-      alert(`Adjuntar los documentos es OBLIGATORIO para enviar el expediente.\n\nDocumentos faltantes:\n• ${missingDocs.join('\n• ')}`);
-      return;
-    }
-
-    setSubmitting(true);
+  const respondJoin = async (action: 'confirmar' | 'rechazar') => {
+    setSaving(true);
+    setFormError(null);
     try {
-      const res = await fetch(`/api/logistics/invitations/${token}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error enviando expediente');
-      setStep('SUBMITTED');
+      const res = await fetch(`/api/logistics/invitations/${token}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      if (action === 'confirmar') setMode('EN_REVISION');
+      else setError('Rechazaste la invitación. Puedes cerrar esta página.');
     } catch (e: any) {
-      alert(e.message || 'Error guardando información');
+      setFormError(e.message || 'No se pudo completar.');
     } finally {
-      setSubmitting(false);
+      setSaving(false);
     }
   };
 
-  // ─── RENDER PANTALLAS ───
-
-  if (step === 'LOADING') {
+  if (error) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <RefreshCw className="w-10 h-10 animate-spin text-blue-500 mb-4" />
-        <p className="text-slate-400 font-semibold">Validando invitación...</p>
-      </div>
+      <Shell>
+        <div className="text-center py-10">
+          <div className="size-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto"><AlertTriangle size={22} /></div>
+          <p className="font-semibold text-slate-900 mt-3">{error}</p>
+        </div>
+      </Shell>
     );
   }
+  if (!data || !mode) return <Shell><div className="py-16 flex justify-center"><Loader2 className="animate-spin text-slate-400" /></div></Shell>;
 
-  if (step === 'ERROR') {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center mb-4">
-          <AlertCircle className="w-8 h-8 text-rose-500" />
-        </div>
-        <h2 className="text-2xl font-black text-white mb-2">Enlace inválido o expirado</h2>
-        <p className="text-slate-400 max-w-sm mb-6">{errorMessage}</p>
-        <p className="text-xs text-slate-600">Contacta al administrador del negocio para solicitar un nuevo enlace.</p>
-      </div>
-    );
-  }
-
-  if (step === 'WELCOME') {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center space-y-6 shadow-2xl">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-blue-500/20">
-            <Truck className="w-8 h-8 text-white" />
-          </div>
-
-          <div>
-            <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold rounded-full uppercase tracking-wider">
-              Invitación Oficial
-            </span>
-            <h1 className="text-2xl font-black text-white mt-3">
-              Bienvenido a <span className="text-blue-400">{invitation?.negocio.nombre}</span>
-            </h1>
-            <p className="text-slate-400 text-sm mt-2">
-              Has sido invitado para registrarte como repartidor oficial. Ingresa mediante código OTP para completar tu expediente.
-            </p>
-          </div>
-
-          <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 text-left space-y-2 text-sm">
-            <div className="flex items-center justify-between text-slate-300">
-              <span className="text-slate-500">Invitado:</span>
-              <span className="font-bold text-white">{invitation?.resource.name}</span>
-            </div>
-            <div className="flex items-center justify-between text-slate-300">
-              <span className="text-slate-500">Teléfono:</span>
-              <span className="font-mono text-white">{invitation?.telefono}</span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => { setStep('OTP'); handleSendOtp(); }}
-            className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
-          >
-            Continuar con OTP
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'OTP') {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center space-y-6 shadow-2xl">
-          <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto text-emerald-400">
-            <ShieldCheck className="w-7 h-7" />
-          </div>
-
-          <div>
-            <h2 className="text-xl font-black text-white">Verificación OTP</h2>
-            <p className="text-slate-400 text-sm mt-1">
-              Enviamos un código de 6 dígitos a <span className="text-white font-mono">{invitation?.telefono}</span>
-            </p>
-          </div>
-
-          {waOtpUrl && (
-            <a
-              href={waOtpUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-xl hover:bg-emerald-500/20 transition-colors"
-            >
-              <Phone className="w-4 h-4" />
-              Ver código en WhatsApp
-            </a>
-          )}
-
-          <div className="space-y-4">
-            <input
-              type="text"
-              maxLength={6}
-              value={otpCode}
-              onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
-              placeholder="000000"
-              className="w-full py-4 text-center text-3xl font-mono tracking-[0.5em] bg-slate-800 border border-slate-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-
-            {otpError && (
-              <p className="text-xs text-rose-400 font-semibold">{otpError}</p>
-            )}
-
-            <button
-              onClick={handleVerifyOtp}
-              disabled={otpLoading || otpCode.length !== 6}
-              className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg hover:bg-emerald-500 disabled:opacity-50 transition-all shadow-lg shadow-emerald-600/20"
-            >
-              {otpLoading ? 'Verificando...' : 'Verificar e ingresar'}
-            </button>
-
-            <button
-              onClick={handleSendOtp}
-              disabled={otpLoading}
-              className="text-xs text-slate-500 hover:text-slate-300 font-semibold"
-            >
-              ¿No recibiste el código? Reenviar OTP
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'SUBMITTED') {
-    const isApproved = invitation?.resource?.profile?.verificationStatus === 'APPROVED' || invitation?.resource?.profile?.verificationStatus === 'VERIFIED' || invitation?.resource?.profile?.activo;
-
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-center">
-        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6 shadow-2xl">
-          <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${
-            isApproved
-              ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-400'
-              : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
-          }`}>
-            <CheckCircle2 className="w-10 h-10" />
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-black text-white mb-2">
-              {isApproved ? '¡Repartidor Aprobado!' : '¡Expediente Enviado!'}
-            </h2>
-            <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase border ${
-              isApproved
-                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 font-black'
-                : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-            }`}>
-              {isApproved ? 'Cuenta Aprobada & Activa' : 'Pendiente de Verificación'}
-            </span>
-          </div>
-
-          <p className="text-slate-400 text-sm leading-relaxed">
-            {isApproved ? (
-              <>Tu cuenta ha sido verificada y aprobada con éxito por el equipo de <span className="text-white font-bold">{invitation?.negocio.nombre}</span>. Ya estás habilitado para recibir asignaciones de recolección y entrega.</>
-            ) : (
-              <>Hemos recibido tus documentos correctamente. El equipo de <span className="text-white font-bold">{invitation?.negocio.nombre}</span> revisará tu expediente. Recibirás una notificación por WhatsApp cuando sea aprobado.</>
-            )}
-          </p>
-
-          <div className="p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50 text-xs text-slate-500">
-            🔒 Tus datos y documentos privados están protegidos y sólo son accesibles por la administración del negocio.
-          </div>
-
-          {isApproved && (
-            <button
-              onClick={() => {
-                if (invitation?.resource?.id) {
-                  localStorage.setItem('driver_session', JSON.stringify({
-                    resourceId: invitation.resource.id,
-                    name: invitation.resource.name
-                  }));
-                }
-                window.location.href = `/driver`;
-              }}
-              className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl font-black text-sm uppercase tracking-wider hover:from-emerald-500 hover:to-teal-500 transition-all flex items-center justify-center gap-2 shadow-xl shadow-emerald-600/30 cursor-pointer active:scale-95"
-            >
-              <Truck className="w-5 h-5" />
-              <span>Ver Mis Órdenes Asignadas (Portal Driver)</span>
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // STEP === 'FORM': Formulario de Expediente Completo
-  return (
-    <div className="min-h-screen bg-slate-950 text-white pb-20">
-      {/* Top Header */}
-      <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 sticky top-0 z-30">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Truck className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Registro de Repartidor</p>
-              <p className="text-sm font-bold text-white">{invitation?.negocio.nombre}</p>
-            </div>
-          </div>
-          <span className="text-xs bg-slate-800 text-slate-300 font-mono px-2.5 py-1 rounded-full border border-slate-700">
-            Expediente 100% Privado
-          </span>
-        </div>
-      </div>
-
-      <div className="max-w-2xl mx-auto p-6 space-y-8">
-        {/* Intro */}
-        <div>
-          <h1 className="text-2xl font-black text-white">Completa tu Expediente</h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Proporciona tus datos personales, vehículo y fotografías de tus documentos para la revisión del negocio.
-          </p>
-        </div>
-
-        {/* 1. DATOS PERSONALES */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <h2 className="text-lg font-bold text-blue-400 flex items-center gap-2">
-            <User className="w-5 h-5" /> 1. Datos Personales
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Nombre completo *</label>
-              <input
-                value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Juan García"
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Documento / Cédula / DNI *</label>
-              <input
-                value={form.documento}
-                onChange={e => setForm(f => ({ ...f, documento: e.target.value }))}
-                placeholder="12345678"
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Fecha de nacimiento</label>
-              <input
-                type="date"
-                value={form.fechaNacimiento}
-                onChange={e => setForm(f => ({ ...f, fechaNacimiento: e.target.value }))}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Correo electrónico</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                placeholder="juan@email.com"
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Dirección de residencia</label>
-              <input
-                value={form.direccion}
-                onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))}
-                placeholder="Av. Principal #123, Dpto 4B"
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Contacto de emergencia</label>
-              <input
-                value={form.contactoEmergencia}
-                onChange={e => setForm(f => ({ ...f, contactoEmergencia: e.target.value }))}
-                placeholder="María García (Esposa) - 987654321"
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 2. VEHÍCULO */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <h2 className="text-lg font-bold text-amber-400 flex items-center gap-2">
-            <Bike className="w-5 h-5" /> 2. Información del Vehículo
-          </h2>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-2">Tipo de transporte</label>
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { val: 'MOTO', label: 'Moto', icon: Bike },
-                { val: 'AUTO', label: 'Auto', icon: Car },
-                { val: 'BICICLETA', label: 'Bicicleta', icon: Bike },
-                { val: 'A_PIE', label: 'A pie', icon: Footprints },
-              ].map(({ val, label, icon: Icon }) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, tipoVehiculo: val }))}
-                  className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 text-xs font-bold transition-all ${
-                    form.tipoVehiculo === val
-                      ? 'border-amber-500 bg-amber-500/10 text-amber-400'
-                      : 'border-slate-800 bg-slate-800/40 text-slate-400 hover:border-slate-700'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {form.tipoVehiculo !== 'A_PIE' && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Marca</label>
-                <input
-                  value={form.marca}
-                  onChange={e => setForm(f => ({ ...f, marca: e.target.value }))}
-                  placeholder="Honda / Yamaha"
-                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Modelo / Año</label>
-                <input
-                  value={form.modelo}
-                  onChange={e => setForm(f => ({ ...f, modelo: e.target.value }))}
-                  placeholder="CB150 - 2022"
-                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Placa *</label>
-                <input
-                  value={form.placa}
-                  onChange={e => setForm(f => ({ ...f, placa: e.target.value }))}
-                  placeholder="ABC-123"
-                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm uppercase focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 3. DOCUMENTOS PRIVADOS */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-emerald-400 flex items-center gap-2">
-              <FileText className="w-5 h-5" /> 3. Documentación Privada
-            </h2>
-            <span className="text-xs text-slate-500 flex items-center gap-1">
-              <Lock className="w-3 h-3" /> Privado
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { key: 'cedulaFrenteUrl', label: 'Cédula / DNI (Frente)' },
-              { key: 'cedulaReversoUrl', label: 'Cédula / DNI (Reverso)' },
-              { key: 'licenciaUrl', label: 'Licencia de conducir' },
-              { key: 'fotoVehiculoUrl', label: 'Foto del vehículo' },
-              { key: 'selfieUrl', label: 'Foto de perfil / Selfie' },
-            ].map(({ key, label }) => {
-              const uploaded = Boolean(form[key as keyof typeof form]);
-              return (
-                <div
-                  key={key}
-                  onClick={() => handleSimulateFileUpload(key, label)}
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
-                    uploaded
-                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
-                      : 'border-slate-800 bg-slate-800/40 text-slate-400 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Camera className="w-5 h-5" />
-                    <span className="text-xs font-bold">{label}</span>
-                  </div>
-                  {uploaded ? (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  ) : (
-                    <UploadCloud className="w-5 h-5 text-slate-500" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* SUBMIT */}
-        <button
-          onClick={handleSubmitForm}
-          disabled={submitting}
-          className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-lg hover:from-blue-500 hover:to-indigo-500 transition-all shadow-xl shadow-blue-600/20 active:scale-95 disabled:opacity-50"
-        >
-          {submitting ? 'Enviando expediente...' : '🚀 Enviar Expediente para Revisión'}
-        </button>
+  const header = (
+    <div className="flex items-center gap-3">
+      <span className="size-12 rounded-xl overflow-hidden bg-white border border-slate-200 flex items-center justify-center font-bold text-lg shrink-0" style={{ color }}>
+        {data.negocio.logoUrl ? <img src={data.negocio.logoUrl} alt="" className="w-full h-full object-cover" /> : data.negocio.nombre.charAt(0)}
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs text-slate-500">Equipo de repartidores</p>
+        <p className="font-semibold text-slate-900 truncate">{data.negocio.nombre}</p>
       </div>
     </div>
+  );
+
+  if (mode === 'APROBADO' || mode === 'EN_REVISION') {
+    const ok = mode === 'APROBADO';
+    return (
+      <Shell>
+        {header}
+        <div className="text-center py-8">
+          <div className={`size-14 rounded-full flex items-center justify-center mx-auto ${ok ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>{ok ? <Check size={26} /> : <Clock size={26} />}</div>
+          <h1 className="text-xl font-bold text-slate-900 mt-4">{ok ? '¡Ya eres parte del equipo!' : 'Recibimos tu registro'}</h1>
+          <p className="text-sm text-slate-600 mt-2 max-w-xs mx-auto">
+            {ok ? 'Entra a tu app de repartidor con tu número de celular para ver tus entregas.' : `${data.negocio.nombre} está revisando tus documentos. Te avisaremos por WhatsApp cuando te aprueben.`}
+          </p>
+          {ok && <a href="/driver" className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-semibold" style={{ backgroundColor: color }}>Abrir mi app <ArrowRight size={15} /></a>}
+        </div>
+      </Shell>
+    );
+  }
+
+  if (mode === 'UNIRSE') {
+    return (
+      <Shell>
+        {header}
+        <h1 className="text-xl font-bold text-slate-900 mt-6">Hola {form.name.split(' ')[0]}, te quieren en su equipo</h1>
+        <p className="text-sm text-slate-600 mt-1.5">{data.negocio.nombre} quiere sumarte como repartidor{data.negocio.ciudad ? ` en ${data.negocio.ciudad}` : ''}.</p>
+        <div className="mt-5 rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+          <p className="text-sm font-semibold text-emerald-900 flex items-center gap-1.5"><ShieldCheck size={16} /> Ya estás verificado en Citiox</p>
+          <p className="text-sm text-emerald-900/80 mt-1">No tienes que subir nada otra vez. Compartiremos con este negocio los documentos que ya tienes registrados:</p>
+          <ul className="mt-2 flex flex-wrap gap-1.5">
+            {data.repartidor.documentosEnArchivo.map((d) => <li key={d} className="text-xs bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full">{d}</li>)}
+          </ul>
+        </div>
+        {formError && <p className="mt-3 text-sm text-rose-700">{formError}</p>}
+        <div className="mt-6 space-y-2">
+          <button type="button" onClick={() => respondJoin('confirmar')} disabled={saving} className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg text-white text-[15px] font-semibold disabled:opacity-60" style={{ backgroundColor: color }}>
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} Sí, unirme al equipo
+          </button>
+          <button type="button" onClick={() => respondJoin('rechazar')} disabled={saving} className="w-full py-2.5 text-sm font-medium text-slate-500 hover:text-slate-900">No, gracias</button>
+        </div>
+      </Shell>
+    );
+  }
+
+  // REGISTRO / CORREGIR
+  return (
+    <Shell>
+      {header}
+      <h1 className="text-xl font-bold text-slate-900 mt-6">{mode === 'CORREGIR' ? 'Corrige tu registro' : `Hola ${form.name.split(' ')[0] || ''}, regístrate como repartidor`}</h1>
+      <p className="text-sm text-slate-600 mt-1">Toma unos 5 minutos. Ten a mano tu cédula{motorizado ? ', tu licencia' : ''} y tu vehículo.</p>
+
+      {mode === 'CORREGIR' && data.motivoRechazo && (
+        <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+          <p className="font-semibold">El negocio te pidió corregir:</p>
+          <p>{data.motivoRechazo}</p>
+        </div>
+      )}
+
+      {/* Progreso */}
+      <ol className="mt-5 grid grid-cols-3 gap-2">
+        {steps.map((s, i) => (
+          <li key={s} className="text-xs">
+            <span className={`block h-1.5 rounded-full ${i <= step ? '' : 'bg-slate-200'}`} style={i <= step ? { backgroundColor: color } : undefined} />
+            <span className={`block mt-1.5 font-medium ${i === step ? 'text-slate-900' : 'text-slate-400'}`}>{i + 1}. {s}</span>
+          </li>
+        ))}
+      </ol>
+
+      <div className="mt-5 space-y-3.5">
+        {step === 0 && (
+          <>
+            <Field label="Nombre completo"><input value={form.name} onChange={set('name')} className={inputCls} autoComplete="name" /></Field>
+            <Field label="Número de cédula"><input value={form.documento} onChange={set('documento')} className={inputCls} inputMode="numeric" /></Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Fecha de nacimiento" optional><input type="date" value={form.fechaNacimiento} onChange={set('fechaNacimiento')} className={inputCls} /></Field>
+              <Field label="Correo" optional><input type="email" value={form.email} onChange={set('email')} className={inputCls} /></Field>
+            </div>
+            <Field label="Dirección" optional><input value={form.direccion} onChange={set('direccion')} className={inputCls} placeholder="Barrio, calle principal" /></Field>
+            <Field label="Contacto de emergencia" optional><input value={form.contactoEmergencia} onChange={set('contactoEmergencia')} className={inputCls} placeholder="Nombre y celular" /></Field>
+          </>
+        )}
+
+        {step === 1 && (
+          <>
+            <Field label="¿En qué vas a repartir?">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {VEHICLES.map((v) => (
+                  <button key={v.id} type="button" onClick={() => setForm((f) => ({ ...f, tipoVehiculo: v.id }))} className={`flex flex-col items-center gap-1 py-2.5 rounded-lg border text-xs font-medium ${form.tipoVehiculo === v.id ? 'text-white border-transparent' : 'border-slate-200 text-slate-700 bg-white'}`} style={form.tipoVehiculo === v.id ? { backgroundColor: color } : undefined}>
+                    <v.icon size={18} /> {v.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+            {form.tipoVehiculo !== 'A_PIE' && (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Marca" optional><input value={form.marca} onChange={set('marca')} className={inputCls} placeholder="Ej: Honda" /></Field>
+                <Field label="Modelo" optional><input value={form.modelo} onChange={set('modelo')} className={inputCls} placeholder="Ej: Navi 110" /></Field>
+                <Field label="Color" optional><input value={form.color} onChange={set('color')} className={inputCls} /></Field>
+                <Field label="Año" optional><input value={form.anio} onChange={set('anio')} className={inputCls} inputMode="numeric" maxLength={4} /></Field>
+                {motorizado && <Field label="Placa"><input value={form.placa} onChange={(e) => setForm((f) => ({ ...f, placa: e.target.value.toUpperCase() }))} className={inputCls} placeholder="Ej: ABC-1234" /></Field>}
+              </div>
+            )}
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <p className="text-sm text-slate-600">Toma fotos claras, con buena luz y sin reflejos.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <DocUpload label="Tu foto (selfie)" field="selfieUrl" value={form.selfieUrl} uploading={uploading} onFile={upload} capture="user" />
+              <DocUpload label="Cédula (frente)" field="cedulaFrenteUrl" value={form.cedulaFrenteUrl} uploading={uploading} onFile={upload} />
+              <DocUpload label="Cédula (reverso)" field="cedulaReversoUrl" value={form.cedulaReversoUrl} uploading={uploading} onFile={upload} />
+              {motorizado && <DocUpload label="Licencia de conducir" field="licenciaUrl" value={form.licenciaUrl} uploading={uploading} onFile={upload} />}
+              {form.tipoVehiculo !== 'A_PIE' && <DocUpload label="Foto del vehículo" field="fotoVehiculoUrl" value={form.fotoVehiculoUrl} uploading={uploading} onFile={upload} />}
+              {motorizado && <DocUpload label="Matrícula (opcional)" field="matriculaUrl" value={form.matriculaUrl} uploading={uploading} onFile={upload} />}
+            </div>
+            <p className="text-xs text-slate-500">Tus documentos solo los ve el negocio que te invita y los negocios de Citiox con los que decidas trabajar.</p>
+          </>
+        )}
+      </div>
+
+      {formError && <p role="alert" className="mt-4 rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-700">{formError}</p>}
+
+      <div className="mt-6 flex gap-2">
+        {step > 0 && (
+          <button type="button" onClick={() => { setFormError(null); setStep(step - 1); }} className="inline-flex items-center gap-1.5 px-4 py-3 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-700">
+            <ArrowLeft size={15} /> Atrás
+          </button>
+        )}
+        <button type="button" onClick={next} disabled={saving || Boolean(uploading)} className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-lg text-white text-[15px] font-semibold disabled:opacity-60" style={{ backgroundColor: color }}>
+          {saving && <Loader2 size={16} className="animate-spin" />}
+          {step < 2 ? 'Continuar' : saving ? 'Enviando…' : 'Enviar mi registro'}
+          {step < 2 && <ArrowRight size={16} />}
+        </button>
+      </div>
+      <p className="text-xs text-slate-400 text-center mt-4">Este enlace vence el {new Date(data.expiresAt).toLocaleDateString('es-EC', { day: 'numeric', month: 'long' })}.</p>
+    </Shell>
+  );
+}
+
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <main className="min-h-screen flex justify-center px-4 py-8 sm:py-12">
+      <div className="w-full max-w-md">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">{children}</div>
+        <p className="text-center text-xs text-slate-400 mt-4 flex items-center justify-center gap-1.5">
+          <img src="/citiox-icon.png" alt="" className="size-4 rounded object-contain" /> Con la tecnología de Citiox
+        </p>
+      </div>
+    </main>
+  );
+}
+
+function Field({ label, optional, children }: { label: string; optional?: boolean; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-sm font-medium text-slate-700 mb-1">{label}{optional && <span className="text-slate-400 font-normal"> (opcional)</span>}</span>
+      {children}
+    </label>
+  );
+}
+
+function DocUpload({ label, field, value, uploading, onFile, capture }: { label: string; field: string; value: string; uploading: string | null; onFile: (field: string, f?: File | null) => void; capture?: 'user' | 'environment' }) {
+  const busy = uploading === field;
+  const isPdf = value.toLowerCase().endsWith('.pdf');
+  return (
+    <label className={`relative block rounded-xl border-2 border-dashed overflow-hidden cursor-pointer aspect-[4/3] ${value ? 'border-emerald-400' : 'border-slate-300 hover:border-slate-400'} bg-slate-50`}>
+      <input type="file" accept="image/*,application/pdf" capture={capture} className="sr-only" onChange={(e) => onFile(field, e.target.files?.[0])} disabled={busy} />
+      {value && !isPdf ? <img src={value} alt="" className="absolute inset-0 w-full h-full object-cover" /> : null}
+      <span className={`absolute inset-0 flex flex-col items-center justify-center gap-1 text-center px-2 ${value ? 'bg-gradient-to-t from-black/60 to-transparent justify-end pb-2 text-white' : 'text-slate-500'}`}>
+        {busy ? <Loader2 size={20} className="animate-spin" /> : value ? (isPdf ? <FileText size={20} className="text-emerald-600" /> : null) : <Camera size={20} />}
+        <span className="text-xs font-semibold flex items-center gap-1">{value && <Check size={12} />} {label}</span>
+        {!value && !busy && <span className="text-[11px] text-slate-400 flex items-center gap-1"><UploadCloud size={11} /> Tomar o subir foto</span>}
+        {value && <span className="text-[11px] opacity-80">Toca para cambiar</span>}
+      </span>
+    </label>
   );
 }

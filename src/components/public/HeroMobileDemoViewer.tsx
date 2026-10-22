@@ -97,11 +97,11 @@ export default function HeroMobileDemoViewer() {
                 key={demo.id}
                 type="button"
                 onClick={() => setActiveId(demo.id)}
-                className={`snap-center shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-[#0066FF] text-white shadow-md shadow-blue-500/25 scale-105'
-                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
-                }`}
+                className={`snap-center shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+ isSelected
+ ? 'bg-[#0066FF] text-white shadow-md shadow-blue-500/25 scale-105'
+ : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+ }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{demo.name}</span>
@@ -124,7 +124,7 @@ export default function HeroMobileDemoViewer() {
         </button>
 
         {/* Mockup Smartphone Móvil */}
-        <div className="w-[260px] xs:w-[280px] h-[520px] xs:h-[550px] bg-white rounded-[2.8rem] p-2 shadow-2xl shadow-blue-500/15 border-[6px] border-slate-950 relative overflow-hidden shrink-0">
+        <div className="w-[260px] xs:w-[280px] h-[520px] xs:h-[550px] bg-white rounded-3xl p-2 shadow-2xl shadow-blue-500/15 border-[6px] border-slate-950 relative overflow-hidden shrink-0">
           
           {/* Isla Dinámica & Botón Pantalla Completa */}
           <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
@@ -135,7 +135,7 @@ export default function HeroMobileDemoViewer() {
               href={activeDemo.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="absolute right-1 top-0 size-6 rounded-full bg-slate-950 text-white flex items-center justify-center text-[9px] hover:bg-[#0066FF] active:scale-90 transition-all shadow-xs"
+              className="absolute right-1 top-0 size-6 rounded-full bg-slate-950 text-white flex items-center justify-center text-xs hover:bg-[#0066FF] active:scale-90 transition-all shadow-xs"
               title="Abrir app en pantalla completa"
             >
               <ExternalLink size={12} />
@@ -143,9 +143,9 @@ export default function HeroMobileDemoViewer() {
           </div>
 
           {/* Pantalla con Iframe Dinámico */}
-          <div className="h-[calc(100%-28px)] bg-slate-950 rounded-[2.1rem] overflow-hidden relative border border-slate-900 shadow-inner">
+          <div className="h-[calc(100%-28px)] bg-slate-950 rounded-3xl overflow-hidden relative border border-slate-900 shadow-inner">
             {/* Badge flotante de vertical */}
-            <div className={`absolute top-1.5 left-2.5 z-20 pointer-events-none flex items-center gap-1 ${activeDemo.badgeColor} text-white px-2 py-0.5 rounded-full text-[8px] font-black shadow-md backdrop-blur-xs`}>
+            <div className={`absolute top-1.5 left-2.5 z-20 pointer-events-none flex items-center gap-1 ${activeDemo.badgeColor} text-white px-2 py-0.5 rounded-full text-xs font-bold shadow-md backdrop-blur-xs`}>
               <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
               <span>{activeDemo.badge}</span>
             </div>

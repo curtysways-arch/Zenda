@@ -33,14 +33,14 @@ export default function ReviewsCarousel({ reviews, primaryColor, textColor }: Re
     return (
         <div className="select-none">
             {/* Testimonial Card */}
-            <div className="bg-[#FFF2F6] border border-pink-100/30 rounded-[2rem] p-5 flex flex-row items-center justify-between shadow-sm relative gap-4">
+            <div className="bg-[#FFF2F6] border border-pink-100/30 rounded-3xl p-5 flex flex-row items-center justify-between shadow-sm relative gap-4">
                 <div className="flex items-start gap-2 flex-1 min-w-0">
                     {/* Icono de Comillas Rosa */}
-                    <span className="text-3xl font-serif font-black leading-none select-none text-pink-500 block shrink-0 pt-0.5">
+                    <span className="text-3xl font-serif font-bold leading-none select-none text-pink-500 block shrink-0 pt-0.5">
                         “
                     </span>
                     {/* Comentario */}
-                    <p className="text-xs font-semibold text-slate-700 leading-relaxed italic pr-1">
+                    <p className="text-xs font-semibold text-slate-700 leading-relaxed pr-1">
                         {currentReview.comment}
                     </p>
                 </div>
@@ -59,10 +59,10 @@ export default function ReviewsCarousel({ reviews, primaryColor, textColor }: Re
                                 />
                             ))}
                         </div>
-                        <p className="text-xs font-black text-slate-800 leading-none">
+                        <p className="text-xs font-bold text-slate-800 leading-none">
                             {clientName}
                         </p>
-                        <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider leading-none">
+                        <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider leading-none">
                             Cliente feliz
                         </p>
                     </div>
@@ -76,7 +76,7 @@ export default function ReviewsCarousel({ reviews, primaryColor, textColor }: Re
                         />
                     ) : (
                         <div 
-                            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-xs border-2 border-white shadow-sm shrink-0"
+                            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 border-white shadow-sm shrink-0"
                             style={{ backgroundColor: primaryColor }}
                         >
                             {clientName.substring(0, 1)}

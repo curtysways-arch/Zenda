@@ -158,9 +158,32 @@ export const GYM_BLUEPRINT_MANIFEST: BlueprintManifest = {
   }
 };
 
+export const CAFETERIA_BLUEPRINT_MANIFEST: BlueprintManifest = {
+  id: 'CAFETERIA',
+  version: '1.0.0',
+  name: 'Blueprint Cafetería, Panadería & Pastelería',
+  description: 'Gestión ágil de ventas en mostrador táctil, recetas de elaboración, producción de panadería/repostería, costeo, inventario y control estricto de caja.',
+  capabilities: [
+    { id: 'pos', version: '1.0.0', enabled: true, configuration: { quickCheckout: true }, dependencies: [] },
+    { id: 'cash_register', version: '1.0.0', enabled: true, configuration: { strictShifts: true }, dependencies: [] },
+    { id: 'inventory', version: '1.0.0', enabled: true, configuration: { trackStock: true }, dependencies: [] },
+    { id: 'recipes', version: '1.0.0', enabled: true, configuration: { allowSubRecipes: true }, dependencies: [] },
+    { id: 'production', version: '1.0.0', enabled: true, configuration: { autoDeductIngredients: true }, dependencies: [] },
+    { id: 'purchases', version: '1.0.0', enabled: true, configuration: {}, dependencies: [] },
+    { id: 'costing', version: '1.0.0', enabled: true, configuration: {}, dependencies: [] }
+  ],
+  defaultConfiguration: {
+    quickCheckout: true,
+    requireCashSession: true,
+    allowNegativeStock: false,
+    autoPrintReceipt: false
+  }
+};
+
 export const ALL_BLUEPRINT_MANIFESTS: Record<string, BlueprintManifest> = {
   // Claves Enterprise (canónicas)
   RESTAURANT: RESTAURANT_BLUEPRINT_MANIFEST,
+  CAFETERIA: CAFETERIA_BLUEPRINT_MANIFEST,
   SPA: SPA_BLUEPRINT_MANIFEST,
   LAUNDRY: LAUNDRY_BLUEPRINT_MANIFEST,
   SPORTS_COURTS: COURTS_BLUEPRINT_MANIFEST,
@@ -172,7 +195,9 @@ export const ALL_BLUEPRINT_MANIFESTS: Record<string, BlueprintManifest> = {
   ACADEMY: ACADEMY_BLUEPRINT_MANIFEST,
   GYM: GYM_BLUEPRINT_MANIFEST,
 
-  // Alias legacy (tipoNegocio en Prisma) → Blueprint Enterprise
+  // Alias gastronómicos y legacy (tipoNegocio en Prisma) → Blueprint Enterprise
+  PANADERIA: CAFETERIA_BLUEPRINT_MANIFEST,
+  PASTELERIA: CAFETERIA_BLUEPRINT_MANIFEST,
   RESERVA: SPA_BLUEPRINT_MANIFEST,
   PELUQUERIA: BARBER_BLUEPRINT_MANIFEST,
   PRODUCTOS: STORE_BLUEPRINT_MANIFEST,

@@ -70,7 +70,7 @@ export default function PinchoClientOrdersHistory({
                 <button
                     type="button"
                     onClick={onBackToStore}
-                    className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-700 hover:text-slate-900 bg-slate-100 px-3 py-2 rounded-xl"
+                    className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 hover:text-slate-900 bg-slate-100 px-3 py-2 rounded-xl"
                 >
                     <ArrowLeft className="size-4" />
                     <span>Volver a Tienda</span>
@@ -78,7 +78,7 @@ export default function PinchoClientOrdersHistory({
 
                 <div className="flex items-center gap-2">
                     <ShoppingBag className="size-5 text-orange-600" />
-                    <span className="font-black text-sm text-slate-900">Mis Pedidos - {storeName}</span>
+                    <span className="font-bold text-sm text-slate-900">Mis Pedidos - {storeName}</span>
                 </div>
             </header>
 
@@ -93,14 +93,14 @@ export default function PinchoClientOrdersHistory({
                         <div className="size-14 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto">
                             <ShoppingBag className="size-7" />
                         </div>
-                        <h3 className="text-base font-black text-slate-900">No tienes pedidos registrados</h3>
+                        <h3 className="text-base font-bold text-slate-900">No tienes pedidos registrados</h3>
                         <p className="text-xs text-slate-500 max-w-xs mx-auto">
                             Tus compras realizadas aparecerán aquí con su código y estado en tiempo real.
                         </p>
                         <button
                             type="button"
                             onClick={onBackToStore}
-                            className="px-5 py-3 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-xl text-xs uppercase tracking-wider"
+                            className="px-5 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider"
                         >
                             Ir al Menú de Productos
                         </button>
@@ -116,14 +116,14 @@ export default function PinchoClientOrdersHistory({
                                 <div key={ord.id} className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-3 text-left">
                                     <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                                         <div>
-                                            <span className="text-[10px] font-black uppercase text-slate-400 block tracking-wider">Código del Pedido</span>
-                                            <span className="text-sm font-mono font-black text-orange-600">{friendlyCode}</span>
+                                            <span className="text-xs font-bold uppercase text-slate-400 block tracking-wider">Código del Pedido</span>
+                                            <span className="text-sm font-mono font-bold text-orange-600">{friendlyCode}</span>
                                         </div>
-                                        <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
-                                            isDelivered ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                                            isExpired ? 'bg-rose-100 text-rose-800 border border-rose-200' :
-                                            'bg-amber-100 text-amber-900 border border-amber-200'
-                                        }`}>
+                                        <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${
+ isDelivered ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+ isExpired ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+ 'bg-amber-100 text-amber-900 border border-amber-200'
+ }`}>
                                             {ord.estado}
                                         </span>
                                     </div>
@@ -140,8 +140,8 @@ export default function PinchoClientOrdersHistory({
 
                                     <div className="flex justify-between items-center border-t border-slate-100 pt-3">
                                         <div>
-                                            <span className="text-[9px] font-black uppercase text-slate-400 block">Total Pagado</span>
-                                            <span className="text-base font-black text-slate-900 font-mono">${ord.total.toFixed(2)}</span>
+                                            <span className="text-xs font-bold uppercase text-slate-400 block">Total Pagado</span>
+                                            <span className="text-base font-bold text-slate-900 font-mono">${ord.total.toFixed(2)}</span>
                                         </div>
 
                                         <div className="flex gap-2">
@@ -149,7 +149,7 @@ export default function PinchoClientOrdersHistory({
                                             <button
                                                 type="button"
                                                 onClick={() => handleReorderClick(ord)}
-                                                className="px-3.5 py-2 bg-orange-600 hover:bg-orange-700 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
+                                                className="px-3.5 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
                                             >
                                                 <RefreshCw className="size-3.5" />
                                                 <span>Volver a pedir</span>
@@ -157,7 +157,7 @@ export default function PinchoClientOrdersHistory({
 
                                             <Link
                                                 href={`/${storeSlug}/pedidos/${ord.id}`}
-                                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs uppercase rounded-xl flex items-center gap-1"
+                                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase rounded-xl flex items-center gap-1"
                                             >
                                                 <span>Detalles</span>
                                                 <ChevronRight className="size-3.5" />

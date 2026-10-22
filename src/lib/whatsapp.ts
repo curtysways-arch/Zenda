@@ -561,10 +561,23 @@ export class WhatsAppService {
         const shortId = reserva.id.slice(-4).toUpperCase();
         
         // 1. Notificar a administradores del negocio
-        const admins = await (prisma as any).usuario.findMany({
+        let admins = await (prisma as any).usuario.findMany({
             where: { negocioId: reserva.negocioId, whatsapp_notifications: true },
             select: { phone: true }
         });
+
+        // Respaldo de admins: si ninguno tiene whatsapp_notifications explícito,
+        // notificar a usuarios con rol administrativo que tengan teléfono registrado
+        if (admins.length === 0) {
+            admins = await (prisma as any).usuario.findMany({
+                where: { 
+                    negocioId: reserva.negocioId, 
+                    role: { in: ['ADMIN', 'SUPERADMIN', 'ADMIN_NEGOCIO'] },
+                    phone: { not: null }
+                },
+                select: { phone: true }
+            });
+        }
 
         const fechaLegible = new Date(reserva.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
         const serviceName = reserva.service?.nombre || reserva.servicio?.nombre || 'Tratamiento Spa';
@@ -598,7 +611,7 @@ export class WhatsAppService {
                     await (prisma as any).pendingReservation.create({
                         data: {
                             id: uuidv4(),
-                            admin_phone: admin.phone,
+                            admin_phone: target,
                             reservation_id: reserva.id,
                             status: 'pending'
                         }
@@ -617,7 +630,7 @@ export class WhatsAppService {
                     await (prisma as any).pendingReservation.create({
                         data: {
                             id: uuidv4(),
-                            admin_phone: negocio.whatsapp,
+                            admin_phone: bizPhoneClean,
                             reservation_id: reserva.id,
                             status: 'pending'
                         }

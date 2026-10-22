@@ -35,7 +35,7 @@ export default function FamilyAuditTab({ familyId, familyName }: FamilyAuditTabP
         <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-6 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div>
-                    <h4 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    <h4 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                         <Activity size={18} className="text-indigo-600" />
                         Historial de Auditoría — {familyName}
                     </h4>
@@ -75,19 +75,19 @@ export default function FamilyAuditTab({ familyId, familyName }: FamilyAuditTabP
                         >
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                    <span className="px-2.5 py-0.5 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-wider">
+                                    <span className="px-2.5 py-0.5 bg-slate-900 text-white rounded-full text-xs font-bold uppercase tracking-wider">
                                         {log.what}
                                     </span>
                                     <span className="text-xs font-bold text-slate-700">
                                         {log.description || 'Operación registrada'}
                                     </span>
                                 </div>
-                                <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                                <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
                                     <Clock size={11} /> {new Date(log.createdAt).toLocaleString()}
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-4 text-[11px] text-slate-500">
+                            <div className="flex items-center gap-4 text-xs text-slate-500">
                                 <span className="flex items-center gap-1">
                                     <User size={12} className="text-slate-400" /> Por: <span className="font-bold text-slate-700">{log.who}</span>
                                 </span>

@@ -123,9 +123,9 @@ export default function WhatsAppConfigPage() {
                 <div>
                     <div className="flex items-center gap-3 mb-4">
                         <div className="h-[2px] w-8 bg-emerald-500 rounded-full" />
-                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em]">Configuración Global</span>
+                        <span className="text-xs font-bold text-emerald-500 uppercase tracking-wide">Configuración Global</span>
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter italic uppercase leading-none">
+                    <h1 className="text-4xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
                         WhatsApp <span className="text-emerald-500">Service</span>
                     </h1>
                     <p className="text-slate-500 dark:text-white/40 font-medium mt-4">Gestión centralizada del bot de mensajería para toda la plataforma.</p>
@@ -133,7 +133,7 @@ export default function WhatsAppConfigPage() {
                 
                 <div className="flex items-center gap-4 bg-white/5 dark:bg-black/20 backdrop-blur-xl p-4 rounded-3xl border border-slate-200 dark:border-white/5 shadow-xl">
                     <div className={`size-3 rounded-full animate-pulse ${status?.connected ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                    <span className={`text-xs font-black uppercase tracking-widest ${getStatusColor()}`}>
+                    <span className={`text-xs font-bold uppercase tracking-wide ${getStatusColor()}`}>
                         {getStatusText()}
                     </span>
                 </div>
@@ -152,18 +152,18 @@ export default function WhatsAppConfigPage() {
                             {/* Visual Indicator */}
                             <div className="relative group/icon">
                                 <div className="absolute inset-0 bg-emerald-500/10 blur-3xl rounded-full scale-150 group-hover/icon:opacity-100 transition-opacity opacity-50" />
-                                <div className={`size-32 md:size-48 rounded-[3rem] border-4 border-dashed flex items-center justify-center transition-all duration-700 shadow-inner ${status?.connected ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5'}`}>
+                                <div className={`size-32 md:size-48 rounded-2xl border-4 border-dashed flex items-center justify-center transition-all duration-700 shadow-inner ${status?.connected ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5'}`}>
                                     {loading ? (
                                         <Loader2 size={48} className="animate-spin text-emerald-500" />
                                     ) : status?.connected ? (
                                         <div className="flex flex-col items-center gap-2">
                                             <CheckCircle2 size={64} className="text-emerald-500 animate-in zoom-in duration-500" />
-                                            <span className="text-[10px] font-black text-emerald-500/60 uppercase tracking-widest">Activo</span>
+                                            <span className="text-xs font-bold text-emerald-500/60 uppercase tracking-wide">Activo</span>
                                         </div>
                                     ) : (
                                         <div className="flex flex-col items-center gap-2">
                                             <XCircle size={64} className="text-rose-500/20" />
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inactivo</span>
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Inactivo</span>
                                         </div>
                                     )}
                                 </div>
@@ -172,11 +172,11 @@ export default function WhatsAppConfigPage() {
                             <div className="flex-1 space-y-8 text-center md:text-left">
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-center md:justify-start gap-4">
-                                        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic leading-none">
+                                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
                                             {status?.connected ? 'SERVIDOR CONECTADO' : 'SISTEMA DESCONECTADO'}
                                         </h2>
                                         {status?.connected && (
-                                            <div className="px-4 py-1.5 bg-emerald-500 text-white text-[9px] font-black rounded-lg shadow-lg shadow-emerald-500/20 uppercase tracking-widest animate-pulse">
+                                            <div className="px-4 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-emerald-500/20 uppercase tracking-wide animate-pulse">
                                                 En Línea
                                             </div>
                                         )}
@@ -199,7 +199,7 @@ export default function WhatsAppConfigPage() {
                                         <button 
                                             onClick={handleConnect}
                                             disabled={actionLoading || status?.hasQR}
-                                            className="btn-premium btn-primary px-10 py-5 text-[11px] tracking-[0.3em] shadow-xl active:scale-95 disabled:opacity-50 flex items-center gap-3"
+                                            className="btn-premium btn-primary px-10 py-5 text-xs tracking-wide shadow-xl active:scale-95 disabled:opacity-50 flex items-center gap-3"
                                         >
                                             {actionLoading ? <Loader2 className="animate-spin" size={20} /> : <Power size={20} />}
                                             {status?.hasQR ? 'ESCANEANDO...' : 'CONECTAR WHATSAPP'}
@@ -208,7 +208,7 @@ export default function WhatsAppConfigPage() {
                                         <button 
                                             onClick={handleDisconnect}
                                             disabled={actionLoading}
-                                            className="btn-premium px-10 py-5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 text-[11px] tracking-[0.3em] active:scale-95 disabled:opacity-50 flex items-center gap-3 transition-all"
+                                            className="btn-premium px-10 py-5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 text-xs tracking-wide active:scale-95 disabled:opacity-50 flex items-center gap-3 transition-all"
                                         >
                                             {actionLoading ? <Loader2 className="animate-spin" size={20} /> : <PowerOff size={20} />}
                                             DESCONECTAR BOT
@@ -240,7 +240,7 @@ export default function WhatsAppConfigPage() {
                                             {status?.status === 'offline' ? <AlertTriangle size={40} /> : <QrCode size={40} />}
                                         </div>
                                         <div className="space-y-2">
-                                            <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tight">
+                                            <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                                                 {status?.status === 'offline' ? 'BOT FUERA DE LÍNEA' : 'CÓDIGO QR NO GENERADO'}
                                             </h4>
                                             <p className="text-sm text-slate-500 dark:text-white/40 font-medium">
@@ -253,7 +253,7 @@ export default function WhatsAppConfigPage() {
                                             <button 
                                                 onClick={handleConnect}
                                                 disabled={actionLoading}
-                                                className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:bg-slate-900 transition-all active:scale-95 disabled:opacity-50"
+                                                className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold text-xs uppercase tracking-wide shadow-xl shadow-emerald-500/20 hover:bg-slate-900 transition-all active:scale-95 disabled:opacity-50"
                                             >
                                                 Generar QR ahora
                                             </button>
@@ -262,8 +262,8 @@ export default function WhatsAppConfigPage() {
                                 </div>
                             )}
 
-                            <div className="bg-white p-10 rounded-[3.5rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)] border-8 border-slate-50 relative group/qr">
-                                <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-[3.5rem] animate-pulse" />
+                            <div className="bg-white p-10 rounded-2xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)] border-8 border-slate-50 relative group/qr">
+                                <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-2xl animate-pulse" />
                                 {status?.qr ? (
                                     <QRCodeSVG value={status.qr} size={280} level="H" />
                                 ) : (
@@ -277,9 +277,9 @@ export default function WhatsAppConfigPage() {
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3 mb-2">
                                         <QrCode size={24} className="text-emerald-500" />
-                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em]">Paso 1: Escaneo</span>
+                                        <span className="text-xs font-bold text-emerald-500 uppercase tracking-wide">Paso 1: Escaneo</span>
                                     </div>
-                                    <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic leading-none">VINCULAR DISPOSITIVO</h3>
+                                    <h3 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">Vincular dispositivo</h3>
                                     <p className="text-slate-500 dark:text-white/40 font-medium text-lg leading-relaxed">
                                         Abre WhatsApp en tu teléfono, ve a <strong>Ajustes &gt; Dispositivos vinculados</strong> y escanea este código para activar el bot central.
                                     </p>
@@ -291,8 +291,8 @@ export default function WhatsAppConfigPage() {
                                             <ShieldCheck size={20} />
                                         </div>
                                         <div>
-                                            <p className="font-black text-xs text-slate-900 dark:text-white uppercase tracking-tight">Conexión Segura</p>
-                                            <p className="text-[11px] text-slate-500 dark:text-white/40 mt-1">Cifrado de extremo a extremo nativo.</p>
+                                            <p className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-tight">Conexión Segura</p>
+                                            <p className="text-xs text-slate-500 dark:text-white/40 mt-1">Cifrado de extremo a extremo nativo.</p>
                                         </div>
                                     </div>
                                     <div className="bg-white/50 dark:bg-black/20 p-6 rounded-3xl border border-white/20 flex items-start gap-4">
@@ -300,8 +300,8 @@ export default function WhatsAppConfigPage() {
                                             <Clock size={20} />
                                         </div>
                                         <div>
-                                            <p className="font-black text-xs text-slate-900 dark:text-white uppercase tracking-tight">QR Dinámico</p>
-                                            <p className="text-[11px] text-slate-500 dark:text-white/40 mt-1">Se actualiza automáticamente cada 30s.</p>
+                                            <p className="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-tight">QR Dinámico</p>
+                                            <p className="text-xs text-slate-500 dark:text-white/40 mt-1">Se actualiza automáticamente cada 30s.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -316,7 +316,7 @@ export default function WhatsAppConfigPage() {
                         <div className="size-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
                             <MessageCircle size={28} />
                         </div>
-                        <h4 className="text-xl font-black text-slate-900 dark:text-white italic uppercase tracking-tight">Mensajería Pro</h4>
+                        <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Mensajería Pro</h4>
                         <p className="text-xs text-slate-500 dark:text-white/40 leading-relaxed font-medium">
                             El bot manejará automáticamente el envío de OTP, confirmación de reservas y reporte de métricas sin costo adicional por mensaje.
                         </p>
@@ -325,7 +325,7 @@ export default function WhatsAppConfigPage() {
                         <div className="size-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
                             <AlertTriangle size={28} />
                         </div>
-                        <h4 className="text-xl font-black text-slate-900 dark:text-white italic uppercase tracking-tight">Reconexión</h4>
+                        <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Reconexión</h4>
                         <p className="text-xs text-slate-500 dark:text-white/40 leading-relaxed font-medium">
                             Si el bot se desconecta por inactividad, puedes reiniciarlo desde aquí sin necesidad de volver a escanear si la sesión persiste.
                         </p>
@@ -335,14 +335,14 @@ export default function WhatsAppConfigPage() {
                 <div className="lg:col-span-4 glass-card p-10 flex flex-col justify-between bg-slate-900 dark:bg-emerald-950 border-emerald-500/20 text-white relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-1000" />
                     <div className="space-y-6 relative z-10">
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Estado de Servidor</span>
-                        <h4 className="text-4xl font-black italic tracking-tighter leading-none">BOT<br/>CENTRAL</h4>
+                        <span className="text-xs font-bold uppercase tracking-wide text-emerald-400">Estado de Servidor</span>
+                        <h4 className="text-4xl font-bold tracking-tight leading-none">BOT<br/>Central</h4>
                         <div className="h-1 w-12 bg-emerald-500 rounded-full" />
                     </div>
                     <div className="pt-10 flex items-center justify-between relative z-10">
                         <div className="space-y-1">
-                            <p className="text-white/40 text-[9px] font-black uppercase tracking-widest">Latencia</p>
-                            <p className="text-xl font-black italic">~150ms</p>
+                            <p className="text-white/40 text-xs font-bold uppercase tracking-wide">Latencia</p>
+                            <p className="text-xl font-bold ">~150ms</p>
                         </div>
                         <div className="size-12 rounded-2xl bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
                             <ChevronRight />
@@ -353,9 +353,9 @@ export default function WhatsAppConfigPage() {
 
             {/* Notifications */}
             {message && (
-                <div className={`fixed bottom-10 right-10 p-6 rounded-[2.5rem] shadow-2xl z-[100] animate-in slide-in-from-bottom-5 duration-500 flex items-center gap-4 ${message.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                <div className={`fixed bottom-10 right-10 p-6 rounded-2xl shadow-2xl z-[100] animate-in slide-in-from-bottom-5 duration-500 flex items-center gap-4 ${message.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
                     {message.type === 'success' ? <CheckCircle2 /> : <XCircle />}
-                    <span className="text-[11px] font-black uppercase tracking-widest">{message.text}</span>
+                    <span className="text-xs font-bold uppercase tracking-wide">{message.text}</span>
                     <button onClick={() => setMessage(null)} className="ml-4 opacity-50 hover:opacity-100 transition-opacity">
                         <RefreshingCcw size={16} className="rotate-45" />
                     </button>

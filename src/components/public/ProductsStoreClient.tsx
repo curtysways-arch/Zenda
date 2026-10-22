@@ -1177,7 +1177,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <Phone className="size-8" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Verificación de Teléfono</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Verificación de Teléfono</h2>
                         <p className="text-xs text-slate-500 mt-1 font-medium">Ingresa el código OTP enviado a <strong>{clientPhone}</strong> para verificar tu identidad y confirmar tu pedido.</p>
                     </div>
 
@@ -1196,15 +1196,15 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 value={otpCode}
                                 onChange={e => setOtpCode(e.target.value)}
                                 placeholder="1234"
-                                className="w-full py-4 bg-slate-50 border border-slate-200 rounded-2xl text-center text-3xl font-mono tracking-widest text-slate-900 focus:outline-none focus:border-orange-500 focus:bg-white transition-colors shadow-inner"
+                                className="w-full py-4 bg-slate-50 border border-slate-200 rounded-2xl text-center text-3xl font-mono tracking-wide text-slate-900 focus:outline-none focus:border-orange-500 focus:bg-white transition-colors shadow-inner"
                             />
-                            <p className="text-[11px] text-slate-400 mt-2 font-medium">Código en modo prueba: <strong className="text-slate-700">1234</strong></p>
+                            <p className="text-xs text-slate-400 mt-2 font-medium">Código en modo prueba: <strong className="text-slate-700">1234</strong></p>
                         </div>
 
                         <button
                             type="submit"
                             disabled={otpLoading}
-                            className="w-full py-4 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2 transition-all"
+                            className="w-full py-4 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2 transition-all"
                         >
                             {otpLoading ? <Loader2 className="size-5 animate-spin" /> : 'Verificar OTP y Generar Pedido'}
                         </button>
@@ -1249,7 +1249,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             <ArrowLeft className="size-5" />
                         </button>
                     ) : (
-                        <div className="relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-black uppercase shadow-xs">
+                        <div className="relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase shadow-xs">
                             <Lock className="size-3.5 text-amber-400" />
                             <span>Pago Previo Requerido</span>
                         </div>
@@ -1260,7 +1260,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={negocio.logoUrl} alt={negocio.nombre} className="h-10 w-auto object-contain" />
                         ) : (
-                            <span className="text-lg font-black text-white italic tracking-tighter uppercase">{negocio.nombre}</span>
+                            <span className="text-lg font-bold text-white tracking-tight ">{negocio.nombre}</span>
                         )}
                     </div>
 
@@ -1273,14 +1273,14 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     {/* Título & Badges */}
                     <div className="text-center space-y-1.5 pb-1">
                         <div className="flex items-center justify-center gap-2 flex-wrap">
-                            <span className="px-3 py-1 bg-orange-600 text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-xs">
+                            <span className="px-3 py-1 bg-orange-600 text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-xs">
                                 Paso Final
                             </span>
-                            <span className="px-3 py-1 bg-orange-100/80 text-orange-900 rounded-full text-[9px] font-black uppercase tracking-wider">
+                            <span className="px-3 py-1 bg-orange-100/80 text-orange-900 rounded-full text-xs font-bold uppercase tracking-wider">
                                 Transferencia Bancaria
                             </span>
                         </div>
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight pt-1">Completa tu pago</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 tracking-tight pt-1">Completa tu pago</h2>
                         <div className="w-8 h-1 bg-orange-600 rounded-full mx-auto" />
                         <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto pt-0.5 leading-relaxed">
                             Transfiere el monto exacto y adjunta tu comprobante para enviar a producción.
@@ -1290,9 +1290,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     {/* Tarjeta 1: Código de Pago y Monto a Transferir */}
                     <div className="bg-gradient-to-r from-orange-50/90 via-orange-50/50 to-orange-50/90 border border-orange-200/80 rounded-3xl p-4 sm:p-5 flex items-center justify-between shadow-2xs">
                         <div className="space-y-0.5">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Código de Pago</span>
+                            <span className="text-xs font-bold uppercase tracking-wide text-orange-900/70 block">Código de Pago</span>
                             <div className="flex items-center gap-2">
-                                <span className="text-sm font-mono font-black text-orange-700 tracking-wider">{paymentCode}</span>
+                                <span className="text-sm font-mono font-bold text-orange-700 tracking-wider">{paymentCode}</span>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1312,8 +1312,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                         <div className="flex items-center gap-3">
                             <div className="text-right space-y-0.5">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Monto a Transferir</span>
-                                <span className="text-2xl font-black text-slate-900 tracking-tight">${totalAmountToPay}</span>
+                                <span className="text-xs font-bold uppercase tracking-wide text-orange-900/70 block">Monto a Transferir</span>
+                                <span className="text-2xl font-bold text-slate-900 tracking-tight">${totalAmountToPay}</span>
                             </div>
                             <div className="size-11 bg-orange-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-600/30 shrink-0">
                                 <Wallet className="size-6" />
@@ -1330,31 +1330,31 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-4 text-left">
                                 <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-wrap gap-2">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-10 bg-slate-900 text-white rounded-full flex items-center justify-center font-black shadow-xs shrink-0">
+                                        <div className="size-10 bg-slate-900 text-white rounded-full flex items-center justify-center font-bold shadow-xs shrink-0">
                                             <Building2 className="size-5" />
                                         </div>
-                                        <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Datos para la Transferencia</span>
+                                        <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">Datos para la Transferencia</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
-                                        <span className="text-xs font-black text-orange-700 uppercase tracking-wider">{activeBankAcc.banco || 'BANCO PICHINCHA'}</span>
+                                        <span className="text-xs font-bold text-orange-700 uppercase tracking-wider">{activeBankAcc.banco || 'BANCO PICHINCHA'}</span>
                                     </div>
                                 </div>
 
                                 {/* Pestañas / Tabs si hay más de una cuenta bancaria */}
                                 {cuentasList.length > 1 && (
                                     <div className="space-y-1.5">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Selecciona el Banco a Transferir:</span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Selecciona el Banco a Transferir:</span>
                                         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
                                             {cuentasList.map((acc: any, idx: number) => (
                                                 <button
                                                     key={acc.id || idx}
                                                     type="button"
                                                     onClick={() => setSelectedBankIndex(idx)}
-                                                    className={`px-3.5 py-2 rounded-2xl text-xs font-black transition-all shrink-0 cursor-pointer ${
-                                                        selectedBankIndex === idx 
-                                                            ? 'bg-orange-600 text-white shadow-md' 
-                                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                                    }`}
+                                                    className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+ selectedBankIndex === idx 
+ ? 'bg-orange-600 text-white shadow-md' 
+ : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+ }`}
                                                 >
                                                     🏦 {acc.banco}
                                                 </button>
@@ -1369,8 +1369,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             <User className="size-4" />
                                         </div>
                                         <div>
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TITULAR</span>
-                                            <span className="text-xs font-black text-slate-900">{activeBankAcc.titular || 'Titular de Cuenta'}</span>
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Titular</span>
+                                            <span className="text-xs font-bold text-slate-900">{activeBankAcc.titular || 'Titular de Cuenta'}</span>
                                         </div>
                                     </div>
 
@@ -1379,8 +1379,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             <CreditCard className="size-4" />
                                         </div>
                                         <div>
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TIPO DE CUENTA</span>
-                                            <span className="text-xs font-black text-slate-900">{activeBankAcc.tipoCuenta || 'Ahorros'}</span>
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Tipo de cuenta</span>
+                                            <span className="text-xs font-bold text-slate-900">{activeBankAcc.tipoCuenta || 'Ahorros'}</span>
                                         </div>
                                     </div>
 
@@ -1389,8 +1389,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             <Hash className="size-4" />
                                         </div>
                                         <div>
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">NÚMERO DE CUENTA</span>
-                                            <span className="text-xs font-mono font-black text-slate-900 select-all">{activeBankAcc.numeroCuenta || '0000000000'}</span>
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Número de cuenta</span>
+                                            <span className="text-xs font-mono font-bold text-slate-900 select-all">{activeBankAcc.numeroCuenta || '0000000000'}</span>
                                         </div>
                                     </div>
 
@@ -1399,14 +1399,14 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             <FileText className="size-4" />
                                         </div>
                                         <div>
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">IDENTIFICACIÓN / RUC</span>
-                                            <span className="text-xs font-mono font-black text-slate-900">{activeBankAcc.identificacion || '0000000000001'}</span>
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Identificación / RUC</span>
+                                            <span className="text-xs font-mono font-bold text-slate-900">{activeBankAcc.identificacion || '0000000000001'}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {activeBankAcc.instructions && (
-                                    <div className="p-3 bg-orange-50/70 border border-orange-200/60 rounded-2xl text-[11px] text-orange-950 font-medium">
+                                    <div className="p-3 bg-orange-50/70 border border-orange-200/60 rounded-2xl text-xs text-orange-950 font-medium">
                                         💡 {activeBankAcc.instructions}
                                     </div>
                                 )}
@@ -1414,7 +1414,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 {/* Código QR opcional */}
                                 {activeBankAcc.qrImageUrl && (
                                     <div className="pt-3 text-center border-t border-slate-100">
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Escanea el código QR de Pago</span>
+                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Escanea el código QR de Pago</span>
                                         <img src={activeBankAcc.qrImageUrl} alt="QR de Pago" className="w-36 h-36 mx-auto rounded-2xl border border-slate-200 shadow-md object-contain bg-white p-2" />
                                     </div>
                                 )}
@@ -1425,7 +1425,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     {/* Formulario de Carga de Comprobante con Estilo Dashed */}
                     <form onSubmit={handleUploadEvidenceSubmit} className="space-y-4 pt-1">
                         <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-3">
-                            <label className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                            <label className="block text-xs font-bold text-slate-900 uppercase tracking-wide">
                                 SUBIR COMPROBANTE (PNG, JPG, WEBP O PDF) *
                             </label>
 
@@ -1439,7 +1439,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 
                                 <button
                                     type="button"
-                                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
                                 >
                                     Seleccionar archivo
                                 </button>
@@ -1462,7 +1462,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                             <div className="bg-slate-100/80 rounded-2xl p-3.5 flex items-start gap-3 border border-slate-200/60">
                                 <ShieldCheck className="size-5 text-orange-600 shrink-0 mt-0.5" />
-                                <div className="text-[10px] text-slate-600 font-semibold leading-relaxed">
+                                <div className="text-xs text-slate-600 font-semibold leading-relaxed">
                                     <strong className="text-slate-800 block">Tu comprobante es 100% seguro.</strong>
                                     Solo se usa para validar tu pago y enviar tu pedido a producción.
                                 </div>
@@ -1480,7 +1480,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             <button
                                 type="submit"
                                 disabled={uploadingEvidence || !evidenceFile}
-                                className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
+                                className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
                             >
                                 {uploadingEvidence ? (
                                     <>
@@ -1496,7 +1496,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             </button>
                             <div className="flex items-center justify-center gap-1.5 text-center pt-1">
                                 <Lock className="size-3 text-slate-400" />
-                                <span className="text-[11px] font-bold text-slate-400">Tus datos están protegidos</span>
+                                <span className="text-xs font-bold text-slate-400">Tus datos están protegidos</span>
                             </div>
                         </div>
                     </form>
@@ -1515,7 +1515,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <Clock className="size-10 stroke-[2.5]" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-slate-900 tracking-tight">¡Comprobante Recibido!</h1>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">¡Comprobante Recibido!</h1>
                         <p className="text-xs text-slate-500 font-medium mt-2">
                             Tu pago está en <strong>Proceso de Verificación</strong>. Tu pedido pasará a producción automáticamente tan pronto como el administrador confirme la transferencia bancaria.
                         </p>
@@ -1523,29 +1523,29 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                     <div className="bg-slate-50 rounded-2xl p-5 text-left border border-slate-200 space-y-3">
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Pedido N°</span>
-                            <span className="text-sm font-black text-slate-900">#{createdOrder.numeroPedido}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Pedido N°</span>
+                            <span className="text-sm font-bold text-slate-900">#{createdOrder.numeroPedido}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Estado del Pago</span>
-                            <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-[10px] font-black uppercase tracking-widest">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Estado del Pago</span>
+                            <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-xs font-bold uppercase tracking-wide">
                                 En Revisión
                             </span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Entrega</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Entrega</span>
                             <span className="text-xs font-bold text-slate-700">{createdOrder.tipoEntrega}</span>
                         </div>
                         <div className="flex justify-between items-center pt-2 border-t border-slate-200">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total</span>
-                            <span className="text-base font-black text-orange-600">${(Number(createdOrder?.total) || 0).toFixed(2)}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Total</span>
+                            <span className="text-base font-bold text-orange-600">${(Number(createdOrder?.total) || 0).toFixed(2)}</span>
                         </div>
                     </div>
 
                     <div className="space-y-3">
                         <a
                             href={`/${negocio.slug}/pedidos`}
-                            className="block w-full py-4 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-white shadow-lg active:scale-95 transition-transform bg-orange-600 hover:bg-orange-700"
+                            className="block w-full py-4 text-center text-xs font-bold uppercase tracking-wide rounded-2xl text-white shadow-lg active:scale-95 transition-transform bg-orange-600 hover:bg-orange-700"
                         >
                             Ver Mis Pedidos
                         </a>
@@ -1554,7 +1554,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 setStep('catalog');
                                 setCreatedOrder(null);
                             }}
-                            className="block w-full py-4 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 active:scale-95 transition-transform"
+                            className="block w-full py-4 text-center text-xs font-bold uppercase tracking-wide rounded-2xl text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 active:scale-95 transition-transform"
                         >
                             Volver al Catálogo
                         </button>
@@ -1578,13 +1578,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={negocio.logoUrl} alt={negocio.nombre} width={36} height={36} className="rounded-xl object-contain size-9 border border-slate-100 bg-white" />
                     ) : (
-                        <div className="size-9 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase" style={{ backgroundColor: primaryColor }}>
+                        <div className="size-9 rounded-xl flex items-center justify-center text-white text-xs font-bold uppercase" style={{ backgroundColor: primaryColor }}>
                             {negocio.nombre.substring(0, 2)}
                         </div>
                     )}
                     <div>
-                        <h1 className="text-sm font-black text-slate-900 tracking-tight leading-tight">{negocio.nombre}</h1>
-                        <span className="text-[9px] font-black tracking-widest text-slate-400 uppercase leading-none">
+                        <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-tight">{negocio.nombre}</h1>
+                        <span className="text-xs font-bold tracking-wide text-slate-400 uppercase leading-none">
                             {step === 'checkout' ? 'Realizar Pedido' : 'Pedidos Online'}
                         </span>
                     </div>
@@ -1595,7 +1595,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <button
                             type="button"
                             onClick={handleShareApp}
-                            className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200/80 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95"
+                            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200/80 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95"
                             title="Compartir esta app"
                         >
                             <Share2 className="size-3.5 text-orange-600 shrink-0" />
@@ -1605,7 +1605,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         {clientPhone ? (
                             <Link 
                                 href={`/${negocio.slug}/perfil`}
-                                className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs"
+                                className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs"
                             >
                                 <User className="size-3.5 text-slate-500" />
                                 <span className="truncate max-w-[70px] sm:max-w-[100px]">{clientName || 'Perfil'}</span>
@@ -1613,7 +1613,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         ) : (
                             <Link
                                 href={`/${negocio.slug}/perfil`}
-                                className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200/80 transition-all cursor-pointer shadow-2xs flex items-center gap-1"
+                                className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200/80 transition-all cursor-pointer shadow-2xs flex items-center gap-1"
                             >
                                 <User className="size-3.5 text-emerald-600" />
                                 <span>Login</span>
@@ -1629,7 +1629,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         >
                             <ShoppingBag className="size-6" />
                             {totalItems > 0 && (
-                                <span className="absolute -top-1 -right-1 size-5 bg-rose-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-md animate-pulse">
+                                <span className="absolute -top-1 -right-1 size-5 bg-rose-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md animate-pulse">
                                     {totalItems}
                                 </span>
                             )}
@@ -1640,7 +1640,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     <button 
                         type="button"
                         onClick={() => setStep('catalog')}
-                        className="text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 px-3 py-1.5 rounded-xl border border-emerald-200/80 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                        className="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 px-3 py-1.5 rounded-xl border border-emerald-200/80 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer shadow-2xs"
                     >
                         <Plus className="size-3.5 text-emerald-600 stroke-[2.5]" />
                         <span>Añadir productos</span>
@@ -1655,10 +1655,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <div className="px-4 py-6 space-y-6 max-w-4xl mx-auto animate-fadeIn">
                             <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 p-6 md:p-8 rounded-3xl text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
                                 <div className="space-y-1 text-center md:text-left">
-                                    <span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-100 backdrop-blur-md">
+                                    <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wide text-amber-100 backdrop-blur-md">
                                         🔥 Promociones & Descuentos
                                     </span>
-                                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">Ofertas Especiales</h2>
+                                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Ofertas Especiales</h2>
                                     <p className="text-xs md:text-sm text-white/90 font-medium">Aprovecha los mejores precios y promociones exclusivas</p>
                                 </div>
                                 <button
@@ -1672,7 +1672,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             {/* Promociones Activas */}
                             {activePromotions.length > 0 ? (
                                 <div className="space-y-4">
-                                    <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">Promociones Disponibles ({activePromotions.length})</h3>
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">Promociones Disponibles ({activePromotions.length})</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {activePromotions.map((promo: any) => {
                                             const linkedProduct = products.find(p => p.id === promo.productoRequeridoId) || products[0];
@@ -1681,13 +1681,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                 <div key={promo.id} className="bg-white rounded-3xl p-4 border border-amber-200 shadow-md flex items-center gap-4">
                                                     <img src={displayImg} alt={promo.titulo} className="w-24 h-24 rounded-2xl object-cover shrink-0" />
                                                     <div className="flex-1 min-w-0 space-y-1">
-                                                        <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-black uppercase">
+                                                        <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-xs font-bold uppercase">
                                                             {promo.tipoPromo === 'DOS_POR_UNO' || promo.tipoPromo === '2X1' ? '🎁 2x1' : '🔥 Promo'}
                                                         </span>
                                                         <h4 className="font-extrabold text-slate-900 text-sm truncate">{promo.titulo}</h4>
                                                         <p className="text-slate-500 text-xs line-clamp-2">{promo.descripcion}</p>
                                                         <div className="flex items-center justify-between pt-1">
-                                                            <span className="text-sm font-black text-amber-600">${(Number(promo.precioPromo) || Number(linkedProduct?.precio) || 0).toFixed(2)}</span>
+                                                            <span className="text-sm font-bold text-amber-600">${(Number(promo.precioPromo) || Number(linkedProduct?.precio) || 0).toFixed(2)}</span>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleOrderPromotion(promo)}
@@ -1707,13 +1707,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     <div className="size-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto shadow-inner">
                                         <Flame className="size-7 animate-bounce" />
                                     </div>
-                                    <h3 className="text-base font-black text-slate-900 uppercase">Sin Promociones Activas en este Momento</h3>
+                                    <h3 className="text-base font-bold text-slate-900 uppercase">Sin Promociones Activas en este Momento</h3>
                                     <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
                                         Actualmente no hay promociones configuradas hoy. ¡Explora nuestro catálogo completo con entregas inmediatas!
                                     </p>
                                     <button
                                         onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
-                                        className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
+                                        className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
                                     >
                                         Explorar Menú Completo
                                     </button>
@@ -1727,10 +1727,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <div className="px-4 py-6 space-y-6 max-w-4xl mx-auto animate-fadeIn">
                             <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-6 md:p-8 rounded-3xl text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
                                 <div className="space-y-1 text-center md:text-left">
-                                    <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-500/30">
+                                    <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-xs font-bold uppercase tracking-wide border border-indigo-500/30">
                                         📦 Mis Pedidos & Rastreo
                                     </span>
-                                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">Seguimiento de Compras</h2>
+                                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Seguimiento de Compras</h2>
                                     <p className="text-xs md:text-sm text-slate-300 font-medium">Consulta el estado de tus pedidos recientes y entregas</p>
                                 </div>
                             </div>
@@ -1738,8 +1738,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             {/* Buscador / Verificación de Teléfono */}
                             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Tus Datos de Cliente</h3>
-                                    <span className="text-[10px] font-bold text-slate-400">Verificado por Teléfono</span>
+                                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Tus Datos de Cliente</h3>
+                                    <span className="text-xs font-bold text-slate-400">Verificado por Teléfono</span>
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -1766,10 +1766,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 <div className="bg-white rounded-3xl p-6 border-2 border-emerald-500/30 shadow-lg space-y-4">
                                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                                         <div>
-                                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block">PEDIDO ACTIVO</span>
-                                            <h4 className="text-lg font-black text-slate-900">Pedido #{activeOrder.id.slice(0, 8).toUpperCase()}</h4>
+                                            <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide block">Pedido activo</span>
+                                            <h4 className="text-lg font-bold text-slate-900">Pedido #{activeOrder.id.slice(0, 8).toUpperCase()}</h4>
                                         </div>
-                                        <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase">
+                                        <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase">
                                             {activeOrder.estado}
                                         </span>
                                     </div>
@@ -1777,12 +1777,12 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
                                         <div>
                                             <p className="text-xs text-slate-500 font-medium">Total Abonado / A pagar:</p>
-                                            <p className="text-xl font-black text-slate-900">${(Number(activeOrder.total) || 0).toFixed(2)}</p>
+                                            <p className="text-xl font-bold text-slate-900">${(Number(activeOrder.total) || 0).toFixed(2)}</p>
                                         </div>
 
                                         <Link
                                             href={`/${negocio.slug}/pedidos/${activeOrder.id}`}
-                                            className="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md text-center transition-all cursor-pointer"
+                                            className="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md text-center transition-all cursor-pointer"
                                         >
                                             Rastrear en Vivo →
                                         </Link>
@@ -1793,13 +1793,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     <div className="size-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto shadow-inner">
                                         <PackageCheck className="size-7" />
                                     </div>
-                                    <h3 className="text-base font-black text-slate-800 uppercase">Sin Pedidos en Curso</h3>
+                                    <h3 className="text-base font-bold text-slate-800 uppercase">Sin Pedidos en Curso</h3>
                                     <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
                                         No hay pedidos activos vinculados a este número en este momento.
                                     </p>
                                     <button
                                         onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
-                                        className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
+                                        className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
                                     >
                                         Realizar Nuevo Pedido
                                     </button>
@@ -1813,21 +1813,21 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <div className="px-4 py-6 space-y-6 max-w-4xl mx-auto animate-fadeIn">
                             <div className="bg-gradient-to-r from-cyan-900 via-slate-900 to-slate-950 p-6 md:p-8 rounded-3xl text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
                                 <div className="space-y-1 text-center md:text-left">
-                                    <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-[10px] font-black uppercase tracking-widest border border-cyan-500/30">
+                                    <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-wide border border-cyan-500/30">
                                         👤 Mi Cuenta & Perfil
                                     </span>
-                                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">Datos de Envío y Cliente</h2>
+                                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Datos de Envío y Cliente</h2>
                                     <p className="text-xs md:text-sm text-slate-300 font-medium">Guarda tu información para compras 1-clic rápidas</p>
                                 </div>
                             </div>
 
                             {/* Formulario de Configuración del Cliente */}
                             <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
-                                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-3">Información Personal Guardada</h3>
+                                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-3">Información Personal Guardada</h3>
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Nombre Completo</label>
+                                        <label className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Nombre Completo</label>
                                         <input
                                             type="text"
                                             value={clientName}
@@ -1838,7 +1838,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Teléfono / WhatsApp</label>
+                                        <label className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Teléfono / WhatsApp</label>
                                         <input
                                             type="tel"
                                             value={clientPhone}
@@ -1849,7 +1849,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Dirección Habitual de Entrega</label>
+                                        <label className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Dirección Habitual de Entrega</label>
                                         <input
                                             type="text"
                                             value={clientAddress}
@@ -1860,7 +1860,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Referencia de Domicilio (opcional)</label>
+                                        <label className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Referencia de Domicilio (opcional)</label>
                                         <input
                                             type="text"
                                             value={clientReference}
@@ -1878,7 +1878,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             if (clientReference) localStorage.setItem('pinchos_client_reference', clientReference);
                                             alert("¡Tus datos de cuenta han sido guardados con éxito!");
                                         }}
-                                        className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg transition-all cursor-pointer"
+                                        className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-all cursor-pointer"
                                     >
                                         💾 Guardar Mis Datos
                                     </button>
@@ -1909,17 +1909,17 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <div className="relative z-10 px-6 pt-10 pb-8 max-w-lg mx-auto">
                             {/* Badge superior */}
                             <div className="inline-flex items-center gap-2 mb-4">
-                                <span className="px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border" style={{ color: primaryColor, borderColor: primaryColor, backgroundColor: `${primaryColor}20` }}>
+                                <span className="px-3 py-1 text-xs font-bold uppercase tracking-wide rounded-full border" style={{ color: primaryColor, borderColor: primaryColor, backgroundColor: `${primaryColor}20` }}>
                                     🔥 Pedidos en Línea
                                 </span>
                             </div>
 
                             {/* Título grande */}
-                            <h2 className="text-5xl md:text-6xl font-black text-white uppercase leading-[0.9] tracking-tight mb-2 drop-shadow-2xl">
+                            <h2 className="text-5xl md:text-5xl font-bold text-white leading-[0.9] tracking-tight mb-2 drop-shadow-2xl">
                                 {heroTitle.split(' ').slice(0, 2).join(' ')}
                             </h2>
                             {heroTitle.split(' ').length > 2 && (
-                                <h2 className="text-5xl md:text-6xl font-black italic uppercase leading-[0.9] tracking-tight mb-4 drop-shadow-2xl" style={{ color: primaryColor }}>
+                                <h2 className="text-5xl md:text-5xl font-bold leading-[0.9] tracking-tight mb-4 drop-shadow-2xl" style={{ color: primaryColor }}>
                                     {heroTitle.split(' ').slice(2).join(' ')}
                                 </h2>
                             )}
@@ -1933,11 +1933,11 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
                                     <div className="flex items-center gap-2">
                                         <span className={`w-3 h-3 rounded-full animate-pulse ${isStoreClosed ? 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.8)]' : 'bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]'}`} />
-                                        <span className={`font-black text-xs uppercase tracking-wider ${isStoreClosed ? 'text-red-300' : 'text-emerald-300'}`}>
+                                        <span className={`font-bold text-xs uppercase tracking-wider ${isStoreClosed ? 'text-red-300' : 'text-emerald-300'}`}>
                                             {isStoreClosed ? '🔴 Local Cerrado' : '🟢 Abierto Ahora'}
                                         </span>
                                     </div>
-                                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-white/90 px-2.5 py-1 rounded-full bg-white/10 border border-white/15">
+                                    <span className="text-xs font-extrabold uppercase tracking-wider text-white/90 px-2.5 py-1 rounded-full bg-white/10 border border-white/15">
                                         {isStoreClosed ? 'Pedidos Pausados' : 'Pedidos Inmediatos'}
                                     </span>
                                 </div>
@@ -1978,23 +1978,23 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     <div className="flex items-center gap-1.5">
                                         <span className="text-base">⏱️</span>
                                         <div>
-                                            <p className="text-white font-black text-[10px]">{config.tiempoMaximoEntrega}</p>
-                                            <p className="text-white/50 text-[9px] font-medium">Entrega rápida</p>
+                                            <p className="text-white font-bold text-xs">{config.tiempoMaximoEntrega}</p>
+                                            <p className="text-white/50 text-xs font-medium">Entrega rápida</p>
                                         </div>
                                     </div>
                                 )}
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-base">🔥</span>
                                     <div>
-                                        <p className="text-white font-black text-[10px]">Recién preparado</p>
-                                        <p className="text-white/50 text-[9px] font-medium">Ingredientes frescos</p>
+                                        <p className="text-white font-bold text-xs">Recién preparado</p>
+                                        <p className="text-white/50 text-xs font-medium">Ingredientes frescos</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-base">🔒</span>
                                     <div>
-                                        <p className="text-white font-black text-[10px]">Pago seguro</p>
-                                        <p className="text-white/50 text-[9px] font-medium">Múltiples métodos</p>
+                                        <p className="text-white font-bold text-xs">Pago seguro</p>
+                                        <p className="text-white/50 text-xs font-medium">Múltiples métodos</p>
                                     </div>
                                 </div>
                             </div>
@@ -2010,11 +2010,11 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 : 'bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white border-emerald-800/80 shadow-emerald-950/20'
                         }`}>
                             <div className="flex items-center gap-3.5 w-full md:w-auto">
-                                <div className={`size-11 rounded-2xl flex items-center justify-center font-black shrink-0 shadow-inner ${
-                                    ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
-                                        ? 'bg-amber-500/20 text-amber-400 ring-2 ring-amber-500/30'
-                                        : 'bg-emerald-500/20 text-emerald-400 ring-2 ring-emerald-500/30'
-                                }`}>
+                                <div className={`size-11 rounded-2xl flex items-center justify-center font-bold shrink-0 shadow-inner ${
+ ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+ ? 'bg-amber-500/20 text-amber-400 ring-2 ring-amber-500/30'
+ : 'bg-emerald-500/20 text-emerald-400 ring-2 ring-emerald-500/30'
+ }`}>
                                     {['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado) ? (
                                         <AlertCircle className="size-6 animate-bounce" />
                                     ) : (
@@ -2029,26 +2029,26 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                         return (
                                             <>
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className={`text-xs font-black uppercase tracking-wider ${
-                                                        isChangesReq || isPendingPayment ? 'text-amber-400' : 'text-emerald-400'
-                                                    }`}>
+                                                    <span className={`text-xs font-bold uppercase tracking-wider ${
+ isChangesReq || isPendingPayment ? 'text-amber-400' : 'text-emerald-400'
+ }`}>
                                                         {isChangesReq
                                                             ? `⚠️ El Negocio Solicitó Cambios en Pedido #${activeOrder.id.slice(0, 8).toUpperCase()}`
                                                             : isPendingPayment
                                                             ? `⏳ Pedido Pendiente de Aprobación #${activeOrder.id.slice(0, 8).toUpperCase()}`
                                                             : `🛵 Pedido Confirmado #${activeOrder.id.slice(0, 8).toUpperCase()}`}
                                                     </span>
-                                                    <span className={`text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                                                        isChangesReq
-                                                            ? 'bg-amber-500/40 text-amber-200 border border-amber-400/50 animate-pulse'
-                                                            : isPendingPayment
-                                                            ? 'bg-amber-500/30 text-amber-200 border border-amber-400/30'
-                                                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
-                                                    }`}>
+                                                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+ isChangesReq
+ ? 'bg-amber-500/40 text-amber-200 border border-amber-400/50 animate-pulse'
+ : isPendingPayment
+ ? 'bg-amber-500/30 text-amber-200 border border-amber-400/30'
+ : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+ }`}>
                                                         {isChangesReq ? '⚠️ REVISAR PROPUESTA' : isPendingPayment ? 'En Verificación' : activeOrder.estado}
                                                     </span>
                                                 </div>
-                                                <p className="text-[11px] text-slate-300 font-semibold mt-1">
+                                                <p className="text-xs text-slate-300 font-semibold mt-1">
                                                     {isChangesReq
                                                         ? 'El establecimiento solicita modificar algunos productos. Revisa y confirma tu propuesta.'
                                                         : isPendingPayment
@@ -2068,12 +2068,12 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                         const isPendingPayment = ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado);
                                         return (
                                             <>
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">
+                                                <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block">
                                                     {isChangesReq ? 'ACCION REQUERIDA' : 'Tiempo Restante'}
                                                 </span>
-                                                <span className={`text-sm font-mono font-black ${
-                                                    isChangesReq || isPendingPayment ? 'text-amber-400' : 'text-emerald-400'
-                                                }`}>
+                                                <span className={`text-sm font-mono font-bold ${
+ isChangesReq || isPendingPayment ? 'text-amber-400' : 'text-emerald-400'
+ }`}>
                                                     {isChangesReq ? 'Esperando tu confirmación...' : (countdownTime || 'Calculando...')}
                                                 </span>
                                             </>
@@ -2082,13 +2082,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 </div>
                                 <Link
                                     href={`/${negocio.slug}/pedidos/${activeOrder.id}`}
-                                    className={`px-4 py-2.5 font-black text-xs rounded-xl transition-all active:scale-95 shrink-0 shadow-md flex items-center gap-1.5 ${
-                                        (activeOrder.estado === 'CAMBIOS_SOLICITADOS' || activeOrder.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS' || activeOrder.extraInfo?.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS')
-                                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20'
-                                            : ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
-                                            ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
-                                            : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950'
-                                    }`}
+                                    className={`px-4 py-2.5 font-bold text-xs rounded-xl transition-all active:scale-95 shrink-0 shadow-md flex items-center gap-1.5 ${
+ (activeOrder.estado === 'CAMBIOS_SOLICITADOS' || activeOrder.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS' || activeOrder.extraInfo?.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS')
+ ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20'
+ : ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+ ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
+ : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950'
+ }`}
                                 >
                                     <span>{(activeOrder.estado === 'CAMBIOS_SOLICITADOS' || activeOrder.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS' || activeOrder.extraInfo?.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS') ? 'Revisar Cambios →' : 'Ver Pedido →'}</span>
                                 </Link>
@@ -2101,9 +2101,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <div className="mx-6 mt-3 bg-gradient-to-r from-amber-50 to-orange-50/70 border border-amber-200/60 rounded-xl px-3.5 py-2 flex items-center justify-between text-left shadow-xs">
                             <div className="flex items-center gap-2">
                                 <Clock className="size-3.5 text-amber-600 shrink-0" />
-                                <span className="text-[10px] font-bold text-amber-900/80 uppercase tracking-wider">Tiempo de entrega aproximado:</span>
+                                <span className="text-xs font-bold text-amber-900/80 uppercase tracking-wider">Tiempo de entrega aproximado:</span>
                             </div>
-                            <span className="text-[11px] font-black text-amber-950 bg-white/80 px-2 py-0.5 rounded-md border border-amber-200/60 shadow-2xs">
+                            <span className="text-xs font-bold text-amber-950 bg-white/80 px-2 py-0.5 rounded-md border border-amber-200/60 shadow-2xs">
                                 {config.tiempoMaximoEntrega}
                             </span>
                         </div>
@@ -2117,11 +2117,11 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar scroll-smooth">
                                 <button 
                                     onClick={() => setSelectedCategory('all')}
-                                    className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider shrink-0 transition-all ${
-                                        selectedCategory === 'all' 
-                                            ? 'text-white shadow-md' 
-                                            : 'bg-white text-slate-500 border border-slate-100'
-                                    }`}
+                                    className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shrink-0 transition-all ${
+ selectedCategory === 'all' 
+ ? 'text-white shadow-md' 
+ : 'bg-white text-slate-500 border border-slate-100'
+ }`}
                                     style={selectedCategory === 'all' ? { backgroundColor: primaryColor } : {}}
                                 >
                                     Todos
@@ -2130,11 +2130,11 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     <button 
                                         key={cat.id}
                                         onClick={() => setSelectedCategory(cat.id)}
-                                        className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider shrink-0 transition-all ${
-                                            selectedCategory === cat.id 
-                                                ? 'text-white shadow-md' 
-                                                : 'bg-white text-slate-500 border border-slate-100'
-                                        }`}
+                                        className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shrink-0 transition-all ${
+ selectedCategory === cat.id 
+ ? 'text-white shadow-md' 
+ : 'bg-white text-slate-500 border border-slate-100'
+ }`}
                                         style={selectedCategory === cat.id ? { backgroundColor: primaryColor } : {}}
                                     >
                                         {cat.nombre}
@@ -2149,10 +2149,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <div className="px-4 pt-4 pb-2 space-y-3">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] mb-0.5 block text-amber-600">🔥 Ofertas Imperdibles</span>
-                                    <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Promociones & Combos</h3>
+                                    <span className="text-xs font-bold uppercase tracking-wide mb-0.5 block text-amber-600">🔥 Ofertas Imperdibles</span>
+                                    <h3 className="text-lg font-bold text-slate-900 tracking-tight">Promociones & Combos</h3>
                                 </div>
-                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black uppercase">
+                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase">
                                     {activePromotions.length} disponibles
                                 </span>
                             </div>
@@ -2167,24 +2167,24 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             <div className="space-y-2">
                                                 <div className="relative h-28 w-full rounded-2xl overflow-hidden bg-slate-100">
                                                     <img src={displayImg} alt={promo.titulo} className="w-full h-full object-cover" />
-                                                    <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-amber-500 text-white font-black text-[9px] uppercase shadow-sm">
+                                                    <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-amber-500 text-white font-bold text-xs uppercase shadow-sm">
                                                         {promo.tipoPromo === 'DOS_POR_UNO' || promo.tipoPromo === '2X1' ? '🎁 2x1' : '🔥 Oferta'}
                                                     </span>
                                                 </div>
 
                                                 <div>
                                                     <h4 className="font-extrabold text-slate-900 text-sm leading-tight line-clamp-1">{promo.titulo}</h4>
-                                                    <p className="text-slate-500 text-[11px] font-medium leading-snug line-clamp-2 mt-0.5">{promo.descripcion}</p>
+                                                    <p className="text-slate-500 text-xs font-medium leading-snug line-clamp-2 mt-0.5">{promo.descripcion}</p>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center justify-between pt-1">
                                                 <div>
-                                                    <span className="text-xs font-black text-amber-600">
+                                                    <span className="text-xs font-bold text-amber-600">
                                                         ${(Number(promo.precioPromo) || Number(linkedProduct?.precio) || 0).toFixed(2)}
                                                     </span>
                                                     {promo.precioAnterior && (
-                                                        <span className="text-[10px] text-slate-400 line-through block font-bold">
+                                                        <span className="text-xs text-slate-400 line-through block font-bold">
                                                             ${Number(promo.precioAnterior).toFixed(2)}
                                                         </span>
                                                     )}
@@ -2193,7 +2193,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleOrderPromotion(promo)}
-                                                    className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase rounded-xl shadow-md cursor-pointer transition-all active:scale-95 flex items-center gap-1"
+                                                    className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-xl shadow-md cursor-pointer transition-all active:scale-95 flex items-center gap-1"
                                                 >
                                                     <Plus className="size-3 text-amber-400" />
                                                     <span>Pedir Promo</span>
@@ -2209,12 +2209,12 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     {/* ── TÍTULO SECCIÓN CATÁLOGO ── */}
                     <div className="px-4 pt-4 pb-1 flex items-center justify-between">
                         <div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] mb-0.5 block" style={{ color: primaryColor }}>🍽️ Menú</span>
-                            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Los más pedidos</h3>
+                            <span className="text-xs font-bold uppercase tracking-wide mb-0.5 block" style={{ color: primaryColor }}>🍽️ Menú</span>
+                            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Los más pedidos</h3>
                         </div>
                         <button
                             onClick={() => setSelectedCategory('all')}
-                            className="text-[10px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1"
+                            className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1"
                         >
                             Ver menú completo <ChevronRight className="size-3.5" />
                         </button>
@@ -2225,7 +2225,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-20">
                                 <Loader2 className="size-8 text-slate-300 animate-spin mb-3" />
-                                <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Cargando menú...</span>
+                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wide">Cargando menú...</span>
                             </div>
                         ) : filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -2242,7 +2242,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             >
                                                 {!p.activo && (
                                                     <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-10 flex items-center justify-center pointer-events-none">
-                                                        <span className="px-3.5 py-1.5 bg-white/90 backdrop-blur-md text-slate-800 font-extrabold text-[10px] uppercase tracking-wider rounded-full shadow-md border border-slate-200/80 flex items-center gap-1.5">
+                                                        <span className="px-3.5 py-1.5 bg-white/90 backdrop-blur-md text-slate-800 font-extrabold text-xs uppercase tracking-wider rounded-full shadow-md border border-slate-200/80 flex items-center gap-1.5">
                                                             <span className="size-2 rounded-full bg-rose-500 animate-pulse"></span>
                                                             Agotado
                                                         </span>
@@ -2265,7 +2265,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                         />
                                                     </>
                                                 ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center font-black text-4xl italic uppercase" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                                                    <div className="absolute inset-0 flex items-center justify-center font-bold text-4xl " style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
                                                         {p.nombre.substring(0, 1)}
                                                     </div>
                                                 )}
@@ -2279,25 +2279,25 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             <div className="flex flex-col flex-1 p-3 text-left">
                                                 <h3 
                                                     onClick={() => setZoomProduct(p)}
-                                                    className="text-xs font-black text-slate-900 tracking-tight leading-tight cursor-pointer line-clamp-2"
+                                                    className="text-xs font-bold text-slate-900 tracking-tight leading-tight cursor-pointer line-clamp-2"
                                                 >
                                                     {p.nombre}
                                                 </h3>
                                                 {p.descripcion && (
-                                                    <p className="text-[10px] text-slate-400 font-medium leading-relaxed mt-0.5 line-clamp-2">{p.descripcion}</p>
+                                                    <p className="text-xs text-slate-400 font-medium leading-relaxed mt-0.5 line-clamp-2">{p.descripcion}</p>
                                                 )}
                                                 <div className="flex justify-between items-center mt-auto pt-2">
-                                                    <span className="text-sm font-black text-slate-900">${p.precio.toFixed(2)}</span>
+                                                    <span className="text-sm font-bold text-slate-900">${p.precio.toFixed(2)}</span>
                                                     
                                                     {!p.activo ? (
-                                                        <span className="px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-200">
+                                                        <span className="px-2.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-200">
                                                             Agotado
                                                         </span>
                                                     ) : isStoreClosed ? (
                                                         <button 
                                                             type="button"
                                                             onClick={(e) => { e.stopPropagation(); alert('El local se encuentra cerrado en este momento.'); }}
-                                                            className="px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-red-500 bg-red-50 border border-red-100 flex items-center gap-1 opacity-85 cursor-not-allowed"
+                                                            className="px-2.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider text-red-500 bg-red-50 border border-red-100 flex items-center gap-1 opacity-85 cursor-not-allowed"
                                                         >
                                                             <Lock className="size-3" />
                                                             <span>Cerrado</span>
@@ -2311,7 +2311,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                             >
                                                                 <Minus className="size-3.5 stroke-[2.5]" />
                                                             </button>
-                                                            <span className="text-xs font-black text-slate-900 min-w-[16px] text-center">{inCart.quantity}</span>
+                                                            <span className="text-xs font-bold text-slate-900 min-w-[16px] text-center">{inCart.quantity}</span>
                                                             <button 
                                                                 type="button"
                                                                 onClick={() => updateQuantity(p.id, 1)}
@@ -2339,7 +2339,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         ) : (
                             <div className="text-center py-20">
                                 <ShoppingBag className="size-12 text-slate-300 mx-auto mb-3" />
-                                <h3 className="text-sm font-black text-slate-800 mb-1">Sin productos disponibles</h3>
+                                <h3 className="text-sm font-bold text-slate-800 mb-1">Sin productos disponibles</h3>
                                 <p className="text-xs text-slate-400 font-medium">Prueba buscando otro término o categoría.</p>
                             </div>
                         )}
@@ -2351,13 +2351,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url('${bannerImage}')` }} />
                             <div className="relative z-10 p-6 flex items-center justify-between gap-4">
                                 <div>
-                                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider">¿Vas a tener visita?</p>
-                                    <h3 className="text-white font-black text-lg uppercase tracking-tight leading-tight mt-0.5">SOMOS TU<br/><span style={{ color: primaryColor }}>MEJOR OPCIÓN</span></h3>
-                                    <p className="text-white/50 text-[10px] mt-1">Grandes cantidades, mismo sabor.</p>
+                                    <p className="text-white/60 text-xs font-bold uppercase tracking-wider">¿Vas a tener visita?</p>
+                                    <h3 className="text-white font-bold text-lg tracking-tight leading-tight mt-0.5">Somos tu<br/><span style={{ color: primaryColor }}>Mejor opción</span></h3>
+                                    <p className="text-white/50 text-xs mt-1">Grandes cantidades, mismo sabor.</p>
                                 </div>
                                 <button
                                     onClick={() => setSelectedCategory('all')}
-                                    className="shrink-0 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider border-2 border-white text-white hover:bg-white/20 active:scale-95 transition-all whitespace-nowrap flex items-center gap-2"
+                                    className="shrink-0 px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider border-2 border-white text-white hover:bg-white/20 active:scale-95 transition-all whitespace-nowrap flex items-center gap-2"
                                 >
                                     <span>Ver Combos</span>
                                     <span>👥</span>
@@ -2374,8 +2374,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     className="flex flex-col sm:flex-row items-center gap-2 group">
                                     <span className="text-2xl">💬</span>
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">¿Dudas? Escríbenos</p>
-                                        <p className="text-xs font-black text-slate-900 group-hover:text-green-600 transition-colors">{config.whatsapp || negocio.whatsapp}</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">¿Dudas? Escríbenos</p>
+                                        <p className="text-xs font-bold text-slate-900 group-hover:text-green-600 transition-colors">{config.whatsapp || negocio.whatsapp}</p>
                                     </div>
                                 </a>
                             )}
@@ -2383,13 +2383,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 <div className="flex flex-col sm:flex-row items-center gap-2">
                                     <span className="text-2xl">🕐</span>
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Horario de atención</p>
-                                        <p className="text-xs font-black text-slate-900">{config.horarioAtencion}</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Horario de atención</p>
+                                        <p className="text-xs font-bold text-slate-900">{config.horarioAtencion}</p>
                                     </div>
                                 </div>
                             )}
                             <div className="flex flex-col items-center sm:items-start gap-1">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Síguenos</p>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Síguenos</p>
                                 <div className="flex items-center gap-3">
                                     {config.instagram && (
                                         <a href={`https://instagram.com/${config.instagram}`} target="_blank" rel="noopener noreferrer"
@@ -2423,16 +2423,16 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
                                         <ShoppingBag className="size-5 text-white" />
-                                        <span className="absolute -top-2 -right-2 size-4 text-[8px] font-black rounded-full flex items-center justify-center text-white" style={{ backgroundColor: primaryColor }}>{totalItems}</span>
+                                        <span className="absolute -top-2 -right-2 size-4 text-xs font-bold rounded-full flex items-center justify-center text-white" style={{ backgroundColor: primaryColor }}>{totalItems}</span>
                                     </div>
                                     <div className="text-left">
-                                        <p className="text-[9px] font-bold text-white/50 uppercase tracking-wider leading-none">Tu pedido</p>
-                                        <p className="text-xs font-black text-white leading-tight">{totalItems} {totalItems === 1 ? 'producto' : 'productos'}</p>
+                                        <p className="text-xs font-bold text-white/50 uppercase tracking-wider leading-none">Tu pedido</p>
+                                        <p className="text-xs font-bold text-white leading-tight">{totalItems} {totalItems === 1 ? 'producto' : 'productos'}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-sm font-black text-white">${cartSubtotal.toFixed(2)}</span>
-                                    <span className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-white" style={{ backgroundColor: primaryColor }}>Ver carrito →</span>
+                                    <span className="text-sm font-bold text-white">${cartSubtotal.toFixed(2)}</span>
+                                    <span className="px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: primaryColor }}>Ver carrito →</span>
                                 </div>
                             </button>
                         </div>
@@ -2448,18 +2448,18 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             <button
                                 type="button"
                                 onClick={() => setDeliveryType('DOMICILIO')}
-                                className={`flex-1 py-3 text-center rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                    deliveryType === 'DOMICILIO' ? 'bg-orange-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 font-bold'
-                                }`}
+                                className={`flex-1 py-3 text-center rounded-2xl text-xs font-bold uppercase tracking-wide transition-all ${
+ deliveryType === 'DOMICILIO' ? 'bg-orange-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 font-bold'
+ }`}
                             >
                                 Entrega a Domicilio
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setDeliveryType('RETIRO')}
-                                className={`flex-1 py-3 text-center rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                    deliveryType === 'RETIRO' ? 'bg-orange-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 font-bold'
-                                }`}
+                                className={`flex-1 py-3 text-center rounded-2xl text-xs font-bold uppercase tracking-wide transition-all ${
+ deliveryType === 'RETIRO' ? 'bg-orange-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 font-bold'
+ }`}
                             >
                                 Retiro en Local
                             </button>
@@ -2469,15 +2469,15 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         {clientPhone && clientName && !isEditingPersonalData ? (
                             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center justify-between">
                                 <div className="flex items-center gap-3.5">
-                                    <div className="size-10 rounded-2xl text-white flex items-center justify-center font-black text-sm shadow-sm" style={{ backgroundColor: primaryColor }}>
+                                    <div className="size-10 rounded-2xl text-white flex items-center justify-center font-bold text-sm shadow-sm" style={{ backgroundColor: primaryColor }}>
                                         {clientName.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-1.5">
-                                            <h4 className="text-xs font-black text-slate-900">{clientName}</h4>
-                                            <span className="bg-emerald-100 text-emerald-800 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider">Identificado</span>
+                                            <h4 className="text-xs font-bold text-slate-900">{clientName}</h4>
+                                            <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider">Identificado</span>
                                         </div>
-                                        <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1 mt-0.5">
+                                        <p className="text-xs font-semibold text-slate-500 flex items-center gap-1 mt-0.5">
                                             <Phone className="size-3 text-slate-400" /> {clientPhone}
                                         </p>
                                     </div>
@@ -2485,7 +2485,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setIsEditingPersonalData(true)}
-                                    className="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all active:scale-95 cursor-pointer"
+                                    className="text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all active:scale-95 cursor-pointer"
                                 >
                                     Editar datos
                                 </button>
@@ -2493,19 +2493,19 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         ) : (
                             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
                                 <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Datos de Contacto</h3>
+                                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Datos de Contacto</h3>
                                     {clientPhone && clientName && (
                                         <button
                                             type="button"
                                             onClick={() => setIsEditingPersonalData(false)}
-                                            className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700"
+                                            className="text-xs font-bold text-emerald-600 hover:text-emerald-700"
                                         >
                                             Ocultar ↑
                                         </button>
                                     )}
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Nombre Completo</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nombre Completo</label>
                                     <input 
                                         type="text"
                                         required
@@ -2516,12 +2516,12 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Teléfono Celular</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Teléfono Celular</label>
                                     <div className="flex gap-2">
                                         <select
                                             value={countryCode}
                                             onChange={(e) => setCountryCode(e.target.value)}
-                                            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-black text-slate-800 focus:outline-none focus:border-slate-400 shrink-0 cursor-pointer shadow-2xs"
+                                            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-bold text-slate-800 focus:outline-none focus:border-slate-400 shrink-0 cursor-pointer shadow-2xs"
                                         >
                                             <option value="+593">🇪🇨 +593</option>
                                             <option value="+57">🇨🇴 +57</option>
@@ -2548,10 +2548,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
                                 <div className="flex items-center gap-2 border-b border-slate-50 pb-2">
                                     <MapPin className="size-4 text-emerald-600 shrink-0" />
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Dirección de Entrega</h3>
+                                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Dirección de Entrega</h3>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Calle / Av. Principal y Secundaria</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Calle / Av. Principal y Secundaria</label>
                                     <input 
                                         type="text"
                                         required={deliveryType === 'DOMICILIO'}
@@ -2562,7 +2562,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Referencia (Casa / Depto / Color / Conjunto)</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Referencia (Casa / Depto / Color / Conjunto)</label>
                                     <input 
                                         type="text"
                                         placeholder="Ej: Casa blanca de 2 pisos, portón negro frente a la farmacia"
@@ -2574,7 +2574,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                                 {/* Tarjeta de Fijación de Ubicación GPS */}
                                 <div className="pt-1">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Punto Exacto en el Mapa (GPS)</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Punto Exacto en el Mapa (GPS)</label>
                                     <button
                                         type="button"
                                         onClick={() => setShowMapModal(true)}
@@ -2591,19 +2591,19 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                 <MapPin className="size-4" />
                                             </div>
                                             <div className="text-left overflow-hidden">
-                                                <span className="block font-black text-xs">
+                                                <span className="block font-bold text-xs">
                                                     {selectedLat && selectedLng ? '📍 Ubicación GPS Fijada' : '🗺️ Seleccionar Punto en el Mapa'}
                                                 </span>
-                                                <span className="block text-[10px] font-bold text-emerald-800 truncate max-w-[190px] sm:max-w-[260px]">
+                                                <span className="block text-xs font-bold text-emerald-800 truncate max-w-[190px] sm:max-w-[260px]">
                                                     {selectedLat && selectedLng 
                                                         ? (selectedAddressName || `${selectedLat.toFixed(4)}, ${selectedLng.toFixed(4)}`) 
                                                         : 'Toca para abrir el mapa interactivo'}
                                                 </span>
                                             </div>
                                         </div>
-                                        <span className={`text-[10px] uppercase font-black tracking-wider px-2.5 py-1 rounded-lg ${
-                                            selectedLat && selectedLng ? 'bg-emerald-200/60 text-emerald-800' : 'bg-white border border-slate-200 text-slate-600'
-                                        }`}>
+                                        <span className={`text-xs uppercase font-bold tracking-wider px-2.5 py-1 rounded-lg ${
+ selectedLat && selectedLng ? 'bg-emerald-200/60 text-emerald-800' : 'bg-white border border-slate-200 text-slate-600'
+ }`}>
                                             {selectedLat && selectedLng ? 'Mover →' : 'Abrir →'}
                                         </span>
                                     </button>
@@ -2615,8 +2615,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <div className="rounded-2xl p-4 flex items-center gap-3 border" style={{ backgroundColor: `${primaryColor}10`, borderColor: `${primaryColor}30` }}>
                             <div className="size-10 rounded-xl flex items-center justify-center shrink-0 text-xl" style={{ backgroundColor: `${primaryColor}20` }}>⚡</div>
                             <div>
-                                <p className="text-xs font-black uppercase tracking-wider" style={{ color: primaryColor }}>Pedido Inmediato</p>
-                                <p className="text-[11px] text-slate-600 font-medium mt-0.5">
+                                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: primaryColor }}>Pedido Inmediato</p>
+                                <p className="text-xs text-slate-600 font-medium mt-0.5">
                                     Tu pedido se prepara de inmediato{config.tiempoMaximoEntrega ? ` · Entrega en ${config.tiempoMaximoEntrega}` : ' mientras el local esté abierto'}.
                                 </p>
                             </div>
@@ -2625,11 +2625,11 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         {/* Resumen del Pedido */}
                         <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
                             <div className="flex items-center justify-between border-b border-slate-50 pb-2">
-                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Resumen del Pedido</h3>
+                                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Resumen del Pedido</h3>
                                 <button
                                     type="button"
                                     onClick={() => setStep('catalog')}
-                                    className="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+                                    className="text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
                                 >
                                     <Plus className="size-3 text-slate-500 stroke-[2.5]" />
                                     <span>Añadir más</span>
@@ -2639,9 +2639,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 {cart.map(item => (
                                     <div key={item.product.id} className="py-2.5 flex justify-between items-center text-xs font-semibold">
                                         <div className="text-slate-600">
-                                            <span className="font-black" style={{ color: primaryColor }}>{item.quantity}x</span> {item.product.nombre}
+                                            <span className="font-bold" style={{ color: primaryColor }}>{item.quantity}x</span> {item.product.nombre}
                                         </div>
-                                        <span className="font-black text-slate-800">${(item.product.precio * item.quantity).toFixed(2)}</span>
+                                        <span className="font-bold text-slate-800">${(item.product.precio * item.quantity).toFixed(2)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -2660,13 +2660,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                         </div>
 
                                         {merchantShippingSubsidy > 0 && (
-                                            <div className="flex justify-between text-xs font-black text-emerald-600 uppercase tracking-wider">
+                                            <div className="flex justify-between text-xs font-bold text-emerald-600 uppercase tracking-wider">
                                                 <span>Descuento de envío (Promo)</span>
                                                 <span>-${merchantShippingSubsidy.toFixed(2)}</span>
                                             </div>
                                         )}
 
-                                        <div className="flex justify-between text-xs font-black text-slate-800 uppercase tracking-wider pt-1 border-t border-slate-100/80">
+                                        <div className="flex justify-between text-xs font-bold text-slate-800 uppercase tracking-wider pt-1 border-t border-slate-100/80">
                                             <span>Envío a pagar</span>
                                             <span>${customerShippingAmount.toFixed(2)}</span>
                                         </div>
@@ -2676,7 +2676,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                  {/* Mensaje Adaptativo de Seguridad de Envío Gratis */}
                                 {freeDeliveryPromo && deliveryType === 'DOMICILIO' && (
                                     <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-tight font-medium space-y-1">
-                                        <p className="font-black text-amber-950 flex items-center gap-1 uppercase tracking-wider">
+                                        <p className="font-bold text-amber-950 flex items-center gap-1 uppercase tracking-wider">
                                             🚚 Promoción de Envío Aplicada
                                         </p>
                                         {customerShippingAmount === 0 ? (
@@ -2690,14 +2690,14 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 {/* Advertencia si supera la distancia máxima */}
                                 {!freeDeliveryPromo && exceededDistancePromo && deliveryType === 'DOMICILIO' && (
                                     <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs leading-tight font-medium space-y-1">
-                                        <p className="font-black text-rose-950 flex items-center gap-1 uppercase tracking-wider">
+                                        <p className="font-bold text-rose-950 flex items-center gap-1 uppercase tracking-wider">
                                             📍 Distancia Fuera de Cobertura de Promo
                                         </p>
                                         <p>Tu ubicación actual (<strong>{distanceKm.toFixed(1)} km</strong>) supera el límite máximo de <strong>{exceededDistancePromo.distanciaMaximaKm} km</strong> configurado para el envío gratis.</p>
                                     </div>
                                 )}
 
-                                <div className="flex justify-between text-sm font-black text-slate-900 uppercase tracking-widest pt-2 border-t border-slate-200">
+                                <div className="flex justify-between text-sm font-bold text-slate-900 uppercase tracking-wide pt-2 border-t border-slate-200">
                                     <span>Total a Pagar</span>
                                     <span>${cartTotal.toFixed(2)}</span>
                                 </div>
@@ -2709,9 +2709,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-4 flex items-start gap-3 text-left">
                                 <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
                                 <div className="text-xs">
-                                    <p className="font-black uppercase tracking-wider text-amber-950">Monto Mínimo de Compra</p>
+                                    <p className="font-bold uppercase tracking-wider text-amber-950">Monto Mínimo de Compra</p>
                                     <p className="mt-1 font-medium leading-relaxed">
-                                        El pedido mínimo en productos es de <strong className="font-black">${minOrderAmount.toFixed(2)}</strong> (sin incluir envío). Te faltan <strong className="font-black">${missingAmountForMin.toFixed(2)}</strong> en productos para poder confirmar tu pedido.
+                                        El pedido mínimo en productos es de <strong className="font-bold">${minOrderAmount.toFixed(2)}</strong> (sin incluir envío). Te faltan <strong className="font-bold">${missingAmountForMin.toFixed(2)}</strong> en productos para poder confirmar tu pedido.
                                     </p>
                                 </div>
                             </div>
@@ -2721,7 +2721,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <button
                             type="button"
                             onClick={() => setStep('catalog')}
-                            className="w-full py-3.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer border border-slate-200/80 shadow-2xs"
+                            className="w-full py-3.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer border border-slate-200/80 shadow-2xs"
                         >
                             <Plus className="size-4 text-slate-700 stroke-[2.5]" />
                             <span>Añadir más productos al carrito</span>
@@ -2731,9 +2731,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <button
                             type="submit"
                             disabled={submitting || isBelowMinOrder}
-                            className={`w-full py-4 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-white shadow-xl transition-all flex items-center justify-center gap-2 ${
-                                isBelowMinOrder ? 'opacity-60 cursor-not-allowed' : 'active:scale-[0.98]'
-                            }`}
+                            className={`w-full py-4 text-center text-xs font-bold uppercase tracking-wide rounded-2xl text-white shadow-xl transition-all flex items-center justify-center gap-2 ${
+ isBelowMinOrder ? 'opacity-60 cursor-not-allowed' : 'active:scale-[0.98]'
+ }`}
                             style={{ backgroundColor: primaryColor }}
                         >
                             {submitting ? (
@@ -2768,8 +2768,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             <div className="flex items-center gap-3">
                                 <ShoppingBag className="size-5 text-white" />
                                 <div>
-                                    <p className="text-[9px] font-bold text-white/50 uppercase tracking-wider leading-none">Tu pedido</p>
-                                    <p className="text-sm font-black text-white">{totalItems} {totalItems === 1 ? 'producto' : 'productos'}</p>
+                                    <p className="text-xs font-bold text-white/50 uppercase tracking-wider leading-none">Tu pedido</p>
+                                    <p className="text-sm font-bold text-white">{totalItems} {totalItems === 1 ? 'producto' : 'productos'}</p>
                                 </div>
                             </div>
                             <button
@@ -2790,7 +2790,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             // eslint-disable-next-line @next/next/no-img-element
                                             <img src={item.product.imagenUrl} alt={item.product.nombre} className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center font-black text-lg italic" style={{ color: primaryColor }}>
+                                            <div className="w-full h-full flex items-center justify-center font-bold text-lg " style={{ color: primaryColor }}>
                                                 {item.product.nombre.substring(0, 1)}
                                             </div>
                                         )}
@@ -2798,8 +2798,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-black text-slate-900 truncate">{item.product.nombre}</p>
-                                        <p className="text-[10px] text-slate-500 font-medium">${item.product.precio.toFixed(2)} c/u</p>
+                                        <p className="text-xs font-bold text-slate-900 truncate">{item.product.nombre}</p>
+                                        <p className="text-xs text-slate-500 font-medium">${item.product.precio.toFixed(2)} c/u</p>
                                     </div>
                                     
                                     {/* Controles */}
@@ -2811,7 +2811,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                         >
                                             <Minus className="size-3.5 stroke-[2.5]" />
                                         </button>
-                                        <span className="text-xs font-black text-slate-900 min-w-[20px] text-center">{item.quantity}</span>
+                                        <span className="text-xs font-bold text-slate-900 min-w-[20px] text-center">{item.quantity}</span>
                                         <button
                                             type="button"
                                             onClick={() => updateQuantity(item.product.id, 1)}
@@ -2822,7 +2822,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     </div>
 
                                     {/* Subtotal por ítem */}
-                                    <p className="text-xs font-black text-slate-900 shrink-0 min-w-[48px] text-right">${(item.product.precio * item.quantity).toFixed(2)}</p>
+                                    <p className="text-xs font-bold text-slate-900 shrink-0 min-w-[48px] text-right">${(item.product.precio * item.quantity).toFixed(2)}</p>
                                 </div>
                             ))}
                         </div>
@@ -2833,8 +2833,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 <span>Subtotal</span>
                                 <span>${cartSubtotal.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-100">
-                                <span>TOTAL</span>
+                            <div className="flex justify-between text-base font-bold text-slate-900 pt-2 border-t border-slate-100">
+                                <span>Total</span>
                                 <span>${cartSubtotal.toFixed(2)}</span>
                             </div>
                         </div>
@@ -2844,7 +2844,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             {isStoreClosed ? (
                                 <button
                                     disabled
-                                    className="w-full py-4 rounded-2xl bg-slate-200 text-slate-500 font-black text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2 border border-slate-300"
+                                    className="w-full py-4 rounded-2xl bg-slate-200 text-slate-500 font-bold text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2 border border-slate-300"
                                 >
                                     <Lock className="size-4 text-red-500" />
                                     <span>Local Cerrado - Pedidos Desactivados</span>
@@ -2852,7 +2852,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             ) : (
                                 <button
                                     onClick={() => { setShowCartDrawer(false); setStep('checkout'); }}
-                                    className="w-full py-4 rounded-2xl text-white font-black text-sm uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                    className="w-full py-4 rounded-2xl text-white font-bold text-sm uppercase tracking-wide shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     ⚡ Confirmar Pedido (${cartSubtotal.toFixed(2)})
@@ -2860,7 +2860,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             )}
                             <button
                                 onClick={() => setShowCartDrawer(false)}
-                                className="w-full py-3 rounded-2xl text-slate-600 font-black text-xs uppercase tracking-wider bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-all cursor-pointer"
+                                className="w-full py-3 rounded-2xl text-slate-600 font-bold text-xs uppercase tracking-wider bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-all cursor-pointer"
                             >
                                 + Seguir comprando
                             </button>
@@ -2919,7 +2919,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     className="w-full h-full object-contain p-2"
                                 />
                             ) : (
-                                <div className="text-white/40 font-black text-6xl italic uppercase">
+                                <div className="text-white/40 font-bold text-5xl ">
                                     {zoomProduct.nombre.substring(0, 2)}
                                 </div>
                             )}
@@ -2929,21 +2929,21 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <div className="p-6 space-y-4 overflow-y-auto">
                             <div className="flex justify-between items-start gap-4 border-b border-slate-100 pb-4">
                                 <div>
-                                    <h2 className="text-xl font-black text-slate-900 tracking-tight">{zoomProduct.nombre}</h2>
+                                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">{zoomProduct.nombre}</h2>
                                     {zoomProduct.descripcion && (
                                         <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
                                             {zoomProduct.descripcion}
                                         </p>
                                     )}
                                 </div>
-                                <span className="text-2xl font-black text-slate-900 shrink-0">
+                                <span className="text-2xl font-bold text-slate-900 shrink-0">
                                     ${zoomProduct.precio.toFixed(2)}
                                 </span>
                             </div>
 
                             {/* Controles de Carrito en Modal */}
                             <div className="pt-1 flex items-center justify-between gap-4">
-                                <span className="text-xs font-black uppercase tracking-wider text-slate-400">Cantidad</span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Cantidad</span>
                                 {(() => {
                                     const itemInCart = cart.find(item => item.product.id === zoomProduct.id);
                                     if (isStoreClosed) {
@@ -2951,7 +2951,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             <button 
                                                 type="button"
                                                 disabled
-                                                className="h-12 px-6 rounded-2xl text-xs font-black uppercase tracking-wider text-red-500 bg-red-50 border border-red-200 opacity-80 cursor-not-allowed flex items-center gap-2"
+                                                className="h-12 px-6 rounded-2xl text-xs font-bold uppercase tracking-wider text-red-500 bg-red-50 border border-red-200 opacity-80 cursor-not-allowed flex items-center gap-2"
                                             >
                                                 <Lock className="size-4" />
                                                 <span>Local Cerrado</span>
@@ -2968,7 +2968,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             >
                                                 <Minus className="size-4 stroke-[2.5]" />
                                             </button>
-                                            <span className="text-base font-black text-slate-900 min-w-[24px] text-center">{itemInCart.quantity}</span>
+                                            <span className="text-base font-bold text-slate-900 min-w-[24px] text-center">{itemInCart.quantity}</span>
                                             <button 
                                                 type="button"
                                                 onClick={() => updateQuantity(zoomProduct.id, 1)}
@@ -2982,7 +2982,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                         <button 
                                             type="button"
                                             onClick={() => addToCart(zoomProduct)}
-                                            className="h-12 px-6 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                                            className="h-12 px-6 rounded-2xl text-xs font-bold uppercase tracking-wider text-white shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                             style={{ backgroundColor: primaryColor }}
                                         >
                                             <Plus className="size-4 stroke-[2.5]" />
@@ -2998,7 +2998,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
             {/* Toast Notificación de Compartir / Enlace Copiado */}
             {showShareToast && (
-                <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[350] bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-white/20 flex items-center gap-2.5 text-xs font-black animate-fade-in">
+                <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[350] bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-white/20 flex items-center gap-2.5 text-xs font-bold animate-fade-in">
                     <Check className="size-4 text-emerald-400 shrink-0" />
                     <span>¡Enlace de la tienda copiado al portapapeles! 📋</span>
                 </div>

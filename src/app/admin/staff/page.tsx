@@ -46,10 +46,60 @@ function StaffContent() {
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
     const [bizType, setBizType] = useState<'gym' | 'dental' | 'spa' | 'general'>('general');
 
+    const fetchStaff = async () => {
+        setLoading(true);
+        try {
+            const resStaff = await fetch('/api/staff');
+            let combined: StaffMember[] = [];
+            if (resStaff.ok) {
+                const dataStaff = await resStaff.json();
+                if (Array.isArray(dataStaff)) combined = [...dataStaff];
+            }
+
+            // Opcional: repartidores solo para negocios no clínicos/médicos
+            try {
+                const resLogistics = await fetch('/api/logistics/resources');
+                if (resLogistics.ok) {
+                    const dataDrivers = await resLogistics.json();
+                    if (Array.isArray(dataDrivers)) {
+                        const mappedDrivers: StaffMember[] = dataDrivers.map((d: any) => ({
+                            id: d.id,
+                            name: d.name,
+                            role: 'REPARTIDOR',
+                            avatar: d.avatar || d.profile?.fotografiaUrl || null,
+                            active: d.active ?? true,
+                            ratingPromedio: 5.0,
+                            totalReviews: 0,
+                            services: [{ id: 'delivery', nombre: 'Servicio de Delivery' }],
+                            workingHours: {}
+                        }));
+                        
+                        const existingIds = new Set(combined.map(s => s.id));
+                        mappedDrivers.forEach(dr => {
+                            if (!existingIds.has(dr.id)) combined.push(dr);
+                        });
+                    }
+                }
+            } catch (_) {
+                // Silenciar logística si no aplica
+            }
+
+            setStaff(combined);
+        } catch (error) {
+            console.error("Error fetching staff:", error);
+            setStaff([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
+        fetchStaff();
+
         fetch('/api/negocio')
             .then(res => res.json())
             .then(data => {
+                if (data?.colorPrimario) setPrimaryColor(data.colorPrimario);
                 const tipoUpper = (data.tipoNegocio || '').toUpperCase();
                 const slugUpper = (data.slug || '').toUpperCase();
                 const nameUpper = (data.nombre || '').toUpperCase();
@@ -62,67 +112,10 @@ function StaffContent() {
                 }
             })
             .catch(() => {});
-    }, []);
 
-    const fetchStaff = async () => {
-        if (!session?.user) return;
-        setLoading(true);
-        try {
-            const negocioId = (session.user as any).negocioId;
-            if (!negocioId) {
-                console.error("No se encontró negocioId en la sesión");
-                setLoading(false);
-                return;
-            }
-            const [resStaff, resLogistics] = await Promise.all([
-                fetch(`/api/staff?businessId=${negocioId}`),
-                fetch(`/api/logistics/resources`)
-            ]);
-
-            let combined: StaffMember[] = [];
-            if (resStaff.ok) {
-                const dataStaff = await resStaff.json();
-                if (Array.isArray(dataStaff)) combined = [...dataStaff];
-            }
-
-            if (resLogistics.ok) {
-                const dataDrivers = await resLogistics.json();
-                if (Array.isArray(dataDrivers)) {
-                    const mappedDrivers: StaffMember[] = dataDrivers.map((d: any) => ({
-                        id: d.id,
-                        name: d.name,
-                        role: 'REPARTIDOR',
-                        avatar: d.avatar || d.profile?.fotografiaUrl || null,
-                        active: d.active ?? true,
-                        ratingPromedio: 5.0,
-                        totalReviews: 0,
-                        services: [{ id: 'delivery', nombre: 'Servicio de Delivery' }],
-                        workingHours: {}
-                    }));
-                    
-                    // Evitar duplicados si coinciden por ID o nombre
-                    const existingIds = new Set(combined.map(s => s.id));
-                    mappedDrivers.forEach(dr => {
-                        if (!existingIds.has(dr.id)) combined.push(dr);
-                    });
-                }
-            }
-
-            setStaff(combined);
-        } catch (error) {
-            console.error("Error fetching staff:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (session) {
-            fetchStaff();
-        }
         const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
         if (color) setPrimaryColor(color);
-    }, [session]);
+    }, []);
 
     const handleEdit = (member: StaffMember) => {
         setSelectedStaff(member);
@@ -156,7 +149,7 @@ function StaffContent() {
         return (
             <div className="flex flex-col items-center justify-center py-40 gap-4">
                 <Loader2 className="animate-spin" size={48} style={{ color: primaryColor }} />
-                <p className="text-slate-400 font-black uppercase tracking-widest animate-pulse">
+                <p className="text-slate-400 font-bold uppercase tracking-wide animate-pulse">
                     {bizType === 'gym' ? 'Cargando Entrenadores...' : bizType === 'dental' ? 'Cargando Doctores...' : 'Cargando Staff...'}
                 </p>
             </div>
@@ -181,7 +174,7 @@ function StaffContent() {
             <div className="hidden md:block p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-3">
+                        <h1 className="text-4xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
                             <Users size={36} style={{ color: primaryColor }} />
                             {bizType === 'gym' ? 'Entrenadores & Coaches' : bizType === 'dental' ? 'Doctores & Especialistas' : 'Gestión de Staff'}
                         </h1>
@@ -196,7 +189,7 @@ function StaffContent() {
 
                     <button 
                         onClick={handleCreate}
-                        className="flex items-center gap-2 text-white font-black px-6 py-4 rounded-[2rem] shadow-xl transition-all active:scale-95 uppercase tracking-widest text-xs cursor-pointer"
+                        className="flex items-center gap-2 text-white font-bold px-6 py-4 rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-wide text-xs cursor-pointer"
                         style={{ backgroundColor: primaryColor }}
                     >
                         <Plus size={18} /> {bizType === 'gym' ? 'Nuevo Entrenador / Coach' : bizType === 'dental' ? 'Nuevo Doctor / Especialista' : 'Nuevo Profesional / Repartidor'}
@@ -210,7 +203,7 @@ function StaffContent() {
                         type="text"
                         placeholder="Buscar por nombre o cargo..."
                         style={{ paddingLeft: '3.6rem' }}
-                        className="w-full pr-6 py-5 bg-white border-2 border-slate-100 rounded-[2.5rem] font-bold text-slate-900 outline-none transition-all shadow-sm"
+                        className="w-full pr-6 py-5 bg-white border-2 border-slate-100 rounded-2xl font-bold text-slate-900 outline-none transition-all shadow-sm"
                         onFocus={(e) => e.target.style.borderColor = primaryColor}
                         onBlur={(e) => e.target.style.borderColor = 'rgb(241 245 249)'}
                         value={searchQuery}
@@ -220,10 +213,10 @@ function StaffContent() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredStaff.map((member) => (
-                        <div key={member.id} className="bg-white rounded-[3rem] border border-slate-100 p-8 space-y-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                        <div key={member.id} className="bg-white rounded-2xl border border-slate-100 p-8 space-y-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4">
                                 <div className="flex gap-2">
-                                    <button onClick={() => setScheduleOpenFor(member)} className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:text-indigo-600 hover:bg-indigo-50 transition-all font-black text-xs uppercase tracking-widest flex items-center gap-2" title="Gestionar Agenda">
+                                    <button onClick={() => setScheduleOpenFor(member)} className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:text-indigo-600 hover:bg-indigo-50 transition-all font-bold text-xs uppercase tracking-wide flex items-center gap-2" title="Gestionar Agenda">
                                         <Clock size={16} /> Agenda
                                     </button>
                                     <button onClick={() => handleEdit(member)} className="p-3 bg-slate-50 text-slate-400 rounded-2xl transition-all" 
@@ -239,27 +232,27 @@ function StaffContent() {
                             </div>
 
                             <div className="flex items-center gap-6">
-                                <div className="size-20 rounded-[2rem] bg-slate-50 overflow-hidden group-hover:ring-4 ring-emerald-100 transition-all">
+                                <div className="size-20 rounded-2xl bg-slate-50 overflow-hidden group-hover:ring-4 ring-emerald-100 transition-all">
                                     {member.imageMedia || member.avatar ? (
                                         <img src={getImageUrl(member.imageMedia || member.avatar, 'thumb')} alt={member.name} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-black text-2xl">
+                                        <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold text-2xl">
                                             {member.name.charAt(0).toUpperCase()}
                                         </div>
                                     )}
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="font-black text-slate-900 uppercase tracking-tight text-xl">{member.name}</h3>
+                                    <h3 className="font-bold text-slate-900 tracking-tight text-xl">{member.name}</h3>
                                     <div className="flex items-center gap-3">
-                                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full w-fit"
+                                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full w-fit"
                                             style={{ color: primaryColor, backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)' }}>
                                             {member.role || 'Profesional'}
                                         </div>
                                         {member.totalReviews > 0 && (
-                                            <div className="flex items-center gap-1 text-amber-500 font-black text-xs">
+                                            <div className="flex items-center gap-1 text-amber-500 font-bold text-xs">
                                                 <Star size={12} fill="currentColor" />
                                                 <span>{member.ratingPromedio.toFixed(1)}</span>
-                                                <span className="text-slate-300 font-medium text-[9px] lowercase">({member.totalReviews})</span>
+                                                <span className="text-slate-300 font-medium text-xs lowercase">({member.totalReviews})</span>
                                             </div>
                                         )}
                                     </div>
@@ -267,29 +260,54 @@ function StaffContent() {
                             </div>
 
                             <div className="space-y-4 pt-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 flex items-center gap-2">
                                     <Scissors size={12} className="text-slate-400" /> Servicios Asignados
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     {member.services.map(service => (
-                                        <span key={service.id} className="bg-slate-50 text-slate-600 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tight">
+                                        <span key={service.id} className="bg-slate-50 text-slate-600 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-tight">
                                             {service.nombre}
                                         </span>
                                     ))}
                                     {member.services.length === 0 && (
-                                        <span className="text-slate-300 text-[10px] font-bold italic">Sin servicios</span>
+                                        <span className="text-slate-300 text-xs font-bold ">Sin servicios</span>
                                     )}
                                 </div>
                             </div>
 
                             {!member.active && (
                                 <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
-                                    <span className="bg-slate-900 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">Inactivo</span>
+                                    <span className="bg-slate-900 text-white px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wide">Inactivo</span>
                                 </div>
                             )}
                         </div>
                     ))}
                 </div>
+
+                {filteredStaff.length === 0 && (
+                    <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-16 text-center space-y-4 shadow-xs">
+                        <div className="size-20 rounded-full bg-slate-50 flex items-center justify-center mx-auto text-slate-400 shadow-inner">
+                            <Users size={36} style={{ color: primaryColor }} />
+                        </div>
+                        <div className="space-y-1">
+                            <h3 className="text-xl font-bold text-slate-800 tracking-tight">
+                                {searchQuery ? 'Sin resultados para la búsqueda' : (bizType === 'dental' ? 'No hay doctores registrados aún' : bizType === 'gym' ? 'No hay entrenadores registrados aún' : 'No hay especialistas registrados')}
+                            </h3>
+                            <p className="text-slate-400 text-sm max-w-md mx-auto font-medium">
+                                {searchQuery ? 'Prueba buscando con otro término.' : 'Comienza registrando a los doctores u odontólogos para habilitar la asignación de citas y agenda.'}
+                            </p>
+                        </div>
+                        {!searchQuery && (
+                            <button
+                                onClick={handleCreate}
+                                className="inline-flex items-center gap-2 text-white font-bold px-8 py-4 rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-wide text-xs cursor-pointer hover:opacity-90"
+                                style={{ backgroundColor: primaryColor }}
+                            >
+                                <Plus size={18} /> {bizType === 'dental' ? 'Registrar Primer Doctor' : 'Registrar Especialista'}
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Modales responsivos */}
@@ -342,7 +360,7 @@ function StaffContent() {
 
 export default function StaffPage() {
     return (
-        <Suspense fallback={<div className="p-20 text-center uppercase font-black animate-pulse">Cargando...</div>}>
+        <Suspense fallback={<div className="p-20 text-center uppercase font-bold animate-pulse">Cargando...</div>}>
             <StaffContent />
         </Suspense>
     );

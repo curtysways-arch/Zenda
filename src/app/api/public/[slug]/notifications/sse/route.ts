@@ -11,44 +11,59 @@ export async function GET(
 ) {
     const { slug } = await params;
 
-    // 1. Obtener customer_token de las cookies
+    // 1. Resolver el negocio por slug
+    const cleanSlug = (typeof slug === 'string' ? slug : '').toLowerCase().trim();
+    let negocio: { id: string; nombre: string } | null = await prisma.negocio.findFirst({
+        where: { slug: cleanSlug },
+        select: { id: true, nombre: true }
+    });
+
+    if (!negocio && (cleanSlug === 'lavado' || cleanSlug === 'demo-lavado')) {
+        negocio = await prisma.negocio.findFirst({
+            where: { tipoNegocio: 'SHOE_CARE' },
+            select: { id: true, nombre: true }
+        });
+    }
+
+    if (!negocio) {
+        return new Response("Negocio not found", { status: 404 });
+    }
+
+    const negocioId = negocio.id;
+
+    // 2. Resolver usuario si existe customer_token en cookies
+    let userId = 'ANONYMOUS';
     const cookieHeader = req.headers.get("cookie") || "";
     const tokenMatch = cookieHeader.match(/customer_token=([^;]+)/);
     const token = tokenMatch ? tokenMatch[1] : null;
 
-    if (!token) {
-        return new Response("Unauthorized", { status: 401 });
+    if (token) {
+        try {
+            const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "default_otp_secret_key_change_me");
+            const verification = await jwtVerify(token, secret);
+            const payload = verification.payload;
+            const phone = payload?.telefono as string;
+
+            if (phone) {
+                const user = await prisma.usuario.findFirst({
+                    where: {
+                        negocioId,
+                        OR: [
+                            { phone: { contains: phone.replace(/\D/g, '') } },
+                            { phone }
+                        ]
+                    },
+                    select: { id: true }
+                });
+
+                if (user) {
+                    userId = user.id;
+                }
+            }
+        } catch {
+            // Token inválido o expirado: mantener como ANONYMOUS
+        }
     }
-
-    let payload;
-    try {
-        const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "default_otp_secret_key_change_me");
-        const verification = await jwtVerify(token, secret);
-        payload = verification.payload;
-    } catch (e) {
-        return new Response("Unauthorized", { status: 401 });
-    }
-
-    const negocioId = payload.negocioId as string;
-    const phone = payload.telefono as string;
-
-    // Buscar al usuario
-    const user = await prisma.usuario.findFirst({
-        where: {
-            negocioId,
-            OR: [
-                { phone: { contains: phone.replace(/\D/g, '') } },
-                { phone }
-            ]
-        },
-        select: { id: true }
-    });
-
-    if (!user) {
-        return new Response("User not found", { status: 404 });
-    }
-
-    const userId = user.id;
 
     // 2. Establecer stream de eventos SSE
     const responseStream = new TransformStream();
@@ -66,7 +81,7 @@ export async function GET(
 
     // Escuchar eventos en tiempo real
     const handleRealtimeEvent = async (event: { negocioId: string; userId: string; data: any }) => {
-        if (event.negocioId === negocioId && (event.userId === 'ALL' || event.userId === userId)) {
+        if (event.negocioId === negocioId && (event.userId === 'ALL' || (userId !== 'ANONYMOUS' && event.userId === userId))) {
             await sendEvent(event.data.tipoEvento, event.data.payload);
         }
     };

@@ -83,7 +83,7 @@ export default function RatingModal({
                 onClick={onClose} 
             />
             
-            <div className="relative bg-white w-full max-w-md rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 border border-slate-100">
+            <div className="relative bg-white w-full max-w-md rounded-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 border border-slate-100">
                 {/* Decorative top bar con gradiente animado */}
                 <div className="h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 bg-[length:200%_100%] animate-pulse" />
                 
@@ -99,7 +99,7 @@ export default function RatingModal({
                         <>
                             <div className="space-y-4 text-center">
                                 <div className="relative inline-flex">
-                                    <div className="size-20 bg-emerald-50 rounded-[2rem] flex items-center justify-center text-emerald-500 shadow-inner rotate-3 hover:rotate-0 transition-transform duration-500">
+                                    <div className="size-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-emerald-500 shadow-inner rotate-3 hover:rotate-0 transition-transform duration-500">
                                         <Heart size={36} fill="currentColor" className="opacity-20 absolute" />
                                         <Sparkles size={32} className="relative z-10" />
                                     </div>
@@ -107,13 +107,13 @@ export default function RatingModal({
                                 </div>
                                 
                                 <div className="space-y-2">
-                                    <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase italic leading-none">
+                                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">
                                         {raterRole === 'client' 
                                             ? `¿Qué tal estuvo tu servicio?` 
                                             : `Califica a tu cliente`}
                                     </h2>
-                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.25em] italic">
-                                        Tu valoración para <span className="text-emerald-600 font-black">{targetName}</span>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide ">
+                                        Tu valoración para <span className="text-emerald-600 font-bold">{targetName}</span>
                                     </p>
                                 </div>
                             </div>
@@ -144,11 +144,11 @@ export default function RatingModal({
 
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between px-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic flex items-center gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
                                         <MessageSquare size={14} className="text-emerald-500" /> Comparte tu experiencia
                                     </label>
                                     <span className={clsx(
-                                        "text-[9px] font-bold uppercase tracking-widest transition-colors",
+                                        "text-xs font-bold uppercase tracking-wide transition-colors",
                                         comment.length > 180 ? "text-rose-400" : "text-slate-300"
                                     )}>
                                         {comment.length}/200
@@ -157,14 +157,14 @@ export default function RatingModal({
                                 <textarea
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value.slice(0, 200))}
-                                    className="w-full bg-slate-50 border-2 border-slate-50 text-slate-700 text-sm font-medium rounded-[2rem] p-6 focus:outline-none focus:border-emerald-500/20 focus:bg-white focus:ring-8 focus:ring-emerald-500/5 transition-all min-h-[120px] resize-none placeholder:text-slate-300 italic shadow-inner"
+                                    className="w-full bg-slate-50 border-2 border-slate-50 text-slate-700 text-sm font-medium rounded-3xl p-6 focus:outline-none focus:border-emerald-500/20 focus:bg-white focus:ring-8 focus:ring-emerald-500/5 transition-all min-h-[120px] resize-none placeholder:text-slate-300 shadow-inner"
                                     placeholder="Escribe algo opcional..."
                                 />
                             </div>
 
                             {error && (
-                                <div className="bg-rose-50 border border-rose-100 p-5 rounded-[1.5rem] animate-in slide-in-from-top-2 duration-300">
-                                    <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest text-center flex items-center justify-center gap-2">
+                                <div className="bg-rose-50 border border-rose-100 p-5 rounded-2xl animate-in slide-in-from-top-2 duration-300">
+                                    <p className="text-xs font-bold text-rose-500 uppercase tracking-wide text-center flex items-center justify-center gap-2">
                                         <X size={14} /> {error}
                                     </p>
                                 </div>
@@ -173,7 +173,7 @@ export default function RatingModal({
                             <div className="flex gap-4 pt-2">
                                 <button
                                     onClick={onClose}
-                                    className="flex-1 py-6 bg-slate-50 text-slate-400 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 hover:text-slate-600 transition-all active:scale-95"
+                                    className="flex-1 py-6 bg-slate-50 text-slate-400 rounded-2xl text-xs font-bold uppercase tracking-wide hover:bg-slate-100 hover:text-slate-600 transition-all active:scale-95"
                                 >
                                     Omitir
                                 </button>
@@ -181,7 +181,7 @@ export default function RatingModal({
                                     onClick={handleSubmit}
                                     disabled={loading || stars === 0}
                                     className={clsx(
-                                        "flex-[2] py-6 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-95 group",
+                                        "flex-[2] py-6 rounded-2xl text-xs font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-95 group",
                                         stars > 0 
                                             ? "bg-slate-900 text-white hover:bg-emerald-600 shadow-emerald-200" 
                                             : "bg-slate-100 text-slate-300 shadow-none cursor-not-allowed"
@@ -201,7 +201,7 @@ export default function RatingModal({
                     ) : (
                         <div className="py-16 text-center space-y-8 animate-in zoom-in-95 duration-700">
                             <div className="relative inline-flex">
-                                <div className="size-24 bg-emerald-50 text-emerald-500 rounded-[2.5rem] flex items-center justify-center shadow-inner border border-emerald-100 rotate-12">
+                                <div className="size-24 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center shadow-inner border border-emerald-100 rotate-12">
                                     <CheckCircle2 size={48} strokeWidth={2.5} className="animate-in zoom-in duration-500" />
                                 </div>
                                 <div className="absolute -top-4 -right-4">
@@ -210,8 +210,8 @@ export default function RatingModal({
                             </div>
                             
                             <div className="space-y-3">
-                                <h2 className="text-4xl font-black text-slate-900 tracking-tight uppercase italic leading-none">¡Gracias!</h2>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] italic">Tu opinión es muy valiosa para nosotros</p>
+                                <h2 className="text-4xl font-bold text-slate-900 tracking-tight leading-none">¡Gracias!</h2>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide ">Tu opinión es muy valiosa para nosotros</p>
                             </div>
                         </div>
                     )}

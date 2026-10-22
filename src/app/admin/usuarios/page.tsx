@@ -96,7 +96,7 @@ function UsuariosContent() {
         <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-3">
+                    <h1 className="text-4xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
                         <Users style={{ color: 'var(--primary-color)' }} size={36} />
                         Gestión de Personal
                     </h1>
@@ -105,7 +105,7 @@ function UsuariosContent() {
  
                 <Link 
                     href="/admin/usuarios/nuevo"
-                    className="inline-flex items-center gap-2 text-white font-black px-6 py-4 rounded-[2rem] shadow-xl transition-all active:scale-95 uppercase tracking-widest text-xs"
+                    className="inline-flex items-center gap-2 text-white font-bold px-6 py-4 rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-wide text-xs"
                     style={{ backgroundColor: 'var(--primary-color)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--primary-color), transparent 80%)' }}
                     onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
                     onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
@@ -120,7 +120,7 @@ function UsuariosContent() {
                     type="text"
                     placeholder="Buscar por nombre o teléfono..."
                     style={{ paddingLeft: '3.6rem' }}
-                    className="w-full pr-6 py-5 bg-white border-2 border-slate-100 rounded-[2.5rem] font-bold text-slate-900 outline-none transition-all shadow-sm"
+                    className="w-full pr-6 py-5 bg-white border-2 border-slate-100 rounded-2xl font-bold text-slate-900 outline-none transition-all shadow-sm"
                     onFocus={(e) => {
                         e.currentTarget.style.borderColor = 'var(--primary-color)';
                         e.currentTarget.style.boxShadow = '0 0 0 4px color-mix(in srgb, var(--primary-color), transparent 95%)';
@@ -137,12 +137,12 @@ function UsuariosContent() {
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <Loader2 className="animate-spin" size={48} style={{ color: 'var(--primary-color)' }} />
-                    <p className="text-slate-400 font-black uppercase tracking-widest animate-pulse">Cargando Personal...</p>
+                    <p className="text-slate-400 font-bold uppercase tracking-wide animate-pulse">Cargando Personal...</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {usuarios.map((user) => (
-                        <div key={user.id} className="bg-white rounded-[3rem] border border-slate-100 p-8 space-y-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                        <div key={user.id} className="bg-white rounded-2xl border border-slate-100 p-8 space-y-6 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4">
                                 <div className="flex gap-2">
                                     <Link href={`/admin/usuarios/nuevo?id=${user.id}`} className="p-3 bg-slate-50 text-slate-400 rounded-2xl transition-all inline-flex items-center justify-center"
@@ -157,43 +157,43 @@ function UsuariosContent() {
                             </div>
 
                             <div className="flex items-center gap-6">
-                                <div className="size-16 rounded-[2rem] bg-slate-50 text-slate-400 flex items-center justify-center font-black text-2xl transition-colors group-hover:text-white"
+                                <div className="size-16 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center font-bold text-2xl transition-colors group-hover:text-white"
                                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-color)'}
                                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(248, 250, 252)'}>
                                     {user.nombre.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="font-black text-slate-900 uppercase tracking-tight text-xl">{user.nombre}</h3>
-                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                    <h3 className="font-bold text-slate-900 tracking-tight text-xl">{user.nombre}</h3>
+                                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
                                         <Phone size={12} style={{ color: 'var(--primary-color)' }} /> {user.phone}
                                     </div>
                                 </div>
                             </div>
 
                             <div className="space-y-4 pt-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 flex items-center gap-2">
                                     <Shield size={12} style={{ color: 'var(--primary-color)' }} /> Roles Asignados
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     {user.roles.map(role => (
-                                        <span key={role} className="px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tight flex items-center gap-1.5"
+                                        <span key={role} className="px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-tight flex items-center gap-1.5"
                                               style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>
                                             <CheckCircle2 size={10} /> {role}
                                         </span>
                                     ))}
                                     {user.roles.length === 0 && (
-                                        <span className="text-slate-300 text-[10px] font-bold italic">Sin roles específicos</span>
+                                        <span className="text-slate-300 text-xs font-bold ">Sin roles específicos</span>
                                     )}
                                 </div>
 
                                 {user.allowedModules && user.allowedModules.length > 0 && (
                                     <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                                             Módulos Habilitados ({user.allowedModules.length})
                                         </p>
                                         <div className="flex flex-wrap gap-1.5">
                                             {user.allowedModules.map((m: string) => (
-                                                <span key={m} className="px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200/60 text-[9px] font-black uppercase tracking-wider">
+                                                <span key={m} className="px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200/60 text-xs font-bold uppercase tracking-wider">
                                                     {m === 'cocina' ? '🍳 Cocina (KDS)' : m === 'mesas' ? '🪑 Mesas' : m === 'caja' ? '💰 Caja' : m === 'pedidos' ? '🛵 Pedidos' : m}
                                                 </span>
                                             ))}
@@ -205,9 +205,9 @@ function UsuariosContent() {
                     ))}
 
                     {usuarios.length === 0 && (
-                        <div className="col-span-full py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-slate-400 space-y-4">
+                        <div className="col-span-full py-20 bg-white rounded-2xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-slate-400 space-y-4">
                             <Users size={48} className="opacity-20" />
-                            <p className="font-black uppercase tracking-widest">No se encontró personal administrativo</p>
+                            <p className="font-bold uppercase tracking-wide">No se encontró personal administrativo</p>
                         </div>
                     )}
                 </div>
@@ -221,7 +221,7 @@ export default function UsuariosPage() {
         <Suspense fallback={
             <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <Loader2 className="animate-spin" size={48} style={{ color: 'var(--primary-color)' }} />
-                <p className="text-slate-400 font-black uppercase tracking-widest animate-pulse">Cargando...</p>
+                <p className="text-slate-400 font-bold uppercase tracking-wide animate-pulse">Cargando...</p>
             </div>
         }>
             <UsuariosContent />

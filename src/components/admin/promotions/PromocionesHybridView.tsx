@@ -59,8 +59,8 @@ export default function PromocionesHybridView({
               <Tag size={18} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Módulo de Marketing</p>
-              <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight italic">Centro de Promociones</h2>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-none">Módulo de Marketing</p>
+              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-tight ">Centro de Promociones</h2>
             </div>
           </div>
 
@@ -68,17 +68,17 @@ export default function PromocionesHybridView({
             <button
               type="button"
               onClick={() => handleTabChange('SERVICIOS')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 ${
-                activeTab === 'SERVICIOS'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 ${
+ activeTab === 'SERVICIOS'
+ ? 'bg-white text-slate-900 shadow-sm'
+ : 'text-slate-500 hover:text-slate-800'
+ }`}
             >
               <Calendar size={15} className={activeTab === 'SERVICIOS' ? 'text-rose-500' : ''} />
               Promociones de Servicios
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                activeTab === 'SERVICIOS' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-slate-200/70 text-slate-500'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+ activeTab === 'SERVICIOS' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-slate-200/70 text-slate-500'
+ }`}>
                 {initialServicePromotions.length}
               </span>
             </button>
@@ -86,17 +86,17 @@ export default function PromocionesHybridView({
             <button
               type="button"
               onClick={() => handleTabChange('PRODUCTOS')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 ${
-                activeTab === 'PRODUCTOS'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 ${
+ activeTab === 'PRODUCTOS'
+ ? 'bg-white text-slate-900 shadow-sm'
+ : 'text-slate-500 hover:text-slate-800'
+ }`}
             >
               <ShoppingBag size={15} className={activeTab === 'PRODUCTOS' ? 'text-amber-500' : ''} />
               Promociones de Productos
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                activeTab === 'PRODUCTOS' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-slate-200/70 text-slate-500'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+ activeTab === 'PRODUCTOS' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-slate-200/70 text-slate-500'
+ }`}>
                 {initialProductPromotions.length}
               </span>
             </button>

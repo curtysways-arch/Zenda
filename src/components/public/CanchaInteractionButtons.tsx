@@ -65,7 +65,7 @@ export default function CanchaInteractionButtons({ canchaId, canchaNombre, negoc
                 <Share2 size={18} className="text-white" />
             </button>
             {justCopied && (
-                <div className="absolute top-11 right-0 w-max bg-emerald-500 text-white font-black uppercase tracking-widest text-[9px] px-3 py-1.5 rounded-lg shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="absolute top-11 right-0 w-max bg-emerald-500 text-white font-bold uppercase tracking-wide text-xs px-3 py-1.5 rounded-lg shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-300">
                     Enlace copiado!
                 </div>
             )}

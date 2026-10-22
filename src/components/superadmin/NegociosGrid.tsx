@@ -1,214 +1,274 @@
 "use client";
 
-import { useState } from "react";
-import {
-    Filter,
-    Search,
-    Plus,
-    Building2,
-    ArrowUpDown,
-    X
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { Search, Plus, X, ArrowUpDown, Building2, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import NegocioActions from "./NegocioActions";
 import NegocioModal from "./NegocioModal";
 
+type StatusFilter = "TODOS" | "ACTIVO" | "PRUEBA" | "SUSPENDIDO" | "VENCIDO" | "DEMO";
+type SortKey = "recientes" | "nombre" | "citas";
+
+const STATUS_STYLE: Record<string, string> = {
+    ACTIVO: "bg-emerald-50 text-emerald-700",
+    PRUEBA: "bg-amber-50 text-amber-700",
+    SUSPENDIDO: "bg-rose-50 text-rose-700",
+    VENCIDO: "bg-slate-100 text-slate-600",
+};
+const STATUS_LABEL: Record<string, string> = { ACTIVO: "Activo", PRUEBA: "Prueba", SUSPENDIDO: "Suspendido", VENCIDO: "Vencido" };
+
+const SUB_LABEL: Record<string, string> = {
+    trial: "Prueba", active: "Al día", activa: "Al día", expired: "Vencida", vencida: "Vencida",
+    downgraded: "Bajó de plan", cancelled: "Cancelada", pending: "Pago pendiente",
+};
+
+function prettyTipo(t?: string) {
+    if (!t) return "—";
+    const s = t.replace(/_/g, " ").toLowerCase();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function daysLeft(fecha?: string) {
+    if (!fecha) return null;
+    return Math.ceil((new Date(fecha).getTime() - Date.now()) / 86400000);
+}
+
 export default function NegociosGrid({ initialNegocios }: { initialNegocios: any[] }) {
-    const [negocios, setNegocios] = useState(initialNegocios);
+    const negocios = initialNegocios || [];
     const [search, setSearch] = useState("");
+    const [status, setStatus] = useState<StatusFilter>("TODOS");
+    const [tipo, setTipo] = useState("TODOS");
+    const [sort, setSort] = useState<SortKey>("recientes");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNegocio, setSelectedNegocio] = useState<any>(null);
 
-    const filteredNegocios = (negocios || []).filter(n =>
-        (n?.nombre || "").toLowerCase().includes(search.toLowerCase()) ||
-        (n?.slug || "").toLowerCase().includes(search.toLowerCase())
-    );
+    const tipos = useMemo(() => Array.from(new Set(negocios.map((n) => n?.tipoNegocio).filter(Boolean))).sort(), [negocios]);
 
-    const handleEdit = (negocio: any) => {
-        setSelectedNegocio(negocio);
-        setIsModalOpen(true);
-    };
-
-    const handleCreate = () => {
-        setSelectedNegocio(null);
-        setIsModalOpen(true);
-    };
-
-    const getStatusColor = (estado: string) => {
-        switch (estado) {
-            case 'ACTIVO': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-            case 'SUSPENDIDO': return 'bg-rose-100 text-rose-700 border-rose-200';
-            case 'PRUEBA': return 'bg-amber-100 text-amber-700 border-amber-200';
-            case 'VENCIDO': return 'bg-slate-100 text-slate-700 border-slate-200';
-            default: return 'bg-gray-100 text-gray-700 border-gray-200';
+    const counts = useMemo(() => {
+        const c: Record<StatusFilter, number> = { TODOS: negocios.length, ACTIVO: 0, PRUEBA: 0, SUSPENDIDO: 0, VENCIDO: 0, DEMO: 0 };
+        for (const n of negocios) {
+            if (n?.estado && n.estado in c) c[n.estado as StatusFilter]++;
+            if (n?.isDemo) c.DEMO++;
         }
-    };
+        return c;
+    }, [negocios]);
+
+    const list = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        const filtered = negocios.filter((n) => {
+            if (status === "DEMO" ? !n?.isDemo : status !== "TODOS" && n?.estado !== status) return false;
+            if (tipo !== "TODOS" && n?.tipoNegocio !== tipo) return false;
+            if (!q) return true;
+            return [n?.nombre, n?.slug, n?.ciudad, n?.email, n?.whatsapp].some((v) => String(v || "").toLowerCase().includes(q));
+        });
+        return [...filtered].sort((a, b) => {
+            if (sort === "nombre") return String(a?.nombre || "").localeCompare(String(b?.nombre || ""));
+            if (sort === "citas") return (b?._count?.Appointment || 0) - (a?._count?.Appointment || 0);
+            return new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime();
+        });
+    }, [negocios, search, status, tipo, sort]);
+
+    const openEdit = (n: any) => { setSelectedNegocio(n); setIsModalOpen(true); };
+    const openCreate = () => { setSelectedNegocio(null); setIsModalOpen(true); };
+
+    const FILTERS: { id: StatusFilter; label: string }[] = [
+        { id: "TODOS", label: "Todos" },
+        { id: "ACTIVO", label: "Activos" },
+        { id: "PRUEBA", label: "En prueba" },
+        { id: "SUSPENDIDO", label: "Suspendidos" },
+        { id: "VENCIDO", label: "Vencidos" },
+        { id: "DEMO", label: "Demos" },
+    ];
 
     return (
-        <div className="space-y-8 lg:space-y-12 animate-in fade-in duration-700 pb-20 lg:pb-0">
-            {/* Header / Actions - APP STYLE */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="h-1 w-6 bg-emerald-500 rounded-full" />
-                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] italic leading-none">Management</span>
-                    </div>
-                    <h2 className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic leading-none">Negocios</h2>
-                    <p className="text-slate-400 font-medium text-sm lg:text-base">Control total sobre los complejos de la red.</p>
+        <div className="space-y-4 pb-16 lg:pb-0">
+            {/* Encabezado */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                <div>
+                    <h1 className="text-xl md:text-2xl font-bold text-slate-900">Negocios</h1>
+                    <p className="text-sm text-slate-500">{negocios.length} negocios en Citiox · {counts.ACTIVO} activos · {counts.PRUEBA} en prueba</p>
                 </div>
-                
-                <div className="grid grid-cols-2 lg:flex items-center gap-3">
-                    <button className="flex items-center justify-center gap-2 px-5 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95">
-                        <Filter size={16} strokeWidth={2.5} />
-                        Filtros
-                    </button>
-                    <button
-                        onClick={handleCreate}
-                        className="flex items-center justify-center gap-2 px-5 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
-                    >
-                        <Plus size={18} strokeWidth={3} />
-                        Nuevo
-                    </button>
+                <button
+                    onClick={openCreate}
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#0066FF] hover:bg-[#0052cc] text-white rounded-lg text-sm font-semibold w-fit"
+                >
+                    <Plus size={16} /> Nuevo negocio
+                </button>
+            </div>
+
+            {/* Filtros */}
+            <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-3">
+                <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
+                    {FILTERS.map((f) => {
+                        const active = status === f.id;
+                        return (
+                            <button
+                                key={f.id}
+                                type="button"
+                                onClick={() => setStatus(f.id)}
+                                className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                            >
+                                {f.label}
+                                <span className={`text-xs ${active ? "text-white/70" : "text-slate-400"}`}>{counts[f.id]}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+                <div className="flex flex-col md:flex-row gap-2">
+                    <label className="relative flex-1">
+                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <input
+                            type="search"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Buscar por nombre, enlace, ciudad, correo o teléfono"
+                            className="w-full !pl-9 !pr-8 !py-2 !text-sm !rounded-lg !border !border-slate-200 !bg-white outline-none focus:!border-slate-400"
+                        />
+                        {search && (
+                            <button type="button" onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700" aria-label="Borrar búsqueda">
+                                <X size={14} />
+                            </button>
+                        )}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 md:w-[26rem]">
+                        <SelectBox value={tipo} onChange={setTipo} label="Tipo de negocio">
+                            <option value="TODOS">Todos los tipos</option>
+                            {tipos.map((t) => <option key={t} value={t}>{prettyTipo(t)}</option>)}
+                        </SelectBox>
+                        <SelectBox value={sort} onChange={(v) => setSort(v as SortKey)} label="Ordenar" icon={<ArrowUpDown size={13} />}>
+                            <option value="recientes">Más recientes</option>
+                            <option value="nombre">Nombre (A-Z)</option>
+                            <option value="citas">Más citas</option>
+                        </SelectBox>
+                    </div>
                 </div>
             </div>
 
-            {/* Buscador Premium - ESTILO APPLE/SAAS */}
-            <div className="relative group max-w-4xl">
-                {/* Glow Effect */}
-                <div className="absolute inset-0 bg-emerald-500/5 rounded-[2rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700" />
-                
-                <div className="relative flex items-center">
-                    <div className="absolute left-9 text-slate-400 group-focus-within:text-emerald-500 transition-all duration-500 z-20">
-                        <Search size={22} strokeWidth={3} />
-                    </div>
-                    
-                    <input
-                        type="text"
-                        placeholder="Buscar por nombre, complejo o ciudad..."
-                        className="w-full !pl-24 pr-16 py-6 bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-100 dark:border-white/5 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/30 transition-all font-bold text-slate-800 dark:text-white shadow-xl dark:shadow-none text-lg placeholder:text-slate-300 dark:placeholder:text-slate-700 italic tracking-tight"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-
-                    {/* Botón de limpiar opcional si hay texto */}
-                    {search && (
-                         <button 
-                            onClick={() => setSearch("")}
-                            className="absolute right-6 size-8 bg-slate-100 dark:bg-white/5 hover:bg-rose-500 hover:text-white rounded-xl flex items-center justify-center transition-all animate-in zoom-in-75 duration-300 group/clear"
-                         >
-                            <X size={14} strokeWidth={3} className="group-hover:rotate-90 transition-transform" />
-                         </button>
-                    )}
+            {list.length === 0 ? (
+                <div className="bg-white border border-slate-200 rounded-xl px-6 py-12 text-center">
+                    <Building2 className="mx-auto text-slate-300" size={28} />
+                    <p className="text-sm font-semibold text-slate-900 mt-2">No hay negocios con estos filtros</p>
+                    <button type="button" onClick={() => { setSearch(""); setStatus("TODOS"); setTipo("TODOS"); }} className="text-sm text-[#0066FF] font-semibold mt-1 hover:underline">Quitar filtros</button>
                 </div>
-
-                {/* Decorative bar */}
-                <div className="absolute -bottom-px left-10 right-10 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent scale-x-0 group-focus-within:scale-x-100 transition-transform duration-700" />
-            </div>
-
-            {/* Vista Responsiva de Negocios */}
-            <div className="lg:hidden space-y-4">
-                {filteredNegocios.map((negocio) => (
-                    <div key={negocio.id} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 border border-slate-100 dark:border-white/5 shadow-lg active:scale-[0.98] transition-all relative overflow-hidden group">
-                        <Link href={`/superadmin/negocios/${negocio.id}`} className="flex items-center gap-5">
-                            <div className="size-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center text-white font-black text-2xl italic shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
-                                {(negocio?.nombre || "N").charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex-1 space-y-1">
-                                <h4 className="font-black text-slate-900 dark:text-white uppercase italic tracking-tight text-lg leading-tight">{negocio?.nombre || "Sin Nombre"}</h4>
-                                <div className="flex items-center gap-2">
-                                    <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest ${getStatusColor(negocio.estado)}`}>
-                                        {negocio.estado}
-                                    </span>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{negocio.ciudad || "N/A"}</span>
-                                </div>
-                            </div>
-                        </Link>
-                        
-                        <div className="mt-6 flex items-center justify-between pt-6 border-t border-slate-50 dark:border-white/5">
-                            <div className="flex gap-4">
-                                <div className="text-center">
-                                    <div className="text-base font-black text-slate-900 dark:text-white">{negocio._count?.Service ?? 0}</div>
-                                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Servicios</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-base font-black text-slate-900 dark:text-white">{negocio._count?.Appointment ?? 0}</div>
-                                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Citas</div>
-                                </div>
-                            </div>
-                            <NegocioActions negocio={negocio} onEdit={() => handleEdit(negocio)} />
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Tabla para Desktop */}
-            <div className="hidden lg:block bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-50 dark:border-white/5 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.05)] overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/50 dark:bg-white/[0.01] border-b border-slate-100 dark:border-white/5">
-                                <th className="px-10 py-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Complejo</th>
-                                <th className="px-8 py-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Ciudad</th>
-                                <th className="px-8 py-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] italic text-center">Stats</th>
-                                <th className="px-8 py-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Status</th>
-                                <th className="px-10 py-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] italic text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-white/[0.02]">
-                            {filteredNegocios.map((negocio) => (
-                                <tr key={negocio.id} className="hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition-all group">
-                                    <td className="px-10 py-8">
-                                        <div className="flex items-center gap-6">
-                                            <div className="size-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-[1.5rem] flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-emerald-500/10 group-hover:scale-110 transition-transform uppercase italic">
-                                                {(negocio?.nombre || "N").charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className="space-y-1">
-                                                <Link
-                                                    href={`/superadmin/negocios/${negocio.id}`}
-                                                    className="font-black text-slate-900 dark:text-white text-xl leading-tight uppercase tracking-tighter hover:text-emerald-500 transition-colors cursor-pointer italic"
-                                                >
-                                                    {negocio?.nombre || "Sin Nombre"}
-                                                </Link>
-                                                <div className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] opacity-60">slug/{negocio?.slug || "N/A"}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-8">
-                                        <div className="text-base font-black text-slate-800 dark:text-slate-200 uppercase italic tracking-tight">{negocio.ciudad || 'N/A'}</div>
-                                        <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{negocio.direccion?.substring(0, 30) || 'Sin dirección'}...</div>
-                                    </td>
-                                    <td className="px-8 py-8">
-                                        <div className="flex items-center justify-center gap-6">
-                                            <div className="text-center">
-                                                <div className="text-xl font-black text-slate-900 dark:text-white italic">{negocio._count?.Service ?? 0}</div>
-                                                <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Servicios</div>
-                                            </div>
-                                            <div className="text-center">
-                                                <div className="text-xl font-black text-slate-900 dark:text-white italic">{negocio._count?.Appointment ?? 0}</div>
-                                                <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Citas</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-8">
-                                        <span className={`px-5 py-2.5 rounded-2xl text-[10px] font-black border uppercase tracking-[0.2em] shadow-sm ${getStatusColor(negocio.estado)}`}>
-                                            {negocio.estado}
-                                        </span>
-                                    </td>
-                                    <td className="px-10 py-8 text-right">
-                                        <NegocioActions negocio={negocio} onEdit={() => handleEdit(negocio)} />
-                                    </td>
+            ) : (
+                <>
+                    {/* Escritorio: tabla */}
+                    <div className="hidden lg:block bg-white border border-slate-200 rounded-xl overflow-hidden">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500">
+                                <tr>
+                                    <th className="px-4 py-2.5 font-semibold">Negocio</th>
+                                    <th className="px-3 py-2.5 font-semibold">Tipo</th>
+                                    <th className="px-3 py-2.5 font-semibold">Plan</th>
+                                    <th className="px-3 py-2.5 font-semibold">Ciudad</th>
+                                    <th className="px-3 py-2.5 font-semibold text-right">Servicios</th>
+                                    <th className="px-3 py-2.5 font-semibold text-right">Citas</th>
+                                    <th className="px-3 py-2.5 font-semibold">Estado</th>
+                                    <th className="px-4 py-2.5 font-semibold text-right">Acciones</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {list.map((n) => (
+                                    <tr key={n.id} className="hover:bg-slate-50/70">
+                                        <td className="px-4 py-2.5">
+                                            <BusinessCell n={n} />
+                                        </td>
+                                        <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{prettyTipo(n.tipoNegocio)}</td>
+                                        <td className="px-3 py-2.5"><PlanCell n={n} /></td>
+                                        <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{n.ciudad || <span className="text-slate-400">—</span>}</td>
+                                        <td className="px-3 py-2.5 text-right tabular-nums text-slate-700">{n._count?.Service ?? 0}</td>
+                                        <td className="px-3 py-2.5 text-right tabular-nums text-slate-700">{n._count?.Appointment ?? 0}</td>
+                                        <td className="px-3 py-2.5"><StatusBadge estado={n.estado} /></td>
+                                        <td className="px-4 py-2.5"><NegocioActions negocio={n} onEdit={() => openEdit(n)} /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
 
-            <NegocioModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                negocio={selectedNegocio}
-            />
+                    {/* Celular: tarjetas */}
+                    <ul className="lg:hidden space-y-2">
+                        {list.map((n) => (
+                            <li key={n.id} className="bg-white border border-slate-200 rounded-xl p-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <BusinessCell n={n} />
+                                    <StatusBadge estado={n.estado} />
+                                </div>
+                                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                                    <span>{prettyTipo(n.tipoNegocio)}</span>
+                                    {n.ciudad && <span>{n.ciudad}</span>}
+                                    <span>{n._count?.Service ?? 0} servicios</span>
+                                    <span>{n._count?.Appointment ?? 0} citas</span>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                                    <PlanCell n={n} />
+                                    <NegocioActions negocio={n} onEdit={() => openEdit(n)} />
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
+
+            <NegocioModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} negocio={selectedNegocio} />
         </div>
+    );
+}
+
+function BusinessCell({ n }: { n: any }) {
+    const color = n?.colorPrimario || "#0f172a";
+    return (
+        <Link href={`/superadmin/negocios/${n.id}`} className="flex items-center gap-2.5 min-w-0 group">
+            <span className="size-8 rounded-lg overflow-hidden shrink-0 flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: color }}>
+                {n?.logoUrl ? <img src={n.logoUrl} alt="" className="w-full h-full object-cover bg-white" /> : (n?.nombre || "N").charAt(0).toUpperCase()}
+            </span>
+            <span className="min-w-0">
+                <span className="flex items-center gap-1.5">
+                    <span className="font-semibold text-slate-900 truncate group-hover:text-[#0066FF]">{n?.nombre || "Sin nombre"}</span>
+                    {n?.isDemo && <span className="text-[10px] font-semibold px-1.5 py-px rounded bg-violet-50 text-violet-700 shrink-0">Demo</span>}
+                </span>
+                <span className="block text-xs text-slate-400 truncate">/{n?.slug}</span>
+            </span>
+        </Link>
+    );
+}
+
+function PlanCell({ n }: { n: any }) {
+    const sub = n?.Suscripcion;
+    if (!sub) return <span className="text-xs text-slate-400">Sin plan</span>;
+    const d = daysLeft(sub.fechaFin);
+    const subEstado = SUB_LABEL[String(sub.estado || "").toLowerCase()] || sub.estado;
+    return (
+        <span className="block min-w-0">
+            <span className="block text-sm text-slate-800 truncate">{sub.Plan?.name || "Plan"}</span>
+            <span className={`block text-xs ${d !== null && d < 0 ? "text-rose-600" : d !== null && d <= 5 ? "text-amber-600" : "text-slate-400"}`}>
+                {subEstado}{d !== null ? ` · ${d < 0 ? `venció hace ${Math.abs(d)} d` : `${d} d restantes`}` : ""}
+            </span>
+        </span>
+    );
+}
+
+function StatusBadge({ estado }: { estado: string }) {
+    return (
+        <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_STYLE[estado] || "bg-slate-100 text-slate-600"}`}>
+            {STATUS_LABEL[estado] || estado || "—"}
+        </span>
+    );
+}
+
+function SelectBox({ value, onChange, label, icon, children }: { value: string; onChange: (v: string) => void; label: string; icon?: React.ReactNode; children: React.ReactNode }) {
+    return (
+        <label className="relative block">
+            <span className="sr-only">{label}</span>
+            {icon && <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">{icon}</span>}
+            <select
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className={`w-full appearance-none ${icon ? "!pl-8" : "!pl-3"} !pr-8 !py-2 !text-sm !rounded-lg !border !border-slate-200 !bg-white text-slate-700`}
+            >
+                {children}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        </label>
     );
 }

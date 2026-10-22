@@ -213,7 +213,7 @@ export default function CoverageManagerModal({
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="px-8 py-6 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -221,7 +221,7 @@ export default function CoverageManagerModal({
               <Layers size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tight">Gestión de Cobertura (Polígono GPS)</h2>
+              <h2 className="text-xl font-bold tracking-tight">Gestión de Cobertura (Polígono GPS)</h2>
               <p className="text-xs text-slate-400 font-medium">Haz clic en el mapa para definir o ajustar el perímetro de retiro a domicilio.</p>
             </div>
           </div>
@@ -235,7 +235,7 @@ export default function CoverageManagerModal({
 
         {/* Toast Notificación */}
         {toastMessage && (
-          <div className={`px-6 py-3 text-xs font-black text-white ${toastMessage.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          <div className={`px-6 py-3 text-xs font-bold text-white ${toastMessage.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
             {toastMessage.text}
           </div>
         )}
@@ -246,23 +246,23 @@ export default function CoverageManagerModal({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-3xl border border-slate-200/80">
             {/* Activo / Inactivo */}
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Estado del Servicio</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block">Estado del Servicio</label>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setActiva(true)}
-                  className={`flex-1 py-2.5 px-3 rounded-2xl text-xs font-black transition-all ${
-                    activa ? 'bg-purple-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-600'
-                  }`}
+                  className={`flex-1 py-2.5 px-3 rounded-2xl text-xs font-bold transition-all ${
+ activa ? 'bg-purple-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-600'
+ }`}
                 >
                   🟢 Cobertura Activa
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiva(false)}
-                  className={`flex-1 py-2.5 px-3 rounded-2xl text-xs font-black transition-all ${
-                    !activa ? 'bg-rose-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-600'
-                  }`}
+                  className={`flex-1 py-2.5 px-3 rounded-2xl text-xs font-bold transition-all ${
+ !activa ? 'bg-rose-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-600'
+ }`}
                 >
                   🔴 Pausada
                 </button>
@@ -271,7 +271,7 @@ export default function CoverageManagerModal({
 
             {/* Mensaje Informativo */}
             <div className="md:col-span-2 space-y-1">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Mensaje de Cobertura</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block">Mensaje de Cobertura</label>
               <input
                 type="text"
                 value={mensaje}
@@ -286,7 +286,7 @@ export default function CoverageManagerModal({
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
             <span className="font-bold text-slate-600 flex items-center gap-1.5">
               <MapPin size={14} className="text-purple-600" />
-              Puntos definidos: <span className="font-black text-purple-700">{poligono.length} vértices</span>
+              Puntos definidos: <span className="font-bold text-purple-700">{poligono.length} vértices</span>
             </span>
 
             <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export default function CoverageManagerModal({
               </div>
             )}
             <div ref={mapDivRef} className="w-full h-full" />
-            <div className="absolute top-3 right-3 z-[400] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black text-slate-700 border border-slate-200 shadow-sm pointer-events-none">
+            <div className="absolute top-3 right-3 z-[400] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 border border-slate-200 shadow-sm pointer-events-none">
               💡 Haz clic en el mapa para agregar puntos
             </div>
           </div>
@@ -328,7 +328,7 @@ export default function CoverageManagerModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-3 bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-black text-xs uppercase tracking-widest rounded-2xl transition"
+            className="px-6 py-3 bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-xs uppercase tracking-wide rounded-2xl transition"
           >
             Cancelar
           </button>
@@ -336,7 +336,7 @@ export default function CoverageManagerModal({
             type="button"
             disabled={saving}
             onClick={handleSave}
-            className="px-8 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-purple-600/30 transition disabled:opacity-50 flex items-center gap-2"
+            className="px-8 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg shadow-purple-600/30 transition disabled:opacity-50 flex items-center gap-2"
           >
             <Save size={16} />
             {saving ? 'Guardando...' : 'Guardar Cobertura'}

@@ -77,11 +77,11 @@ export default function GalleryAdmin({ canchaId, serviceId, onCoverChange }: Gal
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px]">Galería de Fotos</h3>
+                <h3 className="font-bold text-gray-900 uppercase tracking-wide text-xs">Galería de Fotos</h3>
                 <button
                     type="button"
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-1 text-[10px] font-black uppercase text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                    className="flex items-center gap-1 text-xs font-bold uppercase text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                 >
                     <Plus size={14} />
                     Añadir Foto
@@ -91,7 +91,7 @@ export default function GalleryAdmin({ canchaId, serviceId, onCoverChange }: Gal
             {showForm && (
                 <div className="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-200 animate-in slide-in-from-top-2">
                     <div className="flex justify-between items-center mb-4">
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nueva Imagen</span>
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Nueva Imagen</span>
                         <button type="button" onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600"><X size={14} /></button>
                     </div>
                     <div className="flex flex-col md:flex-row gap-3">
@@ -113,12 +113,12 @@ export default function GalleryAdmin({ canchaId, serviceId, onCoverChange }: Gal
                             type="button"
                             onClick={handleAdd}
                             disabled={uploading}
-                            className="bg-emerald-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                            className="bg-emerald-600 text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wide disabled:opacity-50"
                         >
                             {uploading ? 'Guardando...' : 'Añadir a Galería'}
                         </button>
                     </div>
-                    <p className="text-[9px] text-gray-400 mt-2 font-bold uppercase tracking-widest">Pega la URL de una imagen pública (JPG/PNG)</p>
+                    <p className="text-xs text-gray-400 mt-2 font-bold uppercase tracking-wide">Pega la URL de una imagen pública (JPG/PNG)</p>
                 </div>
             )}
 
@@ -139,9 +139,9 @@ export default function GalleryAdmin({ canchaId, serviceId, onCoverChange }: Gal
                 ))}
 
                 {images.length === 0 && !showForm && (
-                    <div className="col-span-full py-12 flex flex-col items-center justify-center text-gray-300 border border-dashed border-gray-100 rounded-[2rem]">
+                    <div className="col-span-full py-12 flex flex-col items-center justify-center text-gray-300 border border-dashed border-gray-100 rounded-2xl">
                         <ImageIcon size={32} className="mb-2 opacity-20" />
-                        <p className="text-[10px] font-black uppercase tracking-widest">No hay fotos en la galería</p>
+                        <p className="text-xs font-bold uppercase tracking-wide">No hay fotos en la galería</p>
                     </div>
                 )}
             </div>

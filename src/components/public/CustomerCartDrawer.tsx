@@ -25,6 +25,8 @@ interface CustomerCartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onOrderSuccess?: (order: any) => void;
+  /** false = el negocio no tiene envío a domicilio (solo retiro en el local). */
+  deliveryEnabled?: boolean;
 }
 
 // Componente Miniatura de Mapa Real Centrado en las Coordenadas del Cliente
@@ -134,6 +136,7 @@ export default function CustomerCartDrawer({
   isOpen,
   onClose,
   onOrderSuccess,
+  deliveryEnabled = true,
 }: CustomerCartDrawerProps) {
   const {
     cart,
@@ -151,6 +154,11 @@ export default function CustomerCartDrawer({
     removeFromCart,
     clearCart,
   } = useCart();
+
+  // Sin envío a domicilio: el único método es retiro en el local
+  useEffect(() => {
+    if (!deliveryEnabled && deliveryType === 'DOMICILIO') setDeliveryType('RETIRO');
+  }, [deliveryEnabled, deliveryType, setDeliveryType]);
 
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
   const [submitting, setSubmitting] = useState(false);
@@ -350,16 +358,16 @@ export default function CustomerCartDrawer({
 
           <div
             style={{ backgroundColor: primaryColor }}
-            className="p-2 rounded-xl text-white font-black shadow-xs flex items-center justify-center"
+            className="p-2 rounded-xl text-white font-bold shadow-xs flex items-center justify-center"
           >
             <ShoppingBag className="w-4 h-4 text-white" />
           </div>
 
           <div>
-            <h2 className="font-black text-sm sm:text-base text-slate-900 tracking-tight leading-tight">
+            <h2 className="font-bold text-sm sm:text-base text-slate-900 tracking-tight leading-tight">
               {step === 'cart' ? 'Mi Pedido' : step === 'checkout' ? 'Datos de Entrega' : '¡Pedido Confirmado!'}
             </h2>
-            <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest leading-none mt-0.5">
+            <p className="text-xs text-slate-400 font-extrabold uppercase tracking-wide leading-none mt-0.5">
               {businessName}
             </p>
           </div>
@@ -385,13 +393,13 @@ export default function CustomerCartDrawer({
                   <ShoppingBag className="w-10 h-10" />
                 </div>
                 <div>
-                  <h3 className="font-black text-slate-800 text-lg">Tu carrito está vacío</h3>
+                  <h3 className="font-bold text-slate-800 text-lg">Tu carrito está vacío</h3>
                   <p className="text-xs text-slate-500 mt-1 font-medium">Agrega tus productos favoritos del catálogo</p>
                 </div>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-8 py-3 rounded-2xl font-black text-xs text-white shadow-lg active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
+                  className="px-8 py-3 rounded-2xl font-bold text-xs text-white shadow-lg active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
                   style={{ backgroundColor: primaryColor }}
                 >
                   Explorar Catálogo
@@ -401,7 +409,7 @@ export default function CustomerCartDrawer({
               <>
                 {/* CABECERA PRODUCTOS SELECCIONADOS */}
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                     PRODUCTOS SELECCIONADOS ({totalItemsCount})
                   </span>
                   <button
@@ -443,22 +451,22 @@ export default function CustomerCartDrawer({
                             </h4>
                             <div className="flex flex-wrap gap-1 items-center">
                               {item.product.varianteNombre && (
-                                <span className="inline-block px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-800 text-[10px] font-extrabold border border-cyan-200">
+                                <span className="inline-block px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-800 text-xs font-extrabold border border-cyan-200">
                                   {item.product.varianteNombre}
                                 </span>
                               )}
                               {item.product.sku && (
-                                <span className="inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-mono font-bold border border-slate-200">
+                                <span className="inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-mono font-bold border border-slate-200">
                                   SKU: {item.product.sku}
                                 </span>
                               )}
                             </div>
                             {item.product.descripcion && (
-                              <p className="text-[11px] text-slate-500 font-medium line-clamp-2 leading-normal">
+                              <p className="text-xs text-slate-500 font-medium line-clamp-2 leading-normal">
                                 {item.product.descripcion.replace(/<!--[\s\S]*?-->/g, '')}
                               </p>
                             )}
-                            <span style={{ color: primaryColor }} className="text-sm font-black block pt-0.5">
+                            <span style={{ color: primaryColor }} className="text-sm font-bold block pt-0.5">
                               ${((Number(item.product.precio) || 0) * item.quantity).toFixed(2)}
                             </span>
                           </div>
@@ -470,17 +478,17 @@ export default function CustomerCartDrawer({
                             <button
                               type="button"
                               onClick={() => decrementQuantity(item.product.id, item.product.varianteId)}
-                              className="w-8 h-8 bg-white text-slate-800 rounded-xl font-black text-xs flex items-center justify-center hover:bg-slate-200 cursor-pointer active:scale-95 transition-all"
+                              className="w-8 h-8 bg-white text-slate-800 rounded-xl font-bold text-xs flex items-center justify-center hover:bg-slate-200 cursor-pointer active:scale-95 transition-all"
                             >
                               <Minus className="w-3.5 h-3.5" />
                             </button>
-                            <span className="w-6 text-center text-xs font-black text-slate-900">
+                            <span className="w-6 text-center text-xs font-bold text-slate-900">
                               {item.quantity}
                             </span>
                             <button
                               type="button"
                               onClick={() => setItemQuantity(item.product, item.quantity + 1)}
-                              className="w-8 h-8 bg-white text-slate-800 rounded-xl font-black text-xs flex items-center justify-center hover:bg-slate-200 cursor-pointer active:scale-95 transition-all"
+                              className="w-8 h-8 bg-white text-slate-800 rounded-xl font-bold text-xs flex items-center justify-center hover:bg-slate-200 cursor-pointer active:scale-95 transition-all"
                             >
                               <Plus className="w-3.5 h-3.5" />
                             </button>
@@ -489,7 +497,7 @@ export default function CustomerCartDrawer({
                           <button
                             type="button"
                             onClick={() => removeFromCart(item.product.id, item.product.varianteId)}
-                            className="text-[10px] font-extrabold text-slate-400 hover:text-rose-600 transition-colors p-1 cursor-pointer flex items-center gap-1"
+                            className="text-xs font-extrabold text-slate-400 hover:text-rose-600 transition-colors p-1 cursor-pointer flex items-center gap-1"
                           >
                             <Trash2 className="w-3 h-3" />
                             <span>Quitar</span>
@@ -504,7 +512,7 @@ export default function CustomerCartDrawer({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full py-3.5 px-4 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl border border-dashed border-slate-200 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-[0.99]"
+                  className="w-full py-3.5 px-4 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl border border-dashed border-slate-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-[0.99]"
                 >
                   <Plus className="w-4 h-4" style={{ color: primaryColor }} />
                   <span>Agregar más productos</span>
@@ -520,7 +528,7 @@ export default function CustomerCartDrawer({
                       <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 leading-tight">
                         ¿Tienes un código de descuento?
                       </h4>
-                      <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
                         Ingresa tu código y obtén beneficios
                       </p>
                     </div>
@@ -544,7 +552,7 @@ export default function CustomerCartDrawer({
                   <div className="space-y-2 text-xs font-medium text-slate-600">
                     <div className="flex justify-between items-center">
                       <span>Subtotal ({totalItemsCount} productos)</span>
-                      <span className="font-black text-slate-900">${subtotal.toFixed(2)}</span>
+                      <span className="font-bold text-slate-900">${subtotal.toFixed(2)}</span>
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -557,11 +565,11 @@ export default function CustomerCartDrawer({
                         <span>Costo de envío</span>
                         <Info className="w-3.5 h-3.5 text-slate-400" />
                       </span>
-                      <span className="font-black text-slate-900">
+                      <span className="font-bold text-slate-900">
                         {deliveryType === 'RETIRO' ? (
                           <span className="text-emerald-600 font-bold">Gratis</span>
                         ) : !hasLocationSelected ? (
-                          <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md text-[11px]">Por calcular</span>
+                          <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md text-xs">Por calcular</span>
                         ) : deliveryCost === 0 ? (
                           <span className="text-emerald-600 font-bold">$0.00</span>
                         ) : (
@@ -577,12 +585,12 @@ export default function CustomerCartDrawer({
                       <span className="font-extrabold text-sm text-slate-900 block leading-tight">
                         Total a pagar
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400 block mt-0.5">
+                      <span className="text-xs font-bold text-slate-400 block mt-0.5">
                         IVA incluido
                       </span>
                     </div>
 
-                    <span style={{ color: primaryColor }} className="text-2xl font-black">
+                    <span style={{ color: primaryColor }} className="text-2xl font-bold">
                       ${subtotal.toFixed(2)}
                     </span>
                   </div>
@@ -594,24 +602,24 @@ export default function CustomerCartDrawer({
                     <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-2xs" style={{ color: primaryColor }}>
                       <ShieldCheck className="w-4.5 h-4.5" />
                     </div>
-                    <span className="text-[11px] font-extrabold text-slate-900 block leading-tight">Pago seguro</span>
-                    <span className="text-[9px] font-medium text-slate-500 block leading-tight">Tus datos protegidos</span>
+                    <span className="text-xs font-extrabold text-slate-900 block leading-tight">Pago seguro</span>
+                    <span className="text-xs font-medium text-slate-500 block leading-tight">Tus datos protegidos</span>
                   </div>
 
                   <div className="flex flex-col items-center space-y-1">
                     <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-2xs" style={{ color: primaryColor }}>
                       <Clock className="w-4.5 h-4.5" />
                     </div>
-                    <span className="text-[11px] font-extrabold text-slate-900 block leading-tight">Preparación rápida</span>
-                    <span className="text-[9px] font-medium text-slate-500 block leading-tight">Listo en 25–35 min</span>
+                    <span className="text-xs font-extrabold text-slate-900 block leading-tight">Preparación rápida</span>
+                    <span className="text-xs font-medium text-slate-500 block leading-tight">Listo en 25–35 min</span>
                   </div>
 
                   <div className="flex flex-col items-center space-y-1">
                     <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-2xs" style={{ color: primaryColor }}>
                       <Truck className="w-4.5 h-4.5" />
                     </div>
-                    <span className="text-[11px] font-extrabold text-slate-900 block leading-tight">Entrega a domicilio</span>
-                    <span className="text-[9px] font-medium text-slate-500 block leading-tight">Rápido y seguro</span>
+                    <span className="text-xs font-extrabold text-slate-900 block leading-tight">Entrega a domicilio</span>
+                    <span className="text-xs font-medium text-slate-500 block leading-tight">Rápido y seguro</span>
                   </div>
                 </div>
 
@@ -625,12 +633,13 @@ export default function CustomerCartDrawer({
           <form onSubmit={handleSubmitOrder} className="space-y-5">
             {/* 1. SELECCIÓN DE MÉTODO DE ENTREGA */}
             <div className="space-y-2">
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                 1. Método de entrega
               </h3>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className={`grid gap-3 ${deliveryEnabled ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {/* A Domicilio */}
+                {deliveryEnabled && (
                 <div
                   onClick={() => setDeliveryType('DOMICILIO')}
                   style={{
@@ -658,7 +667,7 @@ export default function CustomerCartDrawer({
                       >
                         A domicilio
                       </span>
-                      <span className="text-[10px] text-slate-500 font-medium block leading-tight mt-0.5">
+                      <span className="text-xs text-slate-500 font-medium block leading-tight mt-0.5">
                         Te llevamos tu pedido hasta tu puerta
                       </span>
                     </div>
@@ -672,6 +681,8 @@ export default function CustomerCartDrawer({
                     )}
                   </div>
                 </div>
+
+                )}
 
                 {/* Para Retirar */}
                 <div
@@ -701,7 +712,7 @@ export default function CustomerCartDrawer({
                       >
                         Para retirar
                       </span>
-                      <span className="text-[10px] text-slate-500 font-medium block leading-tight mt-0.5">
+                      <span className="text-xs text-slate-500 font-medium block leading-tight mt-0.5">
                         Retira tu pedido en nuestro local
                       </span>
                     </div>
@@ -720,7 +731,7 @@ export default function CustomerCartDrawer({
 
             {/* 2. DATOS DEL CLIENTE */}
             <div className="space-y-3">
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                 2. Datos del cliente
               </h3>
 
@@ -731,7 +742,7 @@ export default function CustomerCartDrawer({
                     <User className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <label className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">
+                    <label className="text-xs font-extrabold text-slate-400 block uppercase tracking-wider">
                       Nombre completo *
                     </label>
                     <input
@@ -756,7 +767,7 @@ export default function CustomerCartDrawer({
                     <Phone className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <label className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">
+                    <label className="text-xs font-extrabold text-slate-400 block uppercase tracking-wider">
                       WhatsApp / Teléfono *
                     </label>
                     <input
@@ -785,7 +796,7 @@ export default function CustomerCartDrawer({
                         <MapPin className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <label className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">
+                        <label className="text-xs font-extrabold text-slate-400 block uppercase tracking-wider">
                           Dirección de entrega *
                         </label>
                         <input
@@ -801,7 +812,7 @@ export default function CustomerCartDrawer({
                     {hasLocationSelected ? (
                       <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
                     ) : (
-                      <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-100/80 border border-amber-300 text-amber-800 font-black text-[10px] shrink-0 animate-pulse">
+                      <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-100/80 border border-amber-300 text-amber-800 font-bold text-xs shrink-0 animate-pulse">
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                         <span>Obligatorio</span>
                       </div>
@@ -827,18 +838,18 @@ export default function CustomerCartDrawer({
                     {/* AVISO INTUITIVO SI FALTA SELECCIONAR UBICACIÓN */}
                     {!hasLocationSelected ? (
                       <div className="p-4 bg-amber-50 border-t border-amber-200 text-center space-y-2.5">
-                        <div className="flex items-center justify-center gap-1.5 text-amber-900 font-black text-xs">
+                        <div className="flex items-center justify-center gap-1.5 text-amber-900 font-bold text-xs">
                           <AlertTriangle className="w-4.5 h-4.5 text-amber-600 shrink-0 animate-bounce" />
                           <span>¡Debes confirmar tu ubicación en el mapa!</span>
                         </div>
-                        <p className="text-[11px] text-amber-800 font-medium max-w-xs mx-auto leading-relaxed">
+                        <p className="text-xs text-amber-800 font-medium max-w-xs mx-auto leading-relaxed">
                           Para entregas a domicilio es <strong>obligatorio</strong> fijar tu pin en el mapa para calcular el envío y despachar tu orden.
                         </p>
                         <button
                           type="button"
                           onClick={() => setShowMapModal(true)}
                           style={{ backgroundColor: primaryColor }}
-                          className="w-full py-3 px-4 rounded-xl text-white font-black text-xs uppercase tracking-wider shadow-lg hover:opacity-95 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                          className="w-full py-3 px-4 rounded-xl text-white font-bold text-xs uppercase tracking-wider shadow-lg hover:opacity-95 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
                         >
                           <Navigation className="w-4 h-4 text-white" />
                           <span>Seleccionar Ubicación en Mapa</span>
@@ -856,7 +867,7 @@ export default function CustomerCartDrawer({
                             <span className="text-xs font-bold text-emerald-600 block leading-tight">
                               Ubicación verificada
                             </span>
-                            <span className="text-[10px] text-slate-400 font-mono block leading-tight truncate">
+                            <span className="text-xs text-slate-400 font-mono block leading-tight truncate">
                               {customerData.lat && customerData.lng
                                 ? `Lat: ${customerData.lat.toFixed(4)}, Lng: ${customerData.lng.toFixed(4)}`
                                 : 'Coordenadas GPS'}
@@ -877,7 +888,7 @@ export default function CustomerCartDrawer({
                             <span style={{ color: primaryColor }} className="text-xs font-extrabold block leading-tight">
                               Cambiar ubicación
                             </span>
-                            <span className="text-[10px] text-slate-400 font-medium block leading-tight">
+                            <span className="text-xs text-slate-400 font-medium block leading-tight">
                               Selecciona en el mapa
                             </span>
                           </div>
@@ -893,7 +904,7 @@ export default function CustomerCartDrawer({
                         <Tag className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <label className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">
+                        <label className="text-xs font-extrabold text-slate-400 block uppercase tracking-wider">
                           Referencia (opcional)
                         </label>
                         <input
@@ -920,7 +931,7 @@ export default function CustomerCartDrawer({
             <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-2xs space-y-2.5 text-xs">
               <div className="flex justify-between items-center text-slate-600 font-medium">
                 <span>Subtotal de Platillos</span>
-                <span className="text-slate-900 font-black">${subtotal.toFixed(2)}</span>
+                <span className="text-slate-900 font-bold">${subtotal.toFixed(2)}</span>
               </div>
 
               {deliveryType === 'DOMICILIO' && (
@@ -929,7 +940,7 @@ export default function CustomerCartDrawer({
                     <span>Costo de Envío</span>
                     <Info className="w-3.5 h-3.5 text-slate-400" />
                   </span>
-                  <span className="text-slate-900 font-black">
+                  <span className="text-slate-900 font-bold">
                     {deliveryCost === 0 ? (
                       <span className="text-emerald-600 font-bold">$0.00</span>
                     ) : (
@@ -939,9 +950,9 @@ export default function CustomerCartDrawer({
                 </div>
               )}
 
-              <div className="flex justify-between items-center text-sm font-black text-slate-900 pt-2.5 border-t border-slate-100">
+              <div className="flex justify-between items-center text-sm font-bold text-slate-900 pt-2.5 border-t border-slate-100">
                 <span className="text-base font-extrabold">Total a pagar</span>
-                <span style={{ color: primaryColor }} className="text-2xl font-black">${total.toFixed(2)}</span>
+                <span style={{ color: primaryColor }} className="text-2xl font-bold">${total.toFixed(2)}</span>
               </div>
             </div>
           </form>
@@ -955,7 +966,7 @@ export default function CustomerCartDrawer({
             </div>
 
             <div>
-              <h3 className="text-xl font-black text-slate-900">¡Pedido Enviado con Éxito!</h3>
+              <h3 className="text-xl font-bold text-slate-900">¡Pedido Enviado con Éxito!</h3>
               <p className="text-xs text-slate-600 font-medium mt-1">
                 Hemos recibido tu orden para <strong>{businessName}</strong>. Te contactaremos por WhatsApp.
               </p>
@@ -963,9 +974,9 @@ export default function CustomerCartDrawer({
 
             {createdOrder && (
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-left text-xs space-y-1 font-bold text-slate-700">
-                <div>Código de Pedido: <span className="font-mono text-slate-900 font-black">#{createdOrder.id?.substring(0, 8)}</span></div>
-                <div>Cliente: <span className="text-slate-900 font-black">{customerData.nombre}</span></div>
-                <div>Total: <span style={{ color: primaryColor }} className="font-black">${total.toFixed(2)}</span></div>
+                <div>Código de Pedido: <span className="font-mono text-slate-900 font-bold">#{createdOrder.id?.substring(0, 8)}</span></div>
+                <div>Cliente: <span className="text-slate-900 font-bold">{customerData.nombre}</span></div>
+                <div>Total: <span style={{ color: primaryColor }} className="font-bold">${total.toFixed(2)}</span></div>
               </div>
             )}
 
@@ -973,7 +984,7 @@ export default function CustomerCartDrawer({
               type="button"
               onClick={onClose}
               style={{ backgroundColor: primaryColor, color: '#ffffff' }}
-              className="w-full py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-lg cursor-pointer"
+              className="w-full py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider text-white shadow-lg cursor-pointer"
             >
               Volver al Inicio
             </button>
@@ -988,16 +999,16 @@ export default function CustomerCartDrawer({
             type="button"
             onClick={handleNextToCheckout}
             style={{ backgroundColor: primaryColor, color: '#ffffff' }}
-            className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-[0.99] transition-all cursor-pointer"
+            className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-[0.99] transition-all cursor-pointer"
           >
-            <span>CONTINUAR PEDIDO</span>
+            <span>Continuar pedido</span>
             <div className="flex items-center gap-2">
-              <span className="text-base font-black">${subtotal.toFixed(2)}</span>
+              <span className="text-base font-bold">${subtotal.toFixed(2)}</span>
               <ArrowRight className="w-4 h-4 text-white" />
             </div>
           </button>
 
-          <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-400 mt-2">
+          <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-400 mt-2">
             <Lock className="w-3 h-3 text-slate-400" />
             <span>Tus datos están protegidos con cifrado SSL</span>
           </div>
@@ -1013,11 +1024,11 @@ export default function CustomerCartDrawer({
                 setErrorMessage('⚠️ Ubicación de Entrega Requerida: Por favor selecciona tu ubicación en el mapa para continuar.');
                 setShowMapModal(true);
               }}
-              className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white bg-amber-600 shadow-xl flex items-center justify-between px-6 hover:bg-amber-700 active:scale-[0.99] transition-all cursor-pointer animate-pulse"
+              className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wider text-white bg-amber-600 shadow-xl flex items-center justify-between px-6 hover:bg-amber-700 active:scale-[0.99] transition-all cursor-pointer animate-pulse"
             >
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-white" />
-                <span>SELECCIONAR UBICACIÓN EN MAPA</span>
+                <span>Seleccionar ubicación en mapa</span>
               </div>
               <ArrowRight className="w-4 h-4 text-white" />
             </button>
@@ -1027,18 +1038,18 @@ export default function CustomerCartDrawer({
               onClick={handleSubmitOrder}
               disabled={submitting}
               style={{ backgroundColor: primaryColor, color: '#ffffff' }}
-              className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-[0.99] transition-all cursor-pointer"
+              className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-[0.99] transition-all cursor-pointer"
             >
               {submitting ? (
                 <div className="flex items-center gap-2 mx-auto">
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>ENVIANDO PEDIDO...</span>
+                  <span>Enviando pedido...</span>
                 </div>
               ) : (
                 <>
-                  <span>CONFIRMAR PEDIDO</span>
+                  <span>Confirmar pedido</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-black">${total.toFixed(2)}</span>
+                    <span className="text-base font-bold">${total.toFixed(2)}</span>
                     <ArrowRight className="w-4 h-4 text-white" />
                   </div>
                 </>
@@ -1046,7 +1057,7 @@ export default function CustomerCartDrawer({
             </button>
           )}
 
-          <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-400 mt-2">
+          <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-400 mt-2">
             <Lock className="w-3 h-3 text-slate-400" />
             <span>Pago seguro y datos protegidos</span>
           </div>

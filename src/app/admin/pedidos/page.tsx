@@ -10,13 +10,13 @@ export default function AdminPedidosRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/admin/ventas');
+    router.replace('/admin/pedidos-online');
   }, [router]);
 
   return (
     <div className="flex flex-col items-center justify-center h-64 text-slate-500 space-y-2">
       <Loader2 className="w-8 h-8 text-[#ea580c] animate-spin" />
-      <p className="text-xs font-bold">Redirigiendo a Ventas POS (/admin/ventas)...</p>
+      <p className="text-xs font-bold">Redirigiendo a Gestión de Pedidos (/admin/pedidos-online)...</p>
     </div>
   );
 }

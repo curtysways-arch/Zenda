@@ -23,8 +23,8 @@ export interface AddonDefinition {
 export const SYSTEM_ADDONS: AddonDefinition[] = [
   {
     id: 'ADDON_ECOMMERCE',
-    name: 'Add-on E-commerce Tienda Online',
-    description: 'Activa el canal de ventas e-commerce en catálogo público',
+    name: 'Venta de productos online',
+    description: 'Tienda en tu página con carrito y pedidos: retiro en el local o envío a domicilio con tus propios repartidores. Disponible para cualquier tipo de negocio.',
     priceMonthly: 15.00,
     type: 'CAPABILITY',
     targetKey: 'ECOMMERCE',
@@ -94,6 +94,86 @@ export const SYSTEM_ADDONS: AddonDefinition[] = [
     priceMonthly: 12.00,
     type: 'CAPABILITY',
     targetKey: 'COMMUNICATION_CENTER',
+    stackable: false,
+    active: true
+  },
+  {
+    id: 'ADDON_LOYALTY',
+    name: 'Add-on Club de Beneficios & Fidelización',
+    description: 'Niveles VIP, misiones por recompensas, catálogo de canjes y cashback para tus clientes',
+    priceMonthly: 12.00,
+    type: 'CAPABILITY',
+    targetKey: 'LOYALTY',
+    stackable: false,
+    active: true
+  },
+  {
+    id: 'ADDON_COURSES',
+    name: 'Add-on Academia, Cursos & Talleres',
+    description: 'Gestión de academias, talleres, masterclasses, alumnos, cupos y pase de asistencia',
+    priceMonthly: 14.00,
+    type: 'CAPABILITY',
+    targetKey: 'COURSES',
+    stackable: false,
+    active: true
+  },
+  {
+    id: 'ADDON_KITCHEN',
+    name: 'Add-on Pantalla de Cocina (KDS)',
+    description: 'Comandas digitales en tiempo real con tiempos de preparación y despacho',
+    priceMonthly: 10.00,
+    type: 'CAPABILITY',
+    targetKey: 'KITCHEN',
+    stackable: false,
+    active: true
+  },
+  {
+    id: 'ADDON_PURCHASES_SUPPLIERS',
+    name: 'Add-on Compras & Proveedores',
+    description: 'Gestión de catálogo de proveedores, órdenes de compra y recepción con costos',
+    priceMonthly: 12.00,
+    type: 'CAPABILITY',
+    targetKey: 'PURCHASES',
+    stackable: false,
+    active: true
+  },
+  {
+    id: 'ADDON_RECIPES_PRODUCTION',
+    name: 'Add-on Recetas & Producción',
+    description: 'Fórmulas, órdenes de producción, descuento de materias primas y costeo de lotes',
+    priceMonthly: 18.00,
+    type: 'CAPABILITY',
+    targetKey: 'PRODUCTION',
+    stackable: false,
+    active: true
+  },
+  {
+    id: 'ADDON_MULTI_WAREHOUSE',
+    name: 'Add-on Multi-Bodega & Transferencias',
+    description: 'Gestión de múltiples bodegas de insumos y transferencias de existencias',
+    priceMonthly: 10.00,
+    type: 'CAPABILITY',
+    targetKey: 'MULTI_WAREHOUSE',
+    stackable: false,
+    active: true
+  },
+  {
+    id: 'ADDON_ELECTRONIC_BILLING',
+    name: 'Add-on Facturación Electrónica SRI',
+    description: 'Emisión de facturas y notas de crédito con clave de acceso oficial SRI Ecuador',
+    priceMonthly: 15.00,
+    type: 'CAPABILITY',
+    targetKey: 'ELECTRONIC_BILLING',
+    stackable: false,
+    active: true
+  },
+  {
+    id: 'ADDON_PAYROLL',
+    name: 'Add-on Personal & Nómina',
+    description: 'Control de empleados, roles de pago, anticipos y liquidación salarial',
+    priceMonthly: 12.00,
+    type: 'CAPABILITY',
+    targetKey: 'PAYROLL',
     stackable: false,
     active: true
   }

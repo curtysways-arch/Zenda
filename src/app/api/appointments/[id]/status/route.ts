@@ -29,23 +29,15 @@ export async function PATCH(
         const { id: rawId } = await params;
         const id = rawId.trim();
 
-        // 1. Buscar la cita de forma flexible con Prisma ORM
-        let appointment = await prisma.appointment.findUnique({
-            where: { id }
-        });
-
-        if (!appointment) {
-            appointment = await prisma.appointment.findFirst({
-                where: {
-                    id: {
-                        contains: id
-                    }
-                }
-            });
-        }
-
+        // 1. Buscar la cita (id exacto) y verificar que sea del negocio de la sesión
+        const appointment = await prisma.appointment.findUnique({ where: { id } });
         if (!appointment) {
             return NextResponse.json({ error: 'Cita no encontrada' }, { status: 404 });
+        }
+        {
+            const { requireBusinessAccess } = await import('@/lib/auth/requireBusinessAccess');
+            const access = await requireBusinessAccess(appointment.negocioId);
+            if (!access.ok) return access.response;
         }
 
         // Bloquear no_show si el cliente ya hizo check-in

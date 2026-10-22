@@ -200,16 +200,16 @@ export default async function CanchaDetailPage({
             ) : userReservasActivas > 0 && (
                 <div className="bg-emerald-600/95 backdrop-blur-md text-white px-6 py-4 flex flex-wrap items-center justify-center gap-4 w-full shadow-2xl z-[120] relative border-b border-white/10">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-white/10 border border-white/20 text-xs font-black animate-pulse-subtle">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-white/10 border border-white/20 text-xs font-bold animate-pulse-subtle">
                             {userReservasActivas}
                         </div>
-                        <p className="text-xs sm:text-sm font-black uppercase tracking-widest text-emerald-50 text-center">
+                        <p className="text-xs sm:text-sm font-bold uppercase tracking-wide text-emerald-50 text-center">
                             {userReservasActivas === 1 ? 'Tienes 1 reserva próxima' : `Tienes ${userReservasActivas} reservas próximas`}
                         </p>
                     </div>
                     <Link
                         href={`/${slug}/mis-reservas`}
-                        className="rounded-xl bg-white px-5 py-2 text-xs font-black uppercase tracking-[0.1em] text-emerald-700 hover:bg-emerald-50 transition-all hover:scale-105 active:scale-95 shadow-xl"
+                        className="rounded-xl bg-white px-5 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700 hover:bg-emerald-50 transition-all hover:scale-105 active:scale-95 shadow-xl"
                     >
                         Gestionar ahora
                     </Link>
@@ -241,8 +241,8 @@ export default async function CanchaDetailPage({
                             <ChevronLeft size={20} strokeWidth={2.5} />
                         </Link>
                         <div className="flex flex-col text-left">
-                            <span className="text-[7px] font-black text-emerald-500 uppercase tracking-widest italic leading-none mb-0.5">{negocio.nombre}</span>
-                            <h1 className="font-black text-[13px] uppercase italic tracking-tighter leading-none">{cancha.nombre}</h1>
+                            <span className="text-xs font-bold text-emerald-500 uppercase tracking-wide leading-none mb-0.5">{negocio.nombre}</span>
+                            <h1 className="font-bold text-sm uppercase tracking-tight leading-none">{cancha.nombre}</h1>
                         </div>
                     </div>
                     
@@ -260,21 +260,21 @@ export default async function CanchaDetailPage({
                 
                 {/* HERO CAROUSEL - COMPACT & PREMIUM */}
                 <div className="px-4 pt-4">
-                    <div className="relative aspect-[16/10] rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl">
+                    <div className="relative aspect-[16/10] rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
                         <HeroCarousel images={imagesToUse} opacityActive="opacity-100" />
                         
                         {/* Status Label Overlay */}
                         <div className="absolute top-4 left-4 z-20">
                             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
                                 <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-[8px] font-black text-white italic uppercase tracking-widest">DISPONIBLE</span>
+                                <span className="text-xs font-bold text-white uppercase tracking-wide">Disponible</span>
                             </div>
                         </div>
 
                         {/* Type Label Overlay */}
                         <div className="absolute bottom-4 left-4 z-20">
                              <div className="px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/10">
-                                <span className="text-[9px] font-black text-white italic uppercase tracking-widest">{cancha.tipo}</span>
+                                <span className="text-xs font-bold text-white uppercase tracking-wide">{cancha.tipo}</span>
                             </div>
                         </div>
                     </div>
@@ -286,35 +286,35 @@ export default async function CanchaDetailPage({
                         {/* Price Píldora */}
                         <div className="col-span-1 bg-[#11141d] border border-white/5 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
                             <div className="absolute -top-4 -right-4 size-16 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
-                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic">PRECIO HORA</span>
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ">Precio hora</span>
                             <div className="flex items-baseline gap-1.5">
-                                <span className="text-3xl font-black text-white italic tracking-tighter">${Number(cancha.precioHora)}</span>
-                                {cancha.promocion && <span className="text-sm font-black line-through text-slate-600 italic">${Number(cancha.precioBase)}</span>}
+                                <span className="text-3xl font-bold text-white tracking-tight">${Number(cancha.precioHora)}</span>
+                                {cancha.promocion && <span className="text-sm font-bold line-through text-slate-600 ">${Number(cancha.precioBase)}</span>}
                             </div>
                         </div>
 
                         {/* Capacity Píldora */}
                         <div className="col-span-1 bg-[#11141d] border border-white/5 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
                            <div className="absolute -top-4 -right-4 size-16 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
-                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic">CAPACIDAD</span>
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ">Capacidad</span>
                             <div className="flex items-center gap-2">
                                 <Users size={18} className="text-blue-500" />
-                                <span className="text-2xl font-black text-white italic tracking-tighter uppercase">{cancha.capacidad} JUG.</span>
+                                <span className="text-2xl font-bold text-white tracking-tight ">{cancha.capacidad} JUG.</span>
                             </div>
                         </div>
 
                         {/* Schedule Píldora - Full Width */}
-                        <div className="col-span-2 bg-[#11141d] border border-white/5 rounded-[1.8rem] p-4 flex items-center justify-between px-6">
+                        <div className="col-span-2 bg-[#11141d] border border-white/5 rounded-2xl p-4 flex items-center justify-between px-6">
                             <div className="flex items-center gap-3">
                                 <div className="size-10 rounded-2xl bg-white/5 flex items-center justify-center text-emerald-500">
                                     <Clock size={20} />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[7px] font-black text-slate-500 uppercase italic tracking-widest">HORARIO DE ATENCIÓN</span>
-                                    <span className="text-[11px] font-black text-white italic uppercase">{negocio.horarioApertura} - {negocio.horarioCierre}</span>
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Horario de atención</span>
+                                    <span className="text-xs font-bold text-white uppercase">{negocio.horarioApertura} - {negocio.horarioCierre}</span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-1 px-3 py-1 bg-emerald-500/10 rounded-lg text-emerald-400 text-[8px] font-black uppercase italic tracking-tighter">
+                            <div className="flex items-center gap-1 px-3 py-1 bg-emerald-500/10 rounded-lg text-emerald-400 text-xs font-bold uppercase tracking-tight">
                                 ABIERTO AHORA
                             </div>
                         </div>
@@ -323,7 +323,7 @@ export default async function CanchaDetailPage({
                     {/* KEY FEATURES - CLEAN LIST */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between px-1">
-                            <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] italic">ESPECIFICACIONES</h3>
+                            <h3 className="text-xs font-bold text-emerald-500 uppercase tracking-wide ">Especificaciones</h3>
                             <Zap size={14} className="text-emerald-500" />
                         </div>
                         <div className="grid grid-cols-1 gap-2.5">
@@ -332,8 +332,8 @@ export default async function CanchaDetailPage({
                                     <Trophy size={18} />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[11px] font-black text-white uppercase italic">Sintético Premium Pro</span>
-                                    <span className="text-[9px] font-bold text-slate-500">Certificado FIFA Quality</span>
+                                    <span className="text-xs font-bold text-white uppercase ">Sintético Premium Pro</span>
+                                    <span className="text-xs font-bold text-slate-500">Certificado FIFA Quality</span>
                                 </div>
                             </div>
                              <div className="flex items-center gap-4 bg-[#11141d]/50 border border-white/5 p-4 rounded-2xl">
@@ -341,8 +341,8 @@ export default async function CanchaDetailPage({
                                     <Zap size={18} />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[11px] font-black text-white uppercase italic">Iluminación LED 4K</span>
-                                    <span className="text-[9px] font-bold text-slate-500">Cero sombras en juego nocturno</span>
+                                    <span className="text-xs font-bold text-white uppercase ">Iluminación LED 4K</span>
+                                    <span className="text-xs font-bold text-slate-500">Cero sombras en juego nocturno</span>
                                 </div>
                             </div>
                         </div>
@@ -359,8 +359,8 @@ export default async function CanchaDetailPage({
                     {/* UBICACION - NATIVE MAP PREVIEW */}
                     {displayUbicacion && (
                         <section className="space-y-4 pt-4">
-                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic px-1">CÓMO LLEGAR</h3>
-                            <div className="bg-[#11141d] border border-white/5 rounded-[2rem] overflow-hidden group">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Cómo llegar</h3>
+                            <div className="bg-[#11141d] border border-white/5 rounded-3xl overflow-hidden group">
                                 <div className="h-40 relative">
                                     <iframe
                                         src={embedSrc || ''}
@@ -371,8 +371,8 @@ export default async function CanchaDetailPage({
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-[#11141d] to-transparent" />
                                     <div className="absolute bottom-5 left-6">
-                                        <h4 className="text-sm font-black text-white italic uppercase tracking-tighter">{displayUbicacion.nombre}</h4>
-                                        <p className="text-[10px] font-bold text-slate-500 italic uppercase">{displayUbicacion.direccion || 'Quito, Ecuador'}</p>
+                                        <h4 className="text-sm font-bold text-white uppercase tracking-tight">{displayUbicacion.nombre}</h4>
+                                        <p className="text-xs font-bold text-slate-500 uppercase">{displayUbicacion.direccion || 'Quito, Ecuador'}</p>
                                     </div>
                                 </div>
                                 <div className="px-6 pb-6 pt-2">
@@ -381,7 +381,7 @@ export default async function CanchaDetailPage({
                                             href={navUrl} 
                                             target="_blank" 
                                             rel="noopener noreferrer" 
-                                            className="w-full h-14 bg-white/5 active:bg-white/10 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black text-white italic uppercase tracking-widest transition-all"
+                                            className="w-full h-14 bg-white/5 active:bg-white/10 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-xs font-bold text-white uppercase tracking-wide transition-all"
                                         >
                                             <MapPin size={16} className="text-emerald-500" /> GOOGLE MAPS
                                         </a>

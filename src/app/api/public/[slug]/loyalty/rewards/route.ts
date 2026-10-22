@@ -297,8 +297,7 @@ export async function POST(
                     negocioId,
                     puntos: -reward.costoPuntos,
                     concepto: 'CANJE',
-                    notes: `Canje de premio: ${reward.nombre}`,
-                    notas: `Canje de premio: ${reward.nombre}` // soportar ambas columnas por compatibilidad
+                    notas: `Canje de premio: ${reward.nombre}`
                 }
             });
 

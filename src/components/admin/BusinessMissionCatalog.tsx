@@ -267,9 +267,9 @@ export default function BusinessMissionCatalog({
         <div className="relative z-10 space-y-2">
           <div className="flex items-center gap-2 text-cyan-400">
             <Zap className="w-5 h-5 animate-pulse" />
-            <span className="text-xs font-black uppercase tracking-widest leading-none">Marketplace de Misiones</span>
+            <span className="text-xs font-bold uppercase tracking-wide leading-none">Marketplace de Misiones</span>
           </div>
-          <h1 className="text-3xl font-black tracking-tight leading-none">Misiones Especiales de la Red Citiox</h1>
+          <h1 className="text-3xl font-bold tracking-tight leading-none">Misiones Especiales de la Red Citiox</h1>
           <p className="text-slate-400 text-sm max-w-2xl">
             Instala misiones oficiales diseñadas por la plataforma. Tus clientes ganan XP globales y recompensas oficiales, mientras tú decides qué premio local ofrecerles.
           </p>
@@ -280,7 +280,7 @@ export default function BusinessMissionCatalog({
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-black text-slate-800 dark:text-white">Misiones Disponibles para Instalar</h2>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Misiones Disponibles para Instalar</h2>
             <p className="text-xs text-slate-400 mt-1">Explora las campañas activas de Citiox y actívalas en tu local.</p>
           </div>
         </div>
@@ -296,10 +296,10 @@ export default function BusinessMissionCatalog({
                 <div className="p-6 space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="text-[9px] bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg text-slate-500 font-bold uppercase tracking-wider">{mapCategory(m.categoria)}</span>
-                      <h3 className="text-lg font-black text-slate-900 dark:text-white mt-2 leading-tight">{m.nombre}</h3>
+                      <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg text-slate-500 font-bold uppercase tracking-wider">{mapCategory(m.categoria)}</span>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-2 leading-tight">{m.nombre}</h3>
                     </div>
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase">{mapDifficulty(m.dificultad)}</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase">{mapDifficulty(m.dificultad)}</span>
                   </div>
 
                   <p className="text-slate-500 text-xs font-medium leading-relaxed line-clamp-3">{m.descripcion}</p>
@@ -307,7 +307,7 @@ export default function BusinessMissionCatalog({
                   <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2">
                     <p className="text-xs font-bold text-slate-400">Objetivo del cliente:</p>
                     <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                      Hacer <strong className="font-bold text-slate-900 dark:text-white">{m.cantidadMeta}</strong> veces el evento <code className="font-mono text-[10px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">{mapTrigger(m.triggerEvent)}</code>
+                      Hacer <strong className="font-bold text-slate-900 dark:text-white">{m.cantidadMeta}</strong> veces el evento <code className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">{mapTrigger(m.triggerEvent)}</code>
                     </p>
                   </div>
                 </div>
@@ -318,7 +318,7 @@ export default function BusinessMissionCatalog({
                   </span>
                   <button 
                     onClick={() => handleInstallClick(m)}
-                    className="flex items-center gap-1.5 font-black text-xs text-white px-4 py-2.5 rounded-xl shadow-lg transition-all hover:opacity-90"
+                    className="flex items-center gap-1.5 font-bold text-xs text-white px-4 py-2.5 rounded-xl shadow-lg transition-all hover:opacity-90"
                     style={{ backgroundColor: primaryColor }}
                   >
                     Instalar <ArrowRight className="w-3.5 h-3.5" />
@@ -333,7 +333,7 @@ export default function BusinessMissionCatalog({
       {/* Installed Grid */}
       <div className="space-y-6 pt-6">
         <div>
-          <h2 className="text-xl font-black text-slate-800 dark:text-white">Misiones Activas en mi Negocio</h2>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white">Misiones Activas en mi Negocio</h2>
           <p className="text-xs text-slate-400 mt-1">Supervisa y controla el estado de las misiones que tus clientes están jugando actualmente.</p>
         </div>
 
@@ -348,19 +348,19 @@ export default function BusinessMissionCatalog({
                 <div className="p-6 space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="text-[9px] bg-slate-100 dark:bg-slate-850 px-2.5 py-1 rounded-lg text-slate-500 font-bold uppercase tracking-wider">{mapCategory(bm.MissionDefinition.categoria)}</span>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white mt-2 leading-tight">{bm.MissionDefinition.nombre}</h3>
+                      <span className="text-xs bg-slate-100 dark:bg-slate-850 px-2.5 py-1 rounded-lg text-slate-500 font-bold uppercase tracking-wider">{mapCategory(bm.MissionDefinition.categoria)}</span>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white mt-2 leading-tight">{bm.MissionDefinition.nombre}</h3>
                     </div>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${
-                      bm.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-600' :
-                      bm.status === 'PAUSED' ? 'bg-amber-500/10 text-amber-600' :
-                      bm.status === 'PENDING_REWARD' ? 'bg-indigo-500/10 text-indigo-650' : 'bg-slate-500/10 text-slate-500'
-                    }`}>{mapStatus(bm.status)}</span>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase ${
+ bm.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-600' :
+ bm.status === 'PAUSED' ? 'bg-amber-500/10 text-amber-600' :
+ bm.status === 'PENDING_REWARD' ? 'bg-indigo-500/10 text-indigo-650' : 'bg-slate-500/10 text-slate-500'
+ }`}>{mapStatus(bm.status)}</span>
                   </div>
 
                   {bm.rewardConfiguration && (
                     <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-850 space-y-1">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tu Recompensa Local:</p>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tu Recompensa Local:</p>
                       <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
                         {bm.rewardConfiguration.rewardType === 'CASHBACK' && `💰 Cashback: $${bm.rewardConfiguration.valor}`}
                         {bm.rewardConfiguration.rewardType === 'COUPON' && `🎟️ Cupón: ${bm.rewardConfiguration.valor.valor}% descuento`}
@@ -395,8 +395,8 @@ export default function BusinessMissionCatalog({
             {/* Wizard Header */}
             <div className="p-6 border-b border-slate-100 dark:border-slate-850 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Instalación - Paso Único</span>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white mt-1">Configurar Recompensa Local</h3>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Instalación - Paso Único</span>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-1">Configurar Recompensa Local</h3>
               </div>
               <button 
                 onClick={() => setWizardOpen(false)}
@@ -586,7 +586,7 @@ export default function BusinessMissionCatalog({
               <button 
                 onClick={handleWizardSubmit}
                 disabled={loading}
-                className="font-black text-xs text-white px-6 py-3 rounded-xl shadow-md transition-all hover:opacity-90 disabled:opacity-50"
+                className="font-bold text-xs text-white px-6 py-3 rounded-xl shadow-md transition-all hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: primaryColor }}
               >
                 {loading ? 'Instalando...' : 'Completar Instalación'}

@@ -1,467 +1,556 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
-  Truck, ShieldCheck, Lock, Unlock, Search, Filter, RefreshCw, Eye, AlertTriangle,
-  CheckCircle2, XCircle, FileText, Building2, User, Phone, MapPin, Clock, Calendar,
-  ShieldAlert, Settings, Award, ArrowUpRight, ChevronRight, Sliders, AlertCircle
+  Truck, Search, RefreshCw, Lock, Unlock, X, Building2, Phone, FileText, ExternalLink,
+  CheckCircle2, Clock, AlertTriangle, PackageCheck, Bike, Car, Footprints, ShieldAlert, Mail, IdCard, MapPin,
 } from 'lucide-react';
 
-interface GlobalDriver {
-  globalId: string;
-  primaryResourceId: string;
+type Status = 'ACTIVO' | 'EN_REVISION' | 'INVITADO' | 'PAUSADO' | 'RECHAZADO' | 'BLOQUEADO';
+type LocalGroup = 'ACTIVO' | 'POR_REVISAR' | 'INVITADO' | 'PAUSADO' | 'RECHAZADO' | 'BLOQUEADO';
+
+interface Driver {
+  key: string;
   name: string;
   phone: string;
-  email?: string;
-  documento?: string;
+  email: string;
+  documento: string;
   tipoVehiculo: string;
   vehiculo: string;
-  placa?: string;
-  globalStatus: 'ACTIVO' | 'BLOQUEADO' | 'INVITED' | 'PENDING_VERIFICATION' | 'APPROVED' | 'SUSPENDED';
-  motivoBloqueo?: string;
-  documentos: {
-    cedulaFrenteUrl?: string;
-    cedulaReversoUrl?: string;
-    licenciaUrl?: string;
-    matriculaUrl?: string;
-    fotoVehiculoUrl?: string;
-    selfieUrl?: string;
-  };
-  negociosAsociados: {
+  placa: string;
+  ciudad: string;
+  selfieUrl: string | null;
+  status: Status;
+  motivoBloqueo: string | null;
+  disponibleRed: boolean;
+  creadoEn: string;
+  entregas: number;
+  docsCount: number;
+  documentos: Record<string, string | null>;
+  negocios: {
     resourceId: string;
     negocioId: string;
-    negocioNombre: string;
-    negocioSlug?: string;
-    negocioLogo?: string;
-    localStatus: string;
-    localActive: boolean;
+    nombre: string;
+    slug: string | null;
+    logoUrl: string | null;
+    estado: LocalGroup;
+    origen: string;
+    entregas: number;
+    desde: string;
   }[];
 }
 
+const STATUS: Record<Status, { label: string; cls: string; dot: string }> = {
+  ACTIVO: { label: 'Activo', cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200', dot: 'bg-emerald-500' },
+  EN_REVISION: { label: 'En revisión', cls: 'bg-amber-50 text-amber-700 ring-amber-200', dot: 'bg-amber-500' },
+  INVITADO: { label: 'Invitado', cls: 'bg-sky-50 text-sky-700 ring-sky-200', dot: 'bg-sky-500' },
+  PAUSADO: { label: 'Pausado', cls: 'bg-slate-100 text-slate-600 ring-slate-200', dot: 'bg-slate-400' },
+  RECHAZADO: { label: 'Por corregir', cls: 'bg-orange-50 text-orange-700 ring-orange-200', dot: 'bg-orange-500' },
+  BLOQUEADO: { label: 'Bloqueado', cls: 'bg-rose-50 text-rose-700 ring-rose-200', dot: 'bg-rose-500' },
+};
+
+const LOCAL: Record<LocalGroup, string> = {
+  ACTIVO: 'Activo',
+  POR_REVISAR: 'Por revisar',
+  INVITADO: 'Invitado',
+  PAUSADO: 'Pausado',
+  RECHAZADO: 'Por corregir',
+  BLOQUEADO: 'Bloqueado',
+};
+
+const FILTERS: { key: 'ALL' | Status; label: string }[] = [
+  { key: 'ALL', label: 'Todos' },
+  { key: 'ACTIVO', label: 'Activos' },
+  { key: 'EN_REVISION', label: 'En revisión' },
+  { key: 'INVITADO', label: 'Invitados' },
+  { key: 'BLOQUEADO', label: 'Bloqueados' },
+];
+
+const DOCS: { key: string; label: string }[] = [
+  { key: 'selfieUrl', label: 'Foto de perfil' },
+  { key: 'cedulaFrenteUrl', label: 'Cédula (frente)' },
+  { key: 'cedulaReversoUrl', label: 'Cédula (reverso)' },
+  { key: 'licenciaUrl', label: 'Licencia' },
+  { key: 'matriculaUrl', label: 'Matrícula' },
+  { key: 'fotoVehiculoUrl', label: 'Vehículo' },
+];
+
+const VEHICLE: Record<string, { label: string; Icon: any }> = {
+  MOTO: { label: 'Moto', Icon: Bike },
+  BICICLETA: { label: 'Bicicleta', Icon: Bike },
+  AUTO: { label: 'Auto', Icon: Car },
+  CAMIONETA: { label: 'Camioneta', Icon: Truck },
+  A_PIE: { label: 'A pie', Icon: Footprints },
+};
+
+const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+function Avatar({ d, size = 'w-9 h-9' }: { d: Driver; size?: string }) {
+  const [err, setErr] = useState(false);
+  if (d.selfieUrl && !err) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={d.selfieUrl} alt="" onError={() => setErr(true)} className={`${size} rounded-full object-cover bg-slate-100 shrink-0`} />;
+  }
+  const initials = d.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  return <div className={`${size} rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center shrink-0`}>{initials}</div>;
+}
+
+function Badge({ s }: { s: Status }) {
+  const c = STATUS[s];
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ${c.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+      {c.label}
+    </span>
+  );
+}
+
+const isPdf = (u: string) => /\.pdf($|\?)/i.test(u);
+
 export default function SuperAdminRepartidoresPage() {
-  const [activeTab, setActiveTab] = useState<'EXPE' | 'REGLAS' | 'AUDITORIA'>('EXPE');
-  const [drivers, setDrivers] = useState<GlobalDriver[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [selectedDriver, setSelectedDriver] = useState<GlobalDriver | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [q, setQ] = useState('');
+  const [filter, setFilter] = useState<'ALL' | Status>('ALL');
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [blockFor, setBlockFor] = useState<Driver | null>(null);
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Modal Bloqueo Global
-  const [showBlockModal, setShowBlockModal] = useState(false);
-  const [blockReason, setBlockReason] = useState('');
-  const [processingAction, setProcessingAction] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  // Reglas Globales (Form State)
-  const [globalRules, setGlobalRules] = useState({
-    documentoIdentidad: true,
-    licenciaConducir: true,
-    matriculaVehiculo: true,
-    fotoVehiculo: true,
-    selfiePerfil: true,
-    warningDays: 15,
-    autoDisableOnExpire: true,
-    allowedVehicles: {
-      MOTO: true,
-      AUTO: true,
-      BICICLETA: true,
-      CAMIONETA: true,
-      A_PIE: true,
-    }
-  });
-
-  const loadGlobalDrivers = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/superadmin/drivers?search=${encodeURIComponent(search)}&status=${statusFilter}`);
-      if (res.ok) {
-        const data = await res.json();
-        setDrivers(data.drivers || []);
-      }
-    } catch (e) {
-      console.error('Error cargando repartidores globales:', e);
+      const res = await fetch('/api/superadmin/drivers', { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo cargar');
+      setDrivers(data.drivers || []);
+      setStats(data.stats || null);
+    } catch (e: any) {
+      setError(e.message || 'No se pudo cargar la lista de repartidores.');
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter]);
+  }, []);
 
-  useEffect(() => {
-    loadGlobalDrivers();
-  }, [loadGlobalDrivers]);
+  useEffect(() => { load(); }, [load]);
 
-  const handleToggleGlobalBlock = async () => {
-    if (!selectedDriver) return;
-    setProcessingAction(true);
+  const list = useMemo(() => {
+    const t = norm(q.trim());
+    const digits = q.replace(/\D/g, '');
+    return drivers.filter((d) => {
+      if (filter !== 'ALL' && d.status !== filter) return false;
+      if (!t) return true;
+      return (
+        norm(d.name).includes(t) ||
+        (digits.length >= 3 && d.phone.replace(/\D/g, '').includes(digits)) ||
+        norm(d.documento).includes(t) ||
+        norm(d.placa).includes(t) ||
+        d.negocios.some((n) => norm(n.nombre).includes(t))
+      );
+    });
+  }, [drivers, q, filter]);
+
+  const open = drivers.find((d) => d.key === openKey) || null;
+
+  const toggleBlock = async () => {
+    if (!blockFor) return;
+    const blocking = blockFor.status !== 'BLOQUEADO';
+    setBusy(true);
     try {
-      const isCurrentlyBlocked = selectedDriver.globalStatus === 'BLOQUEADO' || selectedDriver.globalStatus === 'SUSPENDED';
-      const newStatus = isCurrentlyBlocked ? 'ACTIVO' : 'BLOQUEADO';
-
       const res = await fetch('/api/superadmin/drivers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'TOGGLE_GLOBAL_BLOCK',
-          driverPhone: selectedDriver.phone,
-          globalStatus: newStatus,
-          motivo: blockReason || 'Bloqueo global aplicado por administración central Citiox'
-        })
+          driverPhone: blockFor.phone,
+          globalStatus: blocking ? 'BLOQUEADO' : 'ACTIVO',
+          motivo: reason,
+        }),
       });
-
-      if (res.ok) {
-        setShowBlockModal(false);
-        setBlockReason('');
-        setSelectedDriver(null);
-        await loadGlobalDrivers();
-      } else {
-        alert('No se pudo actualizar el estado global del repartidor');
-      }
-    } catch (e) {
-      console.error('Error en cambio de estado global:', e);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo actualizar');
+      setBlockFor(null);
+      setReason('');
+      await load();
+    } catch (e: any) {
+      alert(e.message);
     } finally {
-      setProcessingAction(false);
+      setBusy(false);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header Central SuperAdmin */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Truck className="w-6 h-6 stroke-[2.5]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Gestión Global de Repartidores</h1>
-              <span className="px-2.5 py-0.5 bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 text-[10px] font-black uppercase tracking-wider rounded-full border border-indigo-200 dark:border-indigo-800">
-                SuperAdmin
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
-              Políticas de plataforma, auditoría y control de bloqueo centralizado para Citiox Enterprise
-            </p>
-          </div>
-        </div>
+  const countFor = (k: 'ALL' | Status) => (k === 'ALL' ? stats?.total ?? drivers.length : stats?.[k] ?? 0);
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={loadGlobalDrivers}
-            className="p-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-2xl transition-colors cursor-pointer"
-            title="Actualizar Repartidores"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
+  return (
+    <div className="space-y-4">
+      {/* Encabezado */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <Truck className="w-5 h-5 text-indigo-600" /> Repartidores
+          </h1>
+          <p className="text-sm text-slate-500">
+            Red de repartidores de Citiox. Cada negocio invita y aprueba a los suyos; aquí ves a todos y puedes bloquear a alguien en toda la red.
+          </p>
         </div>
+        <button
+          onClick={load}
+          className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Actualizar
+        </button>
       </div>
 
-      {/* Navegación por Pestañas SuperAdmin */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
+      {/* Resumen */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { key: 'EXPE', label: 'Expedientes Globales', icon: UsersIcon },
-          { key: 'REGLAS', label: 'Reglas y Documentos Requeridos', icon: Settings },
-          { key: 'AUDITORIA', label: 'Historial y Auditoría Global', icon: Clock },
-        ].map(t => (
-          <button
-            key={t.key}
-            onClick={() => setActiveTab(t.key as any)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
-              activeTab === t.key
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10'
-            }`}
-          >
-            <t.icon className="w-4 h-4" />
-            <span>{t.label}</span>
-          </button>
+          { label: 'Repartidores', value: stats?.total ?? '—', Icon: Truck, tone: 'text-indigo-600 bg-indigo-50' },
+          { label: 'Activos', value: stats?.ACTIVO ?? '—', Icon: CheckCircle2, tone: 'text-emerald-600 bg-emerald-50' },
+          { label: 'Esperan revisión', value: stats?.EN_REVISION ?? '—', Icon: Clock, tone: 'text-amber-600 bg-amber-50' },
+          { label: 'Entregas completadas', value: stats?.entregas ?? '—', Icon: PackageCheck, tone: 'text-sky-600 bg-sky-50' },
+        ].map((s) => (
+          <div key={s.label} className="bg-white rounded-xl border border-slate-200 p-3 flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${s.tone}`}>
+              <s.Icon className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-lg font-bold text-slate-900 leading-tight">{s.value}</p>
+              <p className="text-xs text-slate-500 truncate">{s.label}</p>
+            </div>
+          </div>
         ))}
       </div>
 
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 1: EXPEDIENTES GLOBALES (SUPERADMIN) */}
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'EXPE' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
-          {/* Barra de Filtros y Búsqueda */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3 w-full md:w-auto flex-1">
-              <div className="relative w-full max-w-md">
-                <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Buscar repartidor por nombre, teléfono o ID..."
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-900 outline-none focus:border-indigo-500 transition-colors"
-                />
-              </div>
-            </div>
+      {/* Filtros */}
+      <div className="bg-white rounded-xl border border-slate-200 p-3 flex flex-col lg:flex-row lg:items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar por nombre, teléfono, cédula, placa o negocio"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm outline-none focus:border-indigo-400 focus:bg-white"
+          />
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto">
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                filter === f.key ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {f.label} <span className="opacity-60">{countFor(f.key)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <span className="text-xs font-black uppercase text-slate-400 tracking-wider">Estado Global:</span>
-              {['ALL', 'ACTIVO', 'BLOQUEADO'].map(st => (
-                <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase transition-all cursor-pointer ${
-                    statusFilter === st
-                      ? 'bg-slate-900 text-white shadow-md'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {st === 'ALL' ? 'Todos' : st}
+      {error && (
+        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-700">{error}</div>
+      )}
+
+      {/* Lista */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        {loading && !drivers.length ? (
+          <div className="p-10 text-center text-sm text-slate-400">Cargando repartidores…</div>
+        ) : list.length === 0 ? (
+          <div className="p-10 text-center">
+            <Truck className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+            <p className="text-sm font-semibold text-slate-700">
+              {drivers.length ? 'Ningún repartidor coincide con la búsqueda' : 'Todavía no hay repartidores en la red'}
+            </p>
+            {!drivers.length && (
+              <p className="text-xs text-slate-500 mt-1">Aparecerán aquí cuando los negocios inviten a sus repartidores desde su panel.</p>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Escritorio */}
+            <table className="hidden md:table w-full text-sm">
+              <thead className="bg-slate-50 text-xs text-slate-500">
+                <tr>
+                  <th className="text-left font-semibold px-4 py-2.5">Repartidor</th>
+                  <th className="text-left font-semibold px-3 py-2.5">Vehículo</th>
+                  <th className="text-left font-semibold px-3 py-2.5">Negocios</th>
+                  <th className="text-right font-semibold px-3 py-2.5">Entregas</th>
+                  <th className="text-left font-semibold px-3 py-2.5">Estado</th>
+                  <th className="px-4 py-2.5" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {list.map((d) => {
+                  const V = VEHICLE[d.tipoVehiculo] || VEHICLE.MOTO;
+                  return (
+                    <tr key={d.key} className="hover:bg-slate-50/70 cursor-pointer" onClick={() => setOpenKey(d.key)}>
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar d={d} />
+                          <div className="min-w-0">
+                            <p className="font-semibold text-slate-900 truncate">{d.name}</p>
+                            <p className="text-xs text-slate-500">{d.phone || 'Sin teléfono'}{d.ciudad ? ` · ${d.ciudad}` : ''}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 text-slate-600">
+                        <span className="inline-flex items-center gap-1.5"><V.Icon className="w-3.5 h-3.5 text-slate-400" />{V.label}</span>
+                        {d.placa && <span className="ml-1.5 text-xs font-mono text-slate-500">{d.placa}</span>}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex flex-wrap gap-1 max-w-[260px]">
+                          {d.negocios.slice(0, 2).map((n) => (
+                            <span
+                              key={n.resourceId}
+                              title={LOCAL[n.estado]}
+                              className={`px-1.5 py-0.5 rounded text-[11px] font-medium truncate max-w-[120px] ${
+                                n.estado === 'ACTIVO' ? 'bg-slate-100 text-slate-700' : 'bg-amber-50 text-amber-700'
+                              }`}
+                            >
+                              {n.nombre}
+                            </span>
+                          ))}
+                          {d.negocios.length > 2 && <span className="text-[11px] text-slate-500">+{d.negocios.length - 2}</span>}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 text-right font-semibold text-slate-700">{d.entregas}</td>
+                      <td className="px-3 py-2.5"><Badge s={d.status} /></td>
+                      <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="inline-flex gap-1.5">
+                          <button
+                            onClick={() => setOpenKey(d.key)}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          >
+                            Ver
+                          </button>
+                          <button
+                            onClick={() => { setBlockFor(d); setReason(''); }}
+                            title={d.status === 'BLOQUEADO' ? 'Desbloquear' : 'Bloquear en toda la red'}
+                            className={`p-1.5 rounded-lg ${
+                              d.status === 'BLOQUEADO' ? 'text-emerald-600 hover:bg-emerald-50' : 'text-rose-600 hover:bg-rose-50'
+                            }`}
+                          >
+                            {d.status === 'BLOQUEADO' ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Móvil */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {list.map((d) => (
+                <button key={d.key} onClick={() => setOpenKey(d.key)} className="w-full text-left p-3 flex items-center gap-3 hover:bg-slate-50">
+                  <Avatar d={d} size="w-10 h-10" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-sm text-slate-900 truncate">{d.name}</p>
+                      <Badge s={d.status} />
+                    </div>
+                    <p className="text-xs text-slate-500 truncate">
+                      {d.phone} · {d.negocios.length} {d.negocios.length === 1 ? 'negocio' : 'negocios'} · {d.entregas} entregas
+                    </p>
+                  </div>
                 </button>
               ))}
             </div>
-          </div>
+          </>
+        )}
+      </div>
 
-          {/* Grid de Repartidores Globales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {loading ? (
-              <div className="col-span-full py-12 text-center text-slate-400 font-semibold text-sm">
-                Cargando expedientes de repartidores...
+      {/* Detalle */}
+      {mounted && open && createPortal(
+        <div className="fixed inset-0 z-[9999] flex justify-end">
+          <div className="absolute inset-0 bg-slate-900/40" onClick={() => setOpenKey(null)} />
+          <aside className="relative w-full max-w-lg h-full bg-white shadow-2xl flex flex-col">
+            <header className="p-4 border-b border-slate-200 flex items-start gap-3">
+              <Avatar d={open} size="w-12 h-12" />
+              <div className="flex-1 min-w-0">
+                <h2 className="font-bold text-slate-900 truncate">{open.name}</h2>
+                <div className="mt-1 flex items-center gap-2 flex-wrap">
+                  <Badge s={open.status} />
+                  {!open.disponibleRed && <span className="text-[11px] text-slate-500">No acepta nuevos negocios</span>}
+                </div>
               </div>
-            ) : drivers.length === 0 ? (
-              <div className="col-span-full py-12 text-center bg-white rounded-3xl border border-dashed border-slate-200 text-slate-500">
-                <Truck className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-                <p className="font-bold text-sm">No se encontraron repartidores registrados</p>
-              </div>
-            ) : (
-              drivers.map(driver => {
-                const isBlocked = driver.globalStatus === 'BLOQUEADO' || driver.globalStatus === 'SUSPENDED';
-                return (
-                  <div
-                    key={driver.globalId}
-                    className={`bg-white rounded-3xl p-6 border shadow-sm space-y-4 transition-all relative ${
-                      isBlocked ? 'border-rose-200 bg-rose-50/20' : 'border-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-black text-lg flex items-center justify-center shadow-md uppercase">
-                          {driver.name.slice(0, 2)}
-                        </div>
-                        <div>
-                          <h3 className="font-black text-slate-900 text-base leading-tight">{driver.name}</h3>
-                          <p className="text-xs font-semibold text-slate-500 mt-0.5">📱 {driver.phone || 'Sin teléfono'}</p>
-                        </div>
-                      </div>
+              <button onClick={() => setOpenKey(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500" aria-label="Cerrar">
+                <X className="w-5 h-5" />
+              </button>
+            </header>
 
-                      <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-full border ${
-                        isBlocked
-                          ? 'bg-rose-100 text-rose-700 border-rose-200'
-                          : 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                      }`}>
-                        {isBlocked ? '🔴 Bloqueado Global' : '🟢 Global Activo'}
-                      </span>
-                    </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-5">
+              {open.status === 'BLOQUEADO' && open.motivoBloqueo && (
+                <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-800">
+                  <p className="font-semibold flex items-center gap-1.5"><ShieldAlert className="w-4 h-4" /> Bloqueado en toda la red</p>
+                  <p className="text-xs mt-0.5">{open.motivoBloqueo}</p>
+                </div>
+              )}
 
-                    {/* Negocios Asociados */}
-                    <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                        Locales Autorizados ({driver.negociosAsociados.length}):
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {driver.negociosAsociados.map(n => (
-                          <span
-                            key={n.negocioId}
-                            className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border flex items-center gap-1 ${
-                              n.localActive && n.localStatus === 'APPROVED'
-                                ? 'bg-slate-100 text-slate-700 border-slate-200'
-                                : 'bg-amber-50 text-amber-800 border-amber-200'
-                            }`}
-                          >
-                            <Building2 className="w-3 h-3 text-slate-400" />
-                            {n.negocioNombre}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Botones de Acción SuperAdmin */}
-                    <div className="flex gap-2 pt-3 border-t border-slate-100">
-                      <button
-                        onClick={() => setSelectedDriver(driver)}
-                        className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black uppercase transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Ver Expediente</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setSelectedDriver(driver);
-                          setShowBlockModal(true);
-                        }}
-                        className={`px-3 py-2.5 rounded-xl text-xs font-black uppercase transition-colors cursor-pointer flex items-center gap-1.5 ${
-                          isBlocked
-                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
-                        }`}
-                      >
-                        {isBlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                        <span>{isBlocked ? 'Desbloquear' : 'Bloquear'}</span>
-                      </button>
-                    </div>
+              <section className="grid grid-cols-2 gap-2 text-sm">
+                {[
+                  { Icon: Phone, label: 'Teléfono', value: open.phone },
+                  { Icon: IdCard, label: 'Cédula', value: open.documento },
+                  { Icon: Mail, label: 'Correo', value: open.email },
+                  { Icon: MapPin, label: 'Ciudad', value: open.ciudad },
+                  { Icon: (VEHICLE[open.tipoVehiculo] || VEHICLE.MOTO).Icon, label: 'Vehículo', value: [(VEHICLE[open.tipoVehiculo] || VEHICLE.MOTO).label, open.vehiculo].filter(Boolean).join(' · ') },
+                  { Icon: FileText, label: 'Placa', value: open.placa },
+                ].map((f) => (
+                  <div key={f.label} className="p-2.5 rounded-lg bg-slate-50">
+                    <p className="text-[11px] text-slate-500 flex items-center gap-1"><f.Icon className="w-3 h-3" /> {f.label}</p>
+                    <p className="font-medium text-slate-800 truncate">{f.value || '—'}</p>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
+                ))}
+              </section>
 
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 2: REGLAS Y DOCUMENTOS REQUERIDOS (SUPERADMIN) */}
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'REGLAS' && (
-        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-6">
-            <div className="space-y-1">
-              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                <Settings className="w-5 h-5 text-indigo-600" /> Configuración Global de Documentos Requeridos
-              </h2>
-              <p className="text-xs text-slate-500 font-semibold">
-                Establece los requisitos obligatorios que deben cumplir todos los repartidores registrados en Citiox.
-              </p>
+              <section>
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                  Documentos <span className="normal-case font-normal">({open.docsCount} de {DOCS.length})</span>
+                </h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {DOCS.map((doc) => {
+                    const url = open.documentos[doc.key];
+                    return url ? (
+                      <a
+                        key={doc.key}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group rounded-lg border border-slate-200 overflow-hidden hover:border-indigo-300"
+                      >
+                        {isPdf(url) ? (
+                          <div className="aspect-[4/3] bg-slate-50 flex items-center justify-center text-slate-400"><FileText className="w-6 h-6" /></div>
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={url} alt={doc.label} className="aspect-[4/3] w-full object-cover bg-slate-100" />
+                        )}
+                        <p className="px-2 py-1 text-[11px] font-medium text-slate-600 flex items-center justify-between">
+                          {doc.label}
+                          <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                        </p>
+                      </a>
+                    ) : (
+                      <div key={doc.key} className="rounded-lg border border-dashed border-slate-200">
+                        <div className="aspect-[4/3] flex items-center justify-center text-[11px] text-slate-400">Sin archivo</div>
+                        <p className="px-2 py-1 text-[11px] text-slate-400">{doc.label}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                  Negocios ({open.negocios.length})
+                </h3>
+                <div className="space-y-1.5">
+                  {open.negocios.map((n) => (
+                    <div key={n.resourceId} className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-200">
+                      {n.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={n.logoUrl} alt="" className="w-8 h-8 rounded-md object-cover bg-slate-100" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center"><Building2 className="w-4 h-4 text-slate-400" /></div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-800 truncate">{n.nombre}</p>
+                        <p className="text-[11px] text-slate-500">
+                          {n.origen === 'RED_CITIOX' ? 'Llegó por la red Citiox' : 'Invitado por el negocio'} · desde {new Date(n.desde).toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })} · {n.entregas} entregas
+                        </p>
+                      </div>
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                        n.estado === 'ACTIVO' ? 'bg-emerald-50 text-emerald-700' : n.estado === 'BLOQUEADO' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
+                      }`}>
+                        {LOCAL[n.estado]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
 
-            <div className="space-y-3">
-              {[
-                { key: 'documentoIdentidad', title: 'Documento de Identidad (Cédula / DNI)', desc: 'Requerido para la validación de identidad personal.' },
-                { key: 'licenciaConducir', title: 'Licencia de Conducir Vigente', desc: 'Obligatorio para conductores de Moto y Auto.' },
-                { key: 'matriculaVehiculo', title: 'Matrícula / Documentación de Vehículo', desc: 'Comprobante de propiedad o matrícula oficial del vehículo.' },
-                { key: 'fotoVehiculo', title: 'Fotografía del Vehículo', desc: 'Foto clara con placa legible para seguridad del cliente.' },
-                { key: 'selfiePerfil', title: 'Selfie de Perfil', desc: 'Fotografía reciente para reconocimiento de perfil en la App.' },
-              ].map(doc => (
-                <div key={doc.key} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">{doc.title}</h3>
-                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">{doc.desc}</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={Boolean((globalRules as any)[doc.key])}
-                    onChange={e => setGlobalRules({
-                      ...globalRules,
-                      [doc.key]: e.target.checked
-                    })}
-                    className="w-5 h-5 accent-indigo-600 rounded-md cursor-pointer"
+            <footer className="p-4 border-t border-slate-200">
+              <button
+                onClick={() => { setBlockFor(open); setReason(''); }}
+                className={`w-full py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-2 ${
+                  open.status === 'BLOQUEADO'
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    : 'bg-white border border-rose-200 text-rose-700 hover:bg-rose-50'
+                }`}
+              >
+                {open.status === 'BLOQUEADO' ? <><Unlock className="w-4 h-4" /> Desbloquear</> : <><Lock className="w-4 h-4" /> Bloquear en toda la red</>}
+              </button>
+            </footer>
+          </aside>
+        </div>,
+        document.body
+      )}
+
+      {/* Confirmar bloqueo / desbloqueo */}
+      {mounted && blockFor && createPortal(
+        <div className="fixed inset-0 z-[10000] bg-slate-900/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 space-y-4">
+            {blockFor.status === 'BLOQUEADO' ? (
+              <>
+                <div>
+                  <h3 className="font-bold text-slate-900">¿Desbloquear a {blockFor.name.split(' ')[0]}?</h3>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Vuelve al estado que tenía en cada negocio antes del bloqueo. No se aprueba en negocios donde no estaba aprobado.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-600" /> Bloquear a {blockFor.name.split(' ')[0]}
+                  </h3>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Dejará de recibir pedidos en sus {blockFor.negocios.length} {blockFor.negocios.length === 1 ? 'negocio' : 'negocios'} y no aparecerá como recomendado. Podrá entrar a su app y ver el motivo.
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600">Motivo (lo verá el repartidor)</label>
+                  <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    rows={3}
+                    autoFocus
+                    placeholder="Ej.: documentos alterados, reclamos graves de clientes…"
+                    className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:border-rose-400"
                   />
                 </div>
-              ))}
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex justify-end">
-              <button
-                onClick={() => alert('Políticas globales de documentación actualizadas correctamente')}
-                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-indigo-600/20 cursor-pointer transition-all"
-              >
-                Guardar Reglas Globales
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 3: AUDITORÍA GLOBAL (SUPERADMIN) */}
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'AUDITORIA' && (
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4 animate-in fade-in duration-300">
-          <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-indigo-600" /> Registro de Auditoría e Historial Global
-          </h2>
-
-          <div className="space-y-3">
-            {[
-              { id: '1', fecha: 'Hoy, 10:30 AM', admin: 'SuperAdmin Citiox', accion: 'Bloqueo Global Aplicado', driver: 'Marco Proaño (+593991234567)', detalle: 'Motivo: Documentación adulterada' },
-              { id: '2', fecha: 'Hoy, 09:15 AM', admin: 'La Parrilla Citiox (Admin)', accion: 'Aprobación Local', driver: 'Carlos Caicedo (+593983173408)', detalle: 'Aprobado para pedidos de La Parrilla' },
-              { id: '3', fecha: 'Ayer, 16:45 PM', admin: 'Pizzeria Gourmet (Admin)', accion: 'Suspensión Local', driver: 'Carlos Caicedo (+593983173408)', detalle: 'Suspendido por retardo recurrente en local' },
-            ].map(log => (
-              <div key={log.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between text-xs">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-slate-900">{log.accion}</span>
-                    <span className="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-full">{log.admin}</span>
-                  </div>
-                  <p className="text-slate-600 font-semibold">{log.driver}</p>
-                  <p className="text-slate-400 text-[11px]">{log.detalle}</p>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400">{log.fecha}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── MODAL BLOQUEO / DESBLOQUEO GLOBAL ── */}
-      {showBlockModal && selectedDriver && (
-        <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 font-bold">
-                <ShieldAlert className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-black text-slate-900">
-                  {selectedDriver.globalStatus === 'BLOQUEADO' ? 'Desbloquear Repartidor' : 'Bloqueo Global de Repartidor'}
-                </h3>
-                <p className="text-xs text-slate-500 font-semibold">{selectedDriver.name} ({selectedDriver.phone})</p>
-              </div>
-            </div>
-
-            <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-2xl text-xs text-amber-900 font-semibold space-y-1">
-              <p className="font-bold flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-600" /> Nota sobre el inicio de sesión:
-              </p>
-              <p className="text-[11px] text-amber-800 leading-tight">
-                Al aplicar el bloqueo global, el repartidor <strong>sí podrá iniciar sesión en la App /driver</strong> para consultar su perfil y ver la razón del bloqueo, pero el sistema le impedirá tomar pedidos en todos los negocios.
-              </p>
-            </div>
-
-            {selectedDriver.globalStatus !== 'BLOQUEADO' && (
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black uppercase text-slate-500 tracking-wider">
-                  Motivo del Bloqueo Global *
-                </label>
-                <textarea
-                  value={blockReason}
-                  onChange={e => setBlockReason(e.target.value)}
-                  placeholder="Ej: Licencia vencida o falta grave reportada."
-                  rows={3}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold outline-none focus:border-rose-500"
-                />
-              </div>
+              </>
             )}
-
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-2">
               <button
-                onClick={() => {
-                  setShowBlockModal(false);
-                  setBlockReason('');
-                }}
-                className="flex-1 py-3 border border-slate-200 text-slate-700 font-black text-xs uppercase tracking-wider rounded-2xl hover:bg-slate-50 cursor-pointer"
+                onClick={() => setBlockFor(null)}
+                className="flex-1 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
                 Cancelar
               </button>
               <button
-                onClick={handleToggleGlobalBlock}
-                disabled={processingAction || (selectedDriver.globalStatus !== 'BLOQUEADO' && !blockReason.trim())}
-                className={`flex-1 py-3 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer disabled:opacity-50 ${
-                  selectedDriver.globalStatus === 'BLOQUEADO'
-                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
-                    : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
+                onClick={toggleBlock}
+                disabled={busy || (blockFor.status !== 'BLOQUEADO' && !reason.trim())}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50 ${
+                  blockFor.status === 'BLOQUEADO' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
                 }`}
               >
-                {processingAction ? 'Procesando...' : (selectedDriver.globalStatus === 'BLOQUEADO' ? 'Confirmar Desbloqueo' : 'Confirmar Bloqueo Global')}
+                {busy ? 'Guardando…' : blockFor.status === 'BLOQUEADO' ? 'Desbloquear' : 'Bloquear'}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
-}
-
-function UsersIcon(props: any) {
-  return <User {...props} />;
 }

@@ -1,7 +1,8 @@
-import PremiosPage from "@/app/[slug]/misiones/premios/page";
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LavadoPremiosPage() {
-    return <PremiosPage params={Promise.resolve({ slug: 'lavado' })} />;
+    redirect('/lavado/misiones?tab=premios');
+    return null;
 }

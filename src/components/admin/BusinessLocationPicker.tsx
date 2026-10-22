@@ -46,30 +46,61 @@ export default function BusinessLocationPicker({
         }
     }, [lat, lng]);
 
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+
     // Reverse geocoding de la posición actual del negocio
     useEffect(() => {
         let isCancelled = false;
         const timer = setTimeout(async () => {
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLng}`);
+                const res = await fetch(`/api/public/geocode?reverse=1&lat=${currentLat}&lng=${currentLng}`);
                 if (res.ok) {
                     const data = await res.json();
-                    if (!isCancelled && data && data.display_name) {
-                        const parts = data.display_name.split(',');
-                        const shortName = parts.slice(0, 4).join(',').trim();
-                        setResolvedAddress(shortName || data.display_name);
+                    if (!isCancelled && data && data.address) {
+                        setResolvedAddress(data.address);
                     }
                 }
             } catch (e) {
                 console.warn('Error reverse geocoding:', e);
             }
-        }, 500);
+        }, 400);
 
         return () => {
             isCancelled = true;
             clearTimeout(timer);
         };
     }, [currentLat, currentLng]);
+
+    // Búsqueda en tiempo real mientras el usuario escribe
+    useEffect(() => {
+        const query = searchQuery.trim();
+        if (!query || query.length < 2) {
+            setSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const res = await fetch(`/api/public/geocode?q=${encodeURIComponent(query)}&lat=${currentLat}&lng=${currentLng}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && Array.isArray(data.results)) {
+                        setSuggestions(data.results);
+                        setShowSuggestions(true);
+                    }
+                }
+            } catch (err) {
+                console.warn('Error buscando sugerencias de mapa:', err);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery, currentLat, currentLng]);
 
     // Inicializar mapa cuando se abre el modal
     useEffect(() => {
@@ -182,28 +213,45 @@ export default function BusinessLocationPicker({
         );
     };
 
-    // Buscar dirección mediante OpenStreetMap Nominatim
+    const handleSelectSuggestion = (item: any) => {
+        const newLat = Number(item.lat);
+        const newLng = Number(item.lng);
+        if (!isNaN(newLat) && !isNaN(newLng)) {
+            setCurrentLat(newLat);
+            setCurrentLng(newLng);
+            const fullLabel = item.secondaryText ? `${item.mainText}, ${item.secondaryText}` : item.mainText;
+            setResolvedAddress(fullLabel);
+            setSearchQuery(item.mainText);
+            setShowSuggestions(false);
+
+            if (mapInstanceRef.current) {
+                try {
+                    mapInstanceRef.current.flyTo([newLat, newLng], 17, { duration: 0.8 });
+                } catch (e) {
+                    mapInstanceRef.current.setView([newLat, newLng], 17);
+                }
+            }
+        }
+    };
+
+    // Buscar dirección mediante API unificada con autocompletado
     const handleSearchAddress = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!searchQuery.trim()) return;
+        const query = searchQuery.trim();
+        if (!query) return;
 
         setIsSearching(true);
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`);
+            const res = await fetch(`/api/public/geocode?q=${encodeURIComponent(query)}&lat=${currentLat}&lng=${currentLng}`);
             if (res.ok) {
                 const data = await res.json();
-                if (data && data.length > 0) {
-                    const newLat = parseFloat(data[0].lat);
-                    const newLng = parseFloat(data[0].lon);
-                    if (!isNaN(newLat) && !isNaN(newLng)) {
-                        setCurrentLat(newLat);
-                        setCurrentLng(newLng);
-                        if (mapInstanceRef.current) {
-                            mapInstanceRef.current.setView([newLat, newLng], 17);
-                        }
-                    }
+                if (data.success && Array.isArray(data.results) && data.results.length > 0) {
+                    setSuggestions(data.results);
+                    setShowSuggestions(true);
+                    handleSelectSuggestion(data.results[0]);
                 } else {
-                    alert("No se encontraron resultados para esa dirección.");
+                    setSuggestions([]);
+                    setShowSuggestions(true);
                 }
             }
         } catch (err) {
@@ -232,17 +280,17 @@ export default function BusinessLocationPicker({
                             <MapPin className="size-5" />
                         </div>
                         <div className="space-y-1">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
                                 Ubicación GPS del Local Comercial
                             </span>
-                            <p className="text-xs font-black text-slate-900 leading-snug">
+                            <p className="text-xs font-bold text-slate-900 leading-snug">
                                 {resolvedAddress || (currentAddress ? currentAddress : 'Ubicación aún sin fijar en el mapa')}
                             </p>
                             <div className="flex items-center gap-2 pt-0.5 flex-wrap">
-                                <span className="font-mono text-[11px] font-bold bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-600">
+                                <span className="font-mono text-xs font-bold bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-600">
                                     Lat: {Number(currentLat).toFixed(6)}
                                 </span>
-                                <span className="font-mono text-[11px] font-bold bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-600">
+                                <span className="font-mono text-xs font-bold bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-600">
                                     Lng: {Number(currentLng).toFixed(6)}
                                 </span>
                             </div>
@@ -255,7 +303,7 @@ export default function BusinessLocationPicker({
                             type="button"
                             onClick={() => setIsModalOpen(true)}
                             style={{ backgroundColor: primaryColor }}
-                            className="px-4 py-2.5 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:opacity-95 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                            className="px-4 py-2.5 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:opacity-95 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                         >
                             <Compass className="size-4" />
                             <span>Abrir Mapa GPS</span>
@@ -268,7 +316,7 @@ export default function BusinessLocationPicker({
                     <button
                         type="button"
                         onClick={() => setShowManualInputs(!showManualInputs)}
-                        className="text-[10px] font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1 cursor-pointer transition-colors"
+                        className="text-xs font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1 cursor-pointer transition-colors"
                     >
                         <span>{showManualInputs ? 'Ocultar coordenadas numéricas' : 'Ajustar coordenadas manualmente'}</span>
                         {showManualInputs ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
@@ -278,7 +326,7 @@ export default function BusinessLocationPicker({
                         <button
                             type="button"
                             onClick={() => onApplyAddress(resolvedAddress)}
-                            className="text-[10px] font-black text-slate-700 hover:underline cursor-pointer flex items-center gap-1"
+                            className="text-xs font-bold text-slate-700 hover:underline cursor-pointer flex items-center gap-1"
                         >
                             <span>Copiar dirección al campo de Dirección Física</span>
                         </button>
@@ -288,7 +336,7 @@ export default function BusinessLocationPicker({
                 {showManualInputs && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-2 border-t border-slate-100">
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-1">
                                 Latitud
                             </label>
                             <input
@@ -300,7 +348,7 @@ export default function BusinessLocationPicker({
                             />
                         </div>
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-1">
                                 Longitud
                             </label>
                             <input
@@ -330,10 +378,10 @@ export default function BusinessLocationPicker({
                                     <MapPin className="size-5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">
                                         Fijar Ubicación del Local Comercial
                                     </h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                                         Mueve el mapa para centrar el pin en tu tienda o negocio
                                     </p>
                                 </div>
@@ -349,22 +397,94 @@ export default function BusinessLocationPicker({
                         </div>
 
                         {/* Buscador de Dirección */}
-                        <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 shrink-0">
-                            <form onSubmit={handleSearchAddress} className="flex gap-2 w-full">
+                        <div className="relative px-5 py-3 bg-slate-50 border-b border-slate-100 shrink-0 z-30">
+                            <form onSubmit={handleSearchAddress} className="flex gap-2 w-full relative">
                                 <div className="relative flex-1">
-                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10 flex items-center justify-center">
+                                        <Search className="size-4 text-slate-400" />
+                                    </div>
                                     <input
                                         type="text"
                                         placeholder="Buscar calle, avenida, barrio, centro comercial o ciudad..."
                                         value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full bg-white rounded-xl pl-10 pr-3 py-2.5 border border-slate-200 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 shadow-2xs"
+                                        onChange={(e) => {
+                                            setSearchQuery(e.target.value);
+                                            setShowSuggestions(true);
+                                        }}
+                                        onFocus={() => {
+                                            if (suggestions.length > 0) setShowSuggestions(true);
+                                        }}
+                                        style={{ paddingLeft: '42px', paddingRight: searchQuery ? '36px' : '14px' }}
+                                        className="w-full bg-white rounded-xl py-2.5 border border-slate-200 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 shadow-2xs"
                                     />
+                                    {searchQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSearchQuery('');
+                                                setSuggestions([]);
+                                                setShowSuggestions(false);
+                                            }}
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 rounded-md transition-colors cursor-pointer"
+                                        >
+                                            <X className="size-3.5" />
+                                        </button>
+                                    )}
+
+                                    {/* Sugerencias predictivas */}
+                                    {showSuggestions && (searchQuery.trim().length >= 2 || isSearching) && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-40"
+                                                onClick={() => setShowSuggestions(false)}
+                                            />
+                                            <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden max-h-72 overflow-y-auto custom-scrollbar animate-in fade-in duration-150">
+                                                {isSearching ? (
+                                                    <div className="px-4 py-3 flex items-center gap-2 text-xs text-slate-500 font-semibold">
+                                                        <RefreshCw className="size-4 animate-spin text-slate-700 shrink-0" />
+                                                        <span>Buscando coincidencias para &ldquo;{searchQuery}&rdquo;...</span>
+                                                    </div>
+                                                ) : suggestions.length > 0 ? (
+                                                    <div className="divide-y divide-slate-100">
+                                                        <div className="px-3.5 py-1.5 bg-slate-50 text-xs font-bold uppercase text-slate-400 tracking-wider">
+                                                            Lugares encontrados ({suggestions.length})
+                                                        </div>
+                                                        {suggestions.map((item) => (
+                                                            <button
+                                                                key={item.id}
+                                                                type="button"
+                                                                onClick={() => handleSelectSuggestion(item)}
+                                                                className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors flex items-start gap-3 cursor-pointer group"
+                                                            >
+                                                                <div className="p-1.5 rounded-lg bg-slate-100 group-hover:bg-slate-200 text-slate-500 shrink-0 mt-0.5 transition-colors">
+                                                                    <MapPin className="size-3.5" />
+                                                                </div>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <p className="text-xs font-bold text-slate-900 truncate">
+                                                                        {item.mainText}
+                                                                    </p>
+                                                                    {item.secondaryText && (
+                                                                        <p className="text-xs text-slate-500 truncate">
+                                                                            {item.secondaryText}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="px-4 py-3 text-xs text-slate-500 font-medium text-center">
+                                                        No encontramos coincidencias para &ldquo;<span className="font-bold text-slate-800">{searchQuery}</span>&rdquo;.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                                 <button
                                     type="submit"
                                     disabled={isSearching}
-                                    className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 transition-colors flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer shadow-xs"
+                                    className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer shadow-xs disabled:opacity-50"
                                 >
                                     {isSearching ? <RefreshCw className="size-4 animate-spin" /> : "Buscar"}
                                 </button>
@@ -387,7 +507,7 @@ export default function BusinessLocationPicker({
                             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full z-20 pointer-events-none flex flex-col items-center drop-shadow-xl pb-1">
                                 <div 
                                     style={{ backgroundColor: primaryColor }}
-                                    className="text-white text-[10px] font-black px-3 py-1 rounded-full mb-1 border-2 border-white shadow-lg whitespace-nowrap"
+                                    className="text-white text-xs font-bold px-3 py-1 rounded-full mb-1 border-2 border-white shadow-lg whitespace-nowrap"
                                 >
                                     Tu Local Comercial 🏪
                                 </div>
@@ -402,7 +522,7 @@ export default function BusinessLocationPicker({
                                 type="button"
                                 onClick={handleUseGPS}
                                 disabled={isLocating}
-                                className="absolute bottom-4 right-4 z-20 bg-white text-slate-900 text-xs font-black px-4 py-2.5 rounded-xl border border-slate-200 shadow-xl flex items-center gap-2 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+                                className="absolute bottom-4 right-4 z-20 bg-white text-slate-900 text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-200 shadow-xl flex items-center gap-2 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
                             >
                                 {isLocating ? <RefreshCw className="size-4 animate-spin text-slate-700" /> : <Crosshair className="size-4 text-emerald-600" />}
                                 <span>Mi ubicación actual (GPS)</span>
@@ -413,7 +533,7 @@ export default function BusinessLocationPicker({
                         <div className="p-4 sm:p-5 border-t border-slate-100 bg-white shrink-0 space-y-3">
                             <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 flex items-center justify-between text-xs gap-3">
                                 <div className="min-w-0 flex-1">
-                                    <span className="text-[9px] font-black uppercase text-slate-400 block leading-none mb-1">
+                                    <span className="text-xs font-bold uppercase text-slate-400 block leading-none mb-1">
                                         Dirección aproximada detectada
                                     </span>
                                     <span className="font-extrabold text-slate-900 truncate block text-xs">
@@ -421,7 +541,7 @@ export default function BusinessLocationPicker({
                                     </span>
                                 </div>
                                 <div className="text-right shrink-0">
-                                    <span className="font-mono text-slate-500 text-[11px] font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 block">
+                                    <span className="font-mono text-slate-500 text-xs font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 block">
                                         {currentLat.toFixed(6)}, {currentLng.toFixed(6)}
                                     </span>
                                 </div>
@@ -431,7 +551,7 @@ export default function BusinessLocationPicker({
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="px-5 py-3 rounded-xl border border-slate-200 text-xs font-black uppercase text-slate-600 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+                                    className="px-5 py-3 rounded-xl border border-slate-200 text-xs font-bold uppercase text-slate-600 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
                                 >
                                     Cancelar
                                 </button>
@@ -439,7 +559,7 @@ export default function BusinessLocationPicker({
                                     type="button"
                                     onClick={handleConfirmModal}
                                     style={{ backgroundColor: primaryColor }}
-                                    className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-lg hover:opacity-95 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                                    className="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-lg hover:opacity-95 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                 >
                                     <Check className="size-4" />
                                     <span>Confirmar Esta Ubicación</span>

@@ -164,7 +164,7 @@ function NewRecepcionWizard({
   const [loadingServices, setLoadingServices] = useState(true);
 
   // Paso 6: Entrega
-  const defaultDeliveryDate = new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0];
+  const defaultDeliveryDate = new Date(Date.now() + 86400000 * 2).toLocaleDateString('en-CA');
   const [fechaEntrega, setFechaEntrega] = useState(defaultDeliveryDate);
   const [horaEntrega, setHoraEntrega] = useState('17:00');
   const [prioridad, setPrioridad] = useState<'Normal' | 'Urgente'>('Normal');
@@ -257,13 +257,32 @@ function NewRecepcionWizard({
     });
   };
 
-  const handleSimulatePhoto = (artIndex: number, photoType: 'frontal' | 'lateral' | 'suela' | 'dano') => {
-    const fakeUrl = `/uploads/recepcion/${Date.now()}_${photoType}.jpg`;
-    setArticles(prev => {
-      const next = [...prev];
-      next[artIndex].fotos = { ...next[artIndex].fotos, [photoType]: fakeUrl };
-      return next;
-    });
+  // Sube la foto real (cámara del celular o archivo) y guarda la URL devuelta por el servidor.
+  // Antes se guardaba una URL inventada sin subir ninguna imagen.
+  const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null);
+  const handlePhotoFile = async (artIndex: number, photoType: 'frontal' | 'lateral' | 'suela' | 'dano', file?: File | null) => {
+    if (!file) return;
+    const key = `${artIndex}-${photoType}`;
+    setUploadingPhoto(key);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'reception');
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('upload');
+      const media = await res.json();
+      const url = media?.url;
+      if (!url) throw new Error('upload');
+      setArticles(prev => {
+        const next = [...prev];
+        next[artIndex] = { ...next[artIndex], fotos: { ...next[artIndex].fotos, [photoType]: url } };
+        return next;
+      });
+    } catch {
+      window.alert('No se pudo subir la foto. Revisa tu conexión e inténtalo de nuevo.');
+    } finally {
+      setUploadingPhoto(null);
+    }
   };
 
   // Selección de servicios
@@ -347,7 +366,7 @@ function NewRecepcionWizard({
               <Store className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-slate-900">Nueva Recepción Presencial</h2>
+              <h2 className="text-lg font-bold text-slate-900">Nueva Recepción Presencial</h2>
               <p className="text-xs text-slate-500">Walk-in · Registro rápido de entrada en local</p>
             </div>
           </div>
@@ -395,9 +414,9 @@ function NewRecepcionWizard({
 
               {registeredClients && registeredClients.length > 0 && (
                 <div className="space-y-1.5 bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-emerald-800 flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center justify-between">
                     <span>👤 Seleccionar Cliente Registrado</span>
-                    <span className="text-[9px] text-emerald-600 font-bold">({registeredClients.length} disponibles)</span>
+                    <span className="text-xs text-emerald-600 font-bold">({registeredClients.length} disponibles)</span>
                   </label>
                   <select
                     onChange={(e) => {
@@ -459,7 +478,7 @@ function NewRecepcionWizard({
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Cliente Verificado</span>
-                      <h4 className="text-lg font-black text-slate-900">{cliente.nombre}</h4>
+                      <h4 className="text-lg font-bold text-slate-900">{cliente.nombre}</h4>
                     </div>
                     <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                   </div>
@@ -607,22 +626,33 @@ function NewRecepcionWizard({
                       { key: 'suela', label: 'Foto Suela' },
                       { key: 'dano', label: 'Foto Daño/Mancha' },
                     ].map(({ key, label }) => {
-                      const hasPhoto = Boolean(art.fotos[key as keyof typeof art.fotos]);
+                      const photoUrl = art.fotos[key as keyof typeof art.fotos] as string | undefined;
+                      const hasPhoto = Boolean(photoUrl);
+                      const isUploading = uploadingPhoto === `${artIdx}-${key}`;
                       return (
-                        <button
+                        <label
                           key={key}
-                          type="button"
-                          onClick={() => handleSimulatePhoto(artIdx, key as any)}
-                          className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all text-xs font-bold ${
+                          className={`relative overflow-hidden p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all text-xs font-semibold cursor-pointer min-h-[88px] ${
                             hasPhoto
                               ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                               : 'border-slate-300 bg-white text-slate-500 hover:border-slate-400'
                           }`}
                         >
-                          <Camera className="w-5 h-5" />
-                          <span>{label}</span>
-                          {hasPhoto && <span className="text-[10px] text-emerald-600">✓ Capturada</span>}
-                        </button>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="sr-only"
+                            disabled={isUploading}
+                            onChange={(e) => { handlePhotoFile(artIdx, key as any, e.target.files?.[0]); e.target.value = ''; }}
+                          />
+                          {hasPhoto && <img src={photoUrl} alt={label} className="absolute inset-0 w-full h-full object-cover opacity-30" />}
+                          <Camera className="w-5 h-5 relative" />
+                          <span className="relative">{label}</span>
+                          <span className="relative text-xs">
+                            {isUploading ? 'Subiendo…' : hasPhoto ? '✓ Tomada · cambiar' : 'Tomar foto'}
+                          </span>
+                        </label>
                       );
                     })}
                   </div>
@@ -750,7 +780,7 @@ function NewRecepcionWizard({
               <div className="p-4 bg-slate-900 text-white rounded-2xl flex items-center justify-between">
                 <div>
                   <p className="text-xs text-slate-400">Subtotal ({articles.length} artículo/s)</p>
-                  <p className="text-2xl font-black text-emerald-400">${subtotal.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-emerald-400">${subtotal.toFixed(2)}</p>
                 </div>
                 <span className="text-xs text-slate-400">Calculado automáticamente</span>
               </div>
@@ -839,7 +869,7 @@ function NewRecepcionWizard({
                 </div>
                 <div className="flex justify-between pt-1 text-base">
                   <span className="font-bold text-slate-900">Costo Total:</span>
-                  <span className="font-black text-emerald-600">${subtotal.toFixed(2)}</span>
+                  <span className="font-bold text-emerald-600">${subtotal.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -874,7 +904,7 @@ function NewRecepcionWizard({
             <button
               onClick={handleCreateOrder}
               disabled={creating}
-              className="flex-1 py-3 bg-emerald-600 text-white rounded-2xl font-black text-sm hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-lg shadow-emerald-600/20"
+              className="flex-1 py-3 bg-emerald-600 text-white rounded-2xl font-bold text-sm hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-lg shadow-emerald-600/20"
             >
               {creating ? 'Emitiendo Orden...' : '🚀 Crear Orden de Servicio (RECIBIDO)'}
             </button>
@@ -937,7 +967,7 @@ export default function RecepcionesPage() {
 
   // Filtrado temporal y por texto
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = now.toLocaleDateString('en-CA');
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - now.getDay());
   startOfWeek.setHours(0, 0, 0, 0);
@@ -946,7 +976,7 @@ export default function RecepcionesPage() {
 
   const filteredOrders = allOrders.filter(ord => {
     const createdDate = new Date(ord.createdAt);
-    const createdStr = createdDate.toISOString().split('T')[0];
+    const createdStr = createdDate.toLocaleDateString('en-CA');
 
     // Filtro temporal
     let matchTime = true;
@@ -970,10 +1000,10 @@ export default function RecepcionesPage() {
   });
 
   // Métricas rápidas
-  const countHoy = allOrders.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === todayStr).length;
+  const countHoy = allOrders.filter(o => new Date(o.createdAt).toLocaleDateString('en-CA') === todayStr).length;
   const countSemana = allOrders.filter(o => new Date(o.createdAt) >= startOfWeek).length;
   const totalMontoHoy = allOrders
-    .filter(o => new Date(o.createdAt).toISOString().split('T')[0] === todayStr)
+    .filter(o => new Date(o.createdAt).toLocaleDateString('en-CA') === todayStr)
     .reduce((sum, o) => sum + (o.total || 0), 0);
 
   return (
@@ -986,10 +1016,10 @@ export default function RecepcionesPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Módulo Recepciones
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider">
                 Walk-In
               </span>
             </div>
@@ -1002,13 +1032,13 @@ export default function RecepcionesPage() {
         <div className="flex items-center gap-2.5 self-stretch sm:self-auto">
           <button
             onClick={() => router.push('/admin/ordenes-servicio')}
-            className="flex-1 sm:flex-none px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+            className="flex-1 sm:flex-none px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2"
           >
             <Package className="w-4 h-4" /> Todas las Órdenes
           </button>
           <button
             onClick={() => setShowWizard(true)}
-            className="flex-1 sm:flex-none px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-95"
+            className="flex-1 sm:flex-none px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-95"
           >
             <Plus className="w-4 h-4 stroke-[3]" /> Nueva Recepción
           </button>
@@ -1018,40 +1048,40 @@ export default function RecepcionesPage() {
       {/* ── TARJETAS DE RESUMEN RÁPIDO ───────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <span className="text-[11px] font-black uppercase text-slate-400 block tracking-wider">Hoy</span>
+          <span className="text-xs font-bold uppercase text-slate-400 block tracking-wider">Hoy</span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-black text-slate-900">{countHoy}</span>
+            <span className="text-2xl font-bold text-slate-900">{countHoy}</span>
             <span className="text-xs font-bold text-emerald-600">${totalMontoHoy.toFixed(2)}</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Ingresos presenciales</p>
+          <p className="text-xs text-slate-500 mt-1">Ingresos presenciales</p>
         </div>
 
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <span className="text-[11px] font-black uppercase text-slate-400 block tracking-wider">Esta Semana</span>
+          <span className="text-xs font-bold uppercase text-slate-400 block tracking-wider">Esta Semana</span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-black text-indigo-900">{countSemana}</span>
+            <span className="text-2xl font-bold text-indigo-900">{countSemana}</span>
             <span className="text-xs font-bold text-slate-400">7 días</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Total recepciones</p>
+          <p className="text-xs text-slate-500 mt-1">Total recepciones</p>
         </div>
 
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <span className="text-[11px] font-black uppercase text-slate-400 block tracking-wider">Histórico</span>
+          <span className="text-xs font-bold uppercase text-slate-400 block tracking-wider">Histórico</span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-black text-slate-900">{allOrders.length}</span>
+            <span className="text-2xl font-bold text-slate-900">{allOrders.length}</span>
             <span className="text-xs font-bold text-purple-600">Registradas</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Base total de órdenes</p>
+          <p className="text-xs text-slate-500 mt-1">Base total de órdenes</p>
         </div>
 
         <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-4 sm:p-5 rounded-2xl text-white shadow-md shadow-emerald-600/15 flex flex-col justify-between">
-          <span className="text-[11px] font-black uppercase tracking-wider text-emerald-100 block">Flujo Ágil</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-100 block">Flujo Ágil</span>
           <p className="text-xs font-bold leading-snug mt-1">
             Crea la orden y compártela a WhatsApp al instante.
           </p>
           <button
             onClick={() => setShowWizard(true)}
-            className="mt-2 text-left text-xs font-black underline underline-offset-2 hover:text-emerald-100 flex items-center gap-1"
+            className="mt-2 text-left text-xs font-bold underline underline-offset-2 hover:text-emerald-100 flex items-center gap-1"
           >
             + Ingreso rápido <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
@@ -1071,17 +1101,17 @@ export default function RecepcionesPage() {
             <button
               key={tab.id}
               onClick={() => setTimeFilter(tab.id as any)}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
-                timeFilter === tab.id
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
+ timeFilter === tab.id
+ ? 'bg-white text-slate-900 shadow-xs'
+ : 'text-slate-500 hover:text-slate-800'
+ }`}
             >
               <span>{tab.label}</span>
               {typeof tab.count === 'number' && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                  timeFilter === tab.id ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-600'
-                }`}>
+                <span className={`text-xs px-1.5 py-0.2 rounded-full font-bold ${
+ timeFilter === tab.id ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-600'
+ }`}>
                   {tab.count}
                 </span>
               )}
@@ -1106,7 +1136,7 @@ export default function RecepcionesPage() {
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <h2 className="text-base sm:text-lg font-black text-slate-900">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">
               {timeFilter === 'HOY' ? 'Recepciones de Hoy' :
                timeFilter === 'SEMANA' ? 'Recepciones de Esta Semana' :
                timeFilter === 'MES' ? 'Recepciones de Este Mes' :
@@ -1136,7 +1166,7 @@ export default function RecepcionesPage() {
               <Inbox className="w-8 h-8 stroke-[1.5]" />
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-900">
+              <h3 className="text-base font-bold text-slate-900">
                 {timeFilter === 'HOY' ? 'Sin ingresos registrados hoy' : 'No se encontraron recepciones'}
               </h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
@@ -1178,25 +1208,25 @@ export default function RecepcionesPage() {
                   className="p-4 sm:p-5 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="flex items-start gap-3.5 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-black text-sm shrink-0">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold text-sm shrink-0">
                       {(r.nombreCliente || 'C').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono font-black text-emerald-600 text-xs">
+                        <span className="font-mono font-bold text-emerald-600 text-xs">
                           #{r.numeroPedido}
                         </span>
-                        <h4 className="font-black text-slate-900 text-sm truncate">
+                        <h4 className="font-bold text-slate-900 text-sm truncate">
                           {r.nombreCliente}
                         </h4>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-100 text-slate-600 border border-slate-200">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200">
                           {r.estado || 'RECIBIDO'}
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5 truncate">
                         {articulosDesc}
                       </p>
-                      <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
+                      <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
                         <span>📱 {r.telefonoCliente}</span>
                         <span>·</span>
                         <span>🕒 {new Date(r.createdAt).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })} {new Date(r.createdAt).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -1206,10 +1236,10 @@ export default function RecepcionesPage() {
 
                   <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                     <div className="text-left sm:text-right">
-                      <span className="text-xs font-black text-slate-900 block">
+                      <span className="text-xs font-bold text-slate-900 block">
                         ${(r.total || 0).toFixed(2)}
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400 block">
+                      <span className="text-xs font-bold text-slate-400 block">
                         {pares} {pares === 1 ? 'par' : 'pares'}
                       </span>
                     </div>
@@ -1228,7 +1258,7 @@ export default function RecepcionesPage() {
                       )}
                       <button
                         onClick={() => router.push(`/admin/service-orders/${r.id}`)}
-                        className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition flex items-center gap-1"
+                        className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1"
                       >
                         Abrir <ChevronRight size={13} />
                       </button>
@@ -1249,9 +1279,9 @@ export default function RecepcionesPage() {
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-slate-900">¡Recepción Registrada!</h3>
+              <h3 className="text-lg font-bold text-slate-900">¡Recepción Registrada!</h3>
               <p className="text-xs text-slate-500 mt-1">
-                La orden fue creada en estado <strong>RECIBIDO</strong>. Puedes enviarle el comprobante al cliente por WhatsApp.
+                La orden fue creada en estado <strong>Recibido</strong>. Puedes enviarle el comprobante al cliente por WhatsApp.
               </p>
             </div>
             <div className="flex flex-col gap-2 pt-2">
@@ -1259,7 +1289,7 @@ export default function RecepcionesPage() {
                 href={waData.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20"
+                className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20"
               >
                 <Phone className="w-4 h-4" /> Enviar WhatsApp
               </a>

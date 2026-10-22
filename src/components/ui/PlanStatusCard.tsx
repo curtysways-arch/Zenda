@@ -113,7 +113,7 @@ export default function PlanStatusCard({
             : 0;
 
     return (
-        <div className="relative rounded-[3.5rem] p-8 md:p-10 bg-slate-900 !text-white shadow-2xl overflow-hidden group">
+        <div className="relative rounded-3xl p-8 md:p-10 bg-slate-900 !text-white shadow-2xl overflow-hidden group">
             <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full blur-[60px] group-hover:scale-150 transition-transform duration-1000"
                  style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 85%)' }} />
             
@@ -121,8 +121,8 @@ export default function PlanStatusCard({
                 {/* Header */}
                 <div className="flex justify-between items-start gap-4">
                     <div className="space-y-1 min-w-0">
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] italic text-slate-400">PLAN ACTUAL</span>
-                        <h3 className="!text-white text-2xl sm:text-3xl font-black uppercase tracking-tighter leading-tight italic flex items-center gap-2 drop-shadow-md">
+                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400">Plan actual</span>
+                        <h3 className="!text-white text-2xl sm:text-3xl font-bold tracking-tight leading-tight flex items-center gap-2 drop-shadow-md">
                             <span className="truncate">{planName}</span>
                             {(planName.toUpperCase().includes('PRO') || planName.toUpperCase().includes('BUSINESS') || planName.toUpperCase().includes('CRECIMIENTO')) && (
                                 <Crown size={24} className="text-amber-400 shrink-0" />
@@ -130,27 +130,27 @@ export default function PlanStatusCard({
                         </h3>
                     </div>
                     {isTrial && (
-                        <div className="shrink-0 bg-white/10 px-3 py-1.5 rounded-full border border-white/20 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur-sm">
+                        <div className="shrink-0 bg-white/10 px-3 py-1.5 rounded-full border border-white/20 text-xs font-bold uppercase tracking-wide text-white backdrop-blur-sm">
                             TRIAL
                         </div>
                     )}
                     {isExpired && (
-                        <div className="shrink-0 bg-red-500/20 px-3 py-1.5 rounded-full border border-red-500/30 text-[10px] font-black uppercase tracking-widest text-red-400 backdrop-blur-sm">
+                        <div className="shrink-0 bg-red-500/20 px-3 py-1.5 rounded-full border border-red-500/30 text-xs font-bold uppercase tracking-wide text-red-400 backdrop-blur-sm">
                             LIMITADO
                         </div>
                     )}
                     {isActive && (
-                        <div className="shrink-0 bg-emerald-500/20 px-3 py-1.5 rounded-full border border-emerald-500/30 text-[10px] font-black uppercase tracking-widest text-emerald-400 backdrop-blur-sm">
+                        <div className="shrink-0 bg-emerald-500/20 px-3 py-1.5 rounded-full border border-emerald-500/30 text-xs font-bold uppercase tracking-wide text-emerald-400 backdrop-blur-sm">
                             ACTIVO
                         </div>
                     )}
                     {isGracePeriod && (
-                        <div className="shrink-0 bg-amber-500/20 px-3 py-1.5 rounded-full border border-amber-500/30 text-[10px] font-black uppercase tracking-widest text-amber-400 backdrop-blur-sm">
+                        <div className="shrink-0 bg-amber-500/20 px-3 py-1.5 rounded-full border border-amber-500/30 text-xs font-bold uppercase tracking-wide text-amber-400 backdrop-blur-sm">
                             PERIODO DE GRACIA
                         </div>
                     )}
                     {isPaymentPending && (
-                        <div className="shrink-0 bg-blue-500/20 px-3 py-1.5 rounded-full border border-blue-500/30 text-[10px] font-black uppercase tracking-widest text-blue-400 backdrop-blur-sm">
+                        <div className="shrink-0 bg-blue-500/20 px-3 py-1.5 rounded-full border border-blue-500/30 text-xs font-bold uppercase tracking-wide text-blue-400 backdrop-blur-sm">
                             PAGO PENDIENTE
                         </div>
                     )}
@@ -161,20 +161,20 @@ export default function PlanStatusCard({
                     <div className="bg-white/5 rounded-3xl p-5 border border-white/10 space-y-4">
                         <div className="flex justify-between items-end">
                             <div>
-                                <p className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">
-                                    {isGracePeriod ? 'Vence en' : 'Días Restantes de Trial'}
+                                <p className="text-xs uppercase font-bold tracking-wide text-slate-400 mb-1">
+                                    {isGracePeriod ? 'Vence en' : 'Días de prueba restantes'}
                                 </p>
-                                <p className="text-4xl font-black italic tracking-tighter text-white">
+                                <p className="text-4xl font-bold tracking-tight text-white">
                                     {daysLeft} {daysLeft === 1 ? 'día' : 'días'}
                                 </p>
                             </div>
-                            <Link href="/admin/plan" className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:opacity-90 transition-opacity">
+                            <Link href="/admin/plan" className="text-xs font-bold uppercase tracking-wide px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:opacity-90 transition-opacity">
                                 Mejorar
                             </Link>
                         </div>
                         {isTrial && (
-                            <div className="text-[9px] uppercase tracking-wider text-amber-400 font-bold leading-normal border-t border-white/5 pt-3">
-                                ⚡ Al finalizar, pasarás automáticamente al plan gratuito <strong className="text-white">BEGIN</strong> sin bloqueos de cuenta.
+                            <div className="text-xs text-amber-300 font-medium leading-normal border-t border-white/5 pt-3">
+                                Activa tu plan antes de que termine la prueba para seguir recibiendo pedidos sin interrupciones. Los días que te queden se suman.
                             </div>
                         )}
                     </div>
@@ -184,7 +184,7 @@ export default function PlanStatusCard({
                 <div className="space-y-4">
                     {/* Indicador 1 */}
                     <div className="space-y-2">
-                        <div className="flex justify-between items-baseline text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        <div className="flex justify-between items-baseline text-xs font-bold uppercase tracking-wide text-slate-400">
                             <span>{metric1Label}</span>
                             <span className="text-white font-mono font-bold">
                                 <span className="text-amber-400">{metric1Usage}</span> / {metric1IsUnlimited ? 'Ilimitados' : metric1Limit.toLocaleString()}
@@ -203,7 +203,7 @@ export default function PlanStatusCard({
 
                     {/* Indicador 2 */}
                     <div className="space-y-2">
-                        <div className="flex justify-between items-baseline text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        <div className="flex justify-between items-baseline text-xs font-bold uppercase tracking-wide text-slate-400">
                             <span>{metric2Label}</span>
                             <span className="text-white font-mono font-bold">
                                 <span className="text-amber-400">{metric2Usage}</span> / {metric2IsUnlimited ? 'Ilimitados' : metric2Limit.toLocaleString()}
@@ -223,7 +223,7 @@ export default function PlanStatusCard({
 
                 {/* Quick Features / Beneficios Activos por Vertical */}
                 <div className="space-y-3 pt-2">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Beneficios Activos</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Beneficios Activos</p>
                     {isRestaurant ? (
                         <div className="grid grid-cols-2 gap-3">
                             <FeatureItem label="Menú QR" active={capabilities?.PRODUCTS !== false} />
@@ -247,7 +247,7 @@ export default function PlanStatusCard({
 
                 <Link
                     href="/admin/plan"
-                    className="w-full flex justify-center items-center gap-2 p-4 text-white rounded-2xl transition-all font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 hover:brightness-110 border border-white/10 bg-white/5 backdrop-blur-sm"
+                    className="w-full flex justify-center items-center gap-2 p-4 text-white rounded-2xl transition-all font-bold text-xs uppercase tracking-wide shadow-lg active:scale-95 hover:brightness-110 border border-white/10 bg-white/5 backdrop-blur-sm"
                 >
                     <Shield size={16} /> Gestionar Plan
                 </Link>
@@ -258,7 +258,7 @@ export default function PlanStatusCard({
 
 function FeatureItem({ label, active }: { label: string, active: boolean }) {
     return (
-        <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${active ? 'text-slate-300' : 'text-slate-600'}`}>
+        <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wide ${active ? 'text-slate-300' : 'text-slate-600'}`}>
             {active ? (
                 <div className="p-1 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
                     <Check size={10} strokeWidth={4} />

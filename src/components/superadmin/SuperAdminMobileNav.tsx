@@ -2,242 +2,134 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-    LayoutDashboard,
-    Building2,
-    MessageCircle,
-    Bell,
-    Settings,
-    Package,
-    Menu,
-    X,
-    CreditCard,
-    Banknote,
-    BarChart3,
-    ShieldCheck,
-    Smartphone,
-    LogOut,
-    UserCog,
-    Gift,
-    Megaphone,
-    Trophy,
-    Store,
-    Award,
-    Calendar,
-    Briefcase,
-    Truck,
-    Layout
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { signOut } from 'next-auth/react';
+import { LayoutDashboard, Building2, Bell, Banknote, Menu, X, LogOut } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { filterNavFor, isNavActive, fetchSuperadminCounts, type SuperadminBadgeKey } from './superadminNav';
+import { useSession } from 'next-auth/react';
+
+const BOTTOM_ITEMS: { name: string; href: string; icon: typeof Bell; badge?: SuperadminBadgeKey }[] = [
+    { name: 'Inicio', href: '/superadmin', icon: LayoutDashboard },
+    { name: 'Negocios', href: '/superadmin/negocios', icon: Building2 },
+    { name: 'Solicitudes', href: '/superadmin/solicitudes', icon: Bell, badge: 'solicitudes' },
+    { name: 'Pagos', href: '/superadmin/pagos', icon: Banknote, badge: 'pagos' },
+];
 
 export default function SuperAdminMobileNav() {
     const pathname = usePathname();
-    const [pendingCount, setPendingCount] = useState<number>(0);
-    const [pendingPaymentsCount, setPendingPaymentsCount] = useState<number>(0);
-    const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+    const [counts, setCounts] = useState<Record<SuperadminBadgeKey, number>>({ solicitudes: 0, pagos: 0 });
+    const { data: session } = useSession();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await fetch('/api/superadmin/solicitudes/count');
-                if (res.ok) {
-                    const data = await res.json();
-                    setPendingCount(data.count || 0);
-                }
-
-                const resPagos = await fetch('/api/superadmin/pagos/count');
-                if (resPagos.ok) {
-                    const data = await resPagos.json();
-                    setPendingPaymentsCount(data.count || 0);
-                }
-            } catch (error) {
-                console.error('Error fetching count:', error);
-            }
+        let alive = true;
+        const load = async () => {
+            const c = await fetchSuperadminCounts();
+            if (alive) setCounts(c);
         };
-        fetchData();
-        const interval = setInterval(fetchData, 30000);
-        return () => clearInterval(interval);
+        load();
+        const interval = setInterval(load, 60000);
+        return () => {
+            alive = false;
+            clearInterval(interval);
+        };
     }, []);
 
-    // Cerrar el menú si cambia de ruta
     useEffect(() => {
         setIsMenuOpen(false);
     }, [pathname]);
 
-    const mainNavItems = [
-        { name: 'Dashboard', href: '/superadmin', icon: LayoutDashboard },
-        { name: 'Negocios', href: '/superadmin/negocios', icon: Building2 },
-        { name: 'Repartidores', href: '/superadmin/repartidores', icon: Truck },
-        { name: 'WhatsApp', href: '/superadmin/whatsapp', icon: MessageCircle },
-        { 
-            name: 'Solicitudes', 
-            href: '/superadmin/solicitudes', 
-            icon: Bell,
-            badge: pendingCount > 0 ? pendingCount : null 
-        },
-    ];
-
-    const extraNavItems = [
-        { name: 'Comunicaciones', href: '/superadmin/comunicaciones', icon: Megaphone },
-        { name: 'Planes', href: '/superadmin/planes', icon: Package },
-        { name: 'Suscripciones', href: '/superadmin/suscripciones', icon: CreditCard },
-        { 
-            name: 'Pagos', 
-            href: '/superadmin/pagos', 
-            icon: Banknote,
-            badge: pendingPaymentsCount > 0 ? pendingPaymentsCount : null 
-        },
-        { name: 'Métricas', href: '/superadmin/metricas', icon: BarChart3 },
-        { name: 'Referidos', href: '/superadmin/referidos', icon: Gift },
-        { name: 'Misiones', href: '/superadmin/misiones-globales', icon: Trophy },
-        { name: 'Niveles Citiox', href: '/superadmin/niveles', icon: Award },
-        { name: 'Temporadas Citiox', href: '/superadmin/temporadas', icon: Calendar },
-        { name: 'Plantillas', href: '/superadmin/plantillas', icon: Layout },
-        { name: 'Equipo', href: '/superadmin/equipo', icon: UserCog },
-        { name: 'Administradores', href: '/superadmin/administradores', icon: ShieldCheck },
-        { name: 'PWA Preview', href: '/superadmin/pwa', icon: Smartphone },
-        { name: 'Configuración', href: '/superadmin/configuracion', icon: Settings },
-    ];
-
     return (
         <>
-            {/* Bottom Navigation Bar */}
-            <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-slate-200 lg:hidden z-50 px-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-                <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
-                    {mainNavItems.map((item) => {
-                        const isActive = pathname === item.href && !isMenuOpen;
+            <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 lg:hidden z-50 pb-safe" aria-label="Navegación principal">
+                <div className="flex justify-around items-stretch h-16 max-w-lg mx-auto">
+                    {BOTTOM_ITEMS.map((item) => {
+                        const active = isNavActive(pathname, item.href) && !isMenuOpen;
+                        const badge = item.badge ? counts[item.badge] : 0;
+                        const Icon = item.icon;
                         return (
                             <Link
-                                key={item.name}
+                                key={item.href}
                                 href={item.href}
-                                className={cn(
-                                    "flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all relative",
-                                    isActive ? "text-indigo-600" : "text-slate-500 hover:text-slate-800"
-                                )}
+                                className={cn('flex-1 flex flex-col items-center justify-center gap-0.5 relative', active ? 'text-[#0066FF]' : 'text-slate-500')}
                             >
-                                <div className={cn(
-                                    "p-1.5 rounded-xl transition-all duration-300",
-                                    isActive ? "bg-indigo-50" : "bg-transparent"
-                                )}>
-                                    <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                                    
-                                    {item.badge && (
-                                        <span className="absolute top-1 right-3 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
-                                            {item.badge}
+                                <span className="relative">
+                                    <Icon size={21} strokeWidth={active ? 2.4 : 2} />
+                                    {badge > 0 && (
+                                        <span className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+                                            {badge}
                                         </span>
                                     )}
-                                </div>
-                                <span className="text-[10px] font-bold tracking-tight">{item.name}</span>
-                                
-                                {isActive && (
-                                    <div className="absolute -bottom-1 w-1 h-1 bg-indigo-600 rounded-full" />
-                                )}
+                                </span>
+                                <span className="text-xs font-semibold">{item.name}</span>
                             </Link>
                         );
                     })}
-
-                    {/* Botón de Menú Más */}
                     <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className={cn(
-                            "flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all relative border-none bg-transparent outline-none",
-                            isMenuOpen ? "text-indigo-600" : "text-slate-500 hover:text-slate-800"
-                        )}
+                        type="button"
+                        onClick={() => setIsMenuOpen((v) => !v)}
+                        aria-expanded={isMenuOpen}
+                        className={cn('flex-1 flex flex-col items-center justify-center gap-0.5', isMenuOpen ? 'text-[#0066FF]' : 'text-slate-500')}
                     >
-                        <div className={cn(
-                            "p-1.5 rounded-xl transition-all duration-300",
-                            isMenuOpen ? "bg-indigo-50" : "bg-transparent"
-                        )}>
-                            {isMenuOpen ? (
-                                <X size={20} strokeWidth={2.5} className="rotate-0 transition-transform duration-300" />
-                            ) : (
-                                <Menu size={20} strokeWidth={2} />
-                            )}
-                            
-                            {pendingPaymentsCount > 0 && !isMenuOpen && (
-                                <span className="absolute top-1 right-3 flex h-2 w-2 items-center justify-center rounded-full bg-amber-500 ring-2 ring-white animate-pulse" />
-                            )}
-                        </div>
-                        <span className="text-[10px] font-bold tracking-tight">Más</span>
-                        
-                        {isMenuOpen && (
-                            <div className="absolute -bottom-1 w-1 h-1 bg-indigo-600 rounded-full" />
-                        )}
+                        {isMenuOpen ? <X size={21} strokeWidth={2.4} /> : <Menu size={21} />}
+                        <span className="text-xs font-semibold">Menú</span>
                     </button>
                 </div>
             </nav>
 
-            {/* Bottom Sheet Menu */}
             <div
                 className={cn(
-                    "fixed inset-0 bg-slate-900/60 backdrop-blur-sm lg:hidden transition-all duration-300 z-40",
-                    isMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                    'fixed inset-0 bg-slate-900/50 backdrop-blur-sm lg:hidden transition-opacity duration-300 z-40',
+                    isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
                 )}
                 onClick={() => setIsMenuOpen(false)}
             >
                 <div
                     className={cn(
-                        "absolute bottom-16 left-0 right-0 bg-white rounded-t-3xl border-t border-slate-100 shadow-[0_-8px_40px_rgba(0,0,0,0.12)] p-6 max-h-[80vh] overflow-y-auto transition-transform duration-300 ease-out pb-8",
-                        isMenuOpen ? "translate-y-0" : "translate-y-full"
+                        'absolute bottom-16 left-0 right-0 bg-white rounded-t-3xl shadow-2xl p-5 max-h-[78vh] overflow-y-auto transition-transform duration-300 ease-out',
+                        isMenuOpen ? 'translate-y-0' : 'translate-y-full'
                     )}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header del menú */}
-                    <div className="flex justify-between items-center mb-6 pb-3 border-b border-slate-100">
-                        <div>
-                            <h3 className="font-bold text-slate-800 text-base">Opciones de Administración</h3>
-                            <p className="text-xs text-slate-400">Control global y configuraciones</p>
-                        </div>
-                        <button
-                            onClick={() => setIsMenuOpen(false)}
-                            className="p-1 rounded-full bg-slate-50 text-slate-400 hover:text-slate-600 border-none"
-                        >
-                            <X size={18} />
-                        </button>
+                    <div className="w-10 h-1 rounded-full bg-slate-200 mx-auto mb-4" />
+                    <div className="space-y-5">
+                        {filterNavFor(session?.user).map((group) => (
+                            <div key={group.title}>
+                                <p className="text-xs font-semibold text-slate-500 mb-2 px-1">{group.title}</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {group.items.map((item) => {
+                                        const active = isNavActive(pathname, item.href);
+                                        const badge = item.badge ? counts[item.badge] : 0;
+                                        const Icon = item.icon;
+                                        return (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                className={cn(
+                                                    'flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-sm transition-colors',
+                                                    active ? 'bg-blue-50 border-blue-200 text-[#0066FF] font-semibold' : 'bg-white border-slate-200 text-slate-700'
+                                                )}
+                                            >
+                                                <Icon size={17} className={active ? 'text-[#0066FF]' : 'text-slate-400'} />
+                                                <span className="flex-1 truncate">{item.name}</span>
+                                                {badge > 0 && (
+                                                    <span className="min-w-5 h-5 px-1.5 rounded-full bg-rose-500 text-white text-xs font-bold flex items-center justify-center">{badge}</span>
+                                                )}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
                     </div>
-
-                    {/* Grid de opciones */}
-                    <div className="grid grid-cols-3 gap-3 mb-6">
-                        {extraNavItems.map((item) => {
-                            const isActive = pathname === item.href;
-                            return (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={cn(
-                                        "flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all duration-200 gap-1.5 relative",
-                                        isActive
-                                            ? "bg-indigo-50 border-indigo-200 text-indigo-600 font-semibold"
-                                            : "bg-slate-50/50 border-slate-100 hover:bg-slate-50 text-slate-600"
-                                    )}
-                                >
-                                    <div className={cn(
-                                        "p-2 rounded-xl",
-                                        isActive ? "bg-white text-indigo-600 shadow-sm" : "bg-white text-slate-500 shadow-sm"
-                                    )}>
-                                        <item.icon size={18} />
-                                    </div>
-                                    <span className="text-[11px] font-medium leading-tight">{item.name}</span>
-                                    
-                                    {item.badge && (
-                                        <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white ring-2 ring-white">
-                                            {item.badge}
-                                        </span>
-                                    )}
-                                </Link>
-                            );
-                        })}
-                    </div>
-
-                    {/* Botón de Cerrar Sesión */}
                     <button
+                        type="button"
                         onClick={() => signOut({ callbackUrl: '/login' })}
-                        className="flex items-center justify-center gap-2 w-full py-3.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition-all font-semibold text-xs border border-rose-100 active:scale-[0.98]"
+                        className="mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-sm"
                     >
                         <LogOut size={16} />
-                        Cerrar Sesión
+                        Cerrar sesión
                     </button>
                 </div>
             </div>

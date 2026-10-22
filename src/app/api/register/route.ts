@@ -54,12 +54,107 @@ export async function POST(req: Request) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const normalizedTipo = (tipoNegocio || 'GENERAL').toUpperCase();
+        const normalizedTipo = (tipoNegocio || 'GENERAL').toUpperCase().trim();
+        
+        let finalTipo = 'SERVICIOS';
+        if (['LAVANDERIA', 'LAVADO', 'SHOE_CARE', 'LAUNDRY'].includes(normalizedTipo)) finalTipo = 'LAVANDERIA';
+        else if (['ODONTOLOGIA', 'DENTISTA', 'DENTAL', 'CLINICA'].includes(normalizedTipo)) finalTipo = 'ODONTOLOGIA';
+        else if (['RESTAURANTE', 'GASTRONOMIA', 'BAR', 'COMIDA'].includes(normalizedTipo)) finalTipo = 'RESTAURANTE';
+        else if (['TIENDA', 'ECOMMERCE', 'PRODUCTOS', 'RETAIL'].includes(normalizedTipo)) finalTipo = 'TIENDA';
+        else if (['CANCHAS', 'SPORTS_COURTS', 'PADEL', 'FUTBOL'].includes(normalizedTipo)) finalTipo = 'SPORTS_COURTS';
+        else if (['BARBERIA', 'PELUQUERIA', 'SALON', 'BARBER'].includes(normalizedTipo)) finalTipo = 'BARBERIA';
+        else if (['SPA', 'CENTRO_ESTETICA', 'ESTETICA', 'BELLEZA'].includes(normalizedTipo)) finalTipo = 'SPA';
+        else if (['GIMNASIO', 'GYM', 'FITNESS', 'CROSSFIT'].includes(normalizedTipo)) finalTipo = 'GIMNASIO';
+        else if (['SERVICIOS', 'RESERVA', 'GENERAL'].includes(normalizedTipo)) finalTipo = 'SERVICIOS';
+        else finalTipo = normalizedTipo;
+
         const primaryColor = 
-            normalizedTipo === 'RESTAURANTE' ? '#ea580c' :
-            normalizedTipo === 'TIENDA' ? '#4f46e5' :
-            normalizedTipo === 'SPORTS_COURTS' ? '#10b981' :
-            normalizedTipo === 'SHOE_CARE' ? '#9333ea' : '#1dc95c';
+            finalTipo === 'RESTAURANTE' ? '#ea580c' :
+            finalTipo === 'TIENDA' ? '#4f46e5' :
+            finalTipo === 'SPORTS_COURTS' ? '#10b981' :
+            finalTipo === 'LAVANDERIA' ? '#7C3AED' :
+            finalTipo === 'ODONTOLOGIA' ? '#00c7b1' :
+            finalTipo === 'BARBERIA' ? '#0284c7' :
+            finalTipo === 'SPA' ? '#ec4899' :
+            finalTipo === 'GIMNASIO' ? '#f97316' : '#2563eb';
+
+        const configData: any = {
+            blueprintId: finalTipo,
+            tipoNegocio: finalTipo,
+            wizardCompleted: false
+        };
+
+        if (finalTipo === 'LAVANDERIA') {
+            configData.delivery = true;
+            configData.loyalty_module = true;
+            configData.activeCapabilities = {
+                ecommerce: true,
+                orders: true,
+                catalog: true,
+                products: true,
+                inventory: true,
+                service_orders: true,
+                delivery: true
+            };
+        } else if (finalTipo === 'ODONTOLOGIA') {
+            configData.activeCapabilities = {
+                appointments: true,
+                services: true,
+                loyalty: true,
+                coupons: true,
+                catalog: false,
+                ecommerce: false
+            };
+        } else if (finalTipo === 'RESTAURANTE') {
+            configData.activeCapabilities = {
+                catalog: true,
+                orders: true,
+                delivery: true,
+                qr_tables: true,
+                loyalty: true,
+                coupons: true
+            };
+        } else if (finalTipo === 'TIENDA') {
+            configData.activeCapabilities = {
+                catalog: true,
+                products: true,
+                orders: true,
+                delivery: true,
+                ecommerce: true,
+                loyalty: true,
+                coupons: true
+            };
+        } else if (finalTipo === 'SPORTS_COURTS') {
+            configData.activeCapabilities = {
+                reservations: true,
+                academy: true,
+                loyalty: true,
+                coupons: true
+            };
+        } else if (finalTipo === 'BARBERIA' || finalTipo === 'SPA') {
+            configData.activeCapabilities = {
+                appointments: true,
+                services: true,
+                specialists: true,
+                loyalty: true,
+                coupons: true
+            };
+        } else if (finalTipo === 'GIMNASIO') {
+            configData.activeCapabilities = {
+                memberships: true,
+                access: true,
+                attendance: true,
+                loyalty: true,
+                coupons: true
+            };
+        } else {
+            configData.activeCapabilities = {
+                appointments: true,
+                services: true,
+                loyalty: true,
+                coupons: true
+            };
+        }
 
         // Crear Negocio y Usuario Admin en una transacción
         const result = await prisma.$transaction(async (tx) => {
@@ -70,11 +165,8 @@ export async function POST(req: Request) {
                     nombre: negocioNombre,
                     slug: slug,
                     ciudad: ciudad,
-                    tipoNegocio: normalizedTipo,
-                    configuracion: JSON.stringify({
-                        blueprintId: normalizedTipo,
-                        tipoNegocio: normalizedTipo
-                    }),
+                    tipoNegocio: finalTipo,
+                    configuracion: configData,
                     whatsapp: telefono || null,
                     horarioApertura: "08:00",
                     horarioCierre: "22:00",

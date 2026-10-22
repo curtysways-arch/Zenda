@@ -128,7 +128,7 @@ export default function QuickBookingModal({
               <Plus size={20} />
             </div>
             <div>
-              <h3 className="font-black text-base uppercase tracking-tight">Nueva Reserva</h3>
+              <h3 className="font-bold text-base uppercase tracking-tight">Nueva Reserva</h3>
               <p className="text-xs text-slate-400">Agendar turno manual en cancha</p>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function QuickBookingModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
               Cancha Asignada
             </label>
             <select
@@ -162,7 +162,7 @@ export default function QuickBookingModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
                 Hora de Inicio
               </label>
               <input
@@ -174,7 +174,7 @@ export default function QuickBookingModal({
               />
             </div>
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
                 Duración
               </label>
               <select
@@ -191,7 +191,7 @@ export default function QuickBookingModal({
 
           <div className="space-y-3 pt-2 border-t border-slate-100">
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
                 Nombre del Cliente
               </label>
               <input
@@ -206,7 +206,7 @@ export default function QuickBookingModal({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
                   Teléfono / WhatsApp
                 </label>
                 <input
@@ -218,7 +218,7 @@ export default function QuickBookingModal({
                 />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
                   Tarifa Acordada ($)
                 </label>
                 <input
@@ -232,7 +232,7 @@ export default function QuickBookingModal({
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
                 Notas / Observaciones
               </label>
               <input
@@ -256,7 +256,7 @@ export default function QuickBookingModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5"
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5"
             >
               {loading ? 'Agendando...' : 'Confirmar Reserva'}
             </button>

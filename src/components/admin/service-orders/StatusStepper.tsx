@@ -32,7 +32,7 @@ export function StatusStepper({ statuses, currentStatus, onChangeStatus }: Statu
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-mono opacity-60">Paso {idx + 1}</span>
+                <span className="text-xs uppercase font-mono opacity-60">Paso {idx + 1}</span>
                 {isDone ? (
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 ) : isCurrent ? (

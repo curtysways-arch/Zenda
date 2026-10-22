@@ -1,4 +1,10 @@
 import withPWA from 'next-pwa';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Carpeta real del proyecto. Evita que Next tome como raíz una carpeta superior
+// (p. ej. "Video MetalOS") si ahí existe algún package-lock.json suelto.
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -9,7 +15,19 @@ const nextConfig = {
     },
     // Silencia el error de Turbopack si detecta conflicto de webpack plugins
     // (Removido 'turbo' experimental porque ya es default y causa errores)
-    turbopack: {}
+    turbopack: {
+        root: projectRoot
+    },
+    outputFileTracingRoot: projectRoot,
+    // Documentos de repartidores: las URLs antiguas (/uploads/drivers/...) pasan por la ruta
+    // protegida, que verifica permisos (antes cualquiera podía abrir la cédula o licencia).
+    async rewrites() {
+        return {
+            beforeFiles: [
+                { source: '/uploads/drivers/:token/:file', destination: '/api/logistics/driver-docs/:token/:file' },
+            ],
+        };
+    }
 };
 
 const withPWAConfig = withPWA({
@@ -18,6 +36,11 @@ const withPWAConfig = withPWA({
     register: true,
     skipWaiting: true,
     runtimeCaching: [
+        {
+            // Documentos privados de repartidores: nunca guardarlos en la caché del navegador
+            urlPattern: /\/(api\/logistics\/driver-docs|uploads\/drivers)\//i,
+            handler: 'NetworkOnly',
+        },
         {
             urlPattern: /\/_next\/static\/.*/i,
             handler: 'NetworkOnly',

@@ -1,20 +1,19 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
 import slugify from 'slugify';
 import DOMPurify from 'isomorphic-dompurify';
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
 
         const businessId = (session.user as any).negocioId;
         if (!businessId) return new NextResponse('No business ID', { status: 400 });
 
         const pages = (await prisma.$queryRawUnsafe(
-            `SELECT id, businessId, title, slug, status, featuredImage, imageMediaId, updatedAt FROM Page WHERE businessId = '${businessId}' ORDER BY updatedAt DESC`
+            `SELECT id, businessId, title, slug, status, featuredImage, imageMediaId, posicion, orden, updatedAt FROM Page WHERE businessId = '${businessId}' ORDER BY orden ASC, updatedAt DESC`
         )) as any[];
 
         // Para cada página, si tiene imageMediaId, obtener el objeto Media y adjuntarlo
@@ -26,6 +25,8 @@ export async function GET(req: Request) {
 
         const result = pages.map(p => ({
             ...p,
+            posicion: p.posicion || (p.slug === 'como-funciona' ? 'top' : 'bottom'),
+            orden: p.orden ?? 1,
             imageMedia: p.imageMediaId ? mediaMap.get(p.imageMediaId) : null
         }));
 
@@ -38,13 +39,13 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
 
         const businessId = (session.user as any).negocioId;
         if (!businessId) return new NextResponse('No business ID', { status: 400 });
 
-        const { title, contentHtml, status, featuredImage, buttonText, buttonUrl, imageMediaId } = await req.json();
+        const { title, contentHtml, status, featuredImage, buttonText, buttonUrl, imageMediaId, posicion, orden } = await req.json();
 
         if (!title || !contentHtml) {
             return NextResponse.json({ error: 'Título y contenido son requeridos' }, { status: 400 });
@@ -69,6 +70,8 @@ export async function POST(req: Request) {
                 buttonText: buttonText || null,
                 buttonUrl: buttonUrl || null,
                 status: status || 'draft',
+                posicion: posicion || 'top',
+                orden: Number(orden) || 1,
                 createdAt: new Date(),
                 updatedAt: new Date()
             }

@@ -234,14 +234,14 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 text-slate-900">
+            <div className="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 text-slate-900">
                 {/* Header */}
                 <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
                     <div>
-                        <h2 className="text-3xl font-black text-gray-900 tracking-tight uppercase flex items-center gap-3">
+                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3">
                             {isEdit ? (isSpa ? 'Editar Curso o Taller' : 'Editar Curso') : (isSpa ? 'Crear Curso o Masterclass' : 'Crear Nuevo Curso')}
                         </h2>
-                        <p className="text-gray-400 font-bold italic text-sm">Paso {step}: {step === 1 ? 'Información General' : step === 2 ? (isSpa ? 'Temario y Requisitos' : 'Contenido Detallado') : (isSpa ? 'Horarios y Cabinas / Espacios' : 'Configuración de Horarios')}</p>
+                        <p className="text-gray-400 font-bold text-sm">Paso {step}: {step === 1 ? 'Información General' : step === 2 ? (isSpa ? 'Temario y Requisitos' : 'Contenido Detallado') : (isSpa ? 'Horarios y Cabinas / Espacios' : 'Configuración de Horarios')}</p>
                     </div>
                     <button type="button" onClick={onClose} className="p-3 hover:bg-gray-100 rounded-full transition-all relative z-10 group">
                         <X size={24} className="text-gray-400 group-hover:text-gray-900 transition-colors" />
@@ -253,7 +253,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                     <button
                         type="button"
                         onClick={() => setStep(1)}
-                        className={`pb-4 px-2 text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-2 ${step === 1 ? 'text-emerald-600' : 'text-gray-400'}`}
+                        className={`pb-4 px-2 text-xs font-bold uppercase tracking-wide transition-all relative flex items-center gap-2 ${step === 1 ? 'text-emerald-600' : 'text-gray-400'}`}
                     >
                         <Info size={14} /> 1. General
                         {step === 1 && <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600 rounded-full" />}
@@ -262,7 +262,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                         type="button"
                         disabled={!isEdit && step < 2}
                         onClick={() => setStep(2)}
-                        className={`pb-4 px-2 text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-2 ${step === 2 ? 'text-emerald-600' : 'text-gray-400'} disabled:opacity-30`}
+                        className={`pb-4 px-2 text-xs font-bold uppercase tracking-wide transition-all relative flex items-center gap-2 ${step === 2 ? 'text-emerald-600' : 'text-gray-400'} disabled:opacity-30`}
                     >
                         <FileText size={14} /> 2. {isSpa ? 'Temario' : 'Contenido'}
                         {step === 2 && <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600 rounded-full" />}
@@ -271,7 +271,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                         type="button"
                         disabled={!isEdit && step < 3}
                         onClick={() => setStep(3)}
-                        className={`pb-4 px-2 text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-2 ${step === 3 ? 'text-emerald-600' : 'text-gray-400'} disabled:opacity-30`}
+                        className={`pb-4 px-2 text-xs font-bold uppercase tracking-wide transition-all relative flex items-center gap-2 ${step === 3 ? 'text-emerald-600' : 'text-gray-400'} disabled:opacity-30`}
                     >
                         <Calendar size={14} /> 3. Horarios
                         {step === 3 && <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600 rounded-full" />}
@@ -290,13 +290,13 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                         <form id="course-form" className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-left">
                             <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2 ml-1">
                                         {isSpa ? 'Nombre del Curso / Taller / Masterclass' : 'Nombre del Curso'}
                                     </label>
                                     <input
                                         required
                                         type="text"
-                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700 shadow-sm"
                                         placeholder={isSpa ? 'Ej: Masterclass Uñas Acrílicas, Taller de Cejas o Yoga' : 'Ej: Escuela de Fútbol Verano'}
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -304,7 +304,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2 ml-1">
                                         Imagen de Portada (URL)
                                     </label>
                                     <input
@@ -322,7 +322,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1"> Resumen Corto </label>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2 ml-1"> Resumen Corto </label>
                                     <textarea
                                         rows={3}
                                         className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-medium text-gray-700 shadow-sm resize-none"
@@ -336,11 +336,11 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                             <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-1">
                                             {isSpa ? 'Instructor / Especialista' : 'Asignar Profesor'}
                                         </label>
                                         <select
-                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700"
+                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700"
                                             value={formData.instructor_id}
                                             onChange={(e) => setFormData({ ...formData, instructor_id: e.target.value })}
                                         >
@@ -351,10 +351,10 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Inversión / Precio ($)</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-1">Inversión / Precio ($)</label>
                                         <input
                                             type="number"
-                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700"
+                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700"
                                             value={formData.price}
                                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                                         />
@@ -362,24 +362,24 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-1 flex items-center gap-2">
                                             <Users size={12} className="text-emerald-500" /> Edad Mínima
                                         </label>
                                         <input
                                             type="number"
-                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700 shadow-sm"
                                             placeholder={isSpa ? 'Ej: 16 (opcional)' : 'Ej: 5'}
                                             value={formData.min_age}
                                             onChange={(e) => setFormData({ ...formData, min_age: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-1 flex items-center gap-2">
                                             <Users size={12} className="text-emerald-500" /> Edad Máxima
                                         </label>
                                         <input
                                             type="number"
-                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700 shadow-sm"
                                             placeholder={isSpa ? 'Sin límite' : 'Ej: 15'}
                                             value={formData.max_age}
                                             onChange={(e) => setFormData({ ...formData, max_age: e.target.value })}
@@ -388,19 +388,19 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha Inicio</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-1">Fecha Inicio</label>
                                         <input
                                             type="date"
-                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-[11px] font-black text-gray-700"
+                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-xs font-bold text-gray-700"
                                             value={formData.start_date}
                                             onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha Fin</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-1">Fecha Fin</label>
                                         <input
                                             type="date"
-                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-[11px] font-black text-gray-700"
+                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-xs font-bold text-gray-700"
                                             value={formData.end_date}
                                             onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                                         />
@@ -408,18 +408,18 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cupos Disponibles</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-1">Cupos Disponibles</label>
                                         <input
                                             type="number"
-                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700"
+                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700"
                                             value={formData.capacity}
                                             onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Estado</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-1">Estado</label>
                                         <select
-                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700"
+                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700"
                                             value={formData.status}
                                             onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                         >
@@ -433,14 +433,14 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                     ) : step === 2 ? (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
                             <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                <label className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
                                     <FileText size={16} className="text-emerald-500" /> {isSpa ? 'Temario, Requisitos y Beneficios del Curso' : 'Contenido del Curso'}
                                 </label>
-                                <span className="text-[10px] font-bold text-gray-400 italic">Este contenido se mostrará al alumno o interesado.</span>
+                                <span className="text-xs font-bold text-gray-400 ">Este contenido se mostrará al alumno o interesado.</span>
                             </div>
                             <textarea
                                 rows={12}
-                                className="w-full p-6 bg-gray-50 border border-gray-200 rounded-[2rem] focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-medium text-gray-800 shadow-inner"
+                                className="w-full p-6 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-medium text-gray-800 shadow-inner"
                                 placeholder={isSpa ? 'Escribe el temario del taller o masterclass (ej: materiales incluidos, kits, técnicas, certificación de uñas/cejas/yoga)...' : 'Escribe el programa completo, requisitos, objetivos y beneficios del curso...'}
                                 value={formData.content}
                                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
@@ -448,29 +448,29 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                         </div>
                     ) : (
                         <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 text-left">
-                             <div className="bg-emerald-50 p-8 rounded-[2.5rem] border border-emerald-100/50 space-y-6">
-                                <h4 className="font-black text-emerald-800 text-sm uppercase tracking-tight flex items-center gap-2">
+                             <div className="bg-emerald-50 p-8 rounded-2xl border border-emerald-100/50 space-y-6">
+                                <h4 className="font-bold text-emerald-800 text-sm uppercase tracking-tight flex items-center gap-2">
                                     <Plus size={18} /> {isSpa ? 'Agregar Horario / Sesión del Curso' : 'Agregar Sesión de Entrenamiento'}
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-black text-emerald-700/50 uppercase tracking-widest ml-1">Día</label>
+                                        <label className="text-xs font-bold text-emerald-700/50 uppercase tracking-wide ml-1">Día</label>
                                         <select
                                             value={newSchedule.day_of_week}
                                             onChange={(e) => setNewSchedule({ ...newSchedule, day_of_week: e.target.value })}
-                                            className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-black text-emerald-900 shadow-sm"
+                                            className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-bold text-emerald-900 shadow-sm"
                                         >
                                             {days.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-black text-emerald-700/50 uppercase tracking-widest ml-1">
+                                        <label className="text-xs font-bold text-emerald-700/50 uppercase tracking-wide ml-1">
                                             {isSpa ? 'Cabina / Espacio / Sala' : 'Cancha'}
                                         </label>
                                         <select
                                             value={newSchedule.courtId}
                                             onChange={(e) => setNewSchedule({ ...newSchedule, courtId: e.target.value })}
-                                            className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-black text-emerald-900 shadow-sm"
+                                            className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-bold text-emerald-900 shadow-sm"
                                         >
                                             {canchas.length === 0 && (
                                                 <option value="">{isSpa ? 'Cabina / Salón Principal' : 'General'}</option>
@@ -480,24 +480,24 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-emerald-700/50 uppercase tracking-widest ml-1">Inicio</label>
-                                            <input type="time" value={newSchedule.start_time} onChange={(e) => setNewSchedule({ ...newSchedule, start_time: e.target.value })} className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-black text-emerald-900 shadow-sm" />
+                                            <label className="text-xs font-bold text-emerald-700/50 uppercase tracking-wide ml-1">Inicio</label>
+                                            <input type="time" value={newSchedule.start_time} onChange={(e) => setNewSchedule({ ...newSchedule, start_time: e.target.value })} className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-bold text-emerald-900 shadow-sm" />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-emerald-700/50 uppercase tracking-widest ml-1">Fin</label>
-                                            <input type="time" value={newSchedule.end_time} onChange={(e) => setNewSchedule({ ...newSchedule, end_time: e.target.value })} className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-black text-emerald-900 shadow-sm" />
+                                            <label className="text-xs font-bold text-emerald-700/50 uppercase tracking-wide ml-1">Fin</label>
+                                            <input type="time" value={newSchedule.end_time} onChange={(e) => setNewSchedule({ ...newSchedule, end_time: e.target.value })} className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-bold text-emerald-900 shadow-sm" />
                                         </div>
                                     </div>
-                                    <button type="button" onClick={handleAddSchedule} disabled={loading} className="bg-emerald-600 text-white p-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 cursor-pointer">
+                                    <button type="button" onClick={handleAddSchedule} disabled={loading} className="bg-emerald-600 text-white p-4 rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 cursor-pointer">
                                         {loading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
                                         Agregar
                                     </button>
                                 </div>
                             </div>
                             <div className="space-y-4">
-                                <h4 className="font-black text-gray-900 text-sm uppercase tracking-tight flex items-center gap-2 ml-1"> <Calendar size={18} className="text-emerald-500" /> Horarios Configurados </h4>
+                                <h4 className="font-bold text-gray-900 text-sm uppercase tracking-tight flex items-center gap-2 ml-1"> <Calendar size={18} className="text-emerald-500" /> Horarios Configurados </h4>
                                 {schedules.length === 0 ? (
-                                    <div className="p-12 text-center border-2 border-dashed border-gray-100 rounded-[2.5rem]">
+                                    <div className="p-12 text-center border-2 border-dashed border-gray-100 rounded-2xl">
                                         <Clock className="mx-auto text-gray-200 mb-2" size={32} />
                                         <p className="text-gray-400 font-bold text-sm">
                                             {isSpa ? 'No has programado sesiones para este curso o taller.' : 'No has agendado sesiones para este curso.'}
@@ -506,12 +506,12 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {schedules.map((s) => (
-                                            <div key={s.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between group">
+                                            <div key={s.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 font-black text-xs"> {days.find(d => d.id === s.day_of_week?.toString())?.label.substring(0, 3)} </div>
+                                                    <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 font-bold text-xs"> {days.find(d => d.id === s.day_of_week?.toString())?.label.substring(0, 3)} </div>
                                                     <div>
-                                                        <p className="text-sm font-black text-gray-900 tracking-tight">{s.start_time} - {s.end_time}</p>
-                                                        <p className="text-[10px] font-bold text-gray-400 italic">
+                                                        <p className="text-sm font-bold text-gray-900 tracking-tight">{s.start_time} - {s.end_time}</p>
+                                                        <p className="text-xs font-bold text-gray-400 ">
                                                             {isSpa ? 'Espacio' : 'Cancha'}: {s.court?.nombre || (isSpa ? 'Cabina / Espacio Principal' : 'General')}
                                                         </p>
                                                     </div>
@@ -532,20 +532,20 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                         type="button"
                         onClick={() => setStep(prev => Math.max(1, prev - 1))}
                         disabled={step === 1}
-                        className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors disabled:opacity-0"
+                        className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wide hover:text-gray-900 transition-colors disabled:opacity-0"
                     >
                         <ChevronLeft size={16} /> Volver
                     </button>
                     
                     <div className="flex gap-4">
-                        <button type="button" onClick={onClose} className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors"> Cancelar </button>
+                        <button type="button" onClick={onClose} className="px-8 py-4 text-xs font-bold text-gray-400 uppercase tracking-wide hover:text-gray-900 transition-colors"> Cancelar </button>
                         
                         {step < 3 ? (
                             <button
                                 type="button"
                                 onClick={handleNextStep}
                                 disabled={loading}
-                                className="flex items-center gap-3 bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 cursor-pointer"
+                                className="flex items-center gap-3 bg-slate-900 text-white px-10 py-4 rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 cursor-pointer"
                             >
                                 {loading ? <Loader2 className="animate-spin" size={16} /> : <ChevronRight size={16} />}
                                 {step === 1 ? 'Guardar y Continuar' : 'Siguiente Paso'}
@@ -557,7 +557,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                     await handleSave();
                                     onClose();
                                 }}
-                                className="flex items-center gap-3 bg-emerald-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 cursor-pointer"
+                                className="flex items-center gap-3 bg-emerald-600 text-white px-10 py-4 rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 cursor-pointer"
                             >
                                 <CheckCircle2 size={16} />
                                 Finalizar Todo

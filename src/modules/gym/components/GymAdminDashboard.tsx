@@ -52,33 +52,42 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
     return () => clearInterval(interval);
   }, []);
 
-  const handleQuickCheck = (e: React.FormEvent) => {
+  // Validación REAL contra el sistema de accesos (misma API que el escáner de recepción).
+  // Antes esta función inventaba un resultado ("Pase autorizado") sin consultar nada.
+  const handleQuickCheck = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchDni.trim()) return;
+    const identifier = searchDni.trim();
+    if (!identifier) return;
 
     setValidating(true);
-    setTimeout(() => {
-      // Si el DNI o término buscado contiene 'vencido' o termina en número par
-      const isExpired = searchDni.toLowerCase().includes('venc') || searchDni === '77889900';
-      if (isExpired) {
-        setQuickAccessResult({
-          status: 'denied',
-          socio: 'Andrea Rivas',
-          plan: 'Plan Trimestral Pro',
-          vence: 'Venció hace 5 días',
-          mensaje: 'Membresía caducada. Requiere renovación en caja.'
-        });
-      } else {
-        setQuickAccessResult({
-          status: 'granted',
-          socio: searchDni.length > 5 ? 'Socio Identificado' : 'Rodrigo Salazar',
-          plan: 'Plan Anual VIP (Acceso Total)',
-          vence: 'Vigente hasta 15 Dic 2026',
-          mensaje: '¡Pase autorizado! Molinete / Torno desbloqueado.'
-        });
-      }
+    try {
+      const res = await fetch('/api/admin/gym/access/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, method: 'MANUAL_DESK' })
+      });
+      const data = await res.json().catch(() => ({}));
+      const granted = data?.access === 'GRANTED';
+      const member = data?.member || {};
+      setQuickAccessResult({
+        status: granted ? 'granted' : 'denied',
+        socio: member.nombre || (granted ? 'Socio' : 'No encontrado'),
+        plan: member.planName || (granted ? 'Membresía activa' : '—'),
+        vence: member.remainingDays !== undefined ? `${member.remainingDays} días restantes` : (granted ? 'Vigente' : ''),
+        mensaje: data?.reason || (granted ? 'Acceso concedido.' : 'No se pudo validar el acceso.')
+      });
+      if (granted) fetchMetrics();
+    } catch {
+      setQuickAccessResult({
+        status: 'denied',
+        socio: 'Sin conexión',
+        plan: '—',
+        vence: '',
+        mensaje: 'No pudimos conectar con el servidor. Intenta de nuevo.'
+      });
+    } finally {
       setValidating(false);
-    }, 400);
+    }
   };
 
   if (loading && !metrics) {
@@ -92,15 +101,17 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
     );
   }
 
+  // Si las métricas no cargan, mostramos ceros (nunca números de ejemplo)
+  const metricsUnavailable = !metrics;
   const m = metrics || {
-    activeMembershipsCount: 142,
-    expiringSoonCount: 6,
-    expiredCount: 3,
-    newMembershipsMonth: 19,
-    attendancesToday: 84,
-    peopleInsideNow: 28,
+    activeMembershipsCount: 0,
+    expiringSoonCount: 0,
+    expiredCount: 0,
+    newMembershipsMonth: 0,
+    attendancesToday: 0,
+    peopleInsideNow: 0,
     capacityMax: 80,
-    monthlyRevenue: 4280,
+    monthlyRevenue: 0,
     recentAttendances: [],
     hourlyTraffic: [],
     classesToday: [],
@@ -113,6 +124,16 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
 
   return (
     <div className="space-y-8 pb-16">
+      {metrics?.isSimulated && (
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+          Estás viendo <strong>datos de ejemplo</strong> porque este es un negocio demo y aún no tiene socios ni asistencias reales.
+        </div>
+      )}
+      {metricsUnavailable && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          No pudimos cargar las métricas del gimnasio. Los números se muestran en cero hasta que se recupere la conexión.
+        </div>
+      )}
       {/* ── CABECERA Y ACCIONES RÁPIDAS DEL GIMNASIO ──────────────────────────── */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-zinc-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-700/50">
         <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
@@ -120,17 +141,17 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2.5 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 text-xs font-black uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 text-xs font-bold uppercase tracking-wider">
                 <Dumbbell size={14} className="animate-pulse" />
                 CENTRO FITNESS & GIMNASIO
               </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
                 TORNO EN LÍNEA
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-tight text-white flex items-center gap-3">
+            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white flex items-center gap-3">
               {negocioNombre || 'Vortex Fitness Club'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 mt-1.5 max-w-xl">
@@ -142,7 +163,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/admin/accesos"
-              className="px-4 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-orange-500/30 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              className="px-4 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-orange-500/30 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
             >
               <QrCode size={18} />
               Escanear Acceso / Torno
@@ -213,12 +234,12 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
         {/* 1. Socios Activos */}
         <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-orange-500/40 transition-all">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-3">
-            <span className="text-xs font-black uppercase tracking-wider">Socios Activos</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Socios Activos</span>
             <div className="p-2.5 rounded-2xl bg-orange-500/10 text-orange-500">
               <Users size={20} />
             </div>
           </div>
-          <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+          <div className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
             {m.activeMembershipsCount}
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
@@ -234,13 +255,13 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
         {/* 2. Aforo en Sala Ahora */}
         <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-emerald-500/40 transition-all">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-3">
-            <span className="text-xs font-black uppercase tracking-wider">En Sala Ahora</span>
+            <span className="text-xs font-bold uppercase tracking-wider">En Sala Ahora</span>
             <div className="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-500">
               <Activity size={20} />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+            <div className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
               {m.peopleInsideNow}
             </div>
             <span className="text-xs text-slate-400 font-bold uppercase">/ {capacityMax} máx</span>
@@ -256,7 +277,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
                 style={{ width: `${occupancyPercent}%` }}
               ></div>
             </div>
-            <div className="flex justify-between items-center text-[11px] font-bold text-slate-500 mt-1.5">
+            <div className="flex justify-between items-center text-xs font-bold text-slate-500 mt-1.5">
               <span>{occupancyPercent}% de aforo</span>
               <span className={occupancyPercent > 80 ? 'text-red-500' : 'text-emerald-500'}>
                 {occupancyPercent > 80 ? 'Alta Demanda' : 'Aforo Óptimo'}
@@ -268,12 +289,12 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
         {/* 3. Asistencias Hoy */}
         <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-blue-500/40 transition-all">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-3">
-            <span className="text-xs font-black uppercase tracking-wider">Asistencias Hoy</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Asistencias Hoy</span>
             <div className="p-2.5 rounded-2xl bg-blue-500/10 text-blue-500">
               <UserCheck size={20} />
             </div>
           </div>
-          <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+          <div className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
             {m.attendancesToday}
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400">
@@ -287,12 +308,12 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
         {/* 4. Recaudación Mensual de Membresías */}
         <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-emerald-500/40 transition-all">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-3">
-            <span className="text-xs font-black uppercase tracking-wider">Recaudación Mes</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Recaudación Mes</span>
             <div className="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-500">
               <CreditCard size={20} />
             </div>
           </div>
-          <div className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+          <div className="text-3xl sm:text-4xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">
             ${Number(m.monthlyRevenue).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
@@ -314,23 +335,23 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <ShieldCheck size={18} className="text-orange-500" />
-                <h3 className="text-sm font-black uppercase text-slate-900 dark:text-white tracking-wider">
-                  Check-in Rápido de Torno
+                <h3 className="text-sm font-bold uppercase text-slate-900 dark:text-white tracking-wider">
+                  Validar acceso de un socio
                 </h3>
               </div>
-              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+              <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
                 Recepción
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              Ingresa el DNI o nombre del socio para validar su membresía de inmediato:
+              Escribe la cédula, teléfono o nombre del socio. Si está al día, se registra su entrada.
             </p>
 
             <form onSubmit={handleQuickCheck} className="space-y-3">
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="DNI, Teléfono o Nombre..."
+                  placeholder="Cédula, teléfono o nombre"
                   value={searchDni}
                   onChange={(e) => setSearchDni(e.target.value)}
                   className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -338,30 +359,12 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
                 <button
                   type="submit"
                   disabled={validating}
-                  className="absolute right-2 top-2 px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black text-xs transition-colors disabled:opacity-50"
+                  className="absolute right-2 top-2 px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs transition-colors disabled:opacity-50"
                 >
                   {validating ? '...' : 'Validar'}
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                <span>Prueba rápida:</span>
-                <button
-                  type="button"
-                  onClick={() => { setSearchDni('Socio Activo'); }}
-                  className="text-emerald-500 hover:underline font-bold"
-                >
-                  Socio Activo
-                </button>
-                <span>•</span>
-                <button
-                  type="button"
-                  onClick={() => { setSearchDni('vencido'); }}
-                  className="text-red-500 hover:underline font-bold"
-                >
-                  Socio Vencido
-                </button>
-              </div>
             </form>
 
             {/* Resultado de Validación Rápida */}
@@ -380,17 +383,17 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
                     <XCircle size={20} className="text-red-500 shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1">
-                    <p className="font-black text-sm uppercase tracking-wide">
+                    <p className="font-bold text-sm uppercase tracking-wide">
                       {quickAccessResult.status === 'granted' ? 'ACCESO PERMITIDO' : 'ACCESO RECHAZADO'}
                     </p>
                     <p className="font-bold text-xs mt-0.5">{quickAccessResult.socio}</p>
-                    <p className="text-[11px] opacity-80">{quickAccessResult.plan} • {quickAccessResult.vence}</p>
-                    <p className="mt-2 text-[11px] font-semibold">{quickAccessResult.mensaje}</p>
+                    <p className="text-xs opacity-80">{quickAccessResult.plan} • {quickAccessResult.vence}</p>
+                    <p className="mt-2 text-xs font-semibold">{quickAccessResult.mensaje}</p>
 
                     {quickAccessResult.status === 'denied' && (
                       <Link
                         href="/admin/membresias"
-                        className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] uppercase tracking-wider"
+                        className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider"
                       >
                         <CreditCard size={12} />
                         Renovar Membresía Ahora
@@ -418,7 +421,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                <h3 className="text-sm font-bold uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
                   <Flame size={18} className="text-orange-500" />
                   Curva de Afluencia & Horas Pico
                 </h3>
@@ -426,7 +429,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
                   Distribución de atletas en sala a lo largo del día
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-full bg-orange-500/10 text-orange-500 text-xs font-black uppercase">
+              <span className="px-3 py-1 rounded-full bg-orange-500/10 text-orange-500 text-xs font-bold uppercase">
                 Pico: 18:00 - 20:00 hrs
               </span>
             </div>
@@ -440,7 +443,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
 
                 return (
                   <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end group">
-                    <span className="text-[10px] font-bold text-slate-400 group-hover:text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-xs font-bold text-slate-400 group-hover:text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity">
                       {h.count}
                     </span>
                     <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-t-xl h-full flex items-end overflow-hidden">
@@ -453,7 +456,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
                         style={{ height: `${heightPct}%` }}
                       ></div>
                     </div>
-                    <span className={`text-[10px] font-black uppercase truncate ${isPeak ? 'text-orange-500' : 'text-slate-500'}`}>
+                    <span className={`text-xs font-bold uppercase truncate ${isPeak ? 'text-orange-500' : 'text-slate-500'}`}>
                       {h.label}
                     </span>
                   </div>
@@ -473,7 +476,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
                 Afluencia Normal
               </span>
             </div>
-            <p className="text-[11px] font-semibold text-slate-400">
+            <p className="text-xs font-semibold text-slate-400">
               💡 Sugerencia: Reforzar staff de piso y recepción de 18:00 a 20:30.
             </p>
           </div>
@@ -486,7 +489,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
         <div className="lg:col-span-2 p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+              <h3 className="text-sm font-bold uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
                 <UserCheck size={18} className="text-orange-500" />
                 Feed en Vivo: Accesos Registrados
               </h3>
@@ -518,19 +521,19 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
                 return (
                   <div key={att.id} className="py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-2 rounded-2xl transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 text-white flex items-center justify-center font-black text-sm shadow-sm">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
                         {att.cliente?.nombre?.charAt(0) || 'S'}
                       </div>
                       <div>
-                        <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                           {att.cliente?.nombre || 'Socio Registrado'}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                             {att.membership?.membershipPlan?.name || 'Membresía Activa'}
                           </span>
-                          <span className="text-[10px] text-slate-400">•</span>
-                          <span className="text-[10px] font-semibold text-slate-400 uppercase">
+                          <span className="text-xs text-slate-400">•</span>
+                          <span className="text-xs font-semibold text-slate-400 uppercase">
                             {att.method?.replace('_', ' ') || 'QR TORNO'}
                           </span>
                         </div>
@@ -538,10 +541,10 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-xs font-black text-slate-800 dark:text-slate-200">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                         {timeStr}
                       </span>
-                      <p className="text-[10px] text-emerald-500 font-bold uppercase flex items-center justify-end gap-1 mt-0.5">
+                      <p className="text-xs text-emerald-500 font-bold uppercase flex items-center justify-end gap-1 mt-0.5">
                         <CheckCircle2 size={11} />
                         Autorizado
                       </p>
@@ -558,7 +561,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+                <h3 className="text-sm font-bold uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
                   <CalendarDays size={18} className="text-orange-500" />
                   Clases del Día
                 </h3>
@@ -566,7 +569,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
                   Salas y cupos programados
                 </p>
               </div>
-              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-orange-500/10 text-orange-500">
+              <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-orange-500/10 text-orange-500">
                 Hoy
               </span>
             </div>
@@ -587,26 +590,26 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase">
                             {cls.title}
                           </h4>
-                          <p className="text-[11px] text-slate-500 font-medium">
+                          <p className="text-xs text-slate-500 font-medium">
                             {cls.coach} • {cls.room}
                           </p>
                         </div>
                         <span
-                          className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                            cls.status === 'EN_CURSO'
-                              ? 'bg-orange-500 text-white animate-pulse'
-                              : 'bg-emerald-500/10 text-emerald-500'
-                          }`}
+                          className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full ${
+ cls.status === 'EN_CURSO'
+ ? 'bg-orange-500 text-white animate-pulse'
+ : 'bg-emerald-500/10 text-emerald-500'
+ }`}
                         >
                           {cls.status === 'EN_CURSO' ? 'En Vivo' : cls.time}
                         </span>
                       </div>
 
                       <div>
-                        <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+                        <div className="flex justify-between text-xs font-bold text-slate-400 mb-1">
                           <span>Ocupación: {cls.enrolled}/{cls.capacity} cupos</span>
                           <span>{fillPct}%</span>
                         </div>
@@ -642,7 +645,7 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
       <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-sm font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
               <MessageCircle size={18} className="text-emerald-500" />
               Retención & Renovaciones Preventivas
             </h3>
@@ -663,14 +666,14 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-2">
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
-              <p className="text-xs font-black text-slate-900 dark:text-white">Carlos Mendoza</p>
-              <p className="text-[11px] text-amber-500 font-bold">Vence en 2 días (Plan Trimestral)</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-white">Carlos Mendoza</p>
+              <p className="text-xs text-amber-500 font-bold">Vence en 2 días (Plan Trimestral)</p>
             </div>
             <a
               href="https://wa.me/51988112233?text=Hola%20Carlos,%20te%20escribimos%20de%20Vortex%20Fitness%20Club.%20Tu%20membres%C3%ADa%20vence%20en%202%20d%C3%ADas.%20%C2%A1Renueva%20hoy%20y%20mant%C3%A9n%20tu%20entrenamiento%20sin%20interrupciones!"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <MessageCircle size={14} />
               WhatsApp
@@ -679,14 +682,14 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
 
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
-              <p className="text-xs font-black text-slate-900 dark:text-white">Luciana Paredes</p>
-              <p className="text-[11px] text-amber-500 font-bold">Vence en 4 días (Plan Mensual)</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-white">Luciana Paredes</p>
+              <p className="text-xs text-amber-500 font-bold">Vence en 4 días (Plan Mensual)</p>
             </div>
             <a
               href="https://wa.me/51977665544?text=Hola%20Luciana,%20te%20escribimos%20de%20Vortex%20Fitness%20Club.%20Tu%20membres%C3%ADa%20vence%20en%204%20d%C3%ADas.%20%C2%A1Renueva%20con%20nosotros!"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <MessageCircle size={14} />
               WhatsApp
@@ -695,14 +698,14 @@ export default function GymAdminDashboard({ businessSlug, negocioNombre }: GymAd
 
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
-              <p className="text-xs font-black text-slate-900 dark:text-white">Manuel Guerrero</p>
-              <p className="text-[11px] text-amber-500 font-bold">Vence en 5 días (Plan Anual VIP)</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-white">Manuel Guerrero</p>
+              <p className="text-xs text-amber-500 font-bold">Vence en 5 días (Plan Anual VIP)</p>
             </div>
             <a
               href="https://wa.me/51966554433?text=Hola%20Manuel,%20te%20saludamos%20de%20Vortex%20Fitness%20Club.%20Tu%20membres%C3%ADa%20VIP%20est%C3%A1%20por%20vencer.%20%C2%A1Asegura%20tu%20tarifa%20preferencial!"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <MessageCircle size={14} />
               WhatsApp

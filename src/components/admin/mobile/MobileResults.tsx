@@ -48,7 +48,7 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
             {/* Header / Navigation */}
             <div className="sticky top-0 z-30 bg-white border-b border-slate-100 p-5 space-y-5">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-black uppercase italic tracking-tighter text-slate-900">
+                    <h2 className="text-xl font-bold tracking-tight text-slate-900">
                         Nuestros <span style={{ color: primaryColor }}>Resultados</span>
                     </h2>
                     <div className="flex items-center gap-3">
@@ -74,7 +74,7 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
                     <button 
                         onClick={() => setFilter('ALL')}
                         className={cn(
-                            "px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                            "px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all whitespace-nowrap",
                             filter === 'ALL' ? "text-white shadow-lg" : "bg-white text-slate-400 border border-slate-100"
                         )}
                         style={filter === 'ALL' ? { backgroundColor: primaryColor } : {}}
@@ -86,7 +86,7 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
                             key={s}
                             onClick={() => setFilter(s)}
                             className={cn(
-                                "px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                                "px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all whitespace-nowrap",
                                 filter === s ? "text-white shadow-lg" : "bg-white text-slate-400 border border-slate-100"
                             )}
                             style={filter === s ? { backgroundColor: primaryColor } : {}}
@@ -102,7 +102,7 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
                 {filtered.map((item) => (
                     <div 
                         key={item.id}
-                        className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl overflow-hidden animate-in zoom-in-95 duration-500"
+                        className="bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden animate-in zoom-in-95 duration-500"
                     >
                         <div className="relative aspect-[16/10]">
                             {item.type === 'BEFORE_AFTER' ? (
@@ -114,7 +114,7 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
                                             alt="Antes" 
                                         />
                                         <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/40 backdrop-blur-md rounded-lg border border-white/20">
-                                            <span className="text-[8px] font-black text-white uppercase tracking-tighter">Antes</span>
+                                            <span className="text-xs font-bold text-white uppercase tracking-tight">Antes</span>
                                         </div>
                                     </div>
                                     <div className="relative flex-1 h-full">
@@ -124,7 +124,7 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
                                             alt="Después" 
                                         />
                                         <div className="absolute bottom-3 right-3 px-2 py-1 bg-white/40 backdrop-blur-md rounded-lg border border-white/20">
-                                            <span className="text-[8px] font-black text-slate-900 uppercase tracking-tighter">Después</span>
+                                            <span className="text-xs font-bold text-slate-900 uppercase tracking-tight">Después</span>
                                         </div>
                                     </div>
                                     {/* Divider Icon */}
@@ -143,7 +143,7 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
                             )}
                             
                             <div className="absolute top-4 left-4 flex flex-col gap-2">
-                                <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest text-slate-900 flex items-center gap-2 border border-white">
+                                <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide text-slate-900 flex items-center gap-2 border border-white">
                                     {item.type === 'BEFORE_AFTER' ? <Sparkles size={10} style={{ color: primaryColor }} /> : <ImageIcon size={10} className="text-blue-500" />}
                                     {item.type === 'BEFORE_AFTER' ? 'Comparativa' : 'Galería'}
                                 </div>
@@ -172,17 +172,17 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
 
                         <div className="p-6 space-y-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: primaryColor }}>
+                                <span className="text-xs font-bold uppercase tracking-wide" style={{ color: primaryColor }}>
                                     {item.service?.nombre}
                                 </span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase italic">
+                                <span className="text-xs font-bold text-slate-400 uppercase ">
                                     {format(new Date(item.date), "dd MMM yyyy", { locale: es })}
                                 </span>
                             </div>
                             
                             <div>
-                                <h4 className="text-xl font-black text-slate-900 uppercase italic leading-none tracking-tighter">{item.title}</h4>
-                                <p className="mt-3 text-[13px] text-slate-600 line-clamp-3 italic leading-relaxed font-medium">"{item.description}"</p>
+                                <h4 className="text-xl font-bold text-slate-900 leading-none tracking-tight">{item.title}</h4>
+                                <p className="mt-3 text-sm text-slate-600 line-clamp-3 leading-relaxed font-medium">"{item.description}"</p>
                             </div>
 
                             <div className="pt-5 border-t border-slate-100 flex items-center gap-3">
@@ -194,8 +194,8 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Especialista</span>
-                                    <span className="text-sm font-black text-slate-900 italic uppercase">{item.staff?.name || 'Varios'}</span>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-none mb-1">Especialista</span>
+                                    <span className="text-sm font-bold text-slate-900 uppercase">{item.staff?.name || 'Varios'}</span>
                                 </div>
                             </div>
                         </div>

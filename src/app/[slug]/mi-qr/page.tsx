@@ -116,7 +116,7 @@ export default function MiQrPage() {
               <QrCode className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-white">QR de Acceso</h1>
+              <h1 className="text-xl font-bold text-white">QR de Acceso</h1>
               <p className="text-xs text-slate-400 mt-1">
                 Ingresa tu teléfono para cargar tu carnet QR de acceso al gimnasio.
               </p>
@@ -136,7 +136,7 @@ export default function MiQrPage() {
               </div>
               <button
                 type="submit"
-                className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-orange-500/20 hover:opacity-95 transition-all"
+                className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-orange-500/20 hover:opacity-95 transition-all"
               >
                 Generar Mi QR
               </button>
@@ -171,11 +171,11 @@ export default function MiQrPage() {
             }`}>
               {/* Badge superior */}
               <div className="mb-4">
-                <span className={`inline-flex items-center px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
-                  memberData.isActive
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse'
-                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                }`}>
+                <span className={`inline-flex items-center px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+ memberData.isActive
+ ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse'
+ : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+ }`}>
                   {memberData.isActive ? (
                     <>
                       <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Acceso Habilitado
@@ -200,7 +200,7 @@ export default function MiQrPage() {
 
               {/* Datos del socio */}
               <div className="mt-4 space-y-1">
-                <h2 className="text-xl font-black text-white tracking-tight">
+                <h2 className="text-xl font-bold text-white tracking-tight">
                   {memberData.member?.name || 'Socio'}
                 </h2>
                 <p className="text-xs text-slate-400">
@@ -214,7 +214,7 @@ export default function MiQrPage() {
               </div>
 
               {/* Instrucción para el socio */}
-              <div className="mt-5 pt-4 border-t border-slate-800 flex items-center justify-center gap-2 text-[11px] text-slate-400 font-medium">
+              <div className="mt-5 pt-4 border-t border-slate-800 flex items-center justify-center gap-2 text-xs text-slate-400 font-medium">
                 <Zap className="w-3.5 h-3.5 text-orange-400 shrink-0" />
                 <span>Pasa este código frente al lector de recepción para ingresar</span>
               </div>
@@ -224,7 +224,7 @@ export default function MiQrPage() {
             {!memberData.isActive && (
               <Link
                 href={`/${slug}#planes`}
-                className="block text-center py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-orange-500/20 hover:opacity-95 transition-all"
+                className="block text-center py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-orange-500/20 hover:opacity-95 transition-all"
               >
                 Renovar Membresía Ahora
               </Link>
@@ -256,7 +256,7 @@ export default function MiQrPage() {
       </main>
 
       {/* Footer discreto */}
-      <footer className="p-4 text-center text-[10px] text-slate-600 font-medium">
+      <footer className="p-4 text-center text-xs text-slate-600 font-medium">
         Citiox Gym Access Engine • Código QR dinámico personal e intransferible
       </footer>
     </div>

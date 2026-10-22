@@ -30,7 +30,7 @@ export default function PWAPreviewPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div>
-        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-3">
+        <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
           <Smartphone className="text-emerald-500" size={32} />
           PWA Multi-Negocio
         </h2>
@@ -42,9 +42,9 @@ export default function PWAPreviewPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Selector de Negocio */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-xl border border-slate-200 dark:border-white/5 space-y-6">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-xl border border-slate-200 dark:border-white/5 space-y-6">
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest italic mb-3">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">
                 Slug del Negocio
               </label>
               <div className="relative">
@@ -66,23 +66,23 @@ export default function PWAPreviewPage() {
             </div>
 
             {error && (
-              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-xs font-bold italic">
+              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-xs font-bold ">
                 {error}
               </div>
             )}
 
             <div className="pt-4 border-t border-slate-100 dark:border-white/5 space-y-4">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Acciones Rápidas</h4>
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide ">Acciones Rápidas</h4>
               <div className="grid grid-cols-2 gap-3">
                 <button 
                   onClick={() => setSlug('los-alpes')}
-                  className="p-3 bg-slate-100 dark:bg-white/5 rounded-xl text-[10px] font-bold text-center hover:bg-emerald-500/10 hover:text-emerald-500 transition-all"
+                  className="p-3 bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-bold text-center hover:bg-emerald-500/10 hover:text-emerald-500 transition-all"
                 >
                   Los Alpes
                 </button>
                 <button 
                   onClick={() => setSlug('padel-pro')}
-                  className="p-3 bg-slate-100 dark:bg-white/5 rounded-xl text-[10px] font-bold text-center hover:bg-emerald-500/10 hover:text-emerald-500 transition-all"
+                  className="p-3 bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-bold text-center hover:bg-emerald-500/10 hover:text-emerald-500 transition-all"
                 >
                   Padel Pro
                 </button>
@@ -90,10 +90,10 @@ export default function PWAPreviewPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden group">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-8 text-white shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/20 transition-all" />
             <div className="relative z-10 space-y-4">
-              <h3 className="font-black italic uppercase tracking-tight flex items-center gap-2 text-lg">
+              <h3 className="font-bold tracking-tight flex items-center gap-2 text-lg">
                 <LayoutTemplate className="text-emerald-400" size={20} />
                 Instalación Real
               </h3>
@@ -108,10 +108,10 @@ export default function PWAPreviewPage() {
         {/* Previsualización del Manifest */}
         <div className="lg:col-span-2">
           {manifest ? (
-            <div className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col h-full">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col h-full">
               <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-black italic uppercase text-slate-900 dark:text-white">PWA Identity</h3>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">PWA Identity</h3>
                   <p className="text-xs text-slate-500 font-medium tracking-tight">Datos generados desde /api/pwa/manifest?slug={slug}</p>
                 </div>
                 <a 
@@ -127,24 +127,24 @@ export default function PWAPreviewPage() {
                 <div className="space-y-8">
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <span className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] italic mb-1">App Name</span>
-                      <p className="font-black text-slate-900 dark:text-white truncate">{manifest.name}</p>
+                      <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">App Name</span>
+                      <p className="font-bold text-slate-900 dark:text-white truncate">{manifest.name}</p>
                     </div>
                     <div>
-                      <span className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] italic mb-1">Short Name</span>
-                      <p className="font-black text-slate-900 dark:text-white truncate">{manifest.short_name}</p>
+                      <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Short Name</span>
+                      <p className="font-bold text-slate-900 dark:text-white truncate">{manifest.short_name}</p>
                     </div>
                   </div>
 
                   <div>
-                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] italic mb-1">Start URL</span>
-                    <code className="block bg-slate-900 text-emerald-400 text-[10px] p-3 rounded-xl font-mono truncate">
+                    <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Start URL</span>
+                    <code className="block bg-slate-900 text-emerald-400 text-xs p-3 rounded-xl font-mono truncate">
                       {manifest.start_url}
                     </code>
                   </div>
 
                   <div>
-                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] italic mb-1">Theme Color</span>
+                    <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Theme Color</span>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl shadow-lg border border-white/20" style={{ backgroundColor: manifest.theme_color }}></div>
                       <span className="font-bold text-sm text-slate-700 dark:text-slate-300 uppercase">{manifest.theme_color}</span>
@@ -153,11 +153,11 @@ export default function PWAPreviewPage() {
                 </div>
 
                 <div className="flex flex-col items-center justify-center space-y-6">
-                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Icon Preview</span>
+                  <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide ">Icon Preview</span>
                   {manifest.icons && manifest.icons.length > 0 ? (
                     <div className="relative group">
                       <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full scale-110 group-hover:scale-125 transition-transform" />
-                      <div className="relative bg-white dark:bg-slate-800 p-4 rounded-[2.5rem] shadow-2xl border border-white/10 ring-8 ring-slate-100 dark:ring-white/5 transform group-hover:-rotate-3 transition-transform">
+                      <div className="relative bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-2xl border border-white/10 ring-8 ring-slate-100 dark:ring-white/5 transform group-hover:-rotate-3 transition-transform">
                         <img 
                           src={manifest.icons[0].src} 
                           alt="App Icon" 
@@ -173,7 +173,7 @@ export default function PWAPreviewPage() {
                       <Globe className="text-slate-300" size={32} />
                     </div>
                   )}
-                  <p className="text-[10px] font-black text-slate-400 uppercase italic text-center">
+                  <p className="text-xs font-bold text-slate-400 uppercase text-center">
                     Cancha SaaS Dynamic Manifest Engine
                   </p>
                 </div>
@@ -182,21 +182,21 @@ export default function PWAPreviewPage() {
               <div className="p-6 bg-slate-50 dark:bg-white/[0.01] border-t border-slate-100 dark:border-white/5 flex items-center justify-center gap-6">
                 <div className="flex items-center gap-2 opacity-50">
                   <Monitor size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-widest">Standalone Mode</span>
+                  <span className="text-xs font-bold uppercase tracking-wide">Standalone Mode</span>
                 </div>
                 <div className="w-1.5 h-1.5 bg-slate-300 dark:bg-white/10 rounded-full" />
                 <div className="flex items-center gap-2 opacity-50 text-emerald-500">
                   <Globe size={14} />
-                  <span className="text-[9px] font-bold uppercase tracking-widest">Multi-Tenant Ready</span>
+                  <span className="text-xs font-bold uppercase tracking-wide">Multi-Tenant Ready</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-slate-50 dark:bg-white/5 border-4 border-dashed border-slate-200 dark:border-white/5 rounded-[3rem] h-full flex flex-col items-center justify-center p-12 text-center opacity-50 group hover:opacity-100 transition-opacity">
+            <div className="bg-slate-50 dark:bg-white/5 border-4 border-dashed border-slate-200 dark:border-white/5 rounded-2xl h-full flex flex-col items-center justify-center p-12 text-center opacity-50 group hover:opacity-100 transition-opacity">
               <div className="w-20 h-20 bg-slate-100 dark:bg-white/5 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <LayoutTemplate size={40} className="text-slate-300" />
               </div>
-              <h3 className="text-xl font-black text-slate-400 uppercase italic">Esperando Negocio</h3>
+              <h3 className="text-xl font-bold text-slate-400 ">Esperando Negocio</h3>
               <p className="text-sm font-medium text-slate-400 mt-2 max-w-xs">
                 Ingresa el slug de un negocio para ver cómo se generará su manifest dinámico.
               </p>

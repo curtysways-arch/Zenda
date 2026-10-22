@@ -20,13 +20,15 @@ export function useNotifications(slug: string): UseNotificationsResult {
             if (res.ok) {
                 const data = await res.json();
                 setUnreadCount(data.unreadCount || 0);
-                setIsAuthenticated(true);
+                setIsAuthenticated(!!data.isAuthenticated);
 
-                // También obtenemos el perfil del cliente para tener los puntos sincronizados solo si está autenticado
-                const meRes = await fetch(`/api/${slug}/referrals/me`);
-                if (meRes.ok) {
-                    const meData = await meRes.json();
-                    setPointsBalance(meData.puntos !== undefined ? meData.puntos : null);
+                // Solo sincronizar puntos de fidelidad si el cliente está autenticado
+                if (data.isAuthenticated) {
+                    const meRes = await fetch(`/api/${slug}/referrals/me`);
+                    if (meRes.ok) {
+                        const meData = await meRes.json();
+                        setPointsBalance(meData.puntos !== undefined ? meData.puntos : null);
+                    }
                 }
             } else {
                 setIsAuthenticated(false);
@@ -107,30 +109,16 @@ export function useNotifications(slug: string): UseNotificationsResult {
                 }
             });
 
-            eventSource.onerror = (err) => {
-                console.warn(`SSE Connection lost. Reconnecting in ${reconnectDelay / 1000}s...`);
+            eventSource.onerror = () => {
                 if (eventSource) {
                     eventSource.close();
                 }
                 
-                // Antes de reintentar de inmediato, verificar si la sesión sigue siendo válida
-                // Esto frena los bucles de reconexión si la causa del error es desautenticación (401)
-                fetch(`/api/public/${slug}/notifications?limit=1`)
-                    .then(res => {
-                        if (res.status === 401) {
-                            console.log("Session expired or unauthorized. Disabling SSE notifications.");
-                            setIsAuthenticated(false);
-                        } else {
-                            reconnectTimeout = setTimeout(connectSSE, reconnectDelay);
-                            // Incremento exponencial hasta un máximo de 60 segundos
-                            reconnectDelay = Math.min(reconnectDelay * 2, 60000);
-                        }
-                    })
-                    .catch(() => {
-                        // Error de red temporal, reintentar con backoff exponencial
-                        reconnectTimeout = setTimeout(connectSSE, reconnectDelay);
-                        reconnectDelay = Math.min(reconnectDelay * 2, 60000);
-                    });
+                // Si la sesión ya no está autenticada, no reintentar
+                if (!isAuthenticated) return;
+
+                reconnectTimeout = setTimeout(connectSSE, reconnectDelay);
+                reconnectDelay = Math.min(reconnectDelay * 2, 60000);
             };
         };
 

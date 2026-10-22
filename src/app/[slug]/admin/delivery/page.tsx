@@ -101,7 +101,7 @@ export default function DeliveryAdminPage({ params }: { params: Promise<{ slug: 
               <Truck className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-white">Panel de Delivery & Logística</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-white">Panel de Delivery & Logística</h1>
               <p className="text-xs text-slate-400">Citiox Enterprise vNext • Control de Flota y Entregas</p>
             </div>
           </div>
@@ -128,42 +128,42 @@ export default function DeliveryAdminPage({ params }: { params: Promise<{ slug: 
       {/* Grid de Estado de Flota y Pedidos */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
             {drivers.filter(d => d.status === 'DISPONIBLE').length}
           </div>
           <div>
             <span className="text-xs text-slate-400 font-bold block">Repartidores Libres</span>
-            <span className="text-sm font-black text-emerald-400">Listos para Despacho</span>
+            <span className="text-sm font-bold text-emerald-400">Listos para Despacho</span>
           </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
             {pendingTasks.length}
           </div>
           <div>
             <span className="text-xs text-slate-400 font-bold block">En Cola de Despacho</span>
-            <span className="text-sm font-black text-amber-400">Esperando Asignación</span>
+            <span className="text-sm font-bold text-amber-400">Esperando Asignación</span>
           </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-black">
+          <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
             {activeTasks.length}
           </div>
           <div>
             <span className="text-xs text-slate-400 font-bold block">En Ruta / Recogidos</span>
-            <span className="text-sm font-black text-blue-400">En Tránsito</span>
+            <span className="text-sm font-bold text-blue-400">En Tránsito</span>
           </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black">
+          <div className="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
             {completedTasks.length}
           </div>
           <div>
             <span className="text-xs text-slate-400 font-bold block">Entregados Hoy</span>
-            <span className="text-sm font-black text-indigo-400">Completados</span>
+            <span className="text-sm font-bold text-indigo-400">Completados</span>
           </div>
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function DeliveryAdminPage({ params }: { params: Promise<{ slug: 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Columna 1: Repartidores */}
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <h2 className="text-base font-black text-white flex items-center gap-2">
+          <h2 className="text-base font-bold text-white flex items-center gap-2">
             <UserCheck className="w-5 h-5 text-orange-500" />
             <span>Estado de Repartidores ({drivers.length})</span>
           </h2>
@@ -187,11 +187,11 @@ export default function DeliveryAdminPage({ params }: { params: Promise<{ slug: 
                     <h3 className="font-extrabold text-sm text-white">{driver.name}</h3>
                     <p className="text-xs text-slate-400">{driver.phone || 'Sin WhatsApp'} • {driver.vehicleType}</p>
                   </div>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase ${
-                    driver.status === 'DISPONIBLE' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                    driver.status === 'OCUPADO' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                    'bg-slate-800 text-slate-400'
-                  }`}>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${
+ driver.status === 'DISPONIBLE' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+ driver.status === 'OCUPADO' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+ 'bg-slate-800 text-slate-400'
+ }`}>
                     {driver.status}
                   </span>
                 </div>
@@ -202,7 +202,7 @@ export default function DeliveryAdminPage({ params }: { params: Promise<{ slug: 
 
         {/* Columna 2 y 3: Cola de Pedidos y Despacho */}
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6">
-          <h2 className="text-base font-black text-white flex items-center gap-2">
+          <h2 className="text-base font-bold text-white flex items-center gap-2">
             <Truck className="w-5 h-5 text-emerald-400" />
             <span>Despacho de Pedidos ({tasks.length})</span>
           </h2>
@@ -218,13 +218,13 @@ export default function DeliveryAdminPage({ params }: { params: Promise<{ slug: 
                 <div key={task.taskId} className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-black text-white text-sm">Pedido #{task.orderId}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                        task.state === 'WAITING_DISPATCH' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                        task.state === 'ASSIGNED' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
-                        task.state === 'ON_ROUTE' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                        'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      }`}>
+                      <span className="font-bold text-white text-sm">Pedido #{task.orderId}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
+ task.state === 'WAITING_DISPATCH' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+ task.state === 'ASSIGNED' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+ task.state === 'ON_ROUTE' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+ 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+ }`}>
                         {task.state}
                       </span>
                     </div>

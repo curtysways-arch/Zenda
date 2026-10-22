@@ -91,7 +91,7 @@ export default function PhoneInput({
     return (
         <div className={clsx("relative space-y-1.5 group/phone w-full text-left", className)}>
             {label && (
-                <span className={clsx("text-[9px] font-black uppercase tracking-[0.2em] ml-1 block", darkMode ? "text-white/40" : "text-slate-400")}>
+                <span className={clsx("text-xs font-bold uppercase tracking-wide ml-1 block", darkMode ? "text-white/40" : "text-slate-400")}>
                     {label}
                 </span>
             )}
@@ -111,7 +111,7 @@ export default function PhoneInput({
                         )}
                     >
                         <span className="text-xl shrink-0">{selectedCountry.flag}</span>
-                        <span className="text-xs font-black shrink-0" style={{ color: darkMode ? '#ffffff' : '#0f172a' }}>{selectedCountry.code}</span>
+                        <span className="text-xs font-bold shrink-0" style={{ color: darkMode ? '#ffffff' : '#0f172a' }}>{selectedCountry.code}</span>
                         <ChevronDown size={14} className={clsx("transition-transform shrink-0", darkMode ? "text-white/40" : "text-slate-400", isOpen && "rotate-180")} />
                     </button>
 
@@ -134,8 +134,8 @@ export default function PhoneInput({
                                 >
                                     <span className="text-xl">{c.flag}</span>
                                     <div className="flex-1">
-                                        <p className={clsx("font-black text-xs uppercase italic", darkMode ? "text-white" : "text-slate-900")}>{c.name}</p>
-                                        <p className={clsx("font-black text-[10px]", darkMode ? "text-slate-400" : "text-slate-500")}>{c.code}</p>
+                                        <p className={clsx("font-bold text-xs uppercase ", darkMode ? "text-white" : "text-slate-900")}>{c.name}</p>
+                                        <p className={clsx("font-bold text-xs", darkMode ? "text-slate-400" : "text-slate-500")}>{c.code}</p>
                                     </div>
                                     {selectedCountry.iso === c.iso && <Check size={14} className="text-emerald-500" />}
                                 </button>

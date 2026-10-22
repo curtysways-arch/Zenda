@@ -51,14 +51,14 @@ export default async function ResultadosPublicPage({ params }: ResultadosPublicP
                 <div className="relative z-10 space-y-4">
                     <Link 
                         href={`/${slug}`}
-                        className="inline-flex items-center gap-2 p-2 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white/80 hover:bg-white/20 transition-all text-[10px] font-black uppercase tracking-widest mb-6"
+                        className="inline-flex items-center gap-2 p-2 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white/80 hover:bg-white/20 transition-all text-xs font-bold uppercase tracking-wide mb-6"
                     >
                         <ArrowLeft size={14} />
                         Volver
                     </Link>
                     <div className="flex flex-col items-center">
-                        <span className="text-emerald-400 font-black text-xs uppercase tracking-[0.4em] mb-2">Portfolio</span>
-                        <h1 className="text-5xl md:text-7xl font-black text-white italic uppercase tracking-tighter leading-none">Nuestros Resultados</h1>
+                        <span className="text-emerald-400 font-bold text-xs uppercase tracking-wide mb-2">Portfolio</span>
+                        <h1 className="text-5xl md:text-5xl font-bold text-white tracking-tight leading-none">Nuestros Resultados</h1>
                     </div>
                 </div>
             </header>
@@ -66,7 +66,7 @@ export default async function ResultadosPublicPage({ params }: ResultadosPublicP
             <main className="max-w-7xl mx-auto px-6 -mt-10 relative z-20">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-12">
                     {resultados.map((res) => (
-                        <div key={res.id} className="group bg-white rounded-[3.5rem] border border-slate-100/60 shadow-2xl p-6 md:p-10 space-y-8 animate-in slide-in-from-bottom duration-500">
+                        <div key={res.id} className="group bg-white rounded-3xl border border-slate-100/60 shadow-2xl p-6 md:p-10 space-y-8 animate-in slide-in-from-bottom duration-500">
                             {/* Comparador Interactivo */}
                             <div className="relative">
                                 <BeforeAfterSlider
@@ -85,20 +85,20 @@ export default async function ResultadosPublicPage({ params }: ResultadosPublicP
                                 <div className="flex justify-between items-start gap-4">
                                     <div>
                                         <div className="flex items-center gap-2 mb-2">
-                                            <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                                            <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold uppercase tracking-wide border border-emerald-100">
                                                 {res.Service?.nombre || 'Especial'}
                                             </span>
                                             <div className="h-px w-8 bg-slate-100" />
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">
                                                 {format(new Date(res.date), "MMM yyyy", { locale: es })}
                                             </span>
                                         </div>
-                                        <h2 className="text-3xl font-black text-slate-900 leading-tight tracking-tight uppercase italic">{res.title}</h2>
+                                        <h2 className="text-3xl font-bold text-slate-900 leading-tight tracking-tight ">{res.title}</h2>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Realizado por</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-none mb-2">Realizado por</p>
                                         <div className="flex items-center gap-3 justify-end">
-                                            <p className="text-sm font-black text-slate-900 uppercase italic leading-none">{res.Staff?.name || 'Profesional'}</p>
+                                            <p className="text-sm font-bold text-slate-900 uppercase leading-none">{res.Staff?.name || 'Profesional'}</p>
                                             <div className="size-10 bg-slate-950 rounded-2xl flex items-center justify-center text-white shadow-xl overflow-hidden">
                                                  {(res.Staff?.imageMedia || res.Staff?.avatar) 
                                                      ? <img src={(res.Staff.imageMedia as any)?.url ?? res.Staff.avatar} className="w-full h-full object-cover" /> 
@@ -109,7 +109,7 @@ export default async function ResultadosPublicPage({ params }: ResultadosPublicP
                                 </div>
 
                                 {res.description && (
-                                    <p className="text-slate-500 font-medium leading-relaxed border-l-4 border-slate-100 pl-6 py-1 italic">
+                                    <p className="text-slate-500 font-medium leading-relaxed border-l-4 border-slate-100 pl-6 py-1 ">
                                         "{res.description}"
                                     </p>
                                 )}
@@ -117,7 +117,7 @@ export default async function ResultadosPublicPage({ params }: ResultadosPublicP
                                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                                     <Link
                                         href={`/${slug}/?serviceId=${res.serviceId}&staffId=${res.staffId}#reservar`}
-                                        className="flex-1 py-5 px-8 rounded-full bg-slate-950 text-white font-black text-sm uppercase italic tracking-widest flex items-center justify-between group/btn hover:bg-emerald-600 transition-all shadow-xl shadow-slate-900/10 active:scale-95"
+                                        className="flex-1 py-5 px-8 rounded-full bg-slate-950 text-white font-bold text-sm uppercase tracking-wide flex items-center justify-between group/btn hover:bg-emerald-600 transition-all shadow-xl shadow-slate-900/10 active:scale-95"
                                     >
                                         Reservar este Servicio
                                         <ChevronRight size={18} className="group-hover/btn:translate-x-2 transition-transform duration-500" />
@@ -138,10 +138,10 @@ export default async function ResultadosPublicPage({ params }: ResultadosPublicP
                 </div>
 
                 {resultados.length === 0 && (
-                    <div className="py-20 text-center bg-white/50 backdrop-blur-md rounded-[4rem] border-2 border-dashed border-slate-200">
+                    <div className="py-20 text-center bg-white/50 backdrop-blur-md rounded-3xl border-2 border-dashed border-slate-200">
                         <Camera size={64} className="mx-auto text-slate-200 mb-6" />
-                        <h3 className="text-2xl font-black text-slate-400 uppercase tracking-tighter">Próximamente más resultados</h3>
-                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mt-2">Estamos capturando nuestros mejores trabajos</p>
+                        <h3 className="text-2xl font-bold text-slate-400 tracking-tight">Próximamente más resultados</h3>
+                        <p className="text-slate-400 font-bold uppercase tracking-wide text-xs mt-2">Estamos capturando nuestros mejores trabajos</p>
                     </div>
                 )}
             </main>

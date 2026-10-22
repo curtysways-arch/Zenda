@@ -67,6 +67,13 @@ export default async function NegocioLayout({
         notFound();
     }
 
+    // Negocio bloqueado por falta de pago o suspendido: la página se ve, pero no recibe reservas ni pedidos
+    let intakeClosed = false;
+    try {
+        const { checkSubscriptionStatus, subscriptionEnforced } = await import('@/lib/subscriptions');
+        if (subscriptionEnforced()) intakeClosed = !(await checkSubscriptionStatus(negocio.id)).active;
+    } catch { intakeClosed = false; }
+
     // Verificar si hay cursos activos para este negocio
     const hasActiveCourses = await prisma.course.count({
         where: { businessId: negocio.id, status: 'active' }
@@ -74,6 +81,13 @@ export default async function NegocioLayout({
 
     const publishedPagesCount = await prisma.page.count({
         where: { businessId: negocio.id, status: 'published' }
+    });
+
+    const activePromotionsCount = await (prisma as any).promotion.count({
+        where: {
+            businessId: negocio.id,
+            estado: { in: ['activa', 'ACTIVA'] }
+        }
     });
 
     const canUseCustomColors = await featureService.canUseFeature(negocio.id, 'custom_colors');
@@ -97,6 +111,13 @@ export default async function NegocioLayout({
 
     let primaryInput = (negocio as any).colorPrimario && (negocio as any).colorPrimario !== '#1dc95c' ? (negocio as any).colorPrimario : '#db2777';
 
+    // Determinar la luminosidad del fondo principal para garantizar contraste
+    const mainBgHex = ((negocio as any).colorNeutral && (negocio as any).colorNeutral !== '#FFF5F5') 
+        ? (negocio as any).colorNeutral 
+        : '#ffffff';
+    const mainBgRgb = hexToRgb(mainBgHex) || { r: 255, g: 255, b: 255 };
+    const mainBgLuma = (0.2126 * mainBgRgb.r + 0.7152 * mainBgRgb.g + 0.0722 * mainBgRgb.b) / 255;
+
     let theme;
     if (modoAvanzado) {
         theme = generateTheme(
@@ -105,8 +126,37 @@ export default async function NegocioLayout({
             (negocio as any).colorNeutral || undefined
         );
         if ((negocio as any).colorTerciario) theme.accentColor = (negocio as any).colorTerciario;
-        if ((negocio as any).colorTexto) theme.textPrimary = (negocio as any).colorTexto;
-        if ((negocio as any).colorSubTexto) theme.textSecondary = (negocio as any).colorSubTexto;
+        if ((negocio as any).colorTexto) {
+            const txtRgb = hexToRgb((negocio as any).colorTexto);
+            if (txtRgb) {
+                const txtLuma = (0.2126 * txtRgb.r + 0.7152 * txtRgb.g + 0.0722 * txtRgb.b) / 255;
+                // Si el fondo es claro y el texto es claro (incompatible) -> forzar color oscuro legible
+                if (mainBgLuma >= 0.5 && txtLuma > 0.6) {
+                    theme.textPrimary = '#0f172a';
+                } else if (mainBgLuma < 0.5 && txtLuma < 0.4) {
+                    theme.textPrimary = '#ffffff';
+                } else {
+                    theme.textPrimary = (negocio as any).colorTexto;
+                }
+            } else {
+                theme.textPrimary = (negocio as any).colorTexto;
+            }
+        }
+        if ((negocio as any).colorSubTexto) {
+            const subRgb = hexToRgb((negocio as any).colorSubTexto);
+            if (subRgb) {
+                const subLuma = (0.2126 * subRgb.r + 0.7152 * subRgb.g + 0.0722 * subRgb.b) / 255;
+                if (mainBgLuma >= 0.5 && subLuma > 0.65) {
+                    theme.textSecondary = '#475569';
+                } else if (mainBgLuma < 0.5 && subLuma < 0.35) {
+                    theme.textSecondary = '#cbd5e1';
+                } else {
+                    theme.textSecondary = (negocio as any).colorSubTexto;
+                }
+            } else {
+                theme.textSecondary = (negocio as any).colorSubTexto;
+            }
+        }
     } else {
         theme = generateTheme(
             primaryInput,
@@ -121,7 +171,7 @@ export default async function NegocioLayout({
         
     const headerBgRgb = hexToRgb(headerBgInput) || { r: 255, g: 255, b: 255 };
     const headerBgLuma = (0.2126 * headerBgRgb.r + 0.7152 * headerBgRgb.g + 0.0722 * headerBgRgb.b) / 255;
-        // Contraste para textos en la barra superior (Header)
+        // Contraste para textos en la barra superior (Header)
     const headerTextInput = headerBgLuma < 0.5 ? '#ffffff' : '#0f172a';
     const headerTextSecondaryInput = headerBgLuma < 0.5 ? '#cbd5e1' : '#475569';
     const headerBorderInput = headerBgLuma < 0.5 ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
@@ -135,12 +185,6 @@ export default async function NegocioLayout({
 
     const customNavBg = config?.colorBottomNav || (hasCustomSecundario ? (negocio as any).colorSecundario : null);
 
-    const mainBgHex = ((negocio as any).colorNeutral && (negocio as any).colorNeutral !== '#FFF5F5') 
-        ? (negocio as any).colorNeutral 
-        : (theme.backgroundColor || '#ffffff');
-    const mainBgRgb = hexToRgb(mainBgHex) || { r: 255, g: 255, b: 255 };
-    const mainBgLuma = (0.2126 * mainBgRgb.r + 0.7152 * mainBgRgb.g + 0.0722 * mainBgRgb.b) / 255;
-    
     const isDarkTheme = mainBgLuma < 0.5 || headerBgLuma < 0.5;
 
     const navBgInput = customNavBg 
@@ -427,11 +471,17 @@ export default async function NegocioLayout({
                     slug={slug} 
                     hasActiveCourses={hasActiveCourses} 
                     pagesCount={publishedPagesCount} 
+                    promotionsCount={activePromotionsCount}
                     logoUrl={negocio.logoUrl} 
                     nombre={negocio.nombre} 
                     tipoNegocio={negocio.tipoNegocio || 'RESERVA'}
                     isLoyaltyEnabled={isLoyaltyEnabled}
                 />
+                {intakeClosed && (
+                    <div className="sticky top-0 z-[60] bg-slate-900 text-white text-center text-sm px-4 py-2.5">
+                        <b>{negocio.nombre}</b> no está recibiendo reservas ni pedidos en línea por el momento. Puedes contactarlo directamente.
+                    </div>
+                )}
                 <div className="flex-1">
                     {children}
                 </div>

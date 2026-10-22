@@ -118,7 +118,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
         return (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
                 <Loader2 className="animate-spin" size={24} style={{ color: primaryColor }} />
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Cargando detalles...</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide animate-pulse">Cargando detalles...</span>
             </div>
         );
     }
@@ -213,7 +213,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
 
             {/* ══ HERO CARD ══ */}
             <div
-                className="rounded-[2rem] overflow-hidden shadow-sm border border-slate-100"
+                className="rounded-3xl overflow-hidden shadow-sm border border-slate-100"
                 style={{ background: 'linear-gradient(145deg, #fff 60%, #fdf4f8 100%)' }}
             >
                 {/* Franja superior de color */}
@@ -236,12 +236,12 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
 
                         <div className="flex-1 min-w-0 space-y-1">
                             <span
-                                className="inline-block text-[8px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full text-white"
+                                className="inline-block text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full text-white"
                                 style={{ backgroundColor: quest.color }}
                             >
                                 DESAFÍO ACTIVO
                             </span>
-                            <h1 className="text-[17px] font-black text-slate-800 leading-tight uppercase tracking-tight">
+                            <h1 className="text-[17px] font-bold text-slate-800 leading-tight tracking-tight">
                                 {quest.nombre}
                             </h1>
                             <p className="text-[10.5px] text-slate-500 font-semibold leading-snug">
@@ -256,12 +256,12 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                             className="rounded-2xl p-3.5 text-left space-y-0.5"
                             style={{ backgroundColor: `${quest.color}0e` }}
                         >
-                            <span className="text-[8px] font-black uppercase tracking-widest block" style={{ color: quest.color }}>
+                            <span className="text-xs font-bold uppercase tracking-wide block" style={{ color: quest.color }}>
                                 TU PROGRESO
                             </span>
-                            <span className="text-[20px] font-black text-slate-800 leading-none block">
+                            <span className="text-[20px] font-bold text-slate-800 leading-none block">
                                 {quest.progresoActual}
-                                <span className="text-[13px] text-slate-400 font-black"> / {quest.progresoRequerido}</span>
+                                <span className="text-sm text-slate-400 font-bold"> / {quest.progresoRequerido}</span>
                             </span>
                             <span className="text-[8.5px] text-slate-400 font-bold">
                                 {estaCompleto ? '✅ Completado' : `Faltan ${faltanPasos} paso${faltanPasos !== 1 ? 's' : ''}`}
@@ -269,10 +269,10 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                         </div>
 
                         <div className="bg-slate-50 rounded-2xl p-3.5 text-left space-y-0.5 border border-slate-100">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 block">
+                            <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block">
                                 TIEMPO RESTANTE
                             </span>
-                            <span className="text-[17px] font-black text-slate-800 leading-none block">
+                            <span className="text-[17px] font-bold text-slate-800 leading-none block">
                                 {diasRestantesStr}
                             </span>
                             <span className="text-[8.5px] text-slate-400 font-bold">{fechaFinStr}</span>
@@ -282,13 +282,13 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
             </div>
 
             {/* ══ BARRA DE PROGRESO DETALLADA ══ */}
-            <div className="bg-white rounded-[1.8rem] border border-slate-100 p-5 shadow-sm space-y-3">
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">
                         PROGRESO DEL DESAFÍO
                     </h3>
                     <span
-                        className="text-[9px] font-black tabular-nums px-2 py-0.5 rounded-full"
+                        className="text-xs font-bold tabular-nums px-2 py-0.5 rounded-full"
                         style={{ color: quest.color, backgroundColor: `${quest.color}12` }}
                     >
                         {Math.round(pct)}%
@@ -315,7 +315,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                         return (
                             <div key={idx} className="flex flex-col items-center gap-1 z-10">
                                 <div
-                                    className="w-9 h-9 rounded-full flex items-center justify-center font-black text-[11px] border-2 transition-all duration-300"
+                                    className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all duration-300"
                                     style={{
                                         backgroundColor: isDone ? quest.color : '#fff',
                                         color: isDone ? '#fff' : isCurrent ? quest.color : '#94a3b8',
@@ -325,7 +325,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                                 >
                                     {isDone ? <Check size={13} strokeWidth={3.5} /> : stepNum}
                                 </div>
-                                <span className="text-[7px] font-black text-slate-400 uppercase">
+                                <span className="text-xs font-bold text-slate-400 uppercase">
                                     {stepNum === quest.progresoRequerido ? 'Meta' : `${stepNum}ª`}
                                 </span>
                             </div>
@@ -343,7 +343,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                         >
                             <Gift size={15} />
                         </div>
-                        <span className="text-[7px] font-black text-slate-400 uppercase">Premio</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase">Premio</span>
                     </div>
                 </div>
 
@@ -355,7 +355,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                     <span className="text-base leading-none">
                         {estaCompleto ? '🎉' : '⚡'}
                     </span>
-                    <p className="text-[10px] font-bold text-slate-600 leading-snug">
+                    <p className="text-xs font-bold text-slate-600 leading-snug">
                         {estaCompleto
                             ? '¡Completaste todos los pasos! Ya puedes reclamar tu premio.'
                             : `Te faltan ${faltanPasos} paso${faltanPasos !== 1 ? 's' : ''} para ganar tu premio.`}
@@ -364,8 +364,8 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
             </div>
 
             {/* ══ CÓMO FUNCIONA (vertical, sin scroll) ══ */}
-            <div className="bg-white rounded-[1.8rem] border border-slate-100 p-5 shadow-sm space-y-3">
-                <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">
                     ¿CÓMO FUNCIONA?
                 </h3>
 
@@ -378,7 +378,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                                 {/* Línea vertical + círculo */}
                                 <div className="flex flex-col items-center">
                                     <div
-                                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-black text-[11px] text-white z-10"
+                                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-xs text-white z-10"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         {step.num}
@@ -392,11 +392,11 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                                 <div className={`flex-1 text-left ${!isLast ? 'pb-4' : 'pb-1'}`}>
                                     <div className="flex items-center gap-2 mb-1">
                                         <StepIcon size={13} className="text-slate-400 shrink-0" />
-                                        <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-tight">
+                                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-tight">
                                             {step.title}
                                         </h4>
                                     </div>
-                                    <p className="text-[10px] text-slate-500 font-semibold leading-snug">
+                                    <p className="text-xs text-slate-500 font-semibold leading-snug">
                                         {step.desc}
                                     </p>
                                 </div>
@@ -407,8 +407,8 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
             </div>
 
             {/* ══ PREMIO ══ */}
-            <div className="bg-white rounded-[1.8rem] border border-slate-100 p-5 shadow-sm space-y-3">
-                <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">
                     TU PREMIO AL COMPLETAR
                 </h3>
 
@@ -433,7 +433,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                                     <ParsedIcon size={20} className="stroke-[2]" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-tight leading-tight">
+                                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-tight leading-tight">
                                         {parsed.title}
                                     </h4>
                                     <p className="text-[9.5px] text-slate-500 font-semibold leading-snug mt-0.5">
@@ -451,7 +451,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                     {quest.estado === 'COMPLETADA' || quest.estado === 'RECLAMADA' ? (
                         <button
                             onClick={() => router.push(`/${slug}/mis-premios?questId=${quest.id}`)}
-                            className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-white rounded-2xl shadow-md border-0 cursor-pointer active:scale-95 transition-transform flex items-center justify-center gap-2"
+                            className="w-full py-4 text-xs font-bold uppercase tracking-wide text-white rounded-2xl shadow-md border-0 cursor-pointer active:scale-95 transition-transform flex items-center justify-center gap-2"
                             style={{ backgroundColor: primaryColor }}
                         >
                             🎁 VER MI RECOMPENSA
@@ -463,7 +463,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
                             style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}20` }}
                         >
                             <span className="text-sm">🔒</span>
-                            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: primaryColor }}>
+                            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: primaryColor }}>
                                 Completa el desafío para ganar
                             </span>
                         </div>
@@ -475,7 +475,7 @@ export default function QuestDetalleClient({ slug, id, primaryColor, textColor, 
             {referralCode && (
                 <button
                     onClick={handleShare}
-                    className="w-full py-4 text-white text-[10px] font-black uppercase tracking-wider shadow-md rounded-[1.75rem] border-0 cursor-pointer active:scale-95 transition-transform flex items-center justify-center gap-2"
+                    className="w-full py-4 text-white text-xs font-bold uppercase tracking-wider shadow-md rounded-2xl border-0 cursor-pointer active:scale-95 transition-transform flex items-center justify-center gap-2"
                     style={{ backgroundColor: primaryColor }}
                 >
                     <Share2 size={16} />

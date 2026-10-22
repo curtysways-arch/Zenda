@@ -261,7 +261,7 @@ export default function CanchaMisReservas({ negocio: propNegocio }: { negocio?: 
                                 <ChevronLeft size={16} strokeWidth={3} className="text-emerald-400 relative right-[1px]" />
                             </div>
                         </button>
-                        <h1 className="text-xs font-black text-white uppercase italic tracking-widest">
+                        <h1 className="text-xs font-bold text-white uppercase tracking-wide">
                             {negocio?.nombre || 'MIS RESERVAS'}
                         </h1>
                     </div>
@@ -272,13 +272,13 @@ export default function CanchaMisReservas({ negocio: propNegocio }: { negocio?: 
                 {step === 'phone' && (
                     <div className="space-y-8 animate-in fade-in duration-500 text-left">
                         <div className="space-y-2">
-                            <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">MIS RESERVAS</h2>
+                            <h2 className="text-3xl font-bold text-white tracking-tight">Mis reservas</h2>
                             <p className="text-slate-400 text-xs font-bold">Ingresa tu número de WhatsApp para consultar tus partidos y reservas.</p>
                         </div>
                         <form onSubmit={handleSendOtp} className="space-y-4">
                             <PhoneInput value={telefono} onChange={setTelefono} />
                             {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
-                            <button type="submit" disabled={loading || !telefono} className="w-full h-14 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20">
+                            <button type="submit" disabled={loading || !telefono} className="w-full h-14 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-2xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20">
                                 {loading ? <Loader2 className="animate-spin mx-auto" /> : "CONTINUAR"}
                             </button>
                         </form>
@@ -288,13 +288,13 @@ export default function CanchaMisReservas({ negocio: propNegocio }: { negocio?: 
                 {step === 'otp' && (
                     <div className="space-y-8 animate-in fade-in duration-500 text-left">
                         <div className="space-y-2">
-                            <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">CÓDIGO DE VERIFICACIÓN</h2>
+                            <h2 className="text-3xl font-bold text-white tracking-tight">Código de verificación</h2>
                             <p className="text-slate-400 text-xs font-bold">Enviamos un código de 6 dígitos a tu WhatsApp {telefono}.</p>
                         </div>
                         <form onSubmit={handleVerifyOtp} className="space-y-6">
-                            <input ref={otpInputRef} type="text" maxLength={6} placeholder="000000" className="w-full h-16 bg-[#11141d] border border-white/10 rounded-2xl px-6 text-center text-3xl font-black italic tracking-widest text-white outline-none focus:border-emerald-500" value={code} onChange={(e) => setCode(e.target.value)} />
+                            <input ref={otpInputRef} type="text" maxLength={6} placeholder="000000" className="w-full h-16 bg-[#11141d] border border-white/10 rounded-2xl px-6 text-center text-3xl font-bold tracking-wide text-white outline-none focus:border-emerald-500" value={code} onChange={(e) => setCode(e.target.value)} />
                             {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
-                            <button type="submit" disabled={loading || code.length < 6} className="w-full h-14 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20">
+                            <button type="submit" disabled={loading || code.length < 6} className="w-full h-14 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-2xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20">
                                 {loading ? <Loader2 className="animate-spin mx-auto" /> : "VERIFICAR CÓDIGO"}
                             </button>
                         </form>
@@ -305,10 +305,10 @@ export default function CanchaMisReservas({ negocio: propNegocio }: { negocio?: 
                     <div className="space-y-6 animate-in fade-in duration-500 text-left">
                         {/* Selector Dual: RESERVAS vs ACADEMIA */}
                         <div className="grid grid-cols-2 gap-2 bg-[#11141d] p-1.5 rounded-2xl border border-white/5">
-                            <button onClick={() => setActiveTab('reservas')} className={cn("py-3 rounded-xl font-black text-xs uppercase tracking-widest italic transition-all", activeTab === 'reservas' ? "bg-emerald-500 text-slate-950 shadow-md" : "text-slate-400")}>
+                            <button onClick={() => setActiveTab('reservas')} className={cn("py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all", activeTab === 'reservas' ? "bg-emerald-500 text-slate-950 shadow-md" : "text-slate-400")}>
                                 RESERVAS
                             </button>
-                            <button onClick={() => setActiveTab('cursos')} className={cn("py-3 rounded-xl font-black text-xs uppercase tracking-widest italic transition-all", activeTab === 'cursos' ? "bg-emerald-500 text-slate-950 shadow-md" : "text-slate-400")}>
+                            <button onClick={() => setActiveTab('cursos')} className={cn("py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all", activeTab === 'cursos' ? "bg-emerald-500 text-slate-950 shadow-md" : "text-slate-400")}>
                                 ACADEMIA
                             </button>
                         </div>
@@ -316,10 +316,10 @@ export default function CanchaMisReservas({ negocio: propNegocio }: { negocio?: 
                         {activeTab === 'reservas' && (
                             <div className="space-y-6">
                                 <div className="flex gap-2">
-                                    <button onClick={() => setFilter('proximas')} className={cn("px-4 py-2 rounded-xl text-xs font-black uppercase italic border transition-all", filter === 'proximas' ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/10" : "text-slate-500 border-transparent")}>
+                                    <button onClick={() => setFilter('proximas')} className={cn("px-4 py-2 rounded-xl text-xs font-bold uppercase border transition-all", filter === 'proximas' ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/10" : "text-slate-500 border-transparent")}>
                                         PRÓXIMAS
                                     </button>
-                                    <button onClick={() => setFilter('pasadas')} className={cn("px-4 py-2 rounded-xl text-xs font-black uppercase italic border transition-all", filter === 'pasadas' ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/10" : "text-slate-500 border-transparent")}>
+                                    <button onClick={() => setFilter('pasadas')} className={cn("px-4 py-2 rounded-xl text-xs font-bold uppercase border transition-all", filter === 'pasadas' ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/10" : "text-slate-500 border-transparent")}>
                                         PASADAS
                                     </button>
                                 </div>
@@ -330,33 +330,33 @@ export default function CanchaMisReservas({ negocio: propNegocio }: { negocio?: 
                                             <div onClick={() => handleManageReserva(resMasCercana)} className="bg-[#11141d] rounded-3xl p-6 border border-white/10 space-y-4 cursor-pointer hover:border-emerald-500/40 transition-all shadow-xl">
                                                 <div className="flex justify-between items-start">
                                                     <div>
-                                                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest italic">RESERVA PRÓXIMA</span>
-                                                        <h4 className="text-xl font-black text-white uppercase italic mt-1">{resMasCercana.cancha?.nombre || 'Cancha Sports'}</h4>
+                                                        <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide ">Reserva próxima</span>
+                                                        <h4 className="text-xl font-bold text-white mt-1">{resMasCercana.cancha?.nombre || 'Cancha Sports'}</h4>
                                                     </div>
-                                                    <span className="text-xl font-black text-emerald-400">${resMasCercana.total}</span>
+                                                    <span className="text-xl font-bold text-emerald-400">${resMasCercana.total}</span>
                                                 </div>
                                                 <div className="space-y-2 text-xs font-bold text-slate-300">
                                                     <div className="flex items-center gap-2"><Calendar size={14} className="text-emerald-400" /><span>{resMasCercana.fecha?.split('T')[0]}</span></div>
                                                     <div className="flex items-center gap-2"><Clock size={14} className="text-emerald-400" /><span>{resMasCercana.horaInicio} - {resMasCercana.horaFin}</span></div>
                                                 </div>
-                                                <button className="w-full py-3.5 bg-emerald-500 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest italic flex items-center justify-center gap-2">
+                                                <button className="w-full py-3.5 bg-emerald-500 text-slate-950 rounded-2xl font-bold text-xs uppercase tracking-wide flex items-center justify-center gap-2">
                                                     Gestionar Convocatoria <ArrowRight size={16} />
                                                 </button>
                                             </div>
                                         ) : (
                                             <div className="py-16 text-center bg-[#11141d] rounded-3xl border border-dashed border-white/10 space-y-2">
                                                 <Trophy size={36} className="mx-auto text-slate-600" />
-                                                <p className="text-xs font-black text-slate-400 uppercase italic tracking-widest">Sin compromisos programados</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Sin compromisos programados</p>
                                             </div>
                                         )}
 
                                         {otrasProximas.map(res => (
                                             <div key={res.id} onClick={() => handleManageReserva(res)} className="bg-[#11141d] rounded-2xl p-4 border border-white/5 flex items-center justify-between cursor-pointer hover:border-emerald-500/20">
                                                 <div>
-                                                    <h5 className="font-black text-white uppercase italic text-sm">{res.cancha?.nombre}</h5>
-                                                    <p className="text-[10px] font-bold text-slate-400 mt-0.5">{res.fecha?.split('T')[0]} | {res.horaInicio}</p>
+                                                    <h5 className="font-bold text-white uppercase text-sm">{res.cancha?.nombre}</h5>
+                                                    <p className="text-xs font-bold text-slate-400 mt-0.5">{res.fecha?.split('T')[0]} | {res.horaInicio}</p>
                                                 </div>
-                                                <span className="text-xs font-black text-emerald-400">${res.total}</span>
+                                                <span className="text-xs font-bold text-emerald-400">${res.total}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -365,10 +365,10 @@ export default function CanchaMisReservas({ negocio: propNegocio }: { negocio?: 
                                         {pasadas.map(res => (
                                             <div key={res.id} className="bg-[#11141d]/50 rounded-2xl p-4 border border-white/5 flex items-center justify-between opacity-70">
                                                 <div>
-                                                    <h5 className="font-black text-white uppercase italic text-sm">{res.cancha?.nombre}</h5>
-                                                    <p className="text-[10px] font-bold text-slate-500 mt-0.5">{res.fecha?.split('T')[0]} | {res.horaInicio}</p>
+                                                    <h5 className="font-bold text-white uppercase text-sm">{res.cancha?.nombre}</h5>
+                                                    <p className="text-xs font-bold text-slate-500 mt-0.5">{res.fecha?.split('T')[0]} | {res.horaInicio}</p>
                                                 </div>
-                                                <span className="text-xs font-black text-slate-400">${res.total}</span>
+                                                <span className="text-xs font-bold text-slate-400">${res.total}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -380,8 +380,8 @@ export default function CanchaMisReservas({ negocio: propNegocio }: { negocio?: 
                             <div className="space-y-4">
                                 <div className="py-16 text-center bg-[#11141d] rounded-3xl border border-dashed border-white/10 space-y-2">
                                     <Trophy size={36} className="mx-auto text-emerald-500" />
-                                    <p className="text-xs font-black text-white uppercase italic tracking-widest">Inscripciones de Academia</p>
-                                    <p className="text-[10px] font-bold text-slate-400 max-w-xs mx-auto">Tus cursos de pádel, tenis y entrenamiento inscritos aparecerán aquí.</p>
+                                    <p className="text-xs font-bold text-white uppercase tracking-wide">Inscripciones de Academia</p>
+                                    <p className="text-xs font-bold text-slate-400 max-w-xs mx-auto">Tus cursos de pádel, tenis y entrenamiento inscritos aparecerán aquí.</p>
                                 </div>
                             </div>
                         )}

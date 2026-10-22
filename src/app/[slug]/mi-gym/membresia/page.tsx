@@ -107,7 +107,7 @@ export default function MiMembresiaPage() {
       </div>
 
       <div>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
           <CreditCard className="w-6 h-6 text-emerald-500" />
           Mi Membresía
         </h1>
@@ -124,25 +124,25 @@ export default function MiMembresiaPage() {
 
             <div className="flex items-start justify-between relative z-10">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+                <span className="text-xs font-bold uppercase tracking-wide text-emerald-400">
                   Plan Activo
                 </span>
-                <h2 className="text-2xl font-black tracking-tight text-white">
+                <h2 className="text-2xl font-bold tracking-tight text-white">
                   {activeMembership.planName}
                 </h2>
               </div>
 
               <div>
                 {isExpired ? (
-                  <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-rose-500/20 text-rose-400 border border-rose-500/30">
                     Vencida
                   </span>
                 ) : isExpiringSoon ? (
-                  <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     Por Vencer
                   </span>
                 ) : (
-                  <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5" /> Vigente
                   </span>
                 )}
@@ -152,7 +152,7 @@ export default function MiMembresiaPage() {
             {/* Días restantes */}
             <div className="space-y-2 relative z-10">
               <div className="flex items-baseline justify-between">
-                <span className="text-3xl font-black text-emerald-400">
+                <span className="text-3xl font-bold text-emerald-400">
                   {Math.max(0, activeMembership.remainingDays)}
                 </span>
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -173,13 +173,13 @@ export default function MiMembresiaPage() {
             {/* Fechas */}
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs text-slate-300 relative z-10">
               <div>
-                <span className="text-[10px] uppercase text-slate-500 font-bold block">Fecha Inicio</span>
+                <span className="text-xs uppercase text-slate-500 font-bold block">Fecha Inicio</span>
                 <span className="font-semibold text-white">
                   {new Date(activeMembership.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] uppercase text-slate-500 font-bold block">Vence el</span>
+                <span className="text-xs uppercase text-slate-500 font-bold block">Vence el</span>
                 <span className="font-semibold text-white">
                   {new Date(activeMembership.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
@@ -189,7 +189,7 @@ export default function MiMembresiaPage() {
 
           {/* Beneficios Incluidos */}
           <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 shadow-sm">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+            <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400 flex items-center gap-1.5">
               <Award className="w-4 h-4 text-emerald-500" />
               Beneficios Incluidos en tu Plan
             </h3>
@@ -233,7 +233,7 @@ export default function MiMembresiaPage() {
           <div className="pt-2">
             <Link
               href={`/${slug}#planes`}
-              className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm"
+              className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm"
             >
               <RefreshCw className="w-4 h-4" />
               <span>{isExpired ? 'Renovar Mi Membresía Ahora' : 'Renovar o Mejorar de Plan'}</span>

@@ -191,6 +191,15 @@ export async function POST(req: NextRequest) {
         }
 
         if (action === 'restore_session') {
+            // Solo renueva una sesión que ya existe para ESE mismo número.
+            // Antes bastaba con enviar cualquier teléfono para entrar como esa persona.
+            const { hasSessionFor } = await import('@/lib/auth/customerSession');
+            if (!(await hasSessionFor(req, cleanPhone))) {
+                return NextResponse.json(
+                    { success: false, error: 'Inicia sesión con el código que te enviamos por WhatsApp.' },
+                    { status: 401 }
+                );
+            }
             const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "default_otp_secret_key_change_me");
             const token = await new SignJWT({
                 telefono: cleanPhone,

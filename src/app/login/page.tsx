@@ -46,7 +46,7 @@ export default function LoginPage() {
             <div className="absolute top-4 right-4 z-50">
                 <a
                     href="/"
-                    className="flex items-center gap-2 text-xs font-black text-slate-600 hover:text-slate-900 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition-all active:scale-95"
+                    className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition-all active:scale-95"
                 >
                     <ArrowLeft size={14} />
                     Volver al inicio
@@ -72,9 +72,9 @@ export default function LoginPage() {
                 <div className="relative z-10 space-y-8">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full">
                         <Sparkles size={14} className="text-cyan-400" fill="currentColor" />
-                        <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.3em]">Panel Administrativo</span>
+                        <span className="text-xs font-bold text-cyan-400 uppercase tracking-wide">Panel Administrativo</span>
                     </div>
-                    <h1 className="text-5xl xl:text-6xl font-black text-white tracking-tighter leading-[0.9] italic">
+                    <h1 className="text-5xl xl:text-5xl font-bold text-white tracking-tight leading-[0.9] ">
                         Gestiona tu<br />negocio <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent not-italic">sin límites.</span>
                     </h1>
                     <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md">
@@ -95,7 +95,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="relative z-10">
-                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">© 2026 CitiOx • Booking & App Solutions</p>
+                    <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">© 2026 CitiOx • Booking & App Solutions</p>
                 </div>
             </div>
 
@@ -115,8 +115,8 @@ export default function LoginPage() {
                     <div className="flex flex-col items-center gap-3">
                         {/* Logo en círculo con glow */}
                         <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-[2rem] blur-xl opacity-30 scale-110" />
-                            <div className="relative w-28 h-28 bg-white rounded-[2rem] shadow-2xl shadow-cyan-100 border border-slate-100 flex items-center justify-center p-3 overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-3xl blur-xl opacity-30 scale-110" />
+                            <div className="relative w-28 h-28 bg-white rounded-3xl shadow-2xl shadow-cyan-100 border border-slate-100 flex items-center justify-center p-3 overflow-hidden">
                                 <img
                                     src="/citiox-icon.png"
                                     alt="CitiOx Logo"
@@ -127,10 +127,10 @@ export default function LoginPage() {
 
                         {/* Nombre grande */}
                         <div className="text-center space-y-1">
-                            <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent italic leading-none">
+                            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent leading-none">
                                 CitiOx
                             </h1>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.35em]">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">
                                 Panel Administrativo
                             </p>
                         </div>
@@ -140,7 +140,7 @@ export default function LoginPage() {
                     <div className="bg-slate-50 rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
 
                         <div className="space-y-1">
-                            <h2 className="text-xl font-black text-slate-900 tracking-tight">Bienvenido de vuelta</h2>
+                            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Bienvenido de vuelta</h2>
                             <p className="text-xs text-slate-400 font-medium">Ingresa tus credenciales para continuar</p>
                         </div>
 
@@ -148,7 +148,7 @@ export default function LoginPage() {
                         {error && (
                             <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 p-3.5 rounded-2xl">
                                 <div className="size-5 shrink-0 mt-0.5 bg-rose-500 rounded-full flex items-center justify-center">
-                                    <span className="text-white text-[10px] font-black">!</span>
+                                    <span className="text-white text-xs font-bold">!</span>
                                 </div>
                                 <p className="text-rose-700 text-xs font-semibold leading-tight">{error}</p>
                             </div>
@@ -157,7 +157,7 @@ export default function LoginPage() {
                         <form className="space-y-4" onSubmit={handleSubmit}>
                             {/* Email */}
                             <div className="space-y-1.5">
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">
                                     Correo electrónico
                                 </label>
                                 <div className="flex items-center w-full bg-white border-2 border-slate-200 overflow-hidden rounded-2xl focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all group shadow-sm">
@@ -179,7 +179,7 @@ export default function LoginPage() {
 
                             {/* Contraseña */}
                             <div className="space-y-1.5">
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">
                                     Contraseña
                                 </label>
                                 <div className="flex items-center w-full bg-white border-2 border-slate-200 overflow-hidden rounded-2xl focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all group shadow-sm">
@@ -227,9 +227,9 @@ export default function LoginPage() {
                                             <polyline points="20 6 9 17 4 12"></polyline>
                                         </svg>
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Recordarme</span>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recordarme</span>
                                 </label>
-                                <Link href="/olvide-password" className="text-[10px] font-black uppercase tracking-wider text-cyan-500 hover:text-purple-600 transition-colors">
+                                <Link href="/olvide-password" className="text-xs font-bold uppercase tracking-wider text-cyan-500 hover:text-purple-600 transition-colors">
                                     ¿Olvidaste la clave?
                                 </Link>
                             </div>
@@ -238,7 +238,7 @@ export default function LoginPage() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="group w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-cyan-500/30 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed mt-1"
+                                className="group w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-wide hover:brightness-110 transition-all shadow-xl shadow-cyan-500/30 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed mt-1"
                             >
                                 {loading ? (
                                     <Loader2 className="animate-spin" size={20} />
@@ -256,11 +256,11 @@ export default function LoginPage() {
                     <div className="space-y-4 text-center">
                         <p className="text-sm text-slate-500 font-medium">
                             ¿No tienes cuenta?{' '}
-                            <Link href="/register" className="font-black text-slate-900 hover:text-cyan-500 transition-colors underline underline-offset-2 decoration-slate-200 hover:decoration-cyan-300">
+                            <Link href="/register" className="font-bold text-slate-900 hover:text-cyan-500 transition-colors underline underline-offset-2 decoration-slate-200 hover:decoration-cyan-300">
                                 Registra tu negocio gratis
                             </Link>
                         </p>
-                        <Link href="/" className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-500 transition-colors">
+                        <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-300 hover:text-slate-500 transition-colors">
                             ← Volver a citiox.com
                         </Link>
                     </div>

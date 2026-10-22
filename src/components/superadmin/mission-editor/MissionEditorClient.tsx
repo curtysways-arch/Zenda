@@ -423,7 +423,7 @@ export default function MissionEditorClient({
         <div>
           <div className="flex items-center gap-2">
             <Trophy className="w-6 h-6 text-amber-400" />
-            <h1 className="text-2xl font-black tracking-tight">Editor de Misiones de Citiox</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Editor de Misiones de Citiox</h1>
           </div>
           <p className="text-slate-400 text-sm mt-1">Diseña misiones globales desacopladas para toda la red de negocios y usuarios.</p>
         </div>
@@ -615,7 +615,7 @@ export default function MissionEditorClient({
                       rows={6}
                       className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-slate-800"
                     />
-                    <span className="text-[10px] text-slate-400 mt-1 block">Configura filtros como monto mínimo o categorías específicas.</span>
+                    <span className="text-xs text-slate-400 mt-1 block">Configura filtros como monto mínimo o categorías específicas.</span>
                   </div>
                 </div>
               )}
@@ -673,7 +673,7 @@ export default function MissionEditorClient({
                           >
                             <div className="flex justify-between items-start">
                               <div>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider">{c.tipo}</span>
+                                <span className="text-xs uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider">{c.tipo}</span>
                                 <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">{c.nombre}</h4>
                                 <p className="text-xs text-slate-400 mt-1 line-clamp-2">{c.descripcion}</p>
                               </div>
@@ -802,7 +802,7 @@ export default function MissionEditorClient({
               {activeTab === 'preview' && (
                 <div className="space-y-6">
                   <div className="border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-4 bg-slate-50 dark:bg-slate-950">
-                    <span className="text-[10px] bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded text-slate-700 dark:text-slate-300 font-bold uppercase">Vista previa del negocio</span>
+                    <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded text-slate-700 dark:text-slate-300 font-bold uppercase">Vista previa del negocio</span>
                     
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
                       {imagenUrl ? (
@@ -816,14 +816,14 @@ export default function MissionEditorClient({
                       <div className="p-6 space-y-4">
                         <div className="flex justify-between items-start">
                           <div>
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{mapCategory(categoria)}</span>
-                            <h2 className="text-lg font-black text-slate-800 dark:text-slate-200 mt-1">{nombre || 'Misión sin título'}</h2>
+                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">{mapCategory(categoria)}</span>
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mt-1">{nombre || 'Misión sin título'}</h2>
                           </div>
-                          <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                            dificultad === 'EASY' ? 'bg-emerald-500/10 text-emerald-600' :
-                            dificultad === 'MEDIUM' ? 'bg-blue-500/10 text-blue-600' :
-                            dificultad === 'HARD' ? 'bg-orange-500/10 text-orange-600' : 'bg-rose-500/10 text-rose-600'
-                          }`}>{mapDifficulty(dificultad)}</span>
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+ dificultad === 'EASY' ? 'bg-emerald-500/10 text-emerald-600' :
+ dificultad === 'MEDIUM' ? 'bg-blue-500/10 text-blue-600' :
+ dificultad === 'HARD' ? 'bg-orange-500/10 text-orange-600' : 'bg-rose-500/10 text-rose-600'
+ }`}>{mapDifficulty(dificultad)}</span>
                         </div>
 
                         <p className="text-slate-500 text-sm font-medium leading-relaxed">{descripcion || 'Sin descripción'}</p>
@@ -938,13 +938,13 @@ export default function MissionEditorClient({
                     <div className="p-6 space-y-4">
                       <div className="flex justify-between items-start">
                         <div>
-                          <span className="text-[9px] bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">{mapCategory(m.categoria)}</span>
+                          <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">{mapCategory(m.categoria)}</span>
                           <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mt-1.5">{m.nombre}</h3>
                         </div>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          m.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-600' :
-                          m.status === 'ARCHIVED' ? 'bg-slate-500/10 text-slate-500' : 'bg-amber-500/10 text-amber-600'
-                        }`}>{mapStatus(m.status)}</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+ m.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-600' :
+ m.status === 'ARCHIVED' ? 'bg-slate-500/10 text-slate-500' : 'bg-amber-500/10 text-amber-600'
+ }`}>{mapStatus(m.status)}</span>
                       </div>
 
                       <p className="text-slate-500 text-xs line-clamp-3">{m.descripcion}</p>

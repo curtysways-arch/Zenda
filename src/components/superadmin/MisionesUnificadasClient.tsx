@@ -394,23 +394,23 @@ export default function MisionesUnificadasClient({
   const inputCls = 'w-full px-4 py-3 !bg-white dark:!bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:outline-none focus:border-indigo-500 !text-slate-900 dark:!text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 [color-scheme:light] dark:[color-scheme:dark] transition-colors';
   const selectCls = 'w-full px-4 py-3 bg-white border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:outline-none focus:border-indigo-500 text-slate-800 placeholder:text-slate-400';
 
-  const labelCls='block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1';
+  const labelCls='block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1';
 
   return (
     <div className="space-y-8">
       {toast&&(
-        <div className={cn('fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-xl border text-xs font-black uppercase tracking-widest',
+        <div className={cn('fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-xl border text-xs font-bold uppercase tracking-wide',
           toast.type==='success'?'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800':'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800')}>
           {toast.type==='success'?<CheckCircle2 size={16}/>:<X size={16}/>} {toast.msg}
         </div>
       )}
 
       {/* Tabs Selector */}
-      <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-[2rem] gap-2 border border-slate-200 dark:border-slate-800 max-w-md">
-        <button onClick={() => setActiveTab('MISIONES')} className={cn('flex-1 py-3 text-center rounded-[1.5rem] text-xs font-black uppercase tracking-wider transition-all cursor-pointer', activeTab === 'MISIONES' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200')}>
+      <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl gap-2 border border-slate-200 dark:border-slate-800 max-w-md">
+        <button onClick={() => setActiveTab('MISIONES')} className={cn('flex-1 py-3 text-center rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer', activeTab === 'MISIONES' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200')}>
           Misiones Citiox
         </button>
-        <button onClick={() => setActiveTab('RECOMPENSAS')} className={cn('flex-1 py-3 text-center rounded-[1.5rem] text-xs font-black uppercase tracking-wider transition-all cursor-pointer', activeTab === 'RECOMPENSAS' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200')}>
+        <button onClick={() => setActiveTab('RECOMPENSAS')} className={cn('flex-1 py-3 text-center rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer', activeTab === 'RECOMPENSAS' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200')}>
           Premios y Cupones
         </button>
       </div>
@@ -423,15 +423,15 @@ export default function MisionesUnificadasClient({
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-indigo-500/20 rounded-xl"><Trophy className="text-indigo-400" size={24}/></div>
-                <h1 className="text-2xl font-black tracking-tight">Misiones Citiox</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Misiones Citiox</h1>
               </div>
               <p className="text-slate-400 text-sm">Gestiona campañas para negocios y retos de gamificación para clientes desde un solo lugar.</p>
             </div>
             <div className="flex gap-3 relative z-10 flex-wrap">
-              <button onClick={()=>openCreate('NEGOCIO')} className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-amber-500/20 transition-all cursor-pointer">
+              <button onClick={()=>openCreate('NEGOCIO')} className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg shadow-amber-500/20 transition-all cursor-pointer">
                 <Briefcase size={14}/> Nueva (Negocio)
               </button>
-              <button onClick={()=>openCreate('CLIENTE')} className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-indigo-500/20 transition-all cursor-pointer">
+              <button onClick={()=>openCreate('CLIENTE')} className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg shadow-indigo-500/20 transition-all cursor-pointer">
                 <Users2 size={14}/> Nueva (Cliente)
               </button>
             </div>
@@ -441,8 +441,8 @@ export default function MisionesUnificadasClient({
           <section>
             <div className="flex items-center gap-3 mb-4">
               <div className="p-1.5 bg-amber-100 dark:bg-amber-950/40 rounded-xl"><Briefcase size={16} className="text-amber-600 dark:text-amber-400"/></div>
-              <h2 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-tight">Misiones de Negocio</h2>
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">{businessMissions.length}</span>
+              <h2 className="text-base font-bold text-slate-800 dark:text-white uppercase tracking-tight">Misiones de Negocio</h2>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">{businessMissions.length}</span>
             </div>
             {businessMissions.length===0?(
               <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center">
@@ -457,17 +457,17 @@ export default function MisionesUnificadasClient({
                       <div className="absolute -top-10 -right-10 w-24 h-24 rounded-full opacity-10 group-hover:scale-150 transition-transform duration-500" style={{backgroundColor:m.color||'#f59e0b'}}/>
                       <div className="relative z-10 flex items-center justify-between mb-3">
                         <div className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-800" style={{backgroundColor:`${m.color||'#f59e0b'}15`}}>{renderIcon(m.icono||'Trophy',m.color||'#f59e0b')}</div>
-                        <span className={cn('px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border',m.activa?'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400':'bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-800 dark:border-slate-700')}>{m.activa?'Activa':'Pausada'}</span>
+                        <span className={cn('px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border',m.activa?'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400':'bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-800 dark:border-slate-700')}>{m.activa?'Activa':'Pausada'}</span>
                       </div>
-                      <h3 className="font-black text-slate-900 dark:text-white text-sm mb-1 uppercase tracking-tight">{m.titulo}</h3>
-                      <p className="text-[11px] text-slate-400 line-clamp-2 mb-3">{m.descripcion}</p>
-                      <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                      <h3 className="font-bold text-slate-900 dark:text-white text-sm mb-1 uppercase tracking-tight">{m.titulo}</h3>
+                      <p className="text-xs text-slate-400 line-clamp-2 mb-3">{m.descripcion}</p>
+                      <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider">
                         <div className="flex justify-between"><span className="text-slate-400">Tipo</span><span className="text-slate-700 dark:text-slate-300">{m.tipo.replace(/_/g,' ')} · Meta {m.objetivo}</span></div>
                         <div className="flex justify-between"><span className="text-slate-400">Premio</span><span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-1"><Sparkles size={10}/>{rewardLabel(m)}</span></div>
                       </div>
                     </div>
                     <div className="px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex justify-between">
-                      <button onClick={()=>toggleActive(m)} className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 cursor-pointer active:scale-95 transition-all">{m.activa?'Pausar':'Activar'}</button>
+                      <button onClick={()=>toggleActive(m)} className="text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 cursor-pointer active:scale-95 transition-all">{m.activa?'Pausar':'Activar'}</button>
                       <div className="flex gap-1">
                         <button onClick={()=>openEditBusiness(m)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-950/20 cursor-pointer transition-colors"><Edit2 size={14}/></button>
                         <button onClick={()=>deleteBusiness(m.id)} className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/20 cursor-pointer transition-colors"><Trash2 size={14}/></button>
@@ -483,8 +483,8 @@ export default function MisionesUnificadasClient({
           <section>
             <div className="flex items-center gap-3 mb-4">
               <div className="p-1.5 bg-indigo-100 dark:bg-indigo-950/40 rounded-xl"><Users2 size={16} className="text-indigo-600 dark:text-indigo-400"/></div>
-              <h2 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-tight">Misiones de Cliente</h2>
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">{clientMissions.length}</span>
+              <h2 className="text-base font-bold text-slate-800 dark:text-white uppercase tracking-tight">Misiones de Cliente</h2>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">{clientMissions.length}</span>
             </div>
             {clientMissions.length===0?(
               <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center">
@@ -498,11 +498,11 @@ export default function MisionesUnificadasClient({
                     <div className="p-5 flex-1">
                       <div className="flex items-center justify-between mb-3">
                         <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl"><Trophy size={16} className="text-indigo-500"/></div>
-                        <span className={cn('px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border',statusStyle(m.status))}>{statusLabel(m.status)}</span>
+                        <span className={cn('px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border',statusStyle(m.status))}>{statusLabel(m.status)}</span>
                       </div>
-                      <h3 className="font-black text-slate-900 dark:text-white text-sm mb-1 uppercase tracking-tight">{m.nombre}</h3>
-                      <p className="text-[11px] text-slate-400 line-clamp-2 mb-3">{m.descripcion}</p>
-                      <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                      <h3 className="font-bold text-slate-900 dark:text-white text-sm mb-1 uppercase tracking-tight">{m.nombre}</h3>
+                      <p className="text-xs text-slate-400 line-clamp-2 mb-3">{m.descripcion}</p>
+                      <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider">
                         <div className="flex justify-between"><span className="text-slate-400">Trigger</span><span className="text-slate-700 dark:text-slate-300">{TRIGGER_LABELS[m.triggerEvent]||m.triggerEvent} x{m.cantidadMeta}</span></div>
                         <div className="flex justify-between"><span className="text-slate-400">Categoria</span><span className="text-slate-700 dark:text-slate-300">{m.categoria}</span></div>
                         {(() => {
@@ -513,7 +513,7 @@ export default function MisionesUnificadasClient({
                             return (
                               <div className="flex justify-between gap-2">
                                 <span className="text-slate-400 shrink-0">Premio</span>
-                                <span className="text-emerald-600 dark:text-emerald-400 font-black text-right truncate">
+                                <span className="text-emerald-600 dark:text-emerald-400 font-bold text-right truncate">
                                   🎁 {assignedNames.join(', ')}
                                 </span>
                               </div>
@@ -531,7 +531,7 @@ export default function MisionesUnificadasClient({
                       </div>
                     </div>
                     <div className="px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex justify-between">
-                      {m.status!=='PUBLISHED'?<button onClick={()=>publishClient(m.id)} className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer active:scale-95 transition-all">Publicar</button>:<div/>}
+                      {m.status!=='PUBLISHED'?<button onClick={()=>publishClient(m.id)} className="text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer active:scale-95 transition-all">Publicar</button>:<div/>}
                       <div className="flex gap-1">
                         <button onClick={()=>openEditClient(m)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-950/20 cursor-pointer transition-colors"><Edit2 size={14}/></button>
                         <button onClick={()=>deleteClient(m.id)} className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/20 cursor-pointer transition-colors"><Trash2 size={14}/></button>
@@ -551,12 +551,12 @@ export default function MisionesUnificadasClient({
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-indigo-500/20 rounded-xl"><Coins className="text-indigo-400" size={24}/></div>
-                <h1 className="text-2xl font-black tracking-tight">Premios y Cupones Globales</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Premios y Cupones Globales</h1>
               </div>
               <p className="text-slate-400 text-sm">Gestiona el catálogo central de recompensas que los negocios pueden usar para sus misiones de cliente.</p>
             </div>
             <div className="flex gap-3 relative z-10">
-              <button onClick={openCreateReward} className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-indigo-500/20 transition-all cursor-pointer">
+              <button onClick={openCreateReward} className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg shadow-indigo-500/20 transition-all cursor-pointer">
                 <Plus size={14}/> Nuevo Premio / Cupón
               </button>
             </div>
@@ -568,17 +568,17 @@ export default function MisionesUnificadasClient({
               <div key={r.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-all">
                 <div className="p-6 flex-1">
                   <div className="flex justify-between items-center mb-4">
-                    <div className={cn('px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border', r.tipo === 'COUPON' ? 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-950/20 dark:border-indigo-900 dark:text-indigo-400' : 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900 dark:text-emerald-400')}>
+                    <div className={cn('px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border', r.tipo === 'COUPON' ? 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-950/20 dark:border-indigo-900 dark:text-indigo-400' : 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900 dark:text-emerald-400')}>
                       {r.tipo}
                     </div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">{r.handler}</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase">{r.handler}</span>
                   </div>
-                  <h3 className="font-black text-slate-900 dark:text-white text-base mb-1 uppercase tracking-tight">{r.nombre}</h3>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base mb-1 uppercase tracking-tight">{r.nombre}</h3>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{r.descripcion || 'Sin descripción'}</p>
                   
                   {/* Detalles Config */}
-                  <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-3.5 text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                    <span className="block text-[9px] uppercase tracking-wider text-slate-400 mb-1">Configuración técnica</span>
+                  <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-3.5 text-xs font-bold text-slate-600 dark:text-slate-400">
+                    <span className="block text-xs uppercase tracking-wider text-slate-400 mb-1">Configuración técnica</span>
                     {r.tipo === 'COUPON' ? (
                       <div>Cupón: {r.config?.valor || 0}{r.config?.tipo === 'PORCENTAJE' ? '%' : ' USD'} de descuento</div>
                     ) : r.tipo === 'XP' ? (
@@ -586,7 +586,7 @@ export default function MisionesUnificadasClient({
                     ) : r.tipo === 'FREE_DAYS' ? (
                       <div>Días: {r.config?.dias || 0} días gratis de suscripción</div>
                     ) : (
-                      <pre className="text-[9px] overflow-x-auto">{JSON.stringify(r.config, null, 2)}</pre>
+                      <pre className="text-xs overflow-x-auto">{JSON.stringify(r.config, null, 2)}</pre>
                     )}
                   </div>
                 </div>
@@ -609,22 +609,22 @@ export default function MisionesUnificadasClient({
               <div className="flex items-center gap-3 flex-wrap">
                 {!(editingBusiness||editingClient)&&(
                   <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1">
-                    <button type="button" onClick={()=>setMissionType('CLIENTE')} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer',missionType==='CLIENTE'?'bg-indigo-600 text-white shadow-sm':'text-slate-500 hover:text-slate-700 dark:text-slate-400')}>
+                    <button type="button" onClick={()=>setMissionType('CLIENTE')} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all cursor-pointer',missionType==='CLIENTE'?'bg-indigo-600 text-white shadow-sm':'text-slate-500 hover:text-slate-700 dark:text-slate-400')}>
                       <Users2 size={12}/> Cliente
                     </button>
-                    <button type="button" onClick={()=>setMissionType('NEGOCIO')} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer',missionType==='NEGOCIO'?'bg-amber-500 text-white shadow-sm':'text-slate-500 hover:text-slate-700 dark:text-slate-400')}>
+                    <button type="button" onClick={()=>setMissionType('NEGOCIO')} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all cursor-pointer',missionType==='NEGOCIO'?'bg-amber-500 text-white shadow-sm':'text-slate-500 hover:text-slate-700 dark:text-slate-400')}>
                       <Briefcase size={12}/> Negocio
                     </button>
                   </div>
                 )}
-                <h3 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight">
+                <h3 className="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-tight">
                   {editingBusiness?'Editar Misión de Negocio':editingClient?'Editar Misión de Cliente':missionType==='NEGOCIO'?'Nueva Misión de Negocio':'Nueva Misión de Cliente'}
                 </h3>
               </div>
               <button onClick={()=>setIsModalOpen(false)} className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer active:scale-95 transition-all shrink-0"><X size={16}/></button>
             </div>
 
-            <div className={cn('px-8 py-2 text-[9px] font-black uppercase tracking-widest flex items-center gap-2',missionType==='NEGOCIO'?'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400':'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400')}>
+            <div className={cn('px-8 py-2 text-xs font-bold uppercase tracking-wide flex items-center gap-2',missionType==='NEGOCIO'?'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400':'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400')}>
               {missionType==='NEGOCIO'?<><Briefcase size={10}/> El dueño del negocio completa esta misión — la recompensa beneficia a su cuenta Citiox</>:<><Users2 size={10}/> El cliente final completa esta misión — la recompensa puede ser global o del negocio</>}
             </div>
 
@@ -646,7 +646,7 @@ export default function MisionesUnificadasClient({
 
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800"/>
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{missionType==='NEGOCIO'?'Acción y Objetivo':'Trigger y Condiciones'}</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">{missionType==='NEGOCIO'?'Acción y Objetivo':'Trigger y Condiciones'}</span>
                 <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800"/>
               </div>
 
@@ -830,7 +830,7 @@ export default function MisionesUnificadasClient({
                                 {sel&&<CheckCircle2 size={10} className="text-white"/>}
                               </div>
                               <span className="truncate">{r.nombre}</span>
-                              <span className="text-[9px] text-slate-400 ml-auto shrink-0">{r.tipo}</span>
+                              <span className="text-xs text-slate-400 ml-auto shrink-0">{r.tipo}</span>
                             </button>
                           );
                         })}
@@ -841,8 +841,8 @@ export default function MisionesUnificadasClient({
               )}
 
               <div className="pt-5 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
-                <button type="button" onClick={()=>setIsModalOpen(false)} className="px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all cursor-pointer">Cancelar</button>
-                <button type="submit" disabled={submitting} className={cn('inline-flex items-center gap-2 px-6 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg active:scale-95 disabled:opacity-50 transition-all cursor-pointer',missionType==='NEGOCIO'?'bg-amber-500 hover:bg-amber-400 shadow-amber-500/20':'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20')}>
+                <button type="button" onClick={()=>setIsModalOpen(false)} className="px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all cursor-pointer">Cancelar</button>
+                <button type="submit" disabled={submitting} className={cn('inline-flex items-center gap-2 px-6 py-3 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg active:scale-95 disabled:opacity-50 transition-all cursor-pointer',missionType==='NEGOCIO'?'bg-amber-500 hover:bg-amber-400 shadow-amber-500/20':'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20')}>
                   {submitting?<Loader2 size={14} className="animate-spin"/>:<Save size={14}/>}
                   {submitting?'Guardando...':(editingBusiness||editingClient)?'Guardar Cambios':'Crear Misión'}
                 </button>
@@ -857,7 +857,7 @@ export default function MisionesUnificadasClient({
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
             <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 bg-slate-50 dark:bg-slate-900/80">
-              <h3 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight">
+              <h3 className="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-tight">
                 {editingReward ? 'Editar Premio / Cupón' : 'Nuevo Premio / Cupón Global'}
               </h3>
               <button onClick={()=>setIsRewardModalOpen(false)} className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer active:scale-95 transition-all shrink-0"><X size={16}/></button>
@@ -878,7 +878,7 @@ export default function MisionesUnificadasClient({
                 <div>
                   <label className={labelCls}>Costo de Canje (Puntos de Fidelidad) *</label>
                   <input type="number" required min={0} value={rewardCostoPuntos} onChange={e=>setRewardCostoPuntos(e.target.value)} placeholder="Ej: 500" className={inputCls}/>
-                  <p className="text-[10px] text-slate-400 mt-1">Costo en puntos que pagará el cliente en el catálogo para canjear este premio.</p>
+                  <p className="text-xs text-slate-400 mt-1">Costo en puntos que pagará el cliente en el catálogo para canjear este premio.</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -960,13 +960,13 @@ export default function MisionesUnificadasClient({
                 )}
 
                 {rewardTipo === 'SERVICE' && (
-                  <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-semibold leading-relaxed mb-4">
+                  <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold leading-relaxed mb-4">
                     💡 <strong>Premio de tipo Servicio:</strong> No requiere configurar un valor aquí. Cuando un negocio instale una misión con este premio, podrá seleccionar uno de sus servicios locales (ej. Masaje, Facial, Manicura) para entregarlo gratis al cliente que complete el reto.
                   </div>
                 )}
 
                 {rewardTipo === 'GIFT' && (
-                  <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-semibold leading-relaxed mb-4">
+                  <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold leading-relaxed mb-4">
                     💡 <strong>Premio de tipo Regalo Físico:</strong> No requiere configurar un valor aquí. El negocio podrá definir el regalo físico o producto de stock local que entregará en mano al cliente en la recepción cuando complete el reto.
                   </div>
                 )}
@@ -980,8 +980,8 @@ export default function MisionesUnificadasClient({
               </div>
 
               <div className="pt-5 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
-                <button type="button" onClick={()=>setIsRewardModalOpen(false)} className="px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all cursor-pointer">Cancelar</button>
-                <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg active:scale-95 disabled:opacity-50 transition-all cursor-pointer">
+                <button type="button" onClick={()=>setIsRewardModalOpen(false)} className="px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all cursor-pointer">Cancelar</button>
+                <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg active:scale-95 disabled:opacity-50 transition-all cursor-pointer">
                   {submitting ? <Loader2 size={14} className="animate-spin"/> : <Save size={14}/>}
                   {submitting ? 'Guardando...' : editingReward ? 'Guardar Cambios' : 'Crear Recompensa'}
                 </button>

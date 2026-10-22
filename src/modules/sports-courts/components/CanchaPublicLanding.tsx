@@ -1,31 +1,17 @@
 'use client';
-
-import React, { useState, useEffect } from 'react';
+/**
+ * Página pública de canchas: reservar en 3 toques.
+ *   1. Día  ·  2. Duración  ·  3. Hora libre de la cancha  →  nombre y WhatsApp  →  listo.
+ * Las horas libres y el precio vienen del servidor (/api/public/{slug}/canchas) y se calculan
+ * con la misma lógica que valida la reserva, así lo que ve el cliente es lo que se cobra.
+ */
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import HeroCarousel from '@/components/HeroCarousel';
-import { 
-  Rocket, 
-  Trophy, 
-  Clock, 
-  Star, 
-  ChevronRight, 
-  MapPin, 
-  Calendar, 
-  Sparkles, 
-  Zap, 
-  User, 
-  Home, 
-  GraduationCap, 
-  Check,
-  Coffee,
-  Car,
-  Wifi,
-  Shirt,
-  ShoppingBag,
-  ExternalLink,
-  Users,
-  Award
+import {
+  Calendar, Clock, MapPin, Users, ChevronRight, X, Check, MessageCircle, Trophy,
+  Coffee, Car, Wifi, Shirt, ShoppingBag, GraduationCap, Loader2, Sun, Moon, Zap,
 } from 'lucide-react';
+import { buildSlots, slotPrice, toMin, type Busy } from '@/lib/courts/slots';
 
 export interface CanchaPublicLandingProps {
   negocio: any;
@@ -37,627 +23,590 @@ export interface CanchaPublicLandingProps {
   hasCoursesModule?: boolean;
 }
 
+type Court = {
+  id: string;
+  nombre: string;
+  tipo: string | null;
+  capacidad: number | null;
+  features: string[];
+  precioHora: number;
+  duracionMin: number;
+  imagen: string | null;
+  promos: any[];
+  auto: any;
+  ocupado: Busy[];
+};
+
+const money = (n: number) => `$${(Number(n) || 0).toFixed(Number(n) % 1 === 0 ? 0 : 2)}`;
+const pad = (n: number) => String(n).padStart(2, '0');
+const localDateStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+function waLink(phone?: string | null, text?: string) {
+  if (!phone) return null;
+  let d = String(phone).replace(/\D/g, '');
+  if (d.startsWith('0')) d = '593' + d.slice(1);
+  return `https://wa.me/${d}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}
+
 export default function CanchaPublicLanding({
   negocio,
   canchas = [],
   torneos = [],
-  sedes = [],
   paginasPersonalizadas = [],
   cursos = [],
-  hasCoursesModule = false
+  hasCoursesModule = false,
 }: CanchaPublicLandingProps) {
-  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
-  const defaultBanner = 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&q=80&w=1200';
+  const brand: string = negocio?.colorPrimario || '#16a34a';
+  const slug: string = negocio?.slug;
+  const nombre: string = negocio?.nombre || 'Canchas';
+  const ap = String(negocio?.horarioApertura || '08:00').slice(0, 5);
+  const ci = String(negocio?.horarioCierre || '22:00').slice(0, 5);
 
-  // Extraer las imágenes subidas por el usuario en el admin
-  const userImages: string[] = [];
-  if (negocio.imagenes && Array.isArray(negocio.imagenes)) {
-    negocio.imagenes.forEach((img: any) => {
-      const url = typeof img === 'string' ? img : img.url;
-      if (url && !userImages.includes(url)) userImages.push(url);
+  // Días para elegir: hoy + 13
+  const days = useMemo(() => {
+    const out: { str: string; top: string; num: number }[] = [];
+    const base = new Date();
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
+      const wd = d.toLocaleDateString('es-EC', { weekday: 'short' }).replace('.', '');
+      out.push({ str: localDateStr(d), top: i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : wd.charAt(0).toUpperCase() + wd.slice(1), num: d.getDate() });
+    }
+    return out;
+  }, []);
+
+  const [fecha, setFecha] = useState(days[0].str);
+  const [horas, setHoras] = useState(1);
+  const [data, setData] = useState<{ apertura: string; cierre: string; canchas: Court[] } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filtro, setFiltro] = useState<string>('TODAS');
+  const [elegido, setElegido] = useState<{ court: Court; time: string; end: string; total: number; base: number; label: string } | null>(null);
+  const [heroIdx, setHeroIdx] = useState(0);
+  const reservarRef = useRef<HTMLDivElement>(null);
+  // Lo que depende de la hora del dispositivo se muestra después de montar (evita diferencias con el servidor)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const load = async (f: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await fetch(`/api/public/${slug}/canchas?fecha=${f}`, { cache: 'no-store' });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'No se pudo cargar');
+      setData(d);
+    } catch (e: any) {
+      setError(e.message || 'No se pudo cargar la disponibilidad');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { load(fecha); }, [fecha]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Imágenes reales del negocio (sin fotos genéricas)
+  const heroImages: string[] = useMemo(() => {
+    const out: string[] = [];
+    (Array.isArray(negocio?.imagenes) ? negocio.imagenes : []).forEach((img: any) => {
+      const u = typeof img === 'string' ? img : img?.url;
+      if (u && !out.includes(u)) out.push(u);
     });
-  }
-
-  const heroImages = userImages.length > 0 
-    ? userImages 
-    : [
-        negocio.bannerUrl || defaultBanner,
-        'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&q=80&w=1200',
-        'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&q=80&w=1200'
-      ];
-
-  // Cambiar foto activa del hero cada 4 segundos
+    if (negocio?.bannerUrl && !out.includes(negocio.bannerUrl)) out.push(negocio.bannerUrl);
+    return out;
+  }, [negocio]);
   useEffect(() => {
-    if (heroImages.length <= 1) return;
-    const interval = setInterval(() => {
-      setActiveHeroIndex(prev => (prev + 1) % heroImages.length);
-    }, 4000);
-    return () => clearInterval(interval);
+    if (heroImages.length < 2) return;
+    const t = setInterval(() => setHeroIdx((i) => (i + 1) % heroImages.length), 5000);
+    return () => clearInterval(t);
   }, [heroImages.length]);
 
-  const rawCanchas = (Array.isArray(canchas) && canchas.length > 0)
-    ? canchas
-    : (Array.isArray(negocio?.services) ? negocio.services : []);
+  const isToday = fecha === days[0].str;
+  const nowMin = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : null;
 
-  const canchasConDisponibilidad = rawCanchas.map((c: any) => {
-    let img = c.imageUrl || c.imagenUrl;
-    if (!img && Array.isArray(c.imagenes) && c.imagenes.length > 0) {
-      img = typeof c.imagenes[0] === 'string' ? c.imagenes[0] : c.imagenes[0]?.url;
-    }
-    if (!img && Array.isArray(c.Imagen) && c.Imagen.length > 0) {
-      img = typeof c.Imagen[0] === 'string' ? c.Imagen[0] : c.Imagen[0]?.url;
-    }
-    return {
-      ...c,
-      imageUrl: img || defaultBanner
-    };
-  });
+  const tipos = useMemo(() => {
+    const set = new Set<string>();
+    (data?.canchas || []).forEach((c) => c.tipo && set.add(c.tipo));
+    return Array.from(set);
+  }, [data]);
+
+  const courts = (data?.canchas || []).filter((c) => filtro === 'TODAS' || c.tipo === filtro);
+
+  const slotsFor = (c: Court) => {
+    const dur = Math.round(horas * 60);
+    const step = Number.isInteger(horas) && c.duracionMin % 60 === 0 ? 60 : 30;
+    return buildSlots({ open: data?.apertura || ap, close: data?.cierre || ci, durationMin: dur, stepMin: step, busy: c.ocupado, nowMin })
+      .filter((s) => s.available)
+      .map((s) => ({ ...s, ...slotPrice({ dateStr: fecha, time: s.time, pricePerHour: c.precioHora, hours: horas, promos: c.promos, auto: c.auto }) }));
+  };
+
+  const openNow = (() => {
+    const a = toMin(ap), c = toMin(ci);
+    if (isNaN(a) || isNaN(c)) return null;
+    const n = new Date().getHours() * 60 + new Date().getMinutes();
+    return c > a ? n >= a && n < c : n >= a || n < c;
+  })();
+
+  const amenities = [
+    negocio?.tieneVestidores && { Icon: Shirt, label: 'Vestidores' },
+    negocio?.tieneParking && { Icon: Car, label: 'Parqueadero' },
+    negocio?.tieneCafeteria && { Icon: Coffee, label: 'Cafetería' },
+    negocio?.tieneWifi && { Icon: Wifi, label: 'WiFi' },
+    negocio?.tieneTienda && { Icon: ShoppingBag, label: 'Tienda' },
+  ].filter(Boolean) as { Icon: any; label: string }[];
+
+  const wa = waLink(negocio?.whatsapp, `Hola ${nombre}, quiero información para reservar una cancha.`);
+  const mapsUrl = negocio?.direccion
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${nombre} ${negocio.direccion} ${negocio?.ciudad || ''}`)}`
+    : null;
+  const preciosDesde = (data?.canchas || canchas).map((c: any) => Number(c.precioHora ?? c.precio ?? 0)).filter((n: number) => n > 0);
+  const desde = preciosDesde.length ? Math.min(...preciosDesde) : null;
 
   return (
-    <div className="min-h-screen bg-[#0a0f1d] text-white font-sans pb-32 relative overflow-x-hidden">
-      {/* 1. TOP BAR DEMO (AMBER) - Solo visible en modo demo */}
-      {(negocio?.isDemo || negocio?.slug === 'demo' || negocio?.slug === 'cancha-demo') && (
-        <div className="bg-amber-500 text-slate-950 px-4 py-2 flex items-center justify-between gap-2 shadow-md z-[60] relative">
-          <div className="flex items-center gap-2 max-w-7xl mx-auto w-full justify-between">
-            <div className="flex items-center gap-2">
-              <Rocket className="size-4 animate-bounce" />
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">
-                ESTÁS VIENDO UNA DEMO DEL SISTEMA
-              </span>
-            </div>
-            <Link
-              href="/register"
-              className="bg-white text-slate-950 px-3.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-md"
-            >
-              CREAR MI NEGOCIO GRATIS
-            </Link>
-          </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-28 md:pb-10 md:pt-[88px]">
+      {(negocio?.isDemo === true) && (
+        <div className="bg-amber-400 text-slate-900 text-sm px-4 py-2 text-center">
+          Estás viendo una demo. <Link href="/register" className="font-semibold underline">Crea tu negocio gratis</Link>
         </div>
       )}
 
-      {/* 2. HEADER CON LOGO, SEDE Y ACCESOS RÁPIDOS */}
-      <header className="sticky top-0 z-50 bg-[#0a0f1d]/90 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          {/* Logo + Nombre */}
-          <div className="flex items-center gap-3">
-            {negocio.logoUrl ? (
-              <img
-                src={negocio.logoUrl}
-                alt={negocio.nombre}
-                className="size-10 rounded-xl object-contain bg-white/10 p-1 shadow-sm border border-slate-800"
-              />
-            ) : (
-              <div className="bg-emerald-500 p-2 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-bold">
-                <Trophy className="size-5" />
-              </div>
+      {/* Encabezado */}
+      {/* Solo en celular: en computadora ya está la barra superior de la plataforma */}
+      <header className="md:hidden sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-3">
+          {negocio?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={negocio.logoUrl} alt="" className="w-10 h-10 rounded-xl object-cover ring-1 ring-slate-200" />
+          ) : (
+            <span style={{ backgroundColor: brand }} className="w-10 h-10 rounded-xl text-white flex items-center justify-center"><Trophy className="w-5 h-5" /></span>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="font-bold leading-tight truncate">{nombre}</p>
+            {mounted && openNow !== null && (
+              <p className={`text-xs font-medium ${openNow ? 'text-emerald-600' : 'text-slate-500'}`}>
+                {openNow ? `Abierto · hasta ${ci}` : `Cerrado · abre ${ap}`}
+              </p>
             )}
-            <h1 className="text-sm sm:text-base font-black tracking-tight text-white uppercase italic">
-              {negocio.nombre || 'CANCHA LOS CAMPEONES'}
-            </h1>
           </div>
-
-          {/* Selector de Sede Ubicación (Middle Pill) */}
-          <div className="hidden md:flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-4 py-1.5 rounded-full text-xs font-black text-slate-300">
-            <MapPin className="size-3.5 text-emerald-400" />
-            <span>{negocio.ciudad || negocio.direccion || 'SIMÓN BOLÍVAR'}</span>
-          </div>
-
-          {/* Botones de Acceso Rápido */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href={`/${negocio.slug}/mis-reservas`}
-              className="bg-white text-slate-950 hover:bg-slate-100 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md transition-all"
-            >
-              <Calendar className="size-4" />
-              <span className="hidden sm:inline">MIS RESERVAS</span>
-              <span className="bg-emerald-500 text-slate-950 size-4 rounded-full text-[10px] font-black flex items-center justify-center">0</span>
-            </Link>
-
-            <button className="p-2 text-slate-400 hover:text-white relative rounded-full bg-slate-900 border border-slate-800">
-              <span className="absolute top-1.5 right-1.5 size-2 bg-emerald-400 rounded-full border-2 border-slate-950" />
-              <Clock className="size-4 sm:size-5" />
-            </button>
-            <Link
-              href={`/${negocio.slug}/perfil`}
-              className="size-9 sm:size-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/40 text-emerald-400 hover:scale-105 transition-transform"
-            >
-              <User className="size-5" />
-            </Link>
-          </div>
+          <Link href={`/${slug}/mis-reservas`} className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100">
+            <Calendar className="w-4 h-4" /> Mis reservas
+          </Link>
+          <button
+            onClick={() => reservarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            style={{ backgroundColor: brand }}
+            className="px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
+          >
+            Reservar
+          </button>
         </div>
       </header>
 
-      {/* 3. HERO SECTION CON CAROUSEL DE TARJETAS FLOTANTES */}
-      <section className="relative px-4 py-6 max-w-7xl mx-auto">
-        <div className="relative overflow-hidden rounded-[3rem] bg-slate-900 aspect-[4/5] md:aspect-[21/9] flex flex-col justify-between shadow-2xl border border-white/10 group/hero">
-          <HeroCarousel images={heroImages} activeIndex={activeHeroIndex} />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-[#0a0f1d]" />
-
-          {/* Título & Subtítulo Hero */}
-          <div className="relative z-10 h-full flex flex-col pt-10 md:pt-16">
-            <div className="px-6 text-center space-y-3 max-w-3xl mx-auto">
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl uppercase italic">
-                {negocio.heroTitulo || 'DONDE EL JUEGO SE VIVE AL MÁXIMO'}
-              </h2>
-              <p className="text-slate-300 text-xs sm:text-sm font-semibold max-w-xl mx-auto opacity-90 italic leading-relaxed">
-                "{negocio.heroSubtitulo || 'Instalaciones de alto nivel diseñadas para vivir el deporte al máximo.'}"
+      <main className="max-w-5xl mx-auto px-4">
+        {/* Portada */}
+        <section className="pt-4">
+          <div className="relative rounded-3xl overflow-hidden text-white min-h-[220px] md:min-h-[300px] flex items-end" style={{ backgroundColor: brand }}>
+            {heroImages.map((src, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={src} src={src} alt="" className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === heroIdx ? 'opacity-100' : 'opacity-0'}`} />
+            ))}
+            <div className={`absolute inset-0 ${heroImages.length ? 'bg-gradient-to-t from-black/75 via-black/30 to-transparent' : 'bg-gradient-to-br from-black/10 to-black/40'}`} />
+            <div className="relative p-5 md:p-8 w-full">
+              <h1 className="text-2xl md:text-4xl font-bold leading-tight max-w-xl">{negocio?.heroTitulo || 'Reserva tu cancha en segundos'}</h1>
+              <p className="text-white/85 mt-1 max-w-lg text-sm md:text-base">
+                {negocio?.heroSubtitulo || 'Mira las horas libres, elige y listo. Te confirmamos por WhatsApp.'}
               </p>
-            </div>
-
-            <div className="flex-grow" />
-
-            {/* Carrusel Flotante de Canchas en la Parte Inferior del Hero */}
-            <div className="w-full pb-6 md:pb-10 z-20">
-              <div
-                className="flex w-full overflow-x-auto snap-x scrollbar-hide gap-3 md:gap-5 pb-4 px-6 justify-start md:justify-center"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              >
-                {canchasConDisponibilidad.map((cancha: any) => {
-                  const horasLibres = cancha.horasDisponiblesHoy ?? 15;
-                  return (
-                    <Link
-                      key={cancha.id}
-                      href={`/${negocio.slug}/servicio/${cancha.id}`}
-                      className="snap-center shrink-0 w-[220px] sm:w-[260px] bg-white/95 hover:bg-white backdrop-blur-2xl p-4 sm:p-5 rounded-[2rem] shadow-2xl hover:shadow-emerald-500/30 transition-all duration-500 transform hover:-translate-y-1 flex items-center justify-between border border-white/20 group"
-                    >
-                      <div className="text-left w-2/3">
-                        <h4 className="font-black text-slate-950 uppercase tracking-tight text-xs sm:text-sm truncate group-hover:text-emerald-700 transition-colors">
-                          {cancha.nombre}
-                        </h4>
-                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest truncate mt-0.5">
-                          {cancha.tipo || 'FÚTBOL 7'}
-                        </p>
-                      </div>
-
-                      <div className="px-2.5 py-1.5 rounded-2xl bg-emerald-50 text-emerald-600 flex flex-col items-center justify-center min-w-[3.2rem] border border-emerald-100 shadow-inner">
-                        <span className="text-base sm:text-xl font-black leading-none">{horasLibres}</span>
-                        <span className="text-[7px] uppercase font-black tracking-widest leading-tight text-center mt-0.5">
-                          HORAS<br />LIBRES
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {/* Indicadores de Paginación Hero (-- -- --) */}
-              <div className="flex justify-center gap-1.5 mt-2">
-                {heroImages.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveHeroIndex(i)}
-                    className={`h-1.5 rounded-full transition-all duration-500 ${
-                      i === activeHeroIndex ? 'w-8 bg-emerald-400' : 'w-2 bg-white/30 hover:bg-white/60'
-                    }`}
-                  />
-                ))}
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+                {desde !== null && <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur">Desde {money(desde)}/hora</span>}
+                <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {ap} – {ci}{mounted && openNow !== null && <><span className={`w-1.5 h-1.5 rounded-full ${openNow ? 'bg-emerald-400' : 'bg-slate-300'}`} />{openNow ? 'Abierto ahora' : 'Cerrado ahora'}</>}</span>
+                {negocio?.direccion && <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur flex items-center gap-1 max-w-full truncate"><MapPin className="w-3.5 h-3.5 shrink-0" /> {negocio.direccion}</span>}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. CATÁLOGO DE CANCHAS */}
-      <section id="canchas" className="max-w-7xl mx-auto px-6 py-10 space-y-8">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
-            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-              CATÁLOGO
-            </span>
-          </div>
-          <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
-            Nuestras Canchas
-          </h3>
-          <p className="text-xs text-slate-400 font-medium mt-1">
-            Selecciona el escenario perfecto para tu próximo partido.
-          </p>
-        </div>
-
-        {/* Grilla de Canchas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {canchasConDisponibilidad.map((cancha: any) => {
-            const extra = typeof cancha.extraInfo === 'string' ? JSON.parse(cancha.extraInfo) : (cancha.extraInfo || {});
-            const canchaTipo = cancha.tipo || extra.tipo || 'FÚTBOL 7';
-            const precioDisplay = cancha.precio || cancha.precioHora || negocio.precioHora || 25;
-            const horasDisponibles = cancha.horasDisponiblesHoy ?? 15;
-
-            return (
-              <Link
-                key={cancha.id}
-                href={`/${negocio.slug}/servicio/${cancha.id}`}
-                className="group bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500 flex flex-col"
-              >
-                <div className="relative aspect-[4/3] overflow-hidden bg-slate-950">
-                  <img
-                    src={cancha.imageUrl || cancha.imagenUrl || defaultBanner}
-                    alt={cancha.nombre}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 left-4 bg-slate-950/90 backdrop-blur-md text-emerald-400 text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest border border-emerald-500/30 shadow-lg">
-                    {canchaTipo}
-                  </div>
-                  <div className="absolute bottom-4 right-4 bg-slate-950/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xl border border-slate-800">
-                    <Star className="size-3.5 text-amber-400 fill-amber-400" />
-                    <span className="text-xs font-black">4.9</span>
-                  </div>
-                </div>
-
-                <div className="p-6 flex-1 flex flex-col justify-between space-y-6">
-                  <div>
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <h4 className="font-black text-xl text-white group-hover:text-emerald-400 transition-colors uppercase italic tracking-tight">
-                        {cancha.nombre}
-                      </h4>
-                      <div className="text-right shrink-0">
-                        <span className="text-[9px] font-bold text-slate-500 uppercase block">Desde</span>
-                        <span className="text-2xl font-black text-emerald-400">
-                          ${Number(precioDisplay).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        <Clock className="size-3" />
-                        {horasDisponibles > 0 ? `${horasDisponibles} Horas libres hoy` : 'Agotado hoy'}
-                      </span>
-                    </div>
-
-                    <div className="w-full py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 bg-emerald-500/10 group-hover:bg-emerald-500 text-emerald-400 group-hover:text-slate-950 transition-all duration-300 shadow-inner">
-                      <Calendar className="size-4" />
-                      <span>Agendar Horario</span>
-                      <ChevronRight className="size-4" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 5. ACADEMIA & CURSOS - Solo si el módulo está activo y hay cursos creados */}
-      {hasCoursesModule && cursos && cursos.length > 0 && (
-        <section id="academia" className="max-w-7xl mx-auto px-6 py-10 space-y-8">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
-              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-                FORMACIÓN
-              </span>
-            </div>
-            <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
-              ACADEMIA & CURSOS
-            </h3>
-            <p className="text-xs text-slate-400 font-medium mt-1">
-              Apúntate a nuestras escuelas de entrenamiento y mejora tu juego.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {cursos.map((curso: any) => {
-              const enrolledCount = curso._count?.enrollments || 0;
-              const capacity = curso.capacity || 20;
-              const schedules = curso.schedules || [];
-              const priceDisplay = curso.price ? `$${Number(curso.price).toLocaleString()}` : 'Gratis';
-              const paymentType = String(curso.payment_type || 'MENSUAL').toUpperCase() === 'TOTAL' ? 'PAGO ÚNICO' : 'PAGO MENSUAL';
-
-              return (
-                <div key={curso.id} className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-6 flex flex-col justify-between hover:border-emerald-500/40 transition-all">
-                  <div className="space-y-4">
-                    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
-                      <img 
-                        src={curso.imageUrl || defaultBanner} 
-                        alt={curso.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-3 left-3 bg-emerald-500 text-slate-950 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                        {paymentType}
-                      </div>
-                      <div className="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 border border-slate-800">
-                        <Users size={12} className="text-emerald-400" />
-                        <span>{enrolledCount}/{capacity}</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-xl font-black text-white italic uppercase tracking-tight">{curso.name}</h4>
-                      {curso.description && (
-                        <p className="text-xs text-emerald-400 italic font-semibold mt-0.5 line-clamp-2">"{curso.description}"</p>
-                      )}
-                    </div>
-
-                    {(curso.min_age != null || curso.max_age != null) && (
-                      <div className="grid grid-cols-2 gap-3 pt-2">
-                        <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
-                          <span className="text-[9px] font-black text-slate-500 uppercase block">EDADES</span>
-                          <span className="text-xs font-bold text-slate-200">
-                            {curso.min_age && curso.max_age 
-                              ? `${curso.min_age} - ${curso.max_age} años` 
-                              : curso.min_age ? `Desde ${curso.min_age} años` : `Hasta ${curso.max_age} años`}
-                          </span>
-                        </div>
-                        <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
-                          <span className="text-[9px] font-black text-slate-500 uppercase block">INSCRITOS</span>
-                          <span className="text-xs font-bold text-slate-200">{enrolledCount} alumnos</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {schedules.length > 0 && (
-                      <div className="space-y-2">
-                        <span className="text-[9px] font-black text-slate-500 uppercase block">HORARIOS DE CLASE</span>
-                        <div className="flex flex-wrap gap-2">
-                          {schedules.map((s: any, idx: number) => {
-                            const daysMap: Record<number, string> = { 1: 'Lun', 2: 'Mar', 3: 'Mié', 4: 'Jue', 5: 'Vie', 6: 'Sáb', 0: 'Dom' };
-                            const dayName = daysMap[s.day_of_week] || 'Día';
-                            return (
-                              <span key={idx} className="px-3 py-1 bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold">
-                                {dayName} • {s.start_time || '14:00'}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                    <div>
-                      <span className="text-[9px] font-bold text-slate-500 uppercase block">INVERSIÓN</span>
-                      <span className="text-2xl font-black text-white">{priceDisplay}</span>
-                    </div>
-                    <Link
-                      href={`/${negocio.slug}/cursos/${curso.id}`}
-                      className="bg-white text-slate-950 hover:bg-slate-100 px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all"
-                    >
-                      <span>MÁS DETALLES</span>
-                      <ChevronRight size={14} />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </section>
-      )}
 
-      {/* 6. NUESTRAS SEDES - Solo si hay sedes o el negocio tiene dirección */}
-      {(sedes.length > 0 || negocio.direccion) && (
-        <section id="sedes" className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+        {/* Reservar */}
+        <section ref={reservarRef} id="reservar" className="mt-6 scroll-mt-20 md:scroll-mt-28 space-y-4">
+          <h2 className="text-xl font-bold">Reserva tu cancha</h2>
+
+          {/* 1. Día */}
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
-              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-                DÓNDE ESTAMOS
-              </span>
+            <p className="text-sm text-slate-500 mb-2">1. Elige el día</p>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-h-[60px]">
+              {mounted && days.map((d) => {
+                const on = d.str === fecha;
+                return (
+                  <button
+                    key={d.str}
+                    onClick={() => setFecha(d.str)}
+                    style={on ? { backgroundColor: brand, borderColor: brand } : undefined}
+                    className={`shrink-0 w-16 py-2 rounded-2xl border text-center transition ${on ? 'text-white' : 'bg-white border-slate-200 text-slate-700'}`}
+                  >
+                    <span className="block text-xs">{d.top}</span>
+                    <span className="block text-lg font-bold leading-tight">{d.num}</span>
+                  </button>
+                );
+              })}
             </div>
-            <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
-              Nuestras Sedes
-            </h3>
-            <p className="text-xs text-slate-400 font-medium mt-1">
-              Encuéntranos en cualquiera de nuestras ubicaciones.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {sedes.length > 0 ? (
-              sedes.map((sede: any) => (
-                <div key={sede.id || sede.nombre} className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-4">
-                  <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
-                    <img 
-                      src={sede.imageUrl || defaultBanner} 
-                      alt={sede.nombre}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 border border-slate-800">
-                      <span>Maps</span>
-                      <ExternalLink size={12} className="text-emerald-400" />
-                    </div>
-                  </div>
-
-                  <h4 className="text-lg font-black text-white italic uppercase tracking-tight">{sede.nombre}</h4>
-                  {sede.direccion && <p className="text-xs text-slate-400">{sede.direccion}</p>}
-
-                  <a 
-                    href={sede.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${sede.nombre} ${sede.direccion || ''}`)}`}
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="w-full py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+          {/* 2. Duración */}
+          <div>
+            <p className="text-sm text-slate-500 mb-2">2. ¿Cuánto tiempo?</p>
+            <div className="flex gap-2">
+              {[1, 1.5, 2].map((h) => {
+                const on = h === horas;
+                return (
+                  <button
+                    key={h}
+                    onClick={() => setHoras(h)}
+                    style={on ? { backgroundColor: brand, borderColor: brand } : undefined}
+                    className={`px-4 py-2 rounded-xl border text-sm font-semibold ${on ? 'text-white' : 'bg-white border-slate-200 text-slate-700'}`}
                   >
-                    <MapPin size={16} />
-                    <span>VER EN GOOGLE MAPS</span>
-                  </a>
+                    {h === 1 ? '1 hora' : h === 1.5 ? '1 h 30 min' : '2 horas'}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 3. Cancha y hora */}
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="text-sm text-slate-500">3. Toca una hora libre</p>
+              {tipos.length > 1 && (
+                <div className="flex gap-1.5 overflow-x-auto">
+                  {['TODAS', ...tipos].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setFiltro(t)}
+                      className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-medium border ${filtro === t ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-600'}`}
+                    >
+                      {t === 'TODAS' ? 'Todas' : t}
+                    </button>
+                  ))}
                 </div>
-              ))
+              )}
+            </div>
+
+            {loading && !data ? (
+              <div className="bg-white rounded-2xl ring-1 ring-slate-200 p-10 flex items-center justify-center text-slate-500 gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" /> Buscando horas libres…
+              </div>
+            ) : error ? (
+              <div className="bg-white rounded-2xl ring-1 ring-slate-200 p-6 text-center">
+                <p className="text-sm text-slate-600">{error}</p>
+                <button onClick={() => load(fecha)} className="mt-2 text-sm font-semibold" style={{ color: brand }}>Reintentar</button>
+              </div>
+            ) : courts.length === 0 ? (
+              <div className="bg-white rounded-2xl ring-1 ring-slate-200 p-8 text-center text-sm text-slate-600">Pronto publicaremos nuestras canchas.</div>
             ) : (
-              <div className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-4">
-                <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
-                  <img 
-                    src={negocio.bannerUrl || defaultBanner} 
-                    alt={negocio.nombre}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 border border-slate-800">
-                    <span>Maps</span>
-                    <ExternalLink size={12} className="text-emerald-400" />
-                  </div>
-                </div>
-
-                <h4 className="text-lg font-black text-white italic uppercase tracking-tight">
-                  {negocio.nombreSede || negocio.nombre || 'SEDE PRINCIPAL'}
-                </h4>
-                {negocio.direccion && (
-                  <p className="text-xs text-slate-400">{negocio.direccion} {negocio.ciudad ? `• ${negocio.ciudad}` : ''}</p>
-                )}
-
-                <a 
-                  href={negocio.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${negocio.nombre} ${negocio.direccion || ''} ${negocio.ciudad || ''}`)}`}
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="w-full py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
-                >
-                  <MapPin size={16} />
-                  <span>VER EN GOOGLE MAPS</span>
-                </a>
+              <div className={`space-y-3 ${loading ? 'opacity-60' : ''}`}>
+                {courts.map((c) => {
+                  const slots = slotsFor(c);
+                  const manana = slots.filter((s) => toMin(s.time) < 12 * 60);
+                  const tarde = slots.filter((s) => toMin(s.time) >= 12 * 60 && toMin(s.time) < 18 * 60);
+                  const noche = slots.filter((s) => toMin(s.time) >= 18 * 60);
+                  return (
+                    <article key={c.id} className="bg-white rounded-2xl ring-1 ring-slate-200 overflow-hidden">
+                      <div className="p-3.5 flex gap-3">
+                        {c.imagen ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={c.imagen} alt="" className="w-20 h-20 rounded-xl object-cover bg-slate-100 shrink-0" />
+                        ) : (
+                          <span style={{ backgroundColor: `${brand}14`, color: brand }} className="w-20 h-20 rounded-xl flex items-center justify-center shrink-0"><Trophy className="w-7 h-7" /></span>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-semibold leading-snug">{c.nombre}</h3>
+                            <span className="font-bold whitespace-nowrap">{money(c.precioHora)}<span className="text-xs font-normal text-slate-500">/h</span></span>
+                          </div>
+                          <p className="text-sm text-slate-500 flex flex-wrap gap-x-3">
+                            {c.tipo && <span>{c.tipo}</span>}
+                            {c.capacidad ? <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {c.capacidad} jugadores</span> : null}
+                          </p>
+                          {c.features.length > 0 && <p className="text-xs text-slate-500 mt-0.5 truncate">{c.features.join(' · ')}</p>}
+                          <p className={`text-xs mt-1 font-medium ${slots.length ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            {slots.length ? `${slots.length} ${slots.length === 1 ? 'hora libre' : 'horas libres'}` : 'Sin horas libres este día'}
+                          </p>
+                        </div>
+                      </div>
+                      {slots.length > 0 && (
+                        <div className="px-3.5 pb-3.5 space-y-2">
+                          {[
+                            { label: 'Mañana', Icon: Sun, list: manana },
+                            { label: 'Tarde', Icon: Sun, list: tarde },
+                            { label: 'Noche', Icon: Moon, list: noche },
+                          ].filter((g) => g.list.length).map((g) => (
+                            <div key={g.label} className="flex items-start gap-2">
+                              <span className="w-14 shrink-0 text-xs text-slate-400 pt-2 flex items-center gap-1"><g.Icon className="w-3 h-3" />{g.label}</span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {g.list.map((s) => (
+                                  <button
+                                    key={s.time}
+                                    onClick={() => setElegido({ court: c, time: s.time, end: s.end, total: s.total, base: s.base, label: s.label })}
+                                    className="relative px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-sm font-semibold hover:border-slate-400 active:scale-95 transition"
+                                  >
+                                    {s.time}
+                                    {s.percent > 0 && (
+                                      <span className="absolute -top-2 -right-2 px-1 rounded text-[10px] font-bold text-white bg-rose-500">{s.label}</span>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
         </section>
-      )}
 
-      {/* 7. EXPERIENCIA DE PRIMERA (SERVICIOS) */}
-      <section id="servicios" className="max-w-7xl mx-auto px-6 py-10 space-y-8 border-t border-white/5">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
-            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-              SERVICIOS
-            </span>
-            <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
-          </div>
-          <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
-            Experiencia de Primera
-          </h3>
-          <p className="text-xs text-slate-400 font-medium">
-            Todo lo que necesitas para tu comodidad antes y después del pitazo final
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 pt-4">
-          {[
-            { icon: Coffee, label: 'CAFETERÍA' },
-            { icon: Car, label: 'PARKING' },
-            { icon: Wifi, label: 'WIFI' },
-            { icon: Shirt, label: 'VESTIDORES' },
-            { icon: ShoppingBag, label: 'TIENDA' }
-          ].map((item) => {
-            const IconComp = item.icon;
-            return (
-              <div key={item.label} className="flex flex-col items-center gap-2 group cursor-pointer">
-                <div className="size-16 rounded-full bg-emerald-950/40 border border-emerald-500/30 group-hover:border-emerald-400 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-all shadow-lg shadow-emerald-950/50">
-                  <IconComp size={24} />
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover:text-emerald-400 transition-colors">
-                  {item.label}
+        {/* Comodidades reales */}
+        {amenities.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-xl font-bold mb-3">Comodidades</h2>
+            <div className="flex flex-wrap gap-2">
+              {amenities.map((a) => (
+                <span key={a.label} className="px-3 py-2 rounded-xl bg-white ring-1 ring-slate-200 text-sm flex items-center gap-2">
+                  <a.Icon className="w-4 h-4" style={{ color: brand }} /> {a.label}
                 </span>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+              ))}
+            </div>
+          </section>
+        )}
 
-      {/* 8. NOVEDADES & EVENTOS - Solo si hay torneos reales */}
-      {torneos && torneos.length > 0 && (
-        <section id="eventos" className="max-w-7xl mx-auto px-6 py-10 space-y-8 border-t border-white/5">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
-              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-                EXCLUSIVOS
+        {/* Academia */}
+        {hasCoursesModule && cursos.length > 0 && (
+          <section className="mt-10" id="academia">
+            <h2 className="text-xl font-bold mb-3 flex items-center gap-2"><GraduationCap className="w-5 h-5" style={{ color: brand }} /> Academia</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {cursos.map((c: any) => {
+                const days: Record<number, string> = { 0: 'Dom', 1: 'Lun', 2: 'Mar', 3: 'Mié', 4: 'Jue', 5: 'Vie', 6: 'Sáb' };
+                const cupos = Math.max(0, (c.capacity || 20) - (c._count?.enrollments || 0));
+                return (
+                  <Link key={c.id} href={`/${slug}/cursos/${c.id}`} className="bg-white rounded-2xl ring-1 ring-slate-200 p-4 hover:ring-slate-300 transition flex flex-col">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-semibold">{c.name}</h3>
+                      <span className="font-bold whitespace-nowrap">{c.price ? money(c.price) : 'Gratis'}</span>
+                    </div>
+                    {c.description && <p className="text-sm text-slate-600 mt-1 line-clamp-2">{c.description}</p>}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {(c.schedules || []).slice(0, 4).map((s: any, i: number) => (
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-slate-100 text-xs text-slate-600">{days[s.day_of_week] || ''} {s.start_time}</span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-auto pt-2">
+                      {c.min_age || c.max_age ? `${c.min_age || ''}${c.min_age && c.max_age ? '–' : ''}${c.max_age || ''} años · ` : ''}
+                      {cupos > 0 ? `${cupos} cupos` : 'Sin cupos'}
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Torneos */}
+        {torneos.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-xl font-bold mb-3 flex items-center gap-2"><Zap className="w-5 h-5" style={{ color: brand }} /> Torneos</h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {torneos.map((t: any) => (
+                <Link key={t.id} href={`/${slug}/torneos/${t.id}`} className="bg-white rounded-2xl ring-1 ring-slate-200 p-4 flex items-center justify-between gap-3">
+                  <span>
+                    <span className="block font-semibold">{t.nombre}</span>
+                    {t.fecha && <span className="block text-sm text-slate-500">{new Date(t.fecha).toLocaleDateString('es-EC', { day: 'numeric', month: 'long' })}</span>}
+                  </span>
+                  <ChevronRight className="w-5 h-5 text-slate-400" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Páginas del negocio */}
+        {paginasPersonalizadas.length > 0 && (
+          <section className="mt-10 grid md:grid-cols-2 gap-3">
+            {paginasPersonalizadas.map((p: any) => (
+              <div key={p.id} className="bg-white rounded-2xl ring-1 ring-slate-200 p-5 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: p.contentHtml || '' }} />
+            ))}
+          </section>
+        )}
+
+        {/* Ubicación y contacto */}
+        <section className="mt-10 mb-6 grid sm:grid-cols-2 gap-3">
+          {mapsUrl && (
+            <a href={mapsUrl} target="_blank" rel="noreferrer" className="bg-white rounded-2xl ring-1 ring-slate-200 p-4 flex items-center gap-3 hover:ring-slate-300">
+              <span style={{ backgroundColor: `${brand}14`, color: brand }} className="w-11 h-11 rounded-xl flex items-center justify-center"><MapPin className="w-5 h-5" /></span>
+              <span className="flex-1 min-w-0">
+                <span className="block font-semibold">Cómo llegar</span>
+                <span className="block text-sm text-slate-500 truncate">{negocio.direccion}{negocio?.ciudad ? `, ${negocio.ciudad}` : ''}</span>
+              </span>
+              <ChevronRight className="w-5 h-5 text-slate-400" />
+            </a>
+          )}
+          {wa && (
+            <a href={wa} target="_blank" rel="noreferrer" className="bg-white rounded-2xl ring-1 ring-slate-200 p-4 flex items-center gap-3 hover:ring-slate-300">
+              <span className="w-11 h-11 rounded-xl flex items-center justify-center bg-emerald-50 text-emerald-600"><MessageCircle className="w-5 h-5" /></span>
+              <span className="flex-1">
+                <span className="block font-semibold">Escríbenos</span>
+                <span className="block text-sm text-slate-500">Torneos, eventos o grupos grandes</span>
+              </span>
+              <ChevronRight className="w-5 h-5 text-slate-400" />
+            </a>
+          )}
+        </section>
+      </main>
+
+      {elegido && (
+        <BookingSheet
+          slug={slug}
+          brand={brand}
+          negocioWhatsapp={negocio?.whatsapp}
+          fecha={fecha}
+          horas={horas}
+          sel={elegido}
+          onClose={() => setElegido(null)}
+          onBooked={() => load(fecha)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── Confirmar reserva ───────────────────────────────────────────────────── */
+
+function BookingSheet({ slug, brand, negocioWhatsapp, fecha, horas, sel, onClose, onBooked }: {
+  slug: string; brand: string; negocioWhatsapp?: string | null; fecha: string; horas: number;
+  sel: { court: Court; time: string; end: string; total: number; base: number; label: string };
+  onClose: () => void; onBooked: () => void;
+}) {
+  const [nombre, setNombre] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [notas, setNotas] = useState('');
+  const [sending, setSending] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [done, setDone] = useState<{ id: string; estado: string; expiresAt?: string | null; sesion?: boolean } | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('customerInfo') || 'null');
+      if (saved?.nombre) setNombre(saved.nombre);
+      if (saved?.telefono) setTelefono(saved.telefono);
+    } catch {}
+  }, []);
+
+  const fechaLarga = (() => {
+    const [y, m, d] = fecha.split('-').map(Number);
+    const s = new Date(y, m - 1, d).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  })();
+
+  const submit = async () => {
+    setErr(null);
+    if (nombre.trim().length < 2) return setErr('Escribe tu nombre.');
+    if (telefono.replace(/\D/g, '').length < 9) return setErr('Escribe tu número de WhatsApp.');
+    setSending(true);
+    try {
+      const r = await fetch(`/api/public/${slug}/reservar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clienteNombre: nombre.trim(),
+          clienteTelefono: telefono.trim(),
+          comentarios: notas.trim(),
+          fecha,
+          horaInicio: sel.time,
+          duracion: horas,
+          serviceId: sel.court.id,
+          precioTotal: sel.total,
+        }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.success) {
+        setErr(d.error || 'No se pudo reservar. Intenta de nuevo.');
+        if (r.status === 409) onBooked();
+        return;
+      }
+      try { localStorage.setItem('customerInfo', JSON.stringify({ nombre: nombre.trim(), telefono: telefono.trim() })); } catch {}
+      setDone({ id: d.id, estado: d.estado, expiresAt: d.expiresAt, sesion: d.sesion !== false });
+      onBooked();
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const pending = done && ['pending', 'PENDIENTE', 'pendiente'].includes(done.estado);
+  const minsToConfirm = done?.expiresAt ? Math.max(1, Math.round((new Date(done.expiresAt).getTime() - Date.now()) / 60000)) : null;
+  const wa = negocioWhatsapp ? (() => {
+    let dgt = String(negocioWhatsapp).replace(/\D/g, '');
+    if (dgt.startsWith('0')) dgt = '593' + dgt.slice(1);
+    return `https://wa.me/${dgt}?text=${encodeURIComponent(`Hola, hice una reserva: ${sel.court.nombre}, ${fechaLarga} de ${sel.time} a ${sel.end}.`)}`;
+  })() : null;
+
+  return (
+    <div className="fixed inset-0 z-[10000] bg-black/40 flex items-end sm:items-center justify-center" onClick={onClose}>
+      <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 pb-8 space-y-4 max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        {!done ? (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold">{sel.court.nombre}</h3>
+                <p className="text-sm text-slate-600">{fechaLarga}</p>
+                <p className="text-sm text-slate-600">{sel.time} a {sel.end}</p>
+              </div>
+              <button onClick={onClose} className="p-1 text-slate-400" aria-label="Cerrar"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-3 flex items-center justify-between">
+              <span className="text-sm text-slate-600">Total</span>
+              <span className="text-right">
+                {sel.base > sel.total && <span className="block text-xs text-slate-400 line-through">{money(sel.base)}</span>}
+                <span className="text-xl font-bold">{money(sel.total)}</span>
               </span>
             </div>
-            <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
-              NOVEDADES & EVENTOS
-            </h3>
-            <p className="text-xs text-slate-400 font-medium mt-1">
-              No te pierdas las últimas noticias, torneos relámpago y contenido exclusivo que tenemos preparado para ti.
+            <label className="block">
+              <span className="text-sm text-slate-600">Tu nombre</span>
+              <input value={nombre} onChange={(e) => setNombre(e.target.value)} autoComplete="name" className="mt-1 w-full px-3 py-2.5 rounded-xl ring-1 ring-slate-200 outline-none focus:ring-2" />
+            </label>
+            <label className="block">
+              <span className="text-sm text-slate-600">WhatsApp</span>
+              <input value={telefono} onChange={(e) => setTelefono(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="0991234567" className="mt-1 w-full px-3 py-2.5 rounded-xl ring-1 ring-slate-200 outline-none focus:ring-2" />
+            </label>
+            <label className="block">
+              <span className="text-sm text-slate-600">Nota (opcional)</span>
+              <input value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Ej.: traemos balón" className="mt-1 w-full px-3 py-2.5 rounded-xl ring-1 ring-slate-200 outline-none focus:ring-2" />
+            </label>
+            {err && <p className="text-sm text-rose-600">{err}</p>}
+            <button disabled={sending} onClick={submit} style={{ backgroundColor: brand }} className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-60 flex items-center justify-center gap-2">
+              {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />} Reservar
+            </button>
+            <p className="text-xs text-slate-500 text-center">Pagas en la cancha. Te avisamos por WhatsApp.</p>
+          </>
+        ) : (
+          <div className="text-center space-y-3 py-2">
+            <span style={{ backgroundColor: `${brand}14`, color: brand }} className="w-14 h-14 rounded-full mx-auto flex items-center justify-center"><Check className="w-7 h-7" /></span>
+            <h3 className="text-xl font-bold">{pending ? '¡Solicitud enviada!' : '¡Reserva confirmada!'}</h3>
+            <p className="text-sm text-slate-600">
+              {sel.court.nombre} · {fechaLarga} · {sel.time} a {sel.end}
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {torneos.map((torneo: any) => (
-              <div key={torneo.id} className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-6">
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
-                  <img 
-                    src={torneo.imageUrl || defaultBanner} 
-                    alt={torneo.nombre || 'Torneo'}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-xl border border-slate-800 text-center leading-tight">
-                    {torneo.fecha ? new Date(torneo.fecha).toLocaleDateString('es', { month: 'short', day: 'numeric' }).toUpperCase() : 'ACTIVO'}
-                  </div>
-                  <div className="absolute top-3 right-3 bg-emerald-500 text-slate-950 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                    {torneo.estado || 'ACTIVO'}
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-xl font-black text-white italic uppercase tracking-tight">{torneo.nombre}</h4>
-                  {torneo.descripcion && (
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{torneo.descripcion}</p>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <Link
-                    href={`/${negocio.slug}/torneos/${torneo.id}`}
-                    className="py-2.5 px-5 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all"
-                  >
-                    <span>VER DETALLES</span>
-                    <ChevronRight size={14} />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 9. PÁGINAS PERSONALIZADAS */}
-      {paginasPersonalizadas && paginasPersonalizadas.length > 0 && (
-        <section id="paginas" className="max-w-7xl mx-auto px-6 py-10 space-y-8 border-t border-white/5">
-          <div className="flex items-center gap-2">
-            <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
-            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-              INFORMACIÓN & GUÍAS
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {paginasPersonalizadas.map((pagina) => (
-              <div
-                key={pagina.id}
-                className="bg-slate-900/90 border border-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-6 text-slate-100 font-sans custom-page-content"
-                dangerouslySetInnerHTML={{ __html: pagina.contentHtml || '' }}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 10. BARRA DE NAVEGACIÓN MÓVIL INFERIOR (TABS) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-[150] px-6 pb-6 pt-2 bg-gradient-to-t from-[#0a0f1d] via-[#0a0f1d]/95 to-transparent pointer-events-none md:hidden">
-        <div className="max-w-md mx-auto h-16 bg-slate-900/90 backdrop-blur-3xl border border-white/10 rounded-[2rem] flex items-center justify-around px-4 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)] pointer-events-auto">
-          <Link href={`/${negocio.slug}`} className="flex flex-col items-center justify-center gap-1 text-emerald-400">
-            <div className="relative scale-110 -translate-y-0.5">
-              <div className="size-1 w-6 bg-emerald-400 rounded-full absolute -top-2.5 left-1/2 -translate-x-1/2" />
-              <Home className="size-5" />
+            {pending && (
+              <p className="text-sm text-amber-700 bg-amber-50 rounded-xl px-3 py-2">
+                El local la confirmará{minsToConfirm ? ` en los próximos ${minsToConfirm} min` : ' pronto'}. Te avisamos por WhatsApp.
+              </p>
+            )}
+            {done.sesion === false && (
+              <p className="text-xs text-slate-500">Te enviamos por WhatsApp un enlace para ver y gestionar tus reservas.</p>
+            )}
+            <div className="flex flex-col gap-2 pt-1">
+              <Link href={`/${slug}/confirmacion/${done.id}`} style={{ backgroundColor: brand }} className="w-full py-3 rounded-2xl text-white font-semibold">Ver mi reserva</Link>
+              {wa && <a href={wa} target="_blank" rel="noreferrer" className="w-full py-3 rounded-2xl ring-1 ring-slate-200 font-medium">Escribir al local</a>}
+              <button onClick={onClose} className="text-sm text-slate-500 py-1">Cerrar</button>
             </div>
-            <span className="text-[9px] font-black uppercase tracking-widest">INICIO</span>
-          </Link>
-
-          <Link href={`/${negocio.slug}/mis-reservas`} className="flex flex-col items-center justify-center gap-1 text-white/40 hover:text-white">
-            <Calendar className="size-5" />
-            <span className="text-[9px] font-black uppercase tracking-widest">RESERVAS</span>
-          </Link>
-
-          {hasCoursesModule && cursos && cursos.length > 0 && (
-            <Link href={`/${negocio.slug}/mis-reservas?tab=academia`} className="flex flex-col items-center justify-center gap-1 text-white/40 hover:text-white">
-              <GraduationCap className="size-5" />
-              <span className="text-[9px] font-black uppercase tracking-widest">ACADEMIA</span>
-            </Link>
-          )}
-
-          <Link href={`/${negocio.slug}/perfil`} className="flex flex-col items-center justify-center gap-1 text-white/40 hover:text-white">
-            <User className="size-5" />
-            <span className="text-[9px] font-black uppercase tracking-widest">PERFIL</span>
-          </Link>
-        </div>
-      </nav>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

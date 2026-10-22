@@ -669,8 +669,8 @@ export default function ProductVariantModal({
             <ShoppingBag className="size-5 text-white stroke-[2.5]" />
           </div>
           <div className="text-left leading-tight hidden sm:block">
-            <span className="font-black text-slate-900 text-sm sm:text-base tracking-tight block">Citiox</span>
-            <span className="text-[10px] text-slate-400 font-bold tracking-wider block -mt-0.5">Tienda Online</span>
+            <span className="font-bold text-slate-900 text-sm sm:text-base tracking-tight block">Citiox</span>
+            <span className="text-xs text-slate-400 font-bold tracking-wider block -mt-0.5">Tienda Online</span>
           </div>
         </div>
 
@@ -703,7 +703,7 @@ export default function ProductVariantModal({
               )}
             </button>
             {copiedShareToast && (
-              <span className="absolute top-11 right-0 whitespace-nowrap bg-slate-900 text-white text-[10px] font-black px-2.5 py-1 rounded-xl shadow-xl z-50 animate-in fade-in">
+              <span className="absolute top-11 right-0 whitespace-nowrap bg-slate-900 text-white text-xs font-bold px-2.5 py-1 rounded-xl shadow-xl z-50 animate-in fade-in">
                 ¡Enlace copiado!
               </span>
             )}
@@ -732,7 +732,7 @@ export default function ProductVariantModal({
           >
             <ShoppingCart className="w-4.5 h-4.5 text-slate-800" />
             {totalItemsCount > 0 && (
-              <span className="absolute -top-1 -right-1 size-5 rounded-full bg-cyan-600 text-white text-[10px] font-black flex items-center justify-center shadow-xs">
+              <span className="absolute -top-1 -right-1 size-5 rounded-full bg-cyan-600 text-white text-xs font-bold flex items-center justify-center shadow-xs">
                 {totalItemsCount}
               </span>
             )}
@@ -776,7 +776,7 @@ export default function ProductVariantModal({
                 
                 {/* Badge Superior Izquierdo: ✨ Nuevo */}
                 <div className="absolute top-4 left-4 z-10">
-                  <span className="bg-slate-950 text-white font-black text-[11px] uppercase tracking-wider px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5">
+                  <span className="bg-slate-950 text-white font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                     <span>Nuevo</span>
                   </span>
@@ -784,7 +784,7 @@ export default function ProductVariantModal({
 
                 {/* Badge Superior Derecho: 🎲 3D */}
                 <div className="absolute top-4 right-4 z-10">
-                  <span className="bg-white/95 backdrop-blur-md text-slate-800 font-black text-[11px] px-3 py-1.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-1">
+                  <span className="bg-white/95 backdrop-blur-md text-slate-800 font-bold text-xs px-3 py-1.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-1">
                     <Box className="w-3.5 h-3.5 text-cyan-600" />
                     <span>3D</span>
                   </span>
@@ -834,14 +834,14 @@ export default function ProductVariantModal({
               
               {/* Badge de Categoría */}
               <div>
-                <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-3 py-1 rounded-lg">
+                <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-3 py-1 rounded-lg">
                   <Tag className="size-3 text-slate-400" />
                   <span>{categoryLabel}</span>
                 </span>
               </div>
 
               {/* Título Principal */}
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
                 {product.nombre}
               </h1>
 
@@ -854,7 +854,7 @@ export default function ProductVariantModal({
                   <Star className="size-4 fill-amber-400" />
                   <Star className="size-4 fill-amber-400" />
                 </div>
-                <span className="font-black text-slate-800">4.9</span>
+                <span className="font-bold text-slate-800">4.9</span>
                 <span className="text-slate-400 font-medium">(124 reseñas)</span>
               </div>
 
@@ -867,7 +867,7 @@ export default function ProductVariantModal({
 
               {/* Precios & Badge de Ahorro */}
               <div className="flex items-baseline gap-3 flex-wrap pt-1">
-                <span className="text-3xl sm:text-4xl font-black text-cyan-600 font-mono tracking-tight">
+                <span className="text-3xl sm:text-4xl font-bold text-cyan-600 font-mono tracking-tight">
                   ${Number(effectivePrice).toFixed(2)}
                 </span>
                 
@@ -878,7 +878,7 @@ export default function ProductVariantModal({
                 )}
 
                 {savings > 0 && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-50 text-emerald-700 font-black text-xs rounded-full border border-emerald-200 shadow-2xs">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-200 shadow-2xs">
                     <Tag className="size-3 text-emerald-600" />
                     <span>Ahorra ${savings.toFixed(2)} ({savingsPercent}%)</span>
                   </span>
@@ -890,16 +890,16 @@ export default function ProductVariantModal({
                 <div className="flex items-center gap-2 text-slate-800 font-bold">
                   <ShieldCheck className="size-4.5 text-cyan-600 shrink-0" />
                   <div>
-                    <span className="font-black block text-slate-900">Compra 100% segura</span>
-                    <span className="text-[11px] text-slate-500 font-normal">Tus datos están protegidos</span>
+                    <span className="font-bold block text-slate-900">Compra 100% segura</span>
+                    <span className="text-xs text-slate-500 font-normal">Tus datos están protegidos</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 text-slate-800 font-bold pt-2 border-t border-slate-200/50">
                   <Truck className="size-4.5 text-cyan-600 shrink-0" />
                   <div>
-                    <span className="font-black block text-slate-900">Envío en 24 – 48h</span>
-                    <span className="text-[11px] text-slate-500 font-normal">a todo el país</span>
+                    <span className="font-bold block text-slate-900">Envío en 24 – 48h</span>
+                    <span className="text-xs text-slate-500 font-normal">a todo el país</span>
                   </div>
                 </div>
               </div>
@@ -908,11 +908,11 @@ export default function ProductVariantModal({
               {isComboWithMultipleProducts && (
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <span className="text-xs font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5">
+                    <span className="text-xs font-bold uppercase text-slate-900 tracking-wider flex items-center gap-1.5">
                       <PackageCheck className="size-4 text-cyan-600" />
                       <span>Artículos incluidos en el combo ({comboProductsList.length}):</span>
                     </span>
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200">
+                    <span className="text-xs font-bold uppercase px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200">
                       Pack Completo
                     </span>
                   </div>
@@ -933,14 +933,14 @@ export default function ProductVariantModal({
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <span className="text-xs font-black text-slate-900 truncate block">{cp.nombre}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">${Number(cp.precio).toFixed(2)}</span>
+                              <span className="text-xs font-bold text-slate-900 truncate block">{cp.nombre}</span>
+                              <span className="text-xs text-slate-400 font-mono">${Number(cp.precio).toFixed(2)}</span>
                             </div>
                           </div>
 
                           {hasCpVariants && cp.variantes && (
                             <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-slate-200/40">
-                              <span className="text-[10px] font-bold text-slate-500 uppercase">Talla:</span>
+                              <span className="text-xs font-bold text-slate-500 uppercase">Talla:</span>
                               <div className="flex flex-wrap gap-1">
                                 {cp.variantes.filter(v => v.activo !== false).map(v => (
                                   <button
@@ -979,7 +979,7 @@ export default function ProductVariantModal({
                     return (
                       <div key={attrKey} className="space-y-2">
                         <div className="flex justify-between items-center text-xs">
-                          <span className="font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                          <span className="font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                             <span>{attrKey}</span>
                             {currentSelectedVal && (
                               <span className="text-cyan-600 font-bold normal-case">: {currentSelectedVal}</span>
@@ -1026,11 +1026,11 @@ export default function ProductVariantModal({
                                 key={val}
                                 type="button"
                                 onClick={() => handleSelectAttribute(attrKey, val)}
-                                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-cyan-600 text-white shadow-md ring-2 ring-cyan-500/20'
-                                    : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300'
-                                }`}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+ isSelected
+ ? 'bg-cyan-600 text-white shadow-md ring-2 ring-cyan-500/20'
+ : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300'
+ }`}
                               >
                                 {val}
                               </button>
@@ -1045,7 +1045,7 @@ export default function ProductVariantModal({
 
               {/* ── FILA DE CANTIDAD Y BOTÓN AGREGAR AL CARRITO (IDÉNTICO A LA IMAGEN) ── */}
               <div className="pt-2 space-y-3">
-                <span className="text-xs font-black text-slate-800 uppercase tracking-wider block">Cantidad</span>
+                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">Cantidad</span>
                 
                 <div className="flex items-center gap-3">
                   {/* Selector Horizontal [-] 1 [+] */}
@@ -1054,18 +1054,18 @@ export default function ProductVariantModal({
                       type="button"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       disabled={quantity <= 1 || isOutOfStock}
-                      className="size-10 rounded-xl bg-white hover:bg-slate-100 disabled:opacity-30 text-slate-800 font-black text-base flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+                      className="size-10 rounded-xl bg-white hover:bg-slate-100 disabled:opacity-30 text-slate-800 font-bold text-base flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                     >
                       -
                     </button>
-                    <span className="w-10 text-center font-black text-slate-900 text-sm font-mono">
+                    <span className="w-10 text-center font-bold text-slate-900 text-sm font-mono">
                       {quantity}
                     </span>
                     <button
                       type="button"
                       onClick={() => setQuantity(Math.min(effectiveStock, quantity + 1))}
                       disabled={quantity >= effectiveStock || isOutOfStock}
-                      className="size-10 rounded-xl bg-white hover:bg-slate-100 disabled:opacity-30 text-slate-800 font-black text-base flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+                      className="size-10 rounded-xl bg-white hover:bg-slate-100 disabled:opacity-30 text-slate-800 font-bold text-base flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                     >
                       +
                     </button>
@@ -1076,7 +1076,7 @@ export default function ProductVariantModal({
                     type="button"
                     disabled={isOutOfStock || isVariantSelectionIncomplete}
                     onClick={handleAddToCart}
-                    className="flex-1 py-3.5 px-6 rounded-2xl bg-cyan-600 hover:bg-cyan-500 active:scale-98 transition-all text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-cyan-600/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-3.5 px-6 rounded-2xl bg-cyan-600 hover:bg-cyan-500 active:scale-98 transition-all text-white font-bold text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-cyan-600/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ backgroundColor: addedToast ? '#10b981' : (primaryColor || '#06b6d4') }}
                   >
                     {addedToast ? (
@@ -1134,8 +1134,8 @@ export default function ProductVariantModal({
                 <Truck className="size-5 text-cyan-600" />
               </div>
               <div className="text-left leading-tight">
-                <span className="font-black text-slate-900 text-xs block">Envíos rápidos</span>
-                <span className="text-[11px] text-slate-400 font-medium">a todo el país</span>
+                <span className="font-bold text-slate-900 text-xs block">Envíos rápidos</span>
+                <span className="text-xs text-slate-400 font-medium">a todo el país</span>
               </div>
             </div>
 
@@ -1144,8 +1144,8 @@ export default function ProductVariantModal({
                 <ShieldCheck className="size-5 text-cyan-600" />
               </div>
               <div className="text-left leading-tight">
-                <span className="font-black text-slate-900 text-xs block">Compra segura</span>
-                <span className="text-[11px] text-slate-400 font-medium">Tus datos protegidos</span>
+                <span className="font-bold text-slate-900 text-xs block">Compra segura</span>
+                <span className="text-xs text-slate-400 font-medium">Tus datos protegidos</span>
               </div>
             </div>
 
@@ -1154,8 +1154,8 @@ export default function ProductVariantModal({
                 <Headphones className="size-5 text-cyan-600" />
               </div>
               <div className="text-left leading-tight">
-                <span className="font-black text-slate-900 text-xs block">Soporte en línea</span>
-                <span className="text-[11px] text-slate-400 font-medium">Estamos para ayudarte</span>
+                <span className="font-bold text-slate-900 text-xs block">Soporte en línea</span>
+                <span className="text-xs text-slate-400 font-medium">Estamos para ayudarte</span>
               </div>
             </div>
 
@@ -1164,8 +1164,8 @@ export default function ProductVariantModal({
                 <RotateCcw className="size-5 text-cyan-600" />
               </div>
               <div className="text-left leading-tight">
-                <span className="font-black text-slate-900 text-xs block">Devoluciones</span>
-                <span className="text-[11px] text-slate-400 font-medium">hasta 7 días</span>
+                <span className="font-bold text-slate-900 text-xs block">Devoluciones</span>
+                <span className="text-xs text-slate-400 font-medium">hasta 7 días</span>
               </div>
             </div>
           </div>
@@ -1183,11 +1183,11 @@ export default function ProductVariantModal({
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveDetailTab(tab.id as any)}
-                  className={`pb-2.5 text-xs sm:text-sm font-black transition-all cursor-pointer relative ${
-                    activeDetailTab === tab.id
-                      ? 'text-cyan-600 border-b-2 border-cyan-600'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
+                  className={`pb-2.5 text-xs sm:text-sm font-bold transition-all cursor-pointer relative ${
+ activeDetailTab === tab.id
+ ? 'text-cyan-600 border-b-2 border-cyan-600'
+ : 'text-slate-500 hover:text-slate-900'
+ }`}
                 >
                   <span>{tab.label}</span>
                 </button>
@@ -1199,7 +1199,7 @@ export default function ProductVariantModal({
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 {/* Columna Izquierda: Texto y Viñetas con Checks Turquesas */}
                 <div className="lg:col-span-7 space-y-4">
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
                     Estilo y comodidad en cada detalle
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
@@ -1229,7 +1229,7 @@ export default function ProductVariantModal({
                       alt={detailCards[0]?.label || "Detalle 1"} 
                       className="w-full h-full object-cover" 
                     />
-                    <span className="absolute bottom-2.5 left-2.5 px-3 py-1 bg-slate-950/80 backdrop-blur-md text-white font-black text-[10px] rounded-lg shadow-sm">
+                    <span className="absolute bottom-2.5 left-2.5 px-3 py-1 bg-slate-950/80 backdrop-blur-md text-white font-bold text-xs rounded-lg shadow-sm">
                       {detailCards[0]?.label || 'Bordado 3D de alta densidad'}
                     </span>
                   </div>
@@ -1242,7 +1242,7 @@ export default function ProductVariantModal({
                         alt={detailCards[1]?.label || "Detalle 2"} 
                         className="w-full h-full object-cover" 
                       />
-                      <span className="absolute bottom-2 left-2 px-2.5 py-0.5 bg-slate-950/80 backdrop-blur-md text-white font-black text-[9px] rounded-lg shadow-sm">
+                      <span className="absolute bottom-2 left-2 px-2.5 py-0.5 bg-slate-950/80 backdrop-blur-md text-white font-bold text-xs rounded-lg shadow-sm">
                         {detailCards[1]?.label || 'Ajuste snapback'}
                       </span>
                     </div>
@@ -1253,7 +1253,7 @@ export default function ProductVariantModal({
                         alt={detailCards[2]?.label || "Detalle 3"} 
                         className="w-full h-full object-cover" 
                       />
-                      <span className="absolute bottom-2 left-2 px-2.5 py-0.5 bg-slate-950/80 backdrop-blur-md text-white font-black text-[9px] rounded-lg shadow-sm">
+                      <span className="absolute bottom-2 left-2 px-2.5 py-0.5 bg-slate-950/80 backdrop-blur-md text-white font-bold text-xs rounded-lg shadow-sm">
                         {detailCards[2]?.label || 'Visera plana premium'}
                       </span>
                     </div>
@@ -1264,7 +1264,7 @@ export default function ProductVariantModal({
 
             {activeDetailTab === 'detalles' && (
               <div className="space-y-4 max-w-2xl text-xs">
-                <h3 className="font-black text-slate-900 text-sm uppercase tracking-wider">Ficha Técnica del Producto</h3>
+                <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider">Ficha Técnica del Producto</h3>
                 <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 overflow-hidden bg-slate-50/50">
                   <div className="p-3 flex justify-between">
                     <span className="font-bold text-slate-500">Material</span>
@@ -1304,7 +1304,7 @@ export default function ProductVariantModal({
               <div className="space-y-4 text-xs">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl font-black text-slate-900">{reviewsData.rating.toFixed(1)}</span>
+                    <span className="text-3xl font-bold text-slate-900">{reviewsData.rating.toFixed(1)}</span>
                     <div>
                       <div className="flex text-amber-400">
                         {[...Array(Math.min(5, Math.max(1, Math.round(reviewsData.rating))))].map((_, s) => (
@@ -1318,7 +1318,7 @@ export default function ProductVariantModal({
                   <button
                     type="button"
                     onClick={() => setShowReviewForm(!showReviewForm)}
-                    className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto shadow-sm active:scale-95"
+                    className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto shadow-sm active:scale-95"
                   >
                     <MessageSquarePlus className="size-4" />
                     <span>{showReviewForm ? 'Cerrar Formulario' : 'Escribir una opinión'}</span>
@@ -1329,11 +1329,11 @@ export default function ProductVariantModal({
                 {showReviewForm && (
                   <form onSubmit={handleSubmitReview} className="p-4 sm:p-5 bg-cyan-50/40 rounded-2xl border border-cyan-200/80 space-y-3 animate-in fade-in duration-200">
                     <div className="flex items-center justify-between">
-                      <span className="font-black text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
                         <Sparkles className="size-3.5 text-cyan-600" /> Tu opinión sobre este producto
                       </span>
                       {reviewSuccessMsg && (
-                        <span className="text-xs font-black text-emerald-600 flex items-center gap-1">
+                        <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                           <CheckCircle2 className="size-4" /> {reviewSuccessMsg}
                         </span>
                       )}
@@ -1341,7 +1341,7 @@ export default function ProductVariantModal({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Tu Nombre</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Tu Nombre</label>
                         <input
                           type="text"
                           required
@@ -1352,7 +1352,7 @@ export default function ProductVariantModal({
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Calificación</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Calificación</label>
                         <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-1.5 border border-slate-200">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
@@ -1370,7 +1370,7 @@ export default function ProductVariantModal({
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Tu Comentario</label>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Tu Comentario</label>
                       <textarea
                         rows={2}
                         required
@@ -1392,7 +1392,7 @@ export default function ProductVariantModal({
                       <button
                         type="submit"
                         disabled={submittingReview}
-                        className="px-5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                        className="px-5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
                       >
                         {submittingReview ? <Loader2 className="size-3.5 animate-spin" /> : null}
                         Publicar Opinión
@@ -1406,9 +1406,9 @@ export default function ProductVariantModal({
                     <div key={rIdx} className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-1">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="font-black text-slate-800">{rev.autor}</span>
+                          <span className="font-bold text-slate-800">{rev.autor}</span>
                           {rev.verificada !== false && (
-                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-extrabold rounded-md border border-emerald-200">
+                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-extrabold rounded-md border border-emerald-200">
                               Compra Verificada
                             </span>
                           )}
@@ -1434,7 +1434,7 @@ export default function ProductVariantModal({
                 <ShieldCheck className="size-6 text-white" />
               </div>
               <div>
-                <h4 className="text-sm sm:text-base font-black text-white leading-tight">
+                <h4 className="text-sm sm:text-base font-bold text-white leading-tight">
                   ¡Luce increíble, todos los días!
                 </h4>
                 <p className="text-xs text-cyan-100 font-medium">
@@ -1446,8 +1446,8 @@ export default function ProductVariantModal({
             <div className="flex items-center gap-2 bg-white/15 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 shrink-0">
               <Truck className="size-5 text-white" />
               <div className="text-left leading-none">
-                <span className="text-xs font-black block text-white">Envío en 24 – 48h</span>
-                <span className="text-[10px] text-cyan-100 font-medium">a todo el país</span>
+                <span className="text-xs font-bold block text-white">Envío en 24 – 48h</span>
+                <span className="text-xs text-cyan-100 font-medium">a todo el país</span>
               </div>
             </div>
           </div>

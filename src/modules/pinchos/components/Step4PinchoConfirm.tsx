@@ -33,7 +33,7 @@ export default function Step4PinchoConfirm({
         <div className="max-w-xl mx-auto space-y-5">
             <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4 text-left">
                 <div className="border-b border-slate-100 pb-3">
-                    <span className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
                         <ShoppingBag className="size-4 text-orange-600" />
                         <span>Resumen del Pedido</span>
                     </span>
@@ -41,7 +41,7 @@ export default function Step4PinchoConfirm({
 
                 {/* Cliente */}
                 <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/60 space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-black text-slate-900">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
                         <User className="size-4 text-orange-600" />
                         <span>{clientName}</span>
                     </div>
@@ -53,28 +53,28 @@ export default function Step4PinchoConfirm({
 
                 {/* Modalidad y Dirección */}
                 <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/60 space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-black text-slate-900 uppercase">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase">
                         <MapPin className="size-4 text-orange-600" />
                         <span>{deliveryType === 'DOMICILIO' ? 'Entrega a Domicilio' : 'Retiro en Local'}</span>
                     </div>
                     {deliveryType === 'DOMICILIO' && (
                         <div className="pl-6 space-y-0.5 text-xs text-slate-600 font-medium">
                             <p className="font-bold text-slate-800">{deliveryAddress}</p>
-                            {deliveryReference && <p className="text-[11px] text-slate-500">Ref: {deliveryReference}</p>}
+                            {deliveryReference && <p className="text-xs text-slate-500">Ref: {deliveryReference}</p>}
                         </div>
                     )}
                 </div>
 
                 {/* Productos */}
                 <div className="space-y-2 border-t border-slate-100 pt-3">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Detalle de Productos</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Detalle de Productos</span>
                     <div className="divide-y divide-slate-100">
                         {items.map((item) => (
                             <div key={item.product.id} className="py-2 flex justify-between items-center text-xs">
                                 <span className="font-bold text-slate-800">
                                     {item.quantity}x {item.product.nombre}
                                 </span>
-                                <span className="font-mono font-black text-slate-900">
+                                <span className="font-mono font-bold text-slate-900">
                                     ${(item.product.precio * item.quantity).toFixed(2)}
                                 </span>
                             </div>
@@ -94,7 +94,7 @@ export default function Step4PinchoConfirm({
                             <span className="font-mono text-white">${shippingCost.toFixed(2)}</span>
                         </div>
                     )}
-                    <div className="flex justify-between text-sm font-black text-white pt-2 border-t border-slate-800">
+                    <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-slate-800">
                         <span>Total a Pagar</span>
                         <span className="text-lg font-mono text-orange-400">${total.toFixed(2)}</span>
                     </div>
@@ -105,7 +105,7 @@ export default function Step4PinchoConfirm({
                     type="button"
                     disabled={submitting}
                     onClick={onCreateOrderAndProceedToPayment}
-                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
                 >
                     {submitting ? (
                         <>
@@ -115,7 +115,7 @@ export default function Step4PinchoConfirm({
                     ) : (
                         <>
                             <CreditCard className="size-4" />
-                            <span>CONTINUAR AL PAGO</span>
+                            <span>Continuar al pago</span>
                         </>
                     )}
                 </button>

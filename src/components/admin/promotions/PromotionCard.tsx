@@ -81,7 +81,7 @@ export default function PromotionCard({
       const info = channelsMap[ch.toUpperCase()] || { label: ch, icon: Store };
       const IconComponent = info.icon;
       return (
-        <span key={ch} className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center gap-1">
+        <span key={ch} className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1">
           <IconComponent className="size-3" /> {info.label}
         </span>
       );
@@ -100,18 +100,18 @@ export default function PromotionCard({
       {/* Header & Badges */}
       <div className="p-5 space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${typeInfo.color}`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${typeInfo.color}`}>
             {typeInfo.label}
           </span>
-          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-            isActiva 
-              ? 'bg-emerald-500 text-white shadow-xs' 
-              : isProgramada 
-                ? 'bg-amber-500 text-white shadow-xs' 
-                : isPausada 
-                  ? 'bg-slate-200 text-slate-800 border border-slate-300' 
-                  : 'bg-rose-100 text-rose-800 border border-rose-200'
-          }`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+ isActiva 
+ ? 'bg-emerald-500 text-white shadow-xs' 
+ : isProgramada 
+ ? 'bg-amber-500 text-white shadow-xs' 
+ : isPausada 
+ ? 'bg-slate-200 text-slate-800 border border-slate-300' 
+ : 'bg-rose-100 text-rose-800 border border-rose-200'
+ }`}>
             {isActiva ? '🟢 ACTIVA' : isProgramada ? '🟡 PROGRAMADA' : isPausada ? '⚪ PAUSADA' : '🔴 FINALIZADA'}
           </span>
         </div>
@@ -127,11 +127,11 @@ export default function PromotionCard({
         <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex items-center justify-between">
           <span className="text-xs text-slate-500 font-extrabold">Beneficio:</span>
           <div className="text-right">
-            <span className="text-sm font-black text-amber-600">
+            <span className="text-sm font-bold text-amber-600">
               {promotion.tipoPromo === 'PORCENTAJE' ? `${promotion.precioPromo || promotion.porcentajeDescuento || 0}% OFF` : formatCurrency(promotion.precioPromo)}
             </span>
             {promotion.precioAnterior && (
-              <span className="text-[10px] text-slate-400 line-through block font-bold">
+              <span className="text-xs text-slate-400 line-through block font-bold">
                 {formatCurrency(promotion.precioAnterior)}
               </span>
             )}
@@ -139,9 +139,9 @@ export default function PromotionCard({
         </div>
 
         {/* Alcance / Asignación a Servicio o Producto */}
-        <div className="bg-amber-50/60 p-2.5 rounded-xl border border-amber-200/60 flex items-center justify-between text-[11px]">
+        <div className="bg-amber-50/60 p-2.5 rounded-xl border border-amber-200/60 flex items-center justify-between text-xs">
           <span className="text-amber-800 font-extrabold">Asignado a:</span>
-          <span className="font-black text-amber-950 truncate max-w-[170px]">
+          <span className="font-bold text-amber-950 truncate max-w-[170px]">
             {promotion.productoRequeridoId || promotion.servicioRequeridoId
               ? `📌 ${promotion.productoNombre || promotion.servicioNombre || 'Servicio / Producto Específico'}`
               : promotion.alcance === 'SERVICIOS'
@@ -154,14 +154,14 @@ export default function PromotionCard({
 
         {/* Canales Activos */}
         <div className="space-y-1 pt-1">
-          <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Canales Activos:</span>
+          <span className="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Canales Activos:</span>
           <div className="flex items-center gap-1.5 flex-wrap">
             {getActiveChannelsList()}
           </div>
         </div>
 
         {/* Fechas & Horario */}
-        <div className="flex items-center justify-between text-[10px] text-slate-500 font-semibold pt-2 border-t border-slate-100">
+        <div className="flex items-center justify-between text-xs text-slate-500 font-semibold pt-2 border-t border-slate-100">
           <div className="flex items-center gap-1">
             <Calendar className="size-3 text-slate-400" />
             <span>Hasta {new Date(promotion.fechaFin).toLocaleDateString('es-EC')}</span>
@@ -179,12 +179,12 @@ export default function PromotionCard({
       <div className="bg-slate-50 border-t border-slate-200 p-4 space-y-3">
         <div className="grid grid-cols-2 gap-2 text-center">
           <div className="bg-white p-2 rounded-xl border border-slate-200/80">
-            <span className="text-[10px] text-slate-400 font-black uppercase block">Pedidos</span>
-            <span className="text-xs font-black text-slate-900">{promotion.ordersGenerated || 0}</span>
+            <span className="text-xs text-slate-400 font-bold uppercase block">Pedidos</span>
+            <span className="text-xs font-bold text-slate-900">{promotion.ordersGenerated || 0}</span>
           </div>
           <div className="bg-white p-2 rounded-xl border border-slate-200/80">
-            <span className="text-[10px] text-slate-400 font-black uppercase block">Ventas</span>
-            <span className="text-xs font-black text-emerald-600">{formatCurrency(promotion.salesGenerated)}</span>
+            <span className="text-xs text-slate-400 font-bold uppercase block">Ventas</span>
+            <span className="text-xs font-bold text-emerald-600">{formatCurrency(promotion.salesGenerated)}</span>
           </div>
         </div>
 
@@ -192,7 +192,7 @@ export default function PromotionCard({
           <button
             type="button"
             onClick={() => onEdit(promotion)}
-            className="py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-[10px] rounded-xl border border-slate-200 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+            className="py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center gap-1 cursor-pointer transition-colors"
             title="Editar"
           >
             <Edit2 className="size-3" /> Editar
@@ -200,9 +200,9 @@ export default function PromotionCard({
           <button
             type="button"
             onClick={() => onToggleStatus(promotion)}
-            className={`py-2 text-[10px] font-bold rounded-xl border flex items-center justify-center gap-1 cursor-pointer transition-colors ${
-              isActiva ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-            }`}
+            className={`py-2 text-xs font-bold rounded-xl border flex items-center justify-center gap-1 cursor-pointer transition-colors ${
+ isActiva ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+ }`}
             title={isActiva ? 'Pausar' : 'Activar'}
           >
             {isActiva ? <Pause className="size-3" /> : <Play className="size-3" />}
@@ -211,7 +211,7 @@ export default function PromotionCard({
           <button
             type="button"
             onClick={() => onDuplicate(promotion)}
-            className="py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-[10px] rounded-xl border border-slate-200 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+            className="py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center gap-1 cursor-pointer transition-colors"
             title="Duplicar"
           >
             <Copy className="size-3" /> Copiar
@@ -219,7 +219,7 @@ export default function PromotionCard({
           <button
             type="button"
             onClick={() => onViewStats(promotion)}
-            className="py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[10px] rounded-xl border border-blue-200 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+            className="py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl border border-blue-200 flex items-center justify-center gap-1 cursor-pointer transition-colors"
             title="Métricas"
           >
             <BarChart3 className="size-3" /> Muestras

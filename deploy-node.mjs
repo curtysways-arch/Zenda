@@ -2,9 +2,15 @@ import { Client } from "ssh2";
 import path from "path";
 import fs from "fs";
 
-const VPS = "157.173.203.174";
-const USER = "root";
-const PASS = "Elmassuelto005624";
+// Credenciales del servidor: se leen de variables de entorno (NUNCA escribirlas aquí).
+// Ejemplo en PowerShell:  $env:VPS_HOST="1.2.3.4"; $env:VPS_USER="root"; $env:VPS_PASS="..."; node deploy-node.mjs
+const VPS = process.env.VPS_HOST;
+const USER = process.env.VPS_USER || "root";
+const PASS = process.env.VPS_PASS;
+if (!VPS || !PASS) {
+  console.error("Faltan VPS_HOST y/o VPS_PASS en las variables de entorno. Abortando despliegue.");
+  process.exit(1);
+}
 const REMOTE_BASE = "/opt/Zenda";
 
 // Carpetas que deben sincronizarse recursivamente (directorios y archivos)
@@ -41,7 +47,16 @@ const syncFolderRoots = [
   // Módulo Lavandería / Calzado (Shoe Care) Completo
   "src/modules/shoe-care",
   "src/app/api/shoe-care",
-  "src/app/lavado"
+  "src/app/lavado",
+
+  // Módulo Logística y Conductores
+  "src/app/superadmin",
+  "src/app/api/superadmin",
+  "src/components/superadmin",
+  "src/app/admin/logistica",
+  "src/app/api/logistics",
+  "src/app/driver",
+  "src/app/api/public/[slug]/driver"
 ];
 
 // Archivos individuales adicionales
@@ -124,7 +139,34 @@ const manualFiles = [
   "src/components/ui/PhoneInput.tsx",
   "src/app/api/shoe-care/orders/[id]/inspect/route.ts",
   "src/components/public/UniversalServiceRequestModal.tsx",
-  "src/app/api/public/auth/otp/route.ts"
+  "src/app/api/public/auth/otp/route.ts",
+  "src/lib/favorites.ts",
+  "src/app/[slug]/perfil/page.tsx",
+  "src/components/admin/GlobalOrderNotifier.tsx",
+  "src/app/admin/productos/page.tsx",
+  "src/app/api/admin/productos/route.ts",
+  "src/app/api/admin/categorias/route.ts",
+  "src/app/admin/servicios/page.tsx",
+  "src/components/admin/mobile/MobileServices.tsx",
+  "src/scripts/seed_shoe_care_content.ts",
+  "src/app/api/admin/inventario/route.ts",
+  "src/app/admin/inventario/page.tsx",
+  "src/core/delivery/DeliveryPricing.ts",
+  "src/core/pricing/PricingEngine.ts",
+  "src/app/api/shoe-care/orders/route.ts",
+  "src/scripts/test_laundry_delivery.ts",
+  "src/components/public/OrderTrackingClient.tsx",
+  "src/components/public/ClientOrdersClient.tsx",
+  "src/app/driver/page.tsx",
+  "src/app/api/public/[slug]/driver/route.ts",
+  "src/components/driver/DriverOrderMapModal.tsx",
+  "src/components/admin/service-orders/ServiceWorkflowActionControl.tsx",
+  "src/components/admin/service-orders/DeliveryCard.tsx",
+  "src/app/admin/service-orders/[id]/page.tsx",
+  "src/app/admin/sucursales/page.tsx",
+  "src/app/api/admin/sucursales/route.ts",
+  "src/lib/services/communicationService.ts",
+  "src/app/api/admin/clean-test-orders/route.ts"
 ];
 
 function collectAllFilesAndDirs(roots, extraFiles) {
@@ -245,6 +287,8 @@ conn.on("ready", async () => {
   await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_gym_benefits.ts || true)`, "Seed Beneficios Gimnasio");
   await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_gym_canonical.ts || true)`, "Seed Gimnasio Canónico");
   await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_gym_examples.ts || true)`, "Seed Ejemplos Conoce Gimnasio");
+  await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_shoe_care_content.ts || true)`, "Seed Contenido Shoe Care");
+  await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/test_laundry_delivery.ts || true)`, "Test Delivery Lavandería x2");
 
   // 5. Build de producción Next.js
   console.log("\n🏗️ Compilando aplicación Next.js en VPS (npm run build)...");

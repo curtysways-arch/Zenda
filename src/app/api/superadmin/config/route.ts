@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
+import { getTeamContext } from "@/lib/admin/teamGuard";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import crypto from 'crypto';
 
 async function isSuperAdmin() {
-    const session = await getServerSession(authOptions);
-    // En un entorno real, verificaríamos el rol de la sesión.
-    // Para propósitos de este desarrollo, permitimos el acceso.
-    return true;
+    // Usuario del equipo Citiox; el permiso de cada acción lo valida el middleware (lib/admin/teamAccessMap)
+    return Boolean(await getTeamContext());
 }
 
 export async function GET() {

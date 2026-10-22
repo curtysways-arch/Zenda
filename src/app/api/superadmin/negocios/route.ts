@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getTeamContext, assignBusinessToCreator } from "@/lib/admin/teamGuard";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -10,9 +11,8 @@ import { whatsappService } from "@/lib/whatsapp";
 import { BusinessProvisioningService } from "@/core/services/BusinessProvisioningService";
 
 async function isSuperAdmin() {
-    const session = await getServerSession(authOptions);
-    // DEBUG: Permitimos acceso total temporalmente local
-    return true;
+    // Usuario del equipo Citiox; el permiso de cada acción lo valida el middleware (lib/admin/teamAccessMap)
+    return Boolean(await getTeamContext());
 }
 
 import { ProvisioningEngine } from "@/core/provisioning/ProvisioningEngine";
@@ -27,7 +27,8 @@ export async function POST(req: Request) {
 
         // Si el payload viene del Universal Provisioning Wizard (Wizard v3.0)
         if (body.generalInfo || body.mode) {
-            const result = await ProvisioningEngine.provisionBusiness(body);
+            const result: any = await ProvisioningEngine.provisionBusiness(body);
+            if (result?.businessId) await assignBusinessToCreator(await getTeamContext(), result.businessId);
             return NextResponse.json(result);
         }
         const {
@@ -416,6 +417,7 @@ export async function POST(req: Request) {
             console.error('Error en proceso de envío de WhatsApp superadmin:', waErr);
         }
 
+        await assignBusinessToCreator(await getTeamContext(), result.nuevoNegocio.id);
         return NextResponse.json(result.nuevoNegocio);
     } catch (error: any) {
         console.error("Error creating business:", error);

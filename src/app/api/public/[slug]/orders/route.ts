@@ -1,9 +1,21 @@
 import { NextResponse } from 'next/server';
+import { guardCustomerIntake } from '@/lib/subscription/receiveGuard';
 import prisma from '@/lib/prisma';
 import { notificationService } from '@/lib/notifications';
 import { PaymentService } from '@/lib/payments/PaymentService';
 import { formatToEcuadorPhone, getPhoneSearchConditions } from '@/lib/phoneUtils';
-import { hasModule } from '@/lib/business/BusinessModuleResolver';
+import { getCommerceAccess } from '@/lib/business/commerceAccess';
+import { InventoryEngine } from '@/core/inventory/InventoryEngine';
+import {
+    toDecimal,
+    decimalAdd,
+    decimalSub,
+    decimalMul,
+    decimalGt,
+    decimalLt,
+    roundQty,
+    roundMoney
+} from '@/lib/math/decimal';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +55,9 @@ export async function GET(
             : (negocio.configuracion as any)) || {};
         const isEnterpriseGet = negocioConfigGet.useEnterpriseRuntime || negocioConfigGet.enterpriseRuntime;
 
-        if (!isEnterpriseGet && !hasModule(negocio.tipoNegocio, 'ORDERS')) {
+        // Tipo de negocio con pedidos, o add-on "Venta de productos" (también para spas y servicios)
+        const accessGet = isEnterpriseGet ? { orders: true } : await getCommerceAccess(negocio as any);
+        if (!accessGet.orders) {
             return NextResponse.json({ error: 'MODULE_NOT_AVAILABLE', message: 'El módulo de pedidos no está disponible para este negocio.' }, { status: 403 });
         }
 
@@ -111,8 +125,14 @@ export async function POST(
             : (negocio.configuracion as any)) || {};
         const isEnterprise = negocioConfig.useEnterpriseRuntime || negocioConfig.enterpriseRuntime;
 
-        if (!isEnterprise && !hasModule(negocio.tipoNegocio, 'ORDERS')) {
+        const access = isEnterprise ? { orders: true, delivery: true } : await getCommerceAccess(negocio as any);
+        if (!access.orders) {
             return NextResponse.json({ error: 'MODULE_NOT_AVAILABLE', message: 'El módulo de pedidos no está disponible para este negocio.' }, { status: 403 });
+        }
+        const intakeBlocked = await guardCustomerIntake(negocio.id);
+        if (intakeBlocked) return intakeBlocked;
+        if (!access.delivery && (deliveryType === 'DOMICILIO' || deliveryType === 'DELIVERY_ORDER')) {
+            return NextResponse.json({ error: 'Este negocio solo tiene retiro en el local por ahora.' }, { status: 400 });
         }
 
         // Protección contra duplicados en checkout (Idempotencia Server-Side)
@@ -152,13 +172,13 @@ export async function POST(
             return NextResponse.json({ error: 'Algunos productos seleccionados ya no están disponibles.' }, { status: 400 });
         }
 
-        // Calcular subtotal e items formateados con snapshots y precios server-side
-        let subtotal = 0;
+        // Calcular subtotal e items formateados con snapshots y precios server-side con precisión Decimal
+        let subtotalDec = toDecimal(0);
         const itemsToCreate = [];
 
         for (const item of items) {
-            const qty = parseInt(String(item.cantidad || 0));
-            if (isNaN(qty) || qty <= 0) {
+            const qty = roundQty(item.cantidad || 0);
+            if (qty.lte(0)) {
                 return NextResponse.json({ error: 'Cantidad de producto inválida.' }, { status: 400 });
             }
 
@@ -175,12 +195,12 @@ export async function POST(
                 }
             }
 
-            const precioReal = (variant && variant.precio !== null && variant.precio > 0)
-                ? variant.precio
-                : product.precio;
+            const precioReal = (variant && variant.precio !== null && decimalGt(variant.precio, 0))
+                ? toDecimal(variant.precio)
+                : toDecimal(product.precio);
 
-            const itemSubtotal = precioReal * qty;
-            subtotal += itemSubtotal;
+            const itemSubtotal = decimalMul(precioReal, qty);
+            subtotalDec = decimalAdd(subtotalDec, itemSubtotal);
 
             itemsToCreate.push({
                 productoId: product.id,
@@ -188,8 +208,10 @@ export async function POST(
                 varianteNombre: variant ? variant.nombre : null,
                 sku: variant?.sku || product.sku || null,
                 nombreProducto: product.nombre,
-                precioUnitario: precioReal,
-                cantidad: qty
+                precioUnitario: roundMoney(precioReal).toNumber(),
+                cantidad: qty.toNumber(),
+                precioUnitarioDec: roundMoney(precioReal),
+                cantidadDec: qty
             });
         }
 
@@ -210,8 +232,8 @@ export async function POST(
         const config = (negocio.configuracion as any) || {};
 
         // Validar monto mínimo en productos
-        const minOrderAmount = config.montoMinimoPedido !== undefined ? parseFloat(config.montoMinimoPedido) : 0;
-        if (minOrderAmount > 0 && subtotal < minOrderAmount) {
+        const minOrderAmount = config.montoMinimoPedido !== undefined ? roundMoney(config.montoMinimoPedido) : toDecimal(0);
+        if (decimalGt(minOrderAmount, 0) && decimalLt(subtotalDec, minOrderAmount)) {
             return NextResponse.json({
                 error: `El pedido mínimo en productos es de $${minOrderAmount.toFixed(2)} (sin incluir costo de envío).`
             }, { status: 400 });
@@ -242,13 +264,17 @@ export async function POST(
         });
 
         const isDeliveryOrder = deliveryType === 'DOMICILIO' || deliveryType === 'DELIVERY_ORDER';
-        const discountAmount = body.discountAmount !== undefined ? parseFloat(body.discountAmount) : (body.descuento !== undefined ? parseFloat(body.descuento) : 0);
-        const rawSubtotal = itemsToCreate.reduce((sum, item) => sum + (item.precioUnitario * item.cantidad), 0);
-        const finalSubtotal = rawSubtotal > 0 ? rawSubtotal : (body.subtotal !== undefined && parseFloat(body.subtotal) > 0 ? parseFloat(body.subtotal) : pricingResult.subtotal);
-        const finalCostoEnvio = isDeliveryOrder ? (body.costoEnvio !== undefined ? parseFloat(body.costoEnvio) : pricingResult.deliveryCost) : 0;
-        const customerShippingCost = isDeliveryOrder ? (body.customerShippingAmount !== undefined ? parseFloat(body.customerShippingAmount) : finalCostoEnvio) : 0;
-        const netSubtotal = Math.max(0, finalSubtotal - discountAmount);
-        const finalTotal = body.total !== undefined && parseFloat(body.total) > 0 ? parseFloat(body.total) : Math.round((netSubtotal + customerShippingCost) * 100) / 100;
+        const discountAmountDec = roundMoney(body.discountAmount !== undefined ? body.discountAmount : (body.descuento !== undefined ? body.descuento : 0));
+        const rawSubtotalDec = itemsToCreate.reduce((sum, item) => decimalAdd(sum, decimalMul(item.precioUnitario, item.cantidad)), toDecimal(0));
+        const finalSubtotalDec = rawSubtotalDec.gt(0) ? rawSubtotalDec : (body.subtotal !== undefined && decimalGt(body.subtotal, 0) ? roundMoney(body.subtotal) : roundMoney(pricingResult.subtotal));
+        const finalCostoEnvioDec = isDeliveryOrder ? (body.costoEnvio !== undefined ? roundMoney(body.costoEnvio) : roundMoney(pricingResult.deliveryCost)) : toDecimal(0);
+        const customerShippingCostDec = isDeliveryOrder ? (body.customerShippingAmount !== undefined ? roundMoney(body.customerShippingAmount) : finalCostoEnvioDec) : toDecimal(0);
+        const netSubtotalDec = decimalSub(finalSubtotalDec, discountAmountDec);
+        const calcTotalDec = roundMoney(decimalAdd(netSubtotalDec.isNegative() ? toDecimal(0) : netSubtotalDec, customerShippingCostDec));
+        const finalTotal = body.total !== undefined && decimalGt(body.total, 0) ? roundMoney(body.total).toNumber() : calcTotalDec.toNumber();
+        const finalSubtotal = finalSubtotalDec.toNumber();
+        const finalCostoEnvio = finalCostoEnvioDec.toNumber();
+        const discountAmount = discountAmountDec.toNumber();
 
         // Resolver fecha de entrega
         let dateToDeliver = new Date();
@@ -261,36 +287,61 @@ export async function POST(
 
         // Generar número de pedido secuencial por negocio y descontar stock atómicamente
         const txResult = await prisma.$transaction(async (tx) => {
-            // Descuento atómico de stock por variante o producto
-            for (const item of itemsToCreate) {
-                if (item.varianteId) {
-                    const updatedVar = await (tx as any).productoVariante.updateMany({
-                        where: {
-                            id: item.varianteId,
-                            stock: { gte: item.cantidad }
-                        },
-                        data: {
-                            stock: { decrement: item.cantidad }
-                        }
+            // Resolver sucursal de despacho para la orden ecommerce
+            let ecommerceBranchId = body.branchId || body.sucursalId;
+            if (!ecommerceBranchId) {
+                const mainBranch = await (tx as any).branch.findFirst({
+                    where: { businessId: negocio.id, active: true },
+                    orderBy: { isMain: 'desc' }
+                });
+                if (mainBranch) ecommerceBranchId = mainBranch.id;
+                else {
+                    const anyBranch = await (tx as any).branch.findFirst({
+                        where: { businessId: negocio.id, active: true }
                     });
-                    if (updatedVar.count === 0) {
-                        throw new Error(`Stock insuficiente para la variante ${item.varianteNombre || 'seleccionada'}.`);
-                    }
-                } else if (item.productoId) {
+                    if (anyBranch) ecommerceBranchId = anyBranch.id;
+                }
+            }
+
+            let ecommerceWarehouseId: string | null = null;
+            if (ecommerceBranchId) {
+                const defWh = await (tx as any).warehouse.findFirst({
+                    where: { businessId: negocio.id, branchId: ecommerceBranchId, isDefault: true, active: true, type: { notIn: ['TRANSIT', 'SCRAP_WASTE'] } }
+                });
+                if (defWh) {
+                    ecommerceWarehouseId = defWh.id;
+                } else {
+                    const anyWh = await (tx as any).warehouse.findFirst({
+                        where: { businessId: negocio.id, branchId: ecommerceBranchId, active: true, type: { notIn: ['TRANSIT', 'SCRAP_WASTE'] } }
+                    });
+                    if (anyWh) ecommerceWarehouseId = anyWh.id;
+                }
+            }
+
+            // Descuento atómico y trazable mediante InventoryEngine
+            for (const item of itemsToCreate) {
+                if (item.productoId) {
                     const prodDb = dbProducts.find(p => p.id === item.productoId);
-                    if (prodDb && prodDb.stock !== null) {
-                        const updatedProd = await (tx as any).producto.updateMany({
-                            where: {
-                                id: item.productoId,
-                                negocioId: negocio.id,
-                                stock: { gte: item.cantidad }
-                            },
-                            data: {
-                                stock: { decrement: item.cantidad }
-                            }
-                        });
-                        if (updatedProd.count === 0) {
-                            throw new Error(`Stock insuficiente para el producto ${item.nombreProducto}.`);
+                    if (prodDb && prodDb.tipoProducto !== 'NO_INVENTARIABLE') {
+                        if (!ecommerceWarehouseId) {
+                            throw new Error('La sucursal de despacho no tiene una bodega de inventario configurada. Configure una bodega antes de realizar esta operación.');
+                        }
+                        try {
+                            await InventoryEngine.recordMovement({
+                                businessId: negocio.id,
+                                branchId: ecommerceBranchId,
+                                warehouseId: ecommerceWarehouseId,
+                                productId: item.productoId,
+                                variantId: item.varianteId || null,
+                                quantity: roundQty(item.cantidad).times(-1), // Descuento por venta
+                                type: 'VENTA',
+                                sourceDocType: 'VENTA',
+                                reason: `Venta E-commerce: ${item.nombreProducto} x${item.cantidad}`,
+                                createdBy: 'ECOMMERCE',
+                                allowNegative: false
+                            }, tx);
+                        } catch (stockErr: any) {
+                            throw new Error(`Stock insuficiente para "${item.nombreProducto}": ${stockErr.message}`);
                         }
                     }
                 }
@@ -304,10 +355,15 @@ export async function POST(
 
             const nextOrderNumber = lastOrder ? lastOrder.numeroPedido + 1 : 1;
 
+            const rawMethod = (body.paymentMethodCode || body.paymentMethod || body.metodoPago || '').toUpperCase();
+            const isCash = rawMethod.includes('CASH') || rawMethod.includes('EFECTIVO') || rawMethod.includes('CONTRA_ENTREGA') || rawMethod.includes('ENTREGA');
+            const initialPaymentStatus = isCash ? 'CONTRA_ENTREGA' : 'PENDIENTE';
+
             // Crear el pedido con desglose de precios en extraInfo
             const newOrder = await (tx as any).pedido.create({
                 data: {
                     negocioId: negocio.id,
+                    sucursalId: ecommerceBranchId || null,
                     numeroPedido: nextOrderNumber,
                     tipoEntrega: deliveryType || (body.channel === 'DELIVERY' ? 'DOMICILIO' : 'RETIRO'),
                     nombreCliente: clientName,
@@ -341,7 +397,24 @@ export async function POST(
                         channel: body.channel || 'WEB',
                         tableCode: body.tableCode || null,
                         packagingCost: pricingResult.packagingCost,
-                        pricingBreakdown: pricingResult
+                        pricingBreakdown: pricingResult,
+                        canonicalLogistics: {
+                            tipoMision: isDeliveryOrder ? 'DELIVERY_ONLY' : 'SIMPLE',
+                            pickupFee: 0,
+                            deliveryFee: finalCostoEnvio,
+                            totalLogisticsFee: finalCostoEnvio,
+                            recaudacion: {
+                                requerida: isDeliveryOrder && isCash,
+                                montoEsperado: (isDeliveryOrder && isCash) ? finalTotal : 0.00,
+                                montoRecaudado: 0.00,
+                                estado: (isDeliveryOrder && isCash) ? 'PENDING' : 'NOT_REQUIRED',
+                                metodo: isCash ? 'EFECTIVO' : 'NINGUNO'
+                            },
+                            deliveryDriver: isDeliveryOrder ? {
+                                compensacion: finalCostoEnvio,
+                                estadoCompensacion: 'PENDING'
+                            } : null
+                        }
                     },
                     items: {
                         create: itemsToCreate
@@ -352,9 +425,7 @@ export async function POST(
                 }
             });
 
-            const rawMethod = (body.paymentMethodCode || body.paymentMethod || body.metodoPago || '').toUpperCase();
-            const isCash = rawMethod.includes('CASH') || rawMethod.includes('EFECTIVO') || rawMethod.includes('CONTRA_ENTREGA') || rawMethod.includes('ENTREGA');
-            const initialPaymentStatus = isCash ? 'CONTRA_ENTREGA' : 'PENDIENTE';
+            // Payment variables ya declaradas arriba
 
             const initialPayment = await PaymentService.createInitialPayment({
                 pedidoId: newOrder.id,

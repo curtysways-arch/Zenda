@@ -18,6 +18,13 @@ export async function GET(req: Request) {
         const negocioId = user.negocioId;
         if (!negocioId) return NextResponse.json({ error: "Negocio no especificado" }, { status: 400 });
 
+        // Los niveles propios del negocio (LoyaltyLevel) son los que usa el motor de puntos
+        // para subir de nivel a los clientes. Si existen, son la única fuente de verdad.
+        const localLevels = await prisma.loyaltyLevel.findMany({ where: { negocioId }, orderBy: { orden: 'asc' } });
+        if (localLevels.length > 0) {
+            return NextResponse.json(localLevels.map(l => ({ ...l, isGlobal: false, mode: 'LOCAL' })));
+        }
+
         const resolved = await ClubResolver.resolveLevels(negocioId);
         const levels = resolved.map((r, idx) => {
             if (r.source === 'LOCAL') {

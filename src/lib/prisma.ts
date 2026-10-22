@@ -70,9 +70,33 @@ function createPrismaClientSync(): PrismaClient {
 // Evita evaluar la base de datos durante la compilación estática de Next.js.
 let prismaInstance: PrismaClient | null = null;
 
+/**
+ * SQLite (solo desarrollo): modo WAL + espera ante bloqueo.
+ * Sin WAL, una escritura (crear pedido, cambiar estado) espera a que terminen TODAS las lecturas
+ * en curso (paneles y app de repartidores consultando cada pocos segundos) y a veces se quedaba
+ * colgada ~30 s hasta que libsql respondía "Operation has timed out". Con WAL lecturas y
+ * escrituras no se bloquean entre sí. En producción (PostgreSQL) no aplica.
+ */
+function tuneSqlite(client: PrismaClient) {
+    const g = globalThis as any;
+    if (g.__citioxSqliteTuned) return;
+    g.__citioxSqliteTuned = true;
+    (async () => {
+        try {
+            await client.$queryRawUnsafe('PRAGMA journal_mode=WAL;');
+            await client.$queryRawUnsafe('PRAGMA busy_timeout=5000;');
+            await client.$queryRawUnsafe('PRAGMA synchronous=NORMAL;');
+        } catch (e: any) {
+            console.warn('[prisma] No se pudo ajustar SQLite:', e?.message || e);
+        }
+    })();
+}
+
 function getPrisma(): PrismaClient {
     if (!prismaInstance) {
         prismaInstance = globalThis.prisma ?? createPrismaClientSync();
+        const url = process.env['DATABASE_URL'] || 'file:./dev.db';
+        if (!url.startsWith('postgres')) tuneSqlite(prismaInstance);
         if (process.env.NODE_ENV !== 'production') {
             globalThis.prisma = prismaInstance;
         }

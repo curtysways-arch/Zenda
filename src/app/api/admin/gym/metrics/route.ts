@@ -14,7 +14,9 @@ export async function GET() {
 
   try {
     const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    // Inicio del día según la hora de Ecuador (el servidor puede estar en UTC)
+    const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guayaquil', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+    const startOfToday = new Date(`${todayKey}T00:00:00-05:00`);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
@@ -135,9 +137,11 @@ export async function GET() {
     // Consultar slug para determinar si es negocio de demostración
     const biz = await prisma.negocio.findUnique({
       where: { id: negocioId },
-      select: { slug: true }
+      select: { slug: true, isDemo: true }
     });
-    const isDemoBusiness = biz?.slug === 'vortex-fitness' || (biz?.slug || '').toLowerCase().includes('demo');
+    // Solo negocios marcados como demo (campo isDemo). Antes bastaba con que el slug contuviera "demo",
+    // y cualquier negocio real con esa palabra en su enlace veía números inventados.
+    const isDemoBusiness = (biz as any)?.isDemo === true || biz?.slug === 'vortex-fitness';
 
     // Solo proveer datos simulados si es explícitamente el negocio de demostración
     const isZeroData = isDemoBusiness && activeMembershipsCount === 0 && attendancesToday === 0;
@@ -296,7 +300,7 @@ export async function GET() {
     if (finalExpiringSoon > 0) {
       alerts.push({
         type: 'warning',
-        text: `⚠️ ${finalExpiringSoon} membresías vencen en los próximos 7 días`,
+        text: `${finalExpiringSoon} ${finalExpiringSoon === 1 ? 'membresía vence' : 'membresías vencen'} en los próximos 7 días`,
         actionText: 'Ver para renovar',
         actionHref: '/admin/socios?filtro=por-vencer'
       });
@@ -304,14 +308,14 @@ export async function GET() {
     if (finalExpired > 0) {
       alerts.push({
         type: 'warning',
-        text: `🛑 ${finalExpired} socios con membresía vencida intentaron o tienen pagos pendientes`,
+        text: `${finalExpired} ${finalExpired === 1 ? 'socio tiene' : 'socios tienen'} la membresía vencida`,
         actionText: 'Gestionar cobranzas',
         actionHref: '/admin/socios?filtro=vencidos'
       });
     }
-    alerts.push({
+    if (finalPeopleInside > 0) alerts.push({
       type: 'success',
-      text: `⚡ Aforo actual en sala: ${finalPeopleInside} atletas entrenando en tiempo real (${Math.round((finalPeopleInside / 80) * 100)}% de ocupación)`,
+      text: `${finalPeopleInside} personas entrenando ahora (${Math.round((finalPeopleInside / 80) * 100)}% del aforo)`,
       actionText: 'Control de Torno',
       actionHref: '/admin/accesos'
     });
@@ -330,11 +334,11 @@ export async function GET() {
         recentAttendances: finalRecentAttendances,
         hourlyTraffic,
         classesToday,
-        planBreakdown: planBreakdown.length > 0 ? planBreakdown : [
+        planBreakdown: planBreakdown.length > 0 ? planBreakdown : (isZeroData ? [
           { name: 'Plan Anual VIP', count: 54, price: 280 },
           { name: 'Plan Trimestral', count: 62, price: 80 },
           { name: 'Plan Mensual', count: 26, price: 30 }
-        ],
+        ] : []),
         alerts,
         isSimulated: isZeroData
       }

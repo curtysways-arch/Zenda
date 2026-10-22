@@ -167,7 +167,7 @@ export default function SuperAdminAddonsPage() {
               <Package className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">Catálogo de Add-ons Citiox</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Catálogo de Add-ons Citiox</h1>
               <p className="text-xs text-slate-500 font-semibold mt-0.5">
                 Configuración universal, persistente y auditable de módulos adicionales y extensiones de límites
               </p>
@@ -177,7 +177,7 @@ export default function SuperAdminAddonsPage() {
 
         <button
           onClick={handleOpenCreate}
-          className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md cursor-pointer transition-all active:scale-95 shrink-0"
+          className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md cursor-pointer transition-all active:scale-95 shrink-0"
         >
           <Plus className="w-4 h-4" /> Crear Nuevo Add-on
         </button>
@@ -187,12 +187,12 @@ export default function SuperAdminAddonsPage() {
       {loading ? (
         <div className="py-20 text-center text-slate-400 space-y-2">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-amber-500" />
-          <p className="text-xs font-black uppercase tracking-widest">Cargando catálogo de add-ons...</p>
+          <p className="text-xs font-bold uppercase tracking-wide">Cargando catálogo de add-ons...</p>
         </div>
       ) : addons.length === 0 ? (
         <div className="py-20 text-center text-slate-500 bg-white border border-slate-200 rounded-3xl p-8">
           <AlertTriangle className="w-10 h-10 mx-auto text-amber-500 mb-3" />
-          <h3 className="text-base font-black">No hay add-ons registrados</h3>
+          <h3 className="text-base font-bold">No hay add-ons registrados</h3>
           <p className="text-xs text-slate-400 mt-1">Crea nuevos add-ons o ejecuta el seeder canónico.</p>
         </div>
       ) : (
@@ -208,27 +208,27 @@ export default function SuperAdminAddonsPage() {
             >
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    addon.type === 'CAPABILITY' 
-                      ? 'bg-blue-100 text-blue-800 border border-blue-200' 
-                      : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                  }`}>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+ addon.type === 'CAPABILITY' 
+ ? 'bg-blue-100 text-blue-800 border border-blue-200' 
+ : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+ }`}>
                     {addon.type === 'CAPABILITY' ? '⚡ Capacidad' : '📈 Límite'}
                   </span>
 
                   <div className="flex items-center gap-1.5">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      addon.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
-                    }`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+ addon.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+ }`}>
                       {addon.active ? 'Activo' : 'Inactivo'}
                     </span>
-                    <span className="font-mono font-black text-sm text-slate-900">${addon.priceMonthly.toFixed(2)}/m</span>
+                    <span className="font-mono font-bold text-sm text-slate-900">${addon.priceMonthly.toFixed(2)}/m</span>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="font-black text-base text-slate-900 leading-tight">{addon.name}</h3>
-                  <p className="text-[11px] font-mono text-slate-400 uppercase mt-0.5">{addon.code}</p>
+                  <h3 className="font-bold text-base text-slate-900 leading-tight">{addon.name}</h3>
+                  <p className="text-xs font-mono text-slate-400 uppercase mt-0.5">{addon.code}</p>
                 </div>
                 
                 <p className="text-xs text-slate-500 font-medium leading-relaxed min-h-[36px]">
@@ -239,17 +239,17 @@ export default function SuperAdminAddonsPage() {
               <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
                 <div className="flex justify-between text-slate-600 font-semibold">
                   <span>Recurso Afectado:</span>
-                  <span className="font-mono font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded">{addon.targetKey}</span>
+                  <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">{addon.targetKey}</span>
                 </div>
                 {addon.type === 'LIMIT' && (
                   <div className="flex justify-between text-slate-600 font-semibold">
                     <span>Monto de Extensión:</span>
-                    <span className="font-black text-emerald-600">+{addon.amount || 1}</span>
+                    <span className="font-bold text-emerald-600">+{addon.amount || 1}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-slate-600 font-semibold">
                   <span>Acumulable / Múltiple:</span>
-                  <span className={`font-black ${addon.stackable ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  <span className={`font-bold ${addon.stackable ? 'text-emerald-600' : 'text-slate-400'}`}>
                     {addon.stackable ? `Sí (Máx: ${addon.maxQuantity || 'Sin Límite'})` : 'No (Único)'}
                   </span>
                 </div>
@@ -258,7 +258,7 @@ export default function SuperAdminAddonsPage() {
                 <div className="pt-3 flex items-center justify-between border-t border-slate-100">
                   <button
                     onClick={() => handleOpenEdit(addon)}
-                    className="flex items-center gap-1.5 text-xs font-black text-slate-700 hover:text-amber-600 bg-slate-100 hover:bg-amber-50 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-amber-600 bg-slate-100 hover:bg-amber-50 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
                   >
                     <Edit3 className="w-3.5 h-3.5" /> Editar
                   </button>
@@ -266,11 +266,11 @@ export default function SuperAdminAddonsPage() {
                   <button
                     onClick={() => handleToggleActive(addon)}
                     disabled={togglingId === addon.id}
-                    className={`flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                      addon.active
-                        ? 'text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200'
-                        : 'text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
-                    }`}
+                    className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+ addon.active
+ ? 'text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200'
+ : 'text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
+ }`}
                   >
                     <Power className="w-3.5 h-3.5" />
                     {addon.active ? 'Desactivar' : 'Activar'}
@@ -286,7 +286,7 @@ export default function SuperAdminAddonsPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200">
-            <h2 className="text-xl font-black text-slate-900">
+            <h2 className="text-xl font-bold text-slate-900">
               {isEditing ? 'Editar Add-on Comercial' : 'Crear Nuevo Add-on Comercial'}
             </h2>
             
@@ -305,7 +305,7 @@ export default function SuperAdminAddonsPage() {
                   }`}
                 />
                 {isEditing && (
-                  <p className="text-[10px] text-slate-400 mt-1">El código es inmutable para proteger los contratos activos.</p>
+                  <p className="text-xs text-slate-400 mt-1">El código es inmutable para proteger los contratos activos.</p>
                 )}
               </div>
 

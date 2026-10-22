@@ -43,16 +43,16 @@ export default async function AttendancePage({ params }: { params: Promise<{ cla
             <div className="space-y-6">
                 <Link 
                     href={`/profesor/cursos/${cls.course_id}/clases`}
-                    className="inline-flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] hover:text-emerald-500 transition-colors group"
+                    className="inline-flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-wide hover:text-emerald-500 transition-colors group"
                 >
                     <ArrowRight size={14} className="rotate-180 group-hover:-translate-x-1 transition-transform" /> Volver a clases
                 </Link>
                 <div>
-                    <h1 className="text-4xl font-black uppercase tracking-tighter text-slate-900 leading-tight">Pasar Lista</h1>
+                    <h1 className="text-4xl font-bold tracking-tight text-slate-900 leading-tight">Pasar Lista</h1>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
-                        <p className="text-slate-500 font-medium italic">Curso: <span className="text-emerald-600 font-black uppercase tracking-tight">{cls.Course.name}</span></p>
+                        <p className="text-slate-500 font-medium ">Curso: <span className="text-emerald-600 font-bold uppercase tracking-tight">{cls.Course.name}</span></p>
                         <div className="size-1 rounded-full bg-slate-200 hidden sm:block" />
-                        <p className="text-slate-500 font-medium italic">Módulo: <span className="text-slate-900 font-black uppercase tracking-tight">{cls.title}</span></p>
+                        <p className="text-slate-500 font-medium ">Módulo: <span className="text-slate-900 font-bold uppercase tracking-tight">{cls.title}</span></p>
                     </div>
                 </div>
             </div>

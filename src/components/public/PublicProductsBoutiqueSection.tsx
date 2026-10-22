@@ -126,7 +126,7 @@ function PublicProductsBoutiqueContent({
       {/* ── ENCABEZADO DE PRODUCTOS ── */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
-          <h3 className="text-2xl font-black leading-none text-slate-900 tracking-tight">
+          <h3 className="text-2xl font-bold leading-none text-slate-900 tracking-tight">
             Nuestros Productos
           </h3>
           <p className="text-xs text-slate-400 font-semibold mt-1">
@@ -137,11 +137,11 @@ function PublicProductsBoutiqueContent({
         {totalItemsCount > 0 && (
           <button
             onClick={() => setIsCartOpen(true)}
-            className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 bg-slate-900 hover:bg-black text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-md active:scale-95 transition-all"
+            className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 bg-slate-900 hover:bg-black text-white rounded-2xl text-xs font-bold uppercase tracking-wider shadow-md active:scale-95 transition-all"
           >
             <ShoppingBag size={16} />
             <span>Ver Carrito ({totalItemsCount})</span>
-            <span className="bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-full text-[11px] font-black">
+            <span className="bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-full text-xs font-bold">
               ${total.toFixed(2)}
             </span>
           </button>
@@ -154,11 +154,11 @@ function PublicProductsBoutiqueContent({
           <button
             type="button"
             onClick={() => setSelectedCategory('TODOS')}
-            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
-              selectedCategory === 'TODOS'
-                ? 'bg-slate-900 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-800'
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+ selectedCategory === 'TODOS'
+ ? 'bg-slate-900 text-white shadow-sm'
+ : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-800'
+ }`}
           >
             Todos ({productos.length})
           </button>
@@ -167,11 +167,11 @@ function PublicProductsBoutiqueContent({
               key={cat.id}
               type="button"
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
-                selectedCategory === cat.id
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-800'
-              }`}
+              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+ selectedCategory === cat.id
+ ? 'bg-slate-900 text-white shadow-sm'
+ : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-800'
+ }`}
             >
               {cat.nombre}
             </button>
@@ -191,10 +191,10 @@ function PublicProductsBoutiqueContent({
             <div
               key={prod.id}
               onClick={() => setSelectedProductForModal(prod)}
-              className="group bg-white rounded-[2rem] border border-slate-100/80 p-3 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer relative overflow-hidden"
+              className="group bg-white rounded-3xl border border-slate-100/80 p-3 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer relative overflow-hidden"
             >
               {/* Imagen del Producto */}
-              <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-slate-50 mb-3">
+              <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-50 mb-3">
                 <img
                   src={displayImage}
                   alt={prod.nombre}
@@ -203,14 +203,14 @@ function PublicProductsBoutiqueContent({
 
                 {/* Badge de Precio Flotante */}
                 <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full shadow-sm border border-slate-100/60">
-                  <span className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
                     ${Number(prod.precio).toFixed(2)}
                   </span>
                 </div>
 
                 {/* Badge si tiene variantes */}
                 {hasVariants && (
-                  <div className="absolute top-2.5 right-2.5 bg-slate-900/80 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full backdrop-blur-sm tracking-wider">
+                  <div className="absolute top-2.5 right-2.5 bg-slate-900/80 text-white text-xs font-bold uppercase px-2 py-0.5 rounded-full backdrop-blur-sm tracking-wider">
                     Opciones
                   </div>
                 )}
@@ -220,17 +220,17 @@ function PublicProductsBoutiqueContent({
               <div className="space-y-1 px-1 mb-3 flex-1 flex flex-col justify-between">
                 <div>
                   {(prod as any).categoria?.nombre && (
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block truncate">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block truncate">
                       {(prod as any).categoria.nombre}
                     </span>
                   )}
-                  <h4 className="font-black text-slate-900 text-sm leading-snug line-clamp-2 uppercase italic tracking-tight">
+                  <h4 className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 uppercase tracking-tight">
                     {prod.nombre}
                   </h4>
                 </div>
 
                 {prod.descripcion && (
-                  <p className="text-[11px] text-slate-400 line-clamp-2 leading-tight mt-1">
+                  <p className="text-xs text-slate-400 line-clamp-2 leading-tight mt-1">
                     {prod.descripcion}
                   </p>
                 )}
@@ -240,11 +240,11 @@ function PublicProductsBoutiqueContent({
               <button
                 type="button"
                 onClick={(e) => handleAddToCart(prod, e)}
-                className={`w-full py-2.5 px-3 rounded-xl font-black text-[11px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm ${
-                  isAdded
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-900 text-white hover:bg-black'
-                }`}
+                className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm ${
+ isAdded
+ ? 'bg-emerald-500 text-white'
+ : 'bg-slate-900 text-white hover:bg-black'
+ }`}
               >
                 {isAdded ? (
                   <>
@@ -279,14 +279,14 @@ function PublicProductsBoutiqueContent({
           >
             <div className="relative">
               <ShoppingBag size={20} className="text-white" />
-              <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-black size-5 rounded-full flex items-center justify-center">
+              <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-xs font-bold size-5 rounded-full flex items-center justify-center">
                 {totalItemsCount}
               </span>
             </div>
-            <span className="font-black text-xs uppercase tracking-wider hidden sm:inline">
+            <span className="font-bold text-xs uppercase tracking-wider hidden sm:inline">
               Ver Carrito
             </span>
-            <span className="bg-emerald-500 text-slate-950 font-black text-xs px-2.5 py-1 rounded-full">
+            <span className="bg-emerald-500 text-slate-950 font-bold text-xs px-2.5 py-1 rounded-full">
               ${total.toFixed(2)}
             </span>
           </button>
@@ -310,6 +310,7 @@ function PublicProductsBoutiqueContent({
         primaryColor={primaryColor}
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
+        deliveryEnabled={negocio?.commerceAccess?.delivery !== false}
       />
     </section>
   );

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
+import { getTeamContext, canAccessBusinessId, outsidePortfolio } from "@/lib/admin/teamGuard";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import crypto from "crypto";
 
 async function isSuperAdmin() {
-    const session = await getServerSession(authOptions);
-    // DEBUG: Permitimos acceso total temporalmente para que puedas probar la interfaz sin tener que desloguearte y loguearte como Superadmin
-    return true;
+    // Usuario del equipo Citiox; el permiso de cada acción lo valida el middleware (lib/admin/teamAccessMap)
+    return Boolean(await getTeamContext());
 }
 
 export async function PATCH(
@@ -20,6 +20,10 @@ export async function PATCH(
 
     try {
         const { id } = await params;
+        {
+            const ctx = await getTeamContext();
+            if (!ctx || !(await canAccessBusinessId(ctx, id))) return outsidePortfolio();
+        }
         const body = await req.json();
         const { 
             nombre, 
@@ -145,6 +149,10 @@ export async function DELETE(
 
     try {
         const { id } = await params;
+        {
+            const ctx = await getTeamContext();
+            if (!ctx || !(await canAccessBusinessId(ctx, id))) return outsidePortfolio();
+        }
 
         console.log(`🧹 Iniciando borrado completo y en cascada manual del negocio ID: ${id}`);
 

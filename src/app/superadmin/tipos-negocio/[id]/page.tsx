@@ -278,7 +278,7 @@ export default function EditBusinessTypePage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-8 space-y-8">
       {/* Toast */}
       {toast && (
-        <div className="fixed top-6 right-6 bg-emerald-500 text-slate-950 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl z-50 animate-bounce">
+        <div className="fixed top-6 right-6 bg-emerald-500 text-slate-950 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-wide shadow-2xl z-50 animate-bounce">
           ✓ {toast}
         </div>
       )}
@@ -291,8 +291,8 @@ export default function EditBusinessTypePage() {
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-black text-white italic uppercase tracking-tight">{tipo?.name}</h1>
-              <span className="text-[10px] font-mono font-black uppercase px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full">
+              <h1 className="text-2xl font-bold text-white tracking-tight">{tipo?.name}</h1>
+              <span className="text-xs font-mono font-bold uppercase px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full">
                 {tipo?.slug}
               </span>
             </div>
@@ -302,9 +302,9 @@ export default function EditBusinessTypePage() {
 
         {/* Engine Inference Indicator */}
         <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2 rounded-2xl text-xs">
-          <span className="text-[10px] font-black uppercase text-slate-400">Core Engines Deducidos:</span>
+          <span className="text-xs font-bold uppercase text-slate-400">Core Engines Deducidos:</span>
           {activeEngines.map(eng => (
-            <span key={eng} className="text-[10px] font-mono font-black bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/30">
+            <span key={eng} className="text-xs font-mono font-bold bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/30">
               ⚙️ {eng}
             </span>
           ))}
@@ -327,11 +327,11 @@ export default function EditBusinessTypePage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
-                isActive 
-                  ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20' 
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-850 border border-slate-800'
-              }`}
+              className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+ isActive 
+ ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20' 
+ : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-850 border border-slate-800'
+ }`}
             >
               <Icon size={16} />
               {tab.name}
@@ -343,11 +343,11 @@ export default function EditBusinessTypePage() {
       {/* TAB 1: GENERAL */}
       {activeTab === 'general' && (
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 space-y-6 max-w-3xl">
-          <h2 className="text-lg font-black text-white uppercase italic">Información General del Business Type</h2>
+          <h2 className="text-lg font-bold text-white ">Información General del Business Type</h2>
 
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Nombre</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Nombre</label>
               <input 
                 type="text"
                 value={generalForm.name}
@@ -357,7 +357,7 @@ export default function EditBusinessTypePage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Descripción</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Descripción</label>
               <textarea 
                 rows={3}
                 value={generalForm.description}
@@ -368,7 +368,7 @@ export default function EditBusinessTypePage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Tipo de Recurso (OperableResource)</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Tipo de Recurso (OperableResource)</label>
                 <select
                   value={generalForm.resourceType}
                   onChange={e => setGeneralForm({ ...generalForm, resourceType: e.target.value })}
@@ -383,7 +383,7 @@ export default function EditBusinessTypePage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Color Identificador</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Color Identificador</label>
                 <input 
                   type="color"
                   value={generalForm.color}
@@ -398,7 +398,7 @@ export default function EditBusinessTypePage() {
             <button
               onClick={handleSaveGeneral}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
               Guardar Cambios General
@@ -413,13 +413,13 @@ export default function EditBusinessTypePage() {
           <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-black text-white uppercase italic">Constructor de Máquina de Estados (State Machine)</h2>
+                <h2 className="text-lg font-bold text-white ">Constructor de Máquina de Estados (State Machine)</h2>
                 <p className="text-xs text-slate-400">Define la secuencia ordenada del flujo operativo. Los engines ejecutan sobre estos estados sin código hardcodeado.</p>
               </div>
               <button
                 onClick={handleSaveStates}
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl transition-all cursor-pointer"
+                className="flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all cursor-pointer"
               >
                 {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                 Guardar Flujo de Estados
@@ -430,7 +430,7 @@ export default function EditBusinessTypePage() {
             <div className="space-y-3">
               {statesList.map((st, idx) => (
                 <div key={idx} className="flex items-center gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                  <span className="text-xs font-mono font-black text-slate-400 w-6">{idx + 1}</span>
+                  <span className="text-xs font-mono font-bold text-slate-400 w-6">{idx + 1}</span>
                   
                   <input 
                     type="color" 
@@ -464,10 +464,10 @@ export default function EditBusinessTypePage() {
                     }}
                     className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-300"
                   >
-                    <option value="INICIAL">🟢 INICIAL</option>
-                    <option value="NORMAL">🔵 NORMAL</option>
-                    <option value="FINAL">⚫ FINAL</option>
-                    <option value="CANCELACION">🔴 CANCELACIÓN</option>
+                    <option value="INICIAL">🟢 Inicial</option>
+                    <option value="NORMAL">🔵 Normal</option>
+                    <option value="FINAL">⚫ Final</option>
+                    <option value="CANCELACION">🔴 Cancelación</option>
                   </select>
 
                   <div className="flex items-center gap-1">
@@ -499,14 +499,14 @@ export default function EditBusinessTypePage() {
                 onChange={e => setNewState({ ...newState, tipo: e.target.value })}
                 className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white"
               >
-                <option value="INICIAL">INICIAL</option>
-                <option value="NORMAL">NORMAL</option>
-                <option value="FINAL">FINAL</option>
-                <option value="CANCELACION">CANCELACIÓN</option>
+                <option value="INICIAL">Inicial</option>
+                <option value="NORMAL">Normal</option>
+                <option value="FINAL">Final</option>
+                <option value="CANCELACION">Cancelación</option>
               </select>
               <button
                 onClick={handleAddState}
-                className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center gap-2 cursor-pointer"
+                className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center gap-2 cursor-pointer"
               >
                 <Plus size={16} />
                 Agregar Estado
@@ -520,7 +520,7 @@ export default function EditBusinessTypePage() {
       {activeTab === 'capabilities' && (
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 space-y-6 max-w-4xl">
           <div>
-            <h2 className="text-lg font-black text-white uppercase italic">Capabilities Activas</h2>
+            <h2 className="text-lg font-bold text-white ">Capabilities Activas</h2>
             <p className="text-xs text-slate-400">Selecciona las capacidades técnicas que habilita esta vertical de negocio. Activan vistas y deducen el Core Engine sin código redundante.</p>
           </div>
 
@@ -543,7 +543,7 @@ export default function EditBusinessTypePage() {
                     {isChecked && <CheckCircle2 size={14} strokeWidth={3} />}
                   </div>
                   <div>
-                    <h4 className="text-sm font-black uppercase tracking-wide text-white">{cap.name}</h4>
+                    <h4 className="text-sm font-bold uppercase tracking-wide text-white">{cap.name}</h4>
                     <p className="text-xs text-slate-400 mt-0.5">{cap.desc}</p>
                   </div>
                 </div>
@@ -557,13 +557,13 @@ export default function EditBusinessTypePage() {
       {activeTab === 'themes' && (
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 space-y-6 max-w-3xl">
           <div>
-            <h2 className="text-lg font-black text-white uppercase italic">Temas Visuales (Desacoplados)</h2>
+            <h2 className="text-lg font-bold text-white ">Temas Visuales (Desacoplados)</h2>
             <p className="text-xs text-slate-400">Asigna la apariencia estética del Landing y del Dashboard sin alterar la lógica de negocio.</p>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">Landing Theme (Página Pública)</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">Landing Theme (Página Pública)</label>
               <div className="grid grid-cols-1 gap-3">
                 {LANDING_THEMES.map(theme => (
                   <div 
@@ -583,7 +583,7 @@ export default function EditBusinessTypePage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">Admin Theme (Dashboard)</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">Admin Theme (Dashboard)</label>
               <div className="grid grid-cols-1 gap-3">
                 {ADMIN_THEMES.map(theme => (
                   <div 
@@ -606,7 +606,7 @@ export default function EditBusinessTypePage() {
               <button
                 onClick={handleSaveGeneral}
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl transition-all cursor-pointer"
+                className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all cursor-pointer"
               >
                 {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                 Guardar Temas Visuales
@@ -620,7 +620,7 @@ export default function EditBusinessTypePage() {
       {activeTab === 'profiles' && (
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 space-y-6 max-w-4xl">
           <div>
-            <h2 className="text-lg font-black text-white uppercase italic">Perfiles Comerciales (Sub-Rubros)</h2>
+            <h2 className="text-lg font-bold text-white ">Perfiles Comerciales (Sub-Rubros)</h2>
             <p className="text-xs text-slate-400">Especialidades comerciales disponibles dentro de esta vertical para rápida selección en el Wizard.</p>
           </div>
 
@@ -628,8 +628,8 @@ export default function EditBusinessTypePage() {
             {profilesList.map(prof => (
               <div key={prof.id} className="p-5 bg-slate-950 border border-slate-800 rounded-2xl space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-black text-white">{prof.name}</h4>
-                  <span className="text-[10px] font-mono bg-slate-900 text-slate-400 px-2 py-0.5 rounded">ID: {prof.id.slice(0, 8)}</span>
+                  <h4 className="text-sm font-bold text-white">{prof.name}</h4>
+                  <span className="text-xs font-mono bg-slate-900 text-slate-400 px-2 py-0.5 rounded">ID: {prof.id.slice(0, 8)}</span>
                 </div>
                 <p className="text-xs text-slate-400">{prof.description || 'Sin descripción'}</p>
               </div>
@@ -638,7 +638,7 @@ export default function EditBusinessTypePage() {
 
           {/* Form to Add Profile */}
           <div className="pt-4 border-t border-slate-800 space-y-4">
-            <h4 className="text-xs font-black uppercase text-slate-400">Agregar Nuevo Perfil Comercial</h4>
+            <h4 className="text-xs font-bold uppercase text-slate-400">Agregar Nuevo Perfil Comercial</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input 
                 type="text" 
@@ -659,7 +659,7 @@ export default function EditBusinessTypePage() {
               <button
                 onClick={handleAddProfile}
                 disabled={saving}
-                className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center gap-2 cursor-pointer"
+                className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center gap-2 cursor-pointer"
               >
                 <Plus size={16} />
                 Agregar Perfil Comercial
@@ -673,13 +673,13 @@ export default function EditBusinessTypePage() {
       {activeTab === 'labels' && (
         <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 space-y-6 max-w-3xl">
           <div>
-            <h2 className="text-lg font-black text-white uppercase italic">UI Labels (Vocabulario de la Interfaz)</h2>
+            <h2 className="text-lg font-bold text-white ">UI Labels (Vocabulario de la Interfaz)</h2>
             <p className="text-xs text-slate-400">Personaliza cómo se nombran las entidades principales en la interfaz del cliente y del administrador.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Nombre de Recurso</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Nombre de Recurso</label>
               <input 
                 type="text" 
                 placeholder="Ej: Cancha / Profesional / Mesa"
@@ -690,7 +690,7 @@ export default function EditBusinessTypePage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Nombre de Reserva / Ticket</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Nombre de Reserva / Ticket</label>
               <input 
                 type="text" 
                 placeholder="Ej: Reserva / Cita / Orden"
@@ -701,7 +701,7 @@ export default function EditBusinessTypePage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Nombre de Cliente</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Nombre de Cliente</label>
               <input 
                 type="text" 
                 placeholder="Ej: Jugador / Paciente / Cliente"
@@ -712,7 +712,7 @@ export default function EditBusinessTypePage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Nombre de Vista Admin</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Nombre de Vista Admin</label>
               <input 
                 type="text" 
                 placeholder="Ej: Tablero de Canchas / Agenda"
@@ -727,7 +727,7 @@ export default function EditBusinessTypePage() {
             <button
               onClick={handleSaveLabels}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl transition-all cursor-pointer"
+              className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all cursor-pointer"
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
               Guardar Vocabulario UI

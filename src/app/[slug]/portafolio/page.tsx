@@ -71,8 +71,8 @@ export default async function FullPortfolioPage({
                         <ArrowLeft size={20} />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mb-1">Volver a</span>
-                        <span className="text-sm font-black uppercase tracking-tight">{negocio.nombre}</span>
+                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400 leading-none mb-1">Volver a</span>
+                        <span className="text-sm font-bold uppercase tracking-tight">{negocio.nombre}</span>
                     </div>
                 </Link>
                 
@@ -84,8 +84,8 @@ export default async function FullPortfolioPage({
             </header>
 
             <section className="px-6 py-8 text-center max-w-2xl mx-auto">
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] mb-2 block" style={{ color: primaryColor }}>PORTAFOLIO</span>
-                <h1 className="text-5xl font-black tracking-tight leading-none text-slate-900">
+                <span className="text-xs font-bold uppercase tracking-wide mb-2 block" style={{ color: primaryColor }}>Portafolio</span>
+                <h1 className="text-5xl font-bold tracking-tight leading-none text-slate-900">
                     Resultados
                 </h1>
             </section>

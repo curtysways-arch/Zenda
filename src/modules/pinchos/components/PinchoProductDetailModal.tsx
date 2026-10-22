@@ -84,7 +84,7 @@ export default function PinchoProductDetailModal({
                         ) : (
                             <div className="w-full py-12 flex flex-col items-center justify-center bg-gradient-to-br from-orange-100 via-amber-50 to-orange-50 text-orange-600">
                                 <span className="text-5xl">🍢</span>
-                                <span className="text-xs font-black uppercase tracking-widest text-orange-700 mt-1">PinchoListo</span>
+                                <span className="text-xs font-bold uppercase tracking-wide text-orange-700 mt-1">PinchoListo</span>
                             </div>
                         )}
                     </div>
@@ -93,10 +93,10 @@ export default function PinchoProductDetailModal({
                     <div className="p-4 sm:p-6 space-y-4">
                         {/* Title & Category Badge */}
                         <div className="space-y-1">
-                            <span className="inline-block px-2.5 py-0.5 bg-orange-100 text-orange-800 text-[10px] font-black uppercase tracking-widest rounded-md">
+                            <span className="inline-block px-2.5 py-0.5 bg-orange-100 text-orange-800 text-xs font-bold uppercase tracking-wide rounded-md">
                                 Calidad Premium
                             </span>
-                            <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+                            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
                                 {product.nombre}
                             </h2>
                         </div>
@@ -110,8 +110,8 @@ export default function PinchoProductDetailModal({
                         <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 flex items-center justify-between gap-4">
                             {/* Prominent Price */}
                             <div>
-                                <span className="text-[10px] font-black uppercase text-slate-400 block tracking-wider">Precio Unitario</span>
-                                <span className="text-2xl font-black text-orange-600 font-mono tracking-tight">
+                                <span className="text-xs font-bold uppercase text-slate-400 block tracking-wider">Precio Unitario</span>
+                                <span className="text-2xl font-bold text-orange-600 font-mono tracking-tight">
                                     ${unitPrice.toFixed(2)}
                                 </span>
                             </div>
@@ -121,18 +121,18 @@ export default function PinchoProductDetailModal({
                                 <button
                                     type="button"
                                     onClick={handleDecrement}
-                                    className="size-9 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center font-black transition-all active:scale-90 cursor-pointer"
+                                    className="size-9 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center font-bold transition-all active:scale-90 cursor-pointer"
                                     title="Disminuir cantidad"
                                 >
                                     <Minus className="size-4 stroke-[2.5]" />
                                 </button>
-                                <span className="text-sm font-mono font-black text-slate-900 min-w-[20px] text-center select-none">
+                                <span className="text-sm font-mono font-bold text-slate-900 min-w-[20px] text-center select-none">
                                     {quantity}
                                 </span>
                                 <button
                                     type="button"
                                     onClick={handleIncrement}
-                                    className="size-9 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center font-black transition-all active:scale-90 cursor-pointer"
+                                    className="size-9 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center font-bold transition-all active:scale-90 cursor-pointer"
                                     title="Aumentar cantidad"
                                 >
                                     <Plus className="size-4 stroke-[2.5]" />
@@ -142,8 +142,8 @@ export default function PinchoProductDetailModal({
 
                         {/* Total Display */}
                         <div className="flex justify-between items-center px-1 text-xs border-t border-slate-100 pt-2.5">
-                            <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Total Estimado</span>
-                            <span className="text-lg font-black text-slate-900 font-mono">${totalPrice.toFixed(2)}</span>
+                            <span className="font-bold text-slate-500 uppercase tracking-wider text-xs">Total Estimado</span>
+                            <span className="text-lg font-bold text-slate-900 font-mono">${totalPrice.toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
@@ -153,7 +153,7 @@ export default function PinchoProductDetailModal({
                     <button
                         type="button"
                         onClick={handleAcceptAdd}
-                        className="w-full py-4 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                        className="w-full py-4 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
                     >
                         <ShoppingBag className="size-4 stroke-[2.5]" />
                         <span>
@@ -165,7 +165,7 @@ export default function PinchoProductDetailModal({
 
             {/* Floating Snackbar Toast */}
             {showToast && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[600] bg-slate-900 text-white px-5 py-3 rounded-2xl text-xs font-black shadow-2xl flex items-center gap-2 border border-slate-800 animate-bounce">
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[600] bg-slate-900 text-white px-5 py-3 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 border border-slate-800 animate-bounce">
                     <CheckCircle2 className="size-4 text-emerald-400" />
                     <span>{toastMsg}</span>
                 </div>

@@ -146,6 +146,11 @@ export default function PlanDashboardClient({
     const startDate = data?.startDate;
     const endDate = data?.endDate;
     const lockedPrice = data?.lockedPrice;
+    const isFounder = Boolean(data?.isFounder);
+    const founderPosition = data?.founderPosition || null;
+    const isFounderCandidate = !isFounder && Boolean(data?.customFeatures?.founderCandidate);
+    const founderReservedPrice = Number(data?.customFeatures?.founderReservedPrice || 10.0);
+    const pagoPendiente = Boolean(data?.pagoPendiente);
     
     const limits = data?.limits || {};
     const safeLimits = {
@@ -219,9 +224,67 @@ export default function PlanDashboardClient({
                 </div>
             </div>
 
+            {/* Banner Oportunidad Exclusiva Socio Fundador (Candidato) */}
+            {isFounderCandidate && (
+                <div className="p-6 md:p-8 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent text-slate-900 shadow-lg relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                        <Sparkles size={120} className="text-amber-500" />
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                        <div className="space-y-2">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-900 text-xs font-bold uppercase tracking-wider">
+                                <Sparkles size={14} className="text-amber-600" />
+                                Candidato a Socio Fundador — Cupos Limitados (25 por industria)
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
+                                Asegura tu Tarifa Congelada de ${founderReservedPrice.toFixed(2)}/mes de por Vida
+                            </h3>
+                            <p className="text-sm font-medium text-slate-600 max-w-2xl">
+                                Tu negocio califica para el beneficio de Socio Fundador. Tu cupo histórico y la tarifa vitalicia se reservan y activan formalmente al confirmar tu primer pago de ${founderReservedPrice.toFixed(2)}. ¡Nunca pagarás más, incluso ante futuras subidas de precios!
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                if (currentPlanId) {
+                                    setSelectedPlanId(currentPlanId);
+                                    setIsRenewalModal(false);
+                                    setIsUpgradeModalOpen(true);
+                                }
+                            }}
+                            className="px-6 py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs uppercase tracking-wide shadow-xl hover:shadow-amber-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                        >
+                            <Sparkles size={16} />
+                            Asegurar Cupo (${founderReservedPrice.toFixed(2)})
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Banner Socio Fundador Confirmado */}
+            {isFounder && (
+                <div className="p-4 px-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shrink-0">
+                            ★
+                        </div>
+                        <div>
+                            <span className="text-xs font-bold text-amber-800 uppercase tracking-wide block">
+                                Socio Fundador Oficial {founderPosition ? `(#${founderPosition})` : ''}
+                            </span>
+                            <span className="text-sm font-bold text-slate-700">
+                                Tarifa vitalicia protegida en ${Number(lockedPrice || 10).toFixed(2)}/mes
+                            </span>
+                        </div>
+                    </div>
+                    <span className="px-3 py-1 rounded-full bg-amber-200/80 text-amber-900 text-xs font-bold uppercase tracking-wider self-start sm:self-auto">
+                        Tarifa Vitalicia Activa
+                    </span>
+                </div>
+            )}
+
             {/* Banner de expiración / renovación */}
             {showRenewal && (
-                <div className={`p-6 rounded-[2rem] border flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-300`}
+                <div className={`p-6 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-300`}
                      style={planStatus === 'expired' 
                          ? { backgroundColor: 'rgba(239, 68, 68, 0.05)', borderColor: 'rgba(239, 68, 68, 0.2)', color: 'rgb(185, 28, 28)' }
                          : { backgroundColor: 'rgba(249, 115, 22, 0.05)', borderColor: 'rgba(249, 115, 22, 0.2)', color: 'rgb(194, 65, 12)' }
@@ -231,7 +294,7 @@ export default function PlanDashboardClient({
                             <AlertTriangle size={24} />
                         </div>
                         <div>
-                            <h4 className="font-black uppercase tracking-widest text-xs mb-1">
+                            <h4 className="font-bold uppercase tracking-wide text-xs mb-1">
                                 {planStatus === 'expired' ? 'Suscripción Expirada' : 'Suscripción por Vencer'}
                             </h4>
                             <p className="text-sm font-bold opacity-90">
@@ -249,7 +312,7 @@ export default function PlanDashboardClient({
                                 setIsUpgradeModalOpen(true);
                             }
                         }}
-                        className={`px-6 py-3 font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-2 flex-shrink-0 cursor-pointer`}
+                        className={`px-6 py-3 font-bold text-xs uppercase tracking-wide rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-2 flex-shrink-0 cursor-pointer`}
                         style={planStatus === 'expired'
                             ? { backgroundColor: 'rgb(185, 28, 28)', color: 'white' }
                             : { backgroundColor: 'rgb(194, 65, 12)', color: 'white' }
@@ -262,15 +325,15 @@ export default function PlanDashboardClient({
             )}
 
             {/* Card Principal */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden group hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500 hover:border-slate-300">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500 hover:border-slate-300">
                 <div className="grid grid-cols-1 lg:grid-cols-12">
                     {/* Detalles del Plan */}
                     <div className="lg:col-span-4 p-8 lg:border-r border-slate-100 bg-slate-50/50">
                         <div className="p-4 bg-white rounded-2xl w-fit mb-8 shadow-sm border border-slate-100" style={{ color: 'var(--primary-color)' }}>
                             <Package size={32} />
                         </div>
-                        <h3 className="text-xs font-black uppercase tracking-widest mb-1.5" style={{ color: 'var(--primary-color)' }}>Nivel de Cuenta</h3>
-                        <h4 className="text-3xl lg:text-4xl font-black text-slate-900 mb-8">{planName}</h4>
+                        <h3 className="text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'var(--primary-color)' }}>Nivel de Cuenta</h3>
+                        <h4 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-8">{planName}</h4>
 
                         <div className="space-y-5">
                              <div className="flex items-center gap-4 group/item">
@@ -278,7 +341,7 @@ export default function PlanDashboardClient({
                                     <Clock size={18} />
                                 </div>
                                 <div className="text-sm">
-                                    <span className="block font-black text-slate-400 uppercase tracking-tighter text-[10px]">Inicia el</span>
+                                    <span className="block font-bold text-slate-400 uppercase tracking-tight text-xs">Inicia el</span>
                                     <span className="font-bold text-slate-700">{startDate ? new Date(startDate).toLocaleDateString() : 'N/A'}</span>
                                 </div>
                             </div>
@@ -287,7 +350,7 @@ export default function PlanDashboardClient({
                                     <Calendar size={18} />
                                 </div>
                                 <div className="text-sm">
-                                    <span className="block font-black text-slate-400 uppercase tracking-tighter text-[10px]">Día de corte</span>
+                                    <span className="block font-bold text-slate-400 uppercase tracking-tight text-xs">Día de corte</span>
                                     <span className="font-bold text-slate-700">{endDate ? new Date(endDate).toLocaleDateString() : 'Plan de por vida'}</span>
                                 </div>
                             </div>
@@ -303,7 +366,7 @@ export default function PlanDashboardClient({
                                             setIsUpgradeModalOpen(true);
                                         }
                                     }}
-                                    className="w-full flex items-center justify-center gap-3 py-4 font-black rounded-2xl transition-all shadow-md active:scale-95 border-2 border-dashed cursor-pointer"
+                                    className="w-full flex items-center justify-center gap-3 py-4 font-bold rounded-2xl transition-all shadow-md active:scale-95 border-2 border-dashed cursor-pointer"
                                     style={{ 
                                         borderColor: 'var(--primary-color)',
                                         color: 'var(--primary-color)',
@@ -320,7 +383,7 @@ export default function PlanDashboardClient({
                                     const section = document.getElementById('available-plans-section');
                                     if (section) section.scrollIntoView({ behavior: 'smooth' });
                                 }}
-                                className="w-full flex items-center justify-center gap-3 py-4 text-white font-black rounded-2xl transition-all shadow-lg active:scale-95 cursor-pointer"
+                                className="w-full flex items-center justify-center gap-3 py-4 text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95 cursor-pointer"
                                 style={{ backgroundColor: 'var(--primary-color)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--primary-color), transparent 80%)' }}
                             >
                                 <ArrowUpCircle size={22} />
@@ -332,7 +395,7 @@ export default function PlanDashboardClient({
                     {/* Consumo y Límites */}
                     <div className="lg:col-span-8 p-8 md:p-10 flex flex-col justify-center bg-white">
                         <div className="flex items-center justify-between mb-10">
-                            <h3 className="text-xl font-black text-slate-900 flex items-center gap-3">
+                            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
                                 <TrendingUp size={24} className="text-slate-400" />
                                 Uso Mensual
                             </h3>
@@ -344,10 +407,10 @@ export default function PlanDashboardClient({
                                          style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>
                                         <Users size={16} />
                                     </div>
-                                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">{staffLabel}</span>
+                                    <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide">{staffLabel}</span>
                                 </div>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-black text-slate-900">{safeLimits.staff.used}</span>
+                                    <span className="text-3xl font-bold text-slate-900">{safeLimits.staff.used}</span>
                                     <span className="text-sm font-bold text-slate-400">/ {safeLimits.staff.max >= 999999 ? '∞' : safeLimits.staff.max}</span>
                                 </div>
                                  <div className="mt-4 h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -364,10 +427,10 @@ export default function PlanDashboardClient({
                                          style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>
                                         <Calendar size={16} />
                                     </div>
-                                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">{usageLabel}</span>
+                                    <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide">{usageLabel}</span>
                                 </div>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-black text-slate-900">{safeLimits.appointments.used}</span>
+                                    <span className="text-3xl font-bold text-slate-900">{safeLimits.appointments.used}</span>
                                     <span className="text-sm font-bold text-slate-400">/ {safeLimits.appointments.max >= 999999 ? '∞' : safeLimits.appointments.max}</span>
                                 </div>
                                  <div className="mt-4 h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -385,14 +448,14 @@ export default function PlanDashboardClient({
             {/* ════════════════════════════════════════════════════════════════════════════════════════
                 SECCIÓN: RESUMEN FINANCIERO CONSOLIDADO & MIS ADD-ONS ACTIVOS
             ════════════════════════════════════════════════════════════════════════════════════════ */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <span className="p-2 bg-amber-500/10 text-amber-600 rounded-xl">
                                 <Sparkles size={18} />
                             </span>
-                            <h3 className="text-xl font-black text-slate-900">Resumen de Facturación Consolidada</h3>
+                            <h3 className="text-xl font-bold text-slate-900">Resumen de Facturación Consolidada</h3>
                         </div>
                         <p className="text-xs text-slate-500 font-medium">
                             Desglose de tu tarifa mensual contractual protegida y los módulos complementarios activos
@@ -402,40 +465,40 @@ export default function PlanDashboardClient({
                     {addonsData.pricingDetails && (
                         <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-center gap-6 shrink-0">
                             <div>
-                                <span className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Plan Base</span>
+                                <span className="block text-xs font-bold uppercase text-slate-400 tracking-wider">Plan Base</span>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-xl font-black text-slate-900">
+                                    <span className="text-xl font-bold text-slate-900">
                                         ${Number(addonsData.pricingDetails.basePlanPrice ?? 0).toFixed(2)}
                                     </span>
                                     <span className="text-xs text-slate-400 font-bold">/m</span>
                                 </div>
                                 {addonsData.pricingDetails.isFounder && (
-                                    <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest block mt-0.5">
+                                    <span className="text-xs font-bold text-amber-600 uppercase tracking-wide block mt-0.5">
                                         ★ Tarifa Fundador
                                     </span>
                                 )}
                             </div>
 
-                            <div className="text-slate-300 font-black text-xl">+</div>
+                            <div className="text-slate-300 font-bold text-xl">+</div>
 
                             <div>
-                                <span className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Add-ons ({addonsData.pricingDetails.addons?.length || 0})</span>
+                                <span className="block text-xs font-bold uppercase text-slate-400 tracking-wider">Add-ons ({addonsData.pricingDetails.addons?.length || 0})</span>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-xl font-black text-slate-900">
+                                    <span className="text-xl font-bold text-slate-900">
                                         +${Number(addonsData.pricingDetails.addonsTotal ?? 0).toFixed(2)}
                                     </span>
                                     <span className="text-xs text-slate-400 font-bold">/m</span>
                                 </div>
                             </div>
 
-                            <div className="text-slate-300 font-black text-xl">=</div>
+                            <div className="text-slate-300 font-bold text-xl">=</div>
 
                             <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
-                                <span className="block text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--primary-color)' }}>
+                                <span className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--primary-color)' }}>
                                     Total Mensual
                                 </span>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-2xl font-black text-slate-900">
+                                    <span className="text-2xl font-bold text-slate-900">
                                         ${Number(addonsData.pricingDetails.effectiveTotalMonthly ?? 0).toFixed(2)}
                                     </span>
                                     <span className="text-xs text-slate-400 font-bold">/m</span>
@@ -447,7 +510,7 @@ export default function PlanDashboardClient({
 
                 {/* Subsección: Mis Add-ons Contratados */}
                 <div>
-                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-4 flex items-center gap-2">
                         <Layers size={14} /> Mis Módulos y Extensiones Contratadas
                     </h4>
 
@@ -483,46 +546,46 @@ export default function PlanDashboardClient({
                                     >
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                    isPendingApproval
-                                                        ? 'bg-amber-500 text-white border border-amber-600 animate-pulse'
-                                                        : isPendingCancel 
-                                                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                                                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                }`}>
+                                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+ isPendingApproval
+ ? 'bg-amber-500 text-white border border-amber-600 animate-pulse'
+ : isPendingCancel 
+ ? 'bg-amber-100 text-amber-800 border border-amber-300'
+ : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+ }`}>
                                                     {isPendingApproval ? 'Pendiente de Aprobación' : isPendingCancel ? 'Cancela al corte' : 'Activo'}
                                                 </span>
-                                                <span className="font-mono font-black text-xs text-slate-900">
+                                                <span className="font-mono font-bold text-xs text-slate-900">
                                                     ${totalPrice}/m
                                                 </span>
                                             </div>
 
                                             <div>
-                                                <h5 className="font-black text-sm text-slate-900 leading-snug">
+                                                <h5 className="font-bold text-sm text-slate-900 leading-snug">
                                                     {sa.addon?.name || sa.addonCode}
                                                 </h5>
                                                 {qty > 1 && (
-                                                    <span className="text-[11px] font-bold text-slate-500">
+                                                    <span className="text-xs font-bold text-slate-500">
                                                         Cantidad: {qty} × ${unitPrice.toFixed(2)}
                                                     </span>
                                                 )}
                                             </div>
 
                                             {isPendingApproval && (
-                                                <p className="text-[11px] text-amber-800 font-medium leading-tight">
+                                                <p className="text-xs text-amber-800 font-medium leading-tight">
                                                     Comprobante enviado. El módulo se activará automáticamente al confirmarse la acreditación.
                                                 </p>
                                             )}
 
                                             {isPendingCancel && sa.effectiveUntil && (
-                                                <p className="text-[11px] text-amber-700 font-medium">
+                                                <p className="text-xs text-amber-700 font-medium">
                                                     Activo hasta: {new Date(sa.effectiveUntil).toLocaleDateString()}
                                                 </p>
                                             )}
                                         </div>
 
                                         <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
-                                            <span className="text-[10px] font-mono text-slate-400">
+                                            <span className="text-xs font-mono text-slate-400">
                                                 {sa.addon?.type === 'LIMIT' ? 'Extensión de Límite' : 'Capacidad Premium'}
                                             </span>
 
@@ -530,7 +593,7 @@ export default function PlanDashboardClient({
                                                 <button
                                                     onClick={() => handleCancelAddon(sa.id)}
                                                     disabled={actionAddonCode === sa.id}
-                                                    className="text-xs font-black text-rose-600 hover:text-rose-700 hover:underline cursor-pointer disabled:opacity-50"
+                                                    className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer disabled:opacity-50"
                                                 >
                                                     {actionAddonCode === sa.id ? 'Procesando...' : 'Cancelar al corte'}
                                                 </button>
@@ -547,9 +610,9 @@ export default function PlanDashboardClient({
             {/* ════════════════════════════════════════════════════════════════════════════════════════
                 SECCIÓN: MÓDULOS Y ADD-ONS DISPONIBLES PARA CONTRATAR
             ════════════════════════════════════════════════════════════════════════════════════════ */}
-            <div className="pt-6 space-y-6">
+            <div id="addons" className="pt-6 space-y-6 scroll-mt-20">
                 <div className="text-center max-w-2xl mx-auto space-y-2">
-                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                    <h3 className="text-3xl font-bold text-slate-900 tracking-tight">
                         Módulos y Add-ons Disponibles
                     </h3>
                     <p className="text-xs text-slate-500 font-medium leading-relaxed">
@@ -560,7 +623,7 @@ export default function PlanDashboardClient({
                 {loadingAddons ? (
                     <div className="py-12 text-center text-slate-400 space-y-2">
                         <Loader2 className="w-8 h-8 animate-spin mx-auto text-amber-500" />
-                        <p className="text-xs font-black uppercase tracking-widest">Cargando módulos disponibles...</p>
+                        <p className="text-xs font-bold uppercase tracking-wide">Cargando módulos disponibles...</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -592,21 +655,21 @@ export default function PlanDashboardClient({
                                 >
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                addonType === 'CAPABILITY'
-                                                    ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                                    : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                            }`}>
+                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+ addonType === 'CAPABILITY'
+ ? 'bg-blue-100 text-blue-800 border border-blue-200'
+ : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+ }`}>
                                                 {addonType === 'CAPABILITY' ? '⚡ Módulo de Capacidad' : '📈 Extensión de Límite'}
                                             </span>
 
-                                            <span className="font-mono font-black text-sm text-slate-900">
+                                            <span className="font-mono font-bold text-sm text-slate-900">
                                                 ${priceMonthly.toFixed(2)}/mes
                                             </span>
                                         </div>
 
                                         <div>
-                                            <h4 className="font-black text-base text-slate-900 leading-tight">
+                                            <h4 className="font-bold text-base text-slate-900 leading-tight">
                                                 {addonName}
                                             </h4>
                                             <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
@@ -617,14 +680,14 @@ export default function PlanDashboardClient({
                                         <div className="pt-2 text-xs space-y-1.5 border-t border-slate-100">
                                             <div className="flex justify-between text-slate-600 font-semibold">
                                                 <span>Afecta:</span>
-                                                <span className="font-mono font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                                                <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-xs">
                                                     {targetKey}
                                                 </span>
                                             </div>
                                             {addonType === 'LIMIT' && (
                                                 <div className="flex justify-between text-slate-600 font-semibold">
                                                     <span>Extensión:</span>
-                                                    <span className="font-black text-emerald-600">+{amount} al límite</span>
+                                                    <span className="font-bold text-emerald-600">+{amount} al límite</span>
                                                 </div>
                                             )}
                                         </div>
@@ -632,19 +695,19 @@ export default function PlanDashboardClient({
 
                                     <div className="pt-5 mt-4 border-t border-slate-100">
                                         {isPendingPayment ? (
-                                            <div className="w-full py-3 bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-300/40 rounded-2xl text-[11px] font-black uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
+                                            <div className="w-full py-3 bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-300/40 rounded-2xl text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
                                                 <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                                                 Pago en Revisión
                                             </div>
                                         ) : isAvailable ? (
                                             <button
                                                 onClick={() => setCheckoutAddon(addon)}
-                                                className="w-full py-3 bg-slate-900 hover:bg-purple-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
+                                                className="w-full py-3 bg-slate-900 hover:bg-purple-700 text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
                                             >
                                                 <Plus className="w-4 h-4" /> Agregar al Plan
                                             </button>
                                         ) : (
-                                            <div className="w-full py-2.5 bg-slate-100 text-slate-400 rounded-2xl text-[11px] font-black uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
+                                            <div className="w-full py-2.5 bg-slate-100 text-slate-400 rounded-2xl text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
                                                 <Check size={14} className="text-emerald-500" />
                                                 {ineligibilityReason || 'Ya Activo en tu Plan'}
                                             </div>
@@ -659,26 +722,26 @@ export default function PlanDashboardClient({
 
             {/* Título de Planes Disponibles */}
              <div id="available-plans-section" className="pt-8 text-center">
-                <h3 className="text-3xl font-black text-slate-900 tracking-tight mb-2 italic underline" style={{ textDecorationColor: 'color-mix(in srgb, var(--primary-color), transparent 80%)' }}>Planes Disponibles</h3>
+                <h3 className="text-3xl font-bold text-slate-900 tracking-tight mb-2 underline" style={{ textDecorationColor: 'color-mix(in srgb, var(--primary-color), transparent 80%)' }}>Planes Disponibles</h3>
                 <p className="text-slate-500 font-medium">Elige el plan que mejor se adapte a las necesidades de tu negocio.</p>
             </div>
 
             {/* Selector de periodo de facturación */}
             <div className="flex justify-center pt-8 pb-6">
-                <div className="bg-slate-100 p-1.5 rounded-[1.5rem] flex items-center gap-1 border border-slate-200">
+                <div className="bg-slate-100 p-1.5 rounded-2xl flex items-center gap-1 border border-slate-200">
                      <button
                         onClick={() => setBillingPeriod('monthly')}
-                        className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer ${billingPeriod === 'monthly' ? 'shadow-md bg-white text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`px-8 py-3 rounded-2xl font-bold text-xs uppercase tracking-wide transition-all cursor-pointer ${billingPeriod === 'monthly' ? 'shadow-md bg-white text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
                     >
                         Mensual
                     </button>
                     <button
                         onClick={() => setBillingPeriod('annual')}
-                        className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer ${billingPeriod === 'annual' ? 'text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`px-8 py-3 rounded-2xl font-bold text-xs uppercase tracking-wide transition-all flex items-center gap-2 cursor-pointer ${billingPeriod === 'annual' ? 'text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
                         style={billingPeriod === 'annual' ? { backgroundColor: 'var(--primary-color)' } : {}}
                     >
                         Anual
-                        <span className="text-[9px] text-white px-2 py-0.5 rounded-full font-black" style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}>-{annualDiscount * 100}%</span>
+                        <span className="text-xs text-white px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}>-{annualDiscount * 100}%</span>
                     </button>
                 </div>
             </div>
@@ -705,21 +768,21 @@ export default function PlanDashboardClient({
                     return (
                          <div
                             key={plan.id}
-                            className={`relative flex flex-col p-8 rounded-[2.5rem] border-2 transition-all duration-300 ${isCurrent
-                                ? ''
-                                : 'border-slate-100 bg-white hover:shadow-xl hover:-translate-y-1'
-                                }`}
+                            className={`relative flex flex-col p-8 rounded-2xl border-2 transition-all duration-300 ${isCurrent
+ ? ''
+ : 'border-slate-100 bg-white hover:shadow-xl hover:-translate-y-1'
+ }`}
                             style={isCurrent ? { borderColor: 'var(--primary-color)', backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)' } : {}}
                         >
                              {isCurrent && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg"
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 text-white text-xs font-bold uppercase tracking-wide rounded-full shadow-lg"
                                      style={{ backgroundColor: 'var(--primary-color)' }}>
                                     Tu Plan Actual
                                 </div>
                             )}
 
                             <div className="mb-6">
-                                <h4 className="text-xl font-black text-slate-900 mb-1">{plan.name}</h4>
+                                <h4 className="text-xl font-bold text-slate-900 mb-1">{plan.name}</h4>
                                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                                     {(() => {
                                         const usersLimit = plan.planLimits?.find((l: any) => l.limitKey === 'MAX_USERS')?.limitValue ?? (plan as any).maxStaff;
@@ -736,23 +799,23 @@ export default function PlanDashboardClient({
                                     {hasLockedPrice && displayLockedPrice !== null ? (
                                         <div className="flex flex-col">
                                             <div className="flex items-baseline gap-2">
-                                                <span className="text-slate-400 font-black line-through text-lg">${Number(displayListPrice ?? 0).toFixed(2)}</span>
-                                                <span className="text-4xl font-black text-slate-900">${Number(displayLockedPrice ?? 0).toFixed(2)}</span>
+                                                <span className="text-slate-400 font-bold line-through text-lg">${Number(displayListPrice ?? 0).toFixed(2)}</span>
+                                                <span className="text-4xl font-bold text-slate-900">${Number(displayLockedPrice ?? 0).toFixed(2)}</span>
                                                 <span className="text-slate-400 font-bold text-sm">/mes</span>
                                             </div>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">Tarifa Especial Congelada</span>
+                                            <span className="text-xs font-bold uppercase tracking-wide text-emerald-600 mt-1">Tarifa Especial Congelada</span>
                                         </div>
                                     ) : (
                                         <div className="flex items-baseline gap-1">
-                                            <span className="text-4xl font-black text-slate-900">${Number(displayListPrice ?? 0).toFixed(2)}</span>
+                                            <span className="text-4xl font-bold text-slate-900">${Number(displayListPrice ?? 0).toFixed(2)}</span>
                                             <span className="text-slate-400 font-bold">/mes</span>
                                         </div>
                                     )}
                                 </div>
                                  {billingPeriod === 'annual' && (
                                     <div className="mt-2 flex flex-col items-start">
-                                        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--primary-color)' }}>Facturado anualmente</span>
-                                        <span className="text-xs font-bold text-slate-400 italic">
+                                        <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--primary-color)' }}>Facturado anualmente</span>
+                                        <span className="text-xs font-bold text-slate-400 ">
                                             ${Number(hasLockedPrice && totalLockedAnnual !== null ? totalLockedAnnual : totalListAnnual ?? 0).toFixed(2)} al año
                                         </span>
                                     </div>
@@ -780,7 +843,7 @@ export default function PlanDashboardClient({
                             </div>
 
                             {isCurrent && billingPeriod === 'monthly' ? (
-                                <div className="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl font-black text-xs uppercase tracking-widest text-center">
+                                <div className="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl font-bold text-xs uppercase tracking-wide text-center">
                                     Plan Actual (Mensual)
                                 </div>
                              ) : (isCurrent && billingPeriod === 'annual') || isSuperior ? (
@@ -789,7 +852,7 @@ export default function PlanDashboardClient({
                                         setSelectedPlanId(plan.id);
                                         setIsUpgradeModalOpen(true);
                                     }}
-                                    className="w-full py-4 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 cursor-pointer"
+                                    className="w-full py-4 text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-95 cursor-pointer"
                                     style={{ backgroundColor: 'var(--primary-color)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--primary-color), transparent 80%)' }}
                                 >
                                     {isCurrent ? 'Pasar a Anual -20%' : 'Solicitar activación'}
@@ -800,7 +863,7 @@ export default function PlanDashboardClient({
                                         setSelectedPlanId(plan.id);
                                         setIsUpgradeModalOpen(true);
                                     }}
-                                    className="w-full py-4 bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all active:scale-95 cursor-pointer"
+                                    className="w-full py-4 bg-slate-800 text-white rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-slate-900 transition-all active:scale-95 cursor-pointer"
                                 >
                                     Cambiar Plan
                                 </button>
@@ -819,8 +882,15 @@ export default function PlanDashboardClient({
                 }}
                 planId={selectedPlanId || ''}
                 planName={allPlans.find(p => p.id === selectedPlanId)?.name || ''}
-                planPrice={allPlans.find(p => p.id === selectedPlanId)?.price || 0}
+                planPrice={
+                    isFounderCandidate && selectedPlanId === currentPlanId
+                        ? founderReservedPrice
+                        : (isFounder && selectedPlanId === currentPlanId && lockedPrice)
+                            ? Number(lockedPrice)
+                            : (allPlans.find(p => p.id === selectedPlanId)?.price || 0)
+                }
                 isRenewal={isRenewalModal}
+                businessId={businessId}
             />
 
             <AddonCheckoutModal

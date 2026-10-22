@@ -222,25 +222,25 @@ export default function AdminDespachoPage() {
     switch (estado) {
       case 'EN_PREPARACION':
       case 'PREPARANDO':
-        return <span className="px-2 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black rounded-lg uppercase tracking-wider whitespace-nowrap">En Preparación</span>;
+        return <span className="px-2 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold rounded-lg uppercase tracking-wider whitespace-nowrap">En Preparación</span>;
       case 'RECIBIDO':
       case 'PENDIENTE':
       case 'WAITING_CONFIRMATION':
-        return <span className="px-2 py-0.5 bg-blue-100 text-blue-900 border border-blue-300 text-[10px] font-black rounded-lg uppercase tracking-wider whitespace-nowrap">Recibido</span>;
+        return <span className="px-2 py-0.5 bg-blue-100 text-blue-900 border border-blue-300 text-xs font-bold rounded-lg uppercase tracking-wider whitespace-nowrap">Recibido</span>;
       case 'LISTO':
       case 'LISTA':
-        return <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-black rounded-lg uppercase tracking-wider whitespace-nowrap">Listo</span>;
+        return <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold rounded-lg uppercase tracking-wider whitespace-nowrap">Listo</span>;
       case 'REPARTIDOR_ASIGNADO':
-        return <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 border border-indigo-200 text-[10px] font-black rounded-lg uppercase tracking-wider whitespace-nowrap">Asignado</span>;
+        return <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-bold rounded-lg uppercase tracking-wider whitespace-nowrap">Asignado</span>;
       case 'EN_CAMINO':
       case 'EN_RUTA':
-        return <span className="px-2 py-0.5 bg-sky-100 text-sky-800 border border-sky-200 text-[10px] font-black rounded-lg uppercase tracking-wider whitespace-nowrap flex items-center gap-1"><Truck className="size-2.5 animate-pulse" />En Ruta</span>;
+        return <span className="px-2 py-0.5 bg-sky-100 text-sky-800 border border-sky-200 text-xs font-bold rounded-lg uppercase tracking-wider whitespace-nowrap flex items-center gap-1"><Truck className="size-2.5 animate-pulse" />En Ruta</span>;
       case 'ENTREGADO':
       case 'ENTREGADO_MESA':
       case 'RETIRADO':
-        return <span className="px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-black rounded-lg uppercase tracking-wider whitespace-nowrap">Entregado</span>;
+        return <span className="px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold rounded-lg uppercase tracking-wider whitespace-nowrap">Entregado</span>;
       default:
-        return <span className="px-2 py-0.5 bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-semibold rounded-lg uppercase tracking-wider whitespace-nowrap">{estado}</span>;
+        return <span className="px-2 py-0.5 bg-slate-50 text-slate-600 border border-slate-200 text-xs font-semibold rounded-lg uppercase tracking-wider whitespace-nowrap">{estado}</span>;
     }
   };
 
@@ -276,10 +276,10 @@ export default function AdminDespachoPage() {
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
                 {isStore ? 'Órdenes de Venta & Despachos' : 'Órdenes del Día'}
               </h1>
-              <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-black rounded-md uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-md uppercase tracking-wider">
                 {isStore ? 'Tienda Online' : 'Historial Oficial'}
               </span>
             </div>
@@ -312,11 +312,11 @@ export default function AdminDespachoPage() {
             <button
               key={f.key}
               onClick={() => setFilterChannel(f.key as any)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer border ${
-                filterChannel === f.key
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-400'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+ filterChannel === f.key
+ ? 'bg-slate-900 text-white border-slate-900'
+ : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-400'
+ }`}
             >
               {f.icon}{f.label}
             </button>
@@ -330,27 +330,27 @@ export default function AdminDespachoPage() {
             <button
               type="button"
               onClick={() => setFilterDate('today')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
-                filterDate === 'today' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+ filterDate === 'today' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+ }`}
             >
               Hoy
             </button>
             <button
               type="button"
               onClick={() => setFilterDate('yesterday')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
-                filterDate === 'yesterday' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+ filterDate === 'yesterday' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+ }`}
             >
               Ayer
             </button>
             <button
               type="button"
               onClick={() => setFilterDate('all')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
-                filterDate === 'all' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+ filterDate === 'all' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+ }`}
             >
               Todas
             </button>
@@ -358,7 +358,7 @@ export default function AdminDespachoPage() {
 
           {/* Input de Fecha Específica (Calendario) */}
           <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
-            <span className="text-[10px] font-black text-slate-400 uppercase">📅 Fecha:</span>
+            <span className="text-xs font-bold text-slate-400 uppercase">📅 Fecha:</span>
             <input
               type="date"
               value={customDate}
@@ -393,13 +393,13 @@ export default function AdminDespachoPage() {
       ) : filteredOrders.length === 0 ? (
         <div className="bg-white p-16 rounded-3xl border border-slate-200/80 text-center space-y-2">
           <CheckCircle2 className="size-10 text-emerald-400 mx-auto" />
-          <h3 className="text-sm font-black text-slate-800">No hay órdenes para mostrar</h3>
+          <h3 className="text-sm font-bold text-slate-800">No hay órdenes para mostrar</h3>
           <p className="text-xs text-slate-400">Las órdenes creadas en la jornada aparecerán aquí automáticamente.</p>
         </div>
       ) : (
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
           {/* Encabezado tabla — desktop */}
-          <div className="hidden lg:grid grid-cols-[56px_1fr_100px_120px_130px_130px_100px_80px] gap-2.5 px-6 py-3 bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest items-center">
+          <div className="hidden lg:grid grid-cols-[56px_1fr_100px_120px_130px_130px_100px_80px] gap-2.5 px-6 py-3 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wide items-center">
             <span>#</span>
             <span>Cliente</span>
             <span>Hora</span>
@@ -449,24 +449,24 @@ export default function AdminDespachoPage() {
                 <summary className="list-none cursor-pointer select-none">
                   {/* Desktop row */}
                   <div className="hidden lg:grid grid-cols-[56px_1fr_115px_120px_130px_130px_100px_80px] gap-2.5 items-center px-6 py-4 hover:bg-indigo-50/30 transition-colors">
-                    <span className="text-xs font-black text-slate-400">#{order.numeroPedido}</span>
+                    <span className="text-xs font-bold text-slate-400">#{order.numeroPedido}</span>
                     <div className="min-w-0">
-                      <p className="text-sm font-black text-slate-900 truncate">{order.nombreCliente}</p>
-                      <p className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
+                      <p className="text-sm font-bold text-slate-900 truncate">{order.nombreCliente}</p>
+                      <p className="text-xs text-slate-400 font-semibold flex items-center gap-1">
                         <Phone className="size-2.5 shrink-0" />
                         <span className="truncate">{order.telefonoCliente}</span>
                       </p>
                     </div>
-                    <div className="flex flex-col text-[11px] font-semibold text-slate-600">
+                    <div className="flex flex-col text-xs font-semibold text-slate-600">
                       <span className="flex items-center gap-1 text-slate-900 font-extrabold">
                         <Clock className="size-3 text-indigo-500 shrink-0" />
                         {hora}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-bold pl-4 uppercase">
+                      <span className="text-xs text-slate-400 font-bold pl-4 uppercase">
                         {fechaStr}
                       </span>
                     </div>
-                    <span className={`text-[11px] font-black px-2.5 py-1 rounded-lg border inline-flex items-center w-fit ${channel.color}`}>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border inline-flex items-center w-fit ${channel.color}`}>
                       {channel.label}
                     </span>
                     <div className="flex items-center gap-1.5">
@@ -479,7 +479,7 @@ export default function AdminDespachoPage() {
                             e.stopPropagation();
                             handleUpdateOrderState(order.id, 'FINALIZADO');
                           }}
-                          className="px-2 py-0.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 font-black text-[9px] uppercase tracking-wider rounded-md transition-all cursor-pointer shadow-xs flex items-center gap-1 shrink-0"
+                          className="px-2 py-0.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 font-bold text-xs uppercase tracking-wider rounded-md transition-all cursor-pointer shadow-xs flex items-center gap-1 shrink-0"
                           title="Entregar al cliente y finalizar pedido"
                         >
                           <CheckCircle2 className="size-3 text-emerald-400" />
@@ -488,17 +488,17 @@ export default function AdminDespachoPage() {
                       )}
                     </div>
                     <div>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border inline-flex items-center uppercase ${
-                        isPagadoTotal
-                          ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                          : isParcial
-                          ? 'bg-amber-100 text-amber-900 border-amber-300'
-                          : 'bg-rose-100 text-rose-900 border-rose-300'
-                      }`}>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full border inline-flex items-center uppercase ${
+ isPagadoTotal
+ ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+ : isParcial
+ ? 'bg-amber-100 text-amber-900 border-amber-300'
+ : 'bg-rose-100 text-rose-900 border-rose-300'
+ }`}>
                         {isPagadoTotal ? '✓ PAGADO' : isParcial ? '⏳ PARCIAL' : '🔴 PENDIENTE'}
                       </span>
                     </div>
-                    <span className="text-sm font-black text-emerald-700 text-right">${displayTotal.toFixed(2)}</span>
+                    <span className="text-sm font-bold text-emerald-700 text-right">${displayTotal.toFixed(2)}</span>
                     <div className="flex items-center gap-1.5 justify-end">
                       <button
                         onClick={e => { e.preventDefault(); setSelectedOrderForPrint(order); }}
@@ -524,16 +524,16 @@ export default function AdminDespachoPage() {
                   <div className="lg:hidden px-4 py-4 hover:bg-indigo-50/20 transition-colors">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="min-w-0">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">#{order.numeroPedido} · {hora}</p>
-                        <p className="text-sm font-black text-slate-900 truncate">{order.nombreCliente}</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">#{order.numeroPedido} · {hora}</p>
+                        <p className="text-sm font-bold text-slate-900 truncate">{order.nombreCliente}</p>
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         {getStatusBadge(order.estado)}
                         <div className="flex items-center gap-1">
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${channel.color}`}>{channel.label}</span>
-                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase ${
-                            isPagadoTotal ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : isParcial ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-rose-100 text-rose-900 border-rose-300'
-                          }`}>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${channel.color}`}>{channel.label}</span>
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded border uppercase ${
+ isPagadoTotal ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : isParcial ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-rose-100 text-rose-900 border-rose-300'
+ }`}>
                             {isPagadoTotal ? 'PAGADO' : isParcial ? 'PARCIAL' : 'PENDIENTE'}
                           </span>
                         </div>
@@ -541,7 +541,7 @@ export default function AdminDespachoPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-slate-400 font-semibold">{order.items.length} producto(s)</span>
-                      <span className="text-sm font-black text-emerald-700">${displayTotal.toFixed(2)}</span>
+                      <span className="text-sm font-bold text-emerald-700">${displayTotal.toFixed(2)}</span>
                     </div>
                   </div>
                 </summary>
@@ -551,20 +551,20 @@ export default function AdminDespachoPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Productos */}
                     <div className="bg-white rounded-2xl border border-slate-200/80 p-4">
-                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Productos del pedido</p>
+                      <p className="text-xs font-bold uppercase text-slate-400 tracking-wide mb-3">Productos del pedido</p>
                       {order.items.length === 0 ? (
-                        <p className="text-xs text-slate-400 italic">Sin ítems registrados</p>
+                        <p className="text-xs text-slate-400 ">Sin ítems registrados</p>
                       ) : (
                         <div className="space-y-1">
                           {order.items.map(item => (
                             <div key={item.id} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="w-6 h-6 bg-indigo-100 text-indigo-800 text-[10px] font-black rounded-md flex items-center justify-center shrink-0">
+                                <span className="w-6 h-6 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-md flex items-center justify-center shrink-0">
                                   {item.cantidad}
                                 </span>
                                 <span className="text-xs font-semibold text-slate-800 truncate">{item.nombreProducto}</span>
                               </div>
-                              <span className="text-xs font-black text-slate-700 ml-2 shrink-0">
+                              <span className="text-xs font-bold text-slate-700 ml-2 shrink-0">
                                 ${((Number(item.precioUnitario) || 0) * (Number(item.cantidad) || 1)).toFixed(2)}
                               </span>
                             </div>
@@ -572,23 +572,23 @@ export default function AdminDespachoPage() {
                         </div>
                       )}
                       <div className="flex justify-between items-center pt-3 border-t border-slate-200 mt-2">
-                        <span className="text-xs font-black text-slate-500 uppercase tracking-wider">Total</span>
-                        <span className="text-lg font-black text-emerald-700">${displayTotal.toFixed(2)}</span>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total</span>
+                        <span className="text-lg font-bold text-emerald-700">${displayTotal.toFixed(2)}</span>
                       </div>
                     </div>
 
                     {/* Info entrega & pago */}
                     <div className="bg-white rounded-2xl border border-slate-200/80 p-4 flex flex-col gap-3">
-                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Detalles de Entrega & Pago</p>
+                      <p className="text-xs font-bold uppercase text-slate-400 tracking-wide">Detalles de Entrega & Pago</p>
                       <div className="space-y-2.5 text-xs font-semibold text-slate-700">
                         <div className="flex items-center justify-between">
                           <span className="text-slate-400 font-bold">Canal / Ubicación</span>
-                          <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-md border ${channel.color}`}>{channel.label}</span>
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${channel.color}`}>{channel.label}</span>
                         </div>
 
                         <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                           <span className="text-slate-400 font-bold">Forma de Pago</span>
-                          <span className="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                          <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-xs">
                             {metodoPago === 'EFECTIVO' ? '💵 Efectivo' : metodoPago === 'TRANSFERENCIA' ? '🏦 Transferencia' : metodoPago === 'TARJETA' ? '💳 Tarjeta' : metodoPago}
                           </span>
                         </div>
@@ -596,14 +596,14 @@ export default function AdminDespachoPage() {
                         {montoPagado > 0 && (
                           <div className="flex items-center justify-between text-emerald-800">
                             <span className="text-slate-400 font-bold">Monto Cobrado</span>
-                            <span className="font-black bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-emerald-700">${montoPagado.toFixed(2)}</span>
+                            <span className="font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-emerald-700">${montoPagado.toFixed(2)}</span>
                           </div>
                         )}
 
                         {saldoPendiente > 0 && (
                           <div className="flex items-center justify-between text-amber-800">
                             <span className="text-slate-400 font-bold">Saldo Pendiente</span>
-                            <span className="font-black bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-amber-700">${saldoPendiente.toFixed(2)}</span>
+                            <span className="font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-amber-700">${saldoPendiente.toFixed(2)}</span>
                           </div>
                         )}
 
@@ -617,16 +617,16 @@ export default function AdminDespachoPage() {
                         <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                           <span className="text-slate-400 font-bold">Estado de Pago</span>
                           <div className="flex items-center gap-1.5">
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase border ${
-                              isPagadoTotal ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : isParcial ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-rose-100 text-rose-900 border-rose-300'
-                            }`}>
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase border ${
+ isPagadoTotal ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : isParcial ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-rose-100 text-rose-900 border-rose-300'
+ }`}>
                               {isPagadoTotal ? 'PAGADO' : isParcial ? 'PARCIALMENTE PAGADO' : 'PENDIENTE EN CAJA'}
                             </span>
                             {!isPagadoTotal && (
                               <button
                                 type="button"
                                 onClick={() => handleOpenPayModal(order)}
-                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm flex items-center gap-1"
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm flex items-center gap-1"
                               >
                                 <DollarSign className="size-3" /> Gestionar Pago
                               </button>
@@ -645,14 +645,14 @@ export default function AdminDespachoPage() {
                       <div className="flex gap-2 mt-auto pt-2 border-t border-slate-100">
                         <button
                           onClick={() => setSelectedOrderForPrint(order)}
-                          className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                         >
                           <Printer className="size-3.5" /> Ver Guía
                         </button>
                         {order.latitud && order.longitud && (
                           <button
                             onClick={() => setSelectedOrderForMap(order)}
-                            className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                           >
                             <Navigation className="size-3.5" /> GPS
                           </button>
@@ -689,9 +689,9 @@ export default function AdminDespachoPage() {
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl font-mono text-xs">
               <div className="text-center border-b border-dashed border-slate-300 pb-4 space-y-1">
-                <h2 className="text-sm font-black text-slate-900 uppercase">Guía de Despacho</h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Citiox Enterprise</p>
-                <p className="font-black text-slate-800">PEDIDO #{selectedOrderForPrint.numeroPedido}</p>
+                <h2 className="text-sm font-bold text-slate-900 uppercase">Guía de Despacho</h2>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Citiox Enterprise</p>
+                <p className="font-bold text-slate-800">PEDIDO #{selectedOrderForPrint.numeroPedido}</p>
               </div>
 
               <div className="space-y-1 border-b border-dashed border-slate-300 pb-4">
@@ -713,21 +713,21 @@ export default function AdminDespachoPage() {
                 ))}
               </div>
 
-              <div className="flex justify-between font-black text-sm">
-                <span>TOTAL:</span>
+              <div className="flex justify-between font-bold text-sm">
+                <span>Total:</span>
                 <span className="text-emerald-700">${dt.toFixed(2)}</span>
               </div>
 
               <div className="flex gap-2 font-sans pt-1">
                 <button
                   onClick={() => window.print()}
-                  className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Printer className="size-4" /> Imprimir
                 </button>
                 <button
                   onClick={() => setSelectedOrderForPrint(null)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-black cursor-pointer"
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer"
                 >
                   Cerrar
                 </button>
@@ -770,10 +770,10 @@ export default function AdminDespachoPage() {
             <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
               <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                 <div>
-                  <span className="text-[10px] font-black uppercase text-emerald-600 tracking-wider block">
+                  <span className="text-xs font-bold uppercase text-emerald-600 tracking-wider block">
                     Gestión de Cobro
                   </span>
-                  <h3 className="text-base font-black text-slate-900">
+                  <h3 className="text-base font-bold text-slate-900">
                     Orden #{order.numeroPedido} — {order.nombreCliente}
                   </h3>
                 </div>
@@ -795,8 +795,8 @@ export default function AdminDespachoPage() {
                   </div>
                 )}
                 <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-800">
-                  <span className="font-black text-amber-400 uppercase tracking-wider">Total a Cobrar Ahora:</span>
-                  <span className="font-black text-emerald-400 text-xl">${amountToPay.toFixed(2)}</span>
+                  <span className="font-bold text-amber-400 uppercase tracking-wider">Total a Cobrar Ahora:</span>
+                  <span className="font-bold text-emerald-400 text-xl">${amountToPay.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -817,11 +817,11 @@ export default function AdminDespachoPage() {
                       key={m.id}
                       type="button"
                       onClick={() => setPayMethod(m.id as any)}
-                      className={`py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer border ${
-                        payMethod === m.id
-                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                      }`}
+                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+ payMethod === m.id
+ ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+ : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+ }`}
                     >
                       {m.label}
                     </button>
@@ -837,7 +837,7 @@ export default function AdminDespachoPage() {
                   step="0.01"
                   value={payMontoRecibido}
                   onChange={e => setPayMontoRecibido(e.target.value)}
-                  className="w-full text-base font-black p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none text-slate-900"
+                  className="w-full text-base font-bold p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none text-slate-900"
                 />
 
                 {/* Accesos Rápidos */}
@@ -849,7 +849,7 @@ export default function AdminDespachoPage() {
                         key={val}
                         type="button"
                         onClick={() => setPayMontoRecibido(val.toFixed(2))}
-                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[11px] rounded-lg transition-colors"
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-lg transition-colors"
                       >
                         ${val.toFixed(2)}
                       </button>
@@ -860,7 +860,7 @@ export default function AdminDespachoPage() {
               {/* Vuelto / Cambio */}
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex justify-between items-center text-xs">
                 <span className="font-extrabold text-emerald-900">Vuelto / Cambio a entregar:</span>
-                <span className="font-black text-emerald-700 text-lg">${vuelt.toFixed(2)}</span>
+                <span className="font-bold text-emerald-700 text-lg">${vuelt.toFixed(2)}</span>
               </div>
 
               {/* Botones de Confirmación */}
@@ -876,7 +876,7 @@ export default function AdminDespachoPage() {
                   type="button"
                   onClick={handleConfirmPayment}
                   disabled={rec < amountToPay - 0.01}
-                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md disabled:opacity-40 cursor-pointer"
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md disabled:opacity-40 cursor-pointer"
                 >
                   ✓ Confirmar Pago
                 </button>
@@ -892,7 +892,7 @@ export default function AdminDespachoPage() {
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-sm font-black text-slate-900">Ubicación GPS del Cliente</h3>
+                <h3 className="text-sm font-bold text-slate-900">Ubicación GPS del Cliente</h3>
                 <p className="text-xs text-slate-500 font-semibold">{selectedOrderForMap.nombreCliente}</p>
               </div>
               <button onClick={() => setSelectedOrderForMap(null)} className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer">
@@ -908,7 +908,7 @@ export default function AdminDespachoPage() {
               href={`https://www.google.com/maps/search/?api=1&query=${selectedOrderForMap.latitud},${selectedOrderForMap.longitud}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
               <Navigation className="size-4" /> Abrir en Google Maps
             </a>

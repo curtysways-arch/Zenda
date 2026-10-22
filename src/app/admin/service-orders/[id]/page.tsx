@@ -15,6 +15,7 @@ import {
   AlertCircle,
   HelpCircle,
   Share2,
+  Lock,
 } from 'lucide-react';
 
 import { ServiceOrderHeader } from '@/components/admin/service-orders/ServiceOrderHeader';
@@ -69,7 +70,6 @@ export default function ServiceOrderWorkspacePage() {
     'SECANDO',
     'DETALLADO',
     'LISTO',
-    'ENTREGADO',
   ]);
   const [hasDelivery, setHasDelivery] = useState(false);
 
@@ -79,6 +79,18 @@ export default function ServiceOrderWorkspacePage() {
 
   // Modal selector de plantillas de WhatsApp
   const [showWaTemplatesModal, setShowWaTemplatesModal] = useState(false);
+  const [isPlanFree, setIsPlanFree] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/features')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.communications_module === false) {
+          setIsPlanFree(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Cargar datos completos de la orden
   const loadOrderWorkspace = useCallback(async () => {
@@ -134,7 +146,15 @@ export default function ServiceOrderWorkspacePage() {
         entrega: ord.extraInfo?.fotosEntrega || [],
       });
       setNotasInternas(ord.extraInfo?.notasInternas || ord.notas || '');
-      setSelectedDriverId(data.deliveryAssignment?.resourceId || ord.extraInfo?.repartidorId || '');
+      
+      // Si la orden está en taller o el retiro ya concluyó, NO precargar repartidor para entrega a menos que esté activamente en entrega
+      const inWorkshopStates = ['RECIBIDO', 'EN_PROCESO', 'LAVANDO', 'SECANDO', 'DETALLADO', 'LISTO'];
+      const isRetiroCompleted = data.deliveryAssignment?.tipo === 'RETIRO' && data.deliveryAssignment?.estado === 'COMPLETADO';
+      if (inWorkshopStates.includes(ord.estado) || isRetiroCompleted) {
+        setSelectedDriverId('');
+      } else {
+        setSelectedDriverId(data.deliveryAssignment?.resourceId || ord.extraInfo?.repartidorId || '');
+      }
 
       // Parsear BusinessSettings (customStatuses y capabilities.delivery)
       if (ord.negocio?.configuracion) {
@@ -226,7 +246,9 @@ export default function ServiceOrderWorkspacePage() {
         prioridad,
         fotos,
         notasInternas,
-        repartidorId: selectedDriverId,
+        repartidorId: payloadExtra?.repartidorId !== undefined 
+          ? payloadExtra.repartidorId 
+          : (['ESPERANDO_REPARTIDOR_ENTREGA', 'ESPERANDO_REPARTIDOR_RETIRO'].includes(nextStatus) ? (selectedDriverId || null) : null),
         ...(payloadExtra || {}),
       };
 
@@ -279,8 +301,12 @@ export default function ServiceOrderWorkspacePage() {
       setFechaEstimadaEntrega(pendingDateChange.fecha);
       setHoraEstimadaEntrega(pendingDateChange.hora);
       if (notifyWa && cliente?.telefono) {
-        const msg = `Hola ${cliente.nombre} 👋, te notificamos que la fecha estimada de entrega de tu orden #${order?.numeroPedido} ha sido reprogramada para el ${pendingDateChange.fecha} a las ${pendingDateChange.hora}.`;
-        window.open(`https://wa.me/${cliente.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+        if (isPlanFree) {
+          alert('La comunicación por WhatsApp está reservada para el Plan Pro.');
+        } else {
+          const msg = `Hola ${cliente.nombre} 👋, te notificamos que la fecha estimada de entrega de tu orden #${order?.numeroPedido} ha sido reprogramada para el ${pendingDateChange.fecha} a las ${pendingDateChange.hora}.`;
+          window.open(`https://wa.me/${cliente.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
       }
     }
     setShowDateWaModal(false);
@@ -289,6 +315,10 @@ export default function ServiceOrderWorkspacePage() {
 
   // Enviar Plantillas Oficiales de WhatsApp
   const sendWaTemplate = (type: 'recepcion' | 'proceso' | 'listo' | 'despacho' | 'entregado') => {
+    if (isPlanFree) {
+      alert('La comunicación por WhatsApp está reservada para el Plan Pro.');
+      return;
+    }
     if (!cliente?.telefono) return;
 
     let text = '';
@@ -337,16 +367,23 @@ export default function ServiceOrderWorkspacePage() {
         </button>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowWaTemplatesModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-500 text-white font-bold rounded-2xl text-xs hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20"
-          >
-            <Send className="w-4 h-4" /> WhatsApp Status
-          </button>
+          {isPlanFree ? (
+            <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 border border-slate-200 text-slate-400 font-bold rounded-2xl text-xs cursor-not-allowed shadow-inner" title="WhatsApp disponible en Plan Pro">
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <span>WhatsApp (Plan Pro)</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowWaTemplatesModal(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-500 text-white font-bold rounded-2xl text-xs hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20"
+            >
+              <Send className="w-4 h-4" /> WhatsApp Status
+            </button>
+          )}
           <button
             onClick={handleSaveWorkspace}
             disabled={saving}
-            className="flex items-center gap-1.5 px-6 py-2.5 bg-slate-900 text-white font-black rounded-2xl text-xs hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-lg"
+            className="flex items-center gap-1.5 px-6 py-2.5 bg-slate-900 text-white font-bold rounded-2xl text-xs hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-lg"
           >
             <Save className="w-4 h-4" /> {saving ? 'Guardando...' : 'Guardar Cambios'}
           </button>
@@ -372,15 +409,44 @@ export default function ServiceOrderWorkspacePage() {
           <CustomerCard
             cliente={cliente}
             historial={historial}
-            onOpenWhatsApp={() => setShowWaTemplatesModal(true)}
+            isPlanFree={isPlanFree}
+            onOpenWhatsApp={() => {
+              if (isPlanFree) {
+                alert('La comunicación por WhatsApp está reservada para el Plan Pro.');
+                return;
+              }
+              setShowWaTemplatesModal(true);
+            }}
           />
 
           {hasDelivery && (
             <DeliveryCard
+              order={order}
               deliveryAssignment={deliveryAssignment}
               approvedDrivers={approvedDrivers}
               selectedDriverId={selectedDriverId}
               onChangeDriver={setSelectedDriverId}
+              onPayCompensation={async (missionType) => {
+                try {
+                  const res = await fetch(`/api/shoe-care/orders/${order.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(missionType === 'RECOGIDA' ? { markPickupPaid: true } : { markDeliveryPaid: true }),
+                  });
+                  if (res.ok) {
+                    const data = await res.json();
+                    if (data.order) setOrder(data.order);
+                    await loadOrderWorkspace();
+                    alert(`✓ Compensación al chofer (${missionType === 'RECOGIDA' ? 'Retiro' : 'Entrega'}) registrada como PAGADA.`);
+                  } else {
+                    const errData = await res.json().catch(() => ({}));
+                    alert(errData.error || 'Error al registrar el pago de compensación');
+                  }
+                } catch (e: any) {
+                  console.error('Error pagando compensación:', e);
+                  alert(e.message || 'Error de conexión al registrar compensación');
+                }
+              }}
             />
           )}
         </div>
@@ -401,6 +467,10 @@ export default function ServiceOrderWorkspacePage() {
             onAdvanceStatus={handleAdvanceStatusFromWizard}
             onChangeDriver={setSelectedDriverId}
             onSendWhatsApp={(msg) => {
+              if (isPlanFree) {
+                alert('La comunicación por WhatsApp está reservada para el Plan Pro.');
+                return;
+              }
               if (cliente?.telefono) {
                 window.open(`https://wa.me/${cliente.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
               }
@@ -416,13 +486,13 @@ export default function ServiceOrderWorkspacePage() {
 
           {/* Resumen de la Orden: Tipo de servicio & Notas internas */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4 text-left">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-900 border-b pb-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 border-b pb-2">
               Resumen de la Orden
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <span className="block font-bold text-slate-500 mb-1">Tipo de Servicio</span>
-                <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full font-bold text-[11px]">
+                <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full font-bold text-xs">
                   {order?.tipoEntrega === 'DOMICILIO' ? 'Recolección y Entrega' : 'Retiro en Local'}
                 </span>
               </div>
@@ -455,6 +525,12 @@ export default function ServiceOrderWorkspacePage() {
 
           {/* Fotos de Auditoría (Antes / Después) */}
           <PhotoGalleryCard
+            orderId={orderId}
+            numeroPedido={order?.numeroPedido}
+            clienteNombre={order?.nombreCliente || cliente?.nombre}
+            clienteTelefono={order?.telefonoCliente || cliente?.telefono}
+            storeSlug={order?.negocio?.slug || 'lavado'}
+            isPlanFree={isPlanFree}
             fotos={fotos}
             onChangeFotos={setFotos}
           />
@@ -550,7 +626,7 @@ export default function ServiceOrderWorkspacePage() {
                   className="w-full p-3 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-2xl text-left transition-all group"
                 >
                   <p className="font-bold text-xs text-slate-900 group-hover:text-emerald-900">{t.label}</p>
-                  <p className="text-[11px] text-slate-500">{t.desc}</p>
+                  <p className="text-xs text-slate-500">{t.desc}</p>
                 </button>
               ))}
             </div>

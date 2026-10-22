@@ -16,10 +16,10 @@ export default function BlueprintCapabilities({ blueprintId, capabilities, onNex
   return (
     <div className="space-y-6 text-left">
       <div className="text-center space-y-2 max-w-xl mx-auto">
-        <span className="text-[10px] font-black tracking-widest text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+        <span className="text-xs font-bold tracking-wide text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
           Paso 5 — Capacidades del Blueprint
         </span>
-        <h2 className="text-2xl font-black text-white italic">Capacidades Declaradas del Blueprint</h2>
+        <h2 className="text-2xl font-bold text-white ">Capacidades Declaradas del Blueprint</h2>
         <p className="text-xs text-slate-400">Estas capacidades se habilitan nativamente según el modelo de industria seleccionado ({blueprintId}).</p>
       </div>
 
@@ -43,7 +43,7 @@ export default function BlueprintCapabilities({ blueprintId, capabilities, onNex
         <button
           type="button"
           onClick={onPrev}
-          className="flex items-center gap-2 bg-slate-900 border border-slate-800 text-slate-400 font-bold text-xs uppercase tracking-widest px-6 py-3.5 rounded-2xl hover:text-white transition"
+          className="flex items-center gap-2 bg-slate-900 border border-slate-800 text-slate-400 font-bold text-xs uppercase tracking-wide px-6 py-3.5 rounded-2xl hover:text-white transition"
         >
           <ArrowLeft size={16} />
           Anterior
@@ -51,7 +51,7 @@ export default function BlueprintCapabilities({ blueprintId, capabilities, onNex
         <button
           type="button"
           onClick={onNext}
-          className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest px-8 py-3.5 rounded-2xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+          className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wide px-8 py-3.5 rounded-2xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
         >
           Continuar
           <ArrowRight size={16} />

@@ -93,7 +93,7 @@ export default function MiMembresiaPage() {
           <ArrowLeft className="w-4 h-4" />
           <span>Volver al Gimnasio</span>
         </Link>
-        <span className="text-xs font-black uppercase tracking-widest text-orange-400 flex items-center gap-1.5">
+        <span className="text-xs font-bold uppercase tracking-wide text-orange-400 flex items-center gap-1.5">
           <Zap className="w-3.5 h-3.5" /> Carnet Digital
         </span>
       </header>
@@ -106,7 +106,7 @@ export default function MiMembresiaPage() {
               <CreditCard className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-white">Consulta tu Membresía</h1>
+              <h1 className="text-xl font-bold text-white">Consulta tu Membresía</h1>
               <p className="text-xs text-slate-400 mt-1">
                 Ingresa el número de teléfono con el que te registraste en recepción.
               </p>
@@ -126,7 +126,7 @@ export default function MiMembresiaPage() {
               </div>
               <button
                 type="submit"
-                className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-orange-500/20 hover:opacity-95 transition-all"
+                className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-orange-500/20 hover:opacity-95 transition-all"
               >
                 Buscar Mi Carnet
               </button>
@@ -166,11 +166,11 @@ export default function MiMembresiaPage() {
 
               <div className="flex items-start justify-between relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center font-black text-lg">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-lg">
                     {memberData.member?.name?.charAt(0) || 'S'}
                   </div>
                   <div>
-                    <h2 className="font-black text-lg text-white tracking-tight">
+                    <h2 className="font-bold text-lg text-white tracking-tight">
                       {memberData.member?.name || 'Socio'}
                     </h2>
                     <p className="text-xs text-slate-400 font-medium">
@@ -180,13 +180,13 @@ export default function MiMembresiaPage() {
                 </div>
 
                 {/* Badge de Estado */}
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm ${
-                  memberData.status === 'ACTIVE'
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                    : memberData.status === 'FROZEN'
-                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                    : 'bg-rose-500/20 text-rose-400 border-rose-500/30'
-                }`}>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${
+ memberData.status === 'ACTIVE'
+ ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+ : memberData.status === 'FROZEN'
+ ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+ : 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+ }`}>
                   {memberData.status === 'ACTIVE' && <CheckCircle2 className="w-3 h-3 mr-1" />}
                   {memberData.status === 'FROZEN' && <Clock className="w-3 h-3 mr-1" />}
                   {memberData.status !== 'ACTIVE' && memberData.status !== 'FROZEN' && <AlertTriangle className="w-3 h-3 mr-1" />}
@@ -197,14 +197,14 @@ export default function MiMembresiaPage() {
               {/* Información del Plan */}
               <div className="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-2 gap-4 relative z-10">
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Plan Actual</span>
-                  <span className="text-sm font-black text-white mt-0.5 block">
+                  <span className="text-xs uppercase tracking-wider text-slate-400 font-bold block">Plan Actual</span>
+                  <span className="text-sm font-bold text-white mt-0.5 block">
                     {memberData.plan?.name || 'Plan Fitness'}
                   </span>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Vence</span>
+                  <span className="text-xs uppercase tracking-wider text-slate-400 font-bold block">Vence</span>
                   <span className="text-sm font-bold text-slate-200 mt-0.5 block">
                     {memberData.dates?.end ? new Date(memberData.dates.end).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                   </span>
@@ -215,7 +215,7 @@ export default function MiMembresiaPage() {
               {memberData.status === 'ACTIVE' && (
                 <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs">
                   <span className="text-slate-400 font-medium">Tiempo disponible</span>
-                  <span className="font-black text-emerald-400">
+                  <span className="font-bold text-emerald-400">
                     {memberData.daysRemaining} días restantes
                   </span>
                 </div>
@@ -225,7 +225,7 @@ export default function MiMembresiaPage() {
             {/* Acceso Rápido al QR de Recepción */}
             <Link
               href={`/${slug}/mi-qr`}
-              className="w-full p-4 bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-black rounded-2xl shadow-xl shadow-orange-500/20 flex items-center justify-between hover:opacity-95 transition-all transform active:scale-98"
+              className="w-full p-4 bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-bold rounded-2xl shadow-xl shadow-orange-500/20 flex items-center justify-between hover:opacity-95 transition-all transform active:scale-98"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-slate-950/20 flex items-center justify-center">
@@ -233,7 +233,7 @@ export default function MiMembresiaPage() {
                 </div>
                 <div className="text-left">
                   <div className="text-sm uppercase tracking-wide">Abrir Carnet QR</div>
-                  <div className="text-[11px] font-semibold opacity-80">Escanear en recepción o torno</div>
+                  <div className="text-xs font-semibold opacity-80">Escanear en recepción o torno</div>
                 </div>
               </div>
               <ArrowRight className="w-5 h-5" />
@@ -252,7 +252,7 @@ export default function MiMembresiaPage() {
                 </p>
                 <Link
                   href={`/${slug}#planes`}
-                  className="block text-center py-2.5 bg-orange-500 hover:bg-orange-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md"
+                  className="block text-center py-2.5 bg-orange-500 hover:bg-orange-600 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md"
                 >
                   Ver Planes & Renovar
                 </Link>
@@ -270,7 +270,7 @@ export default function MiMembresiaPage() {
                 </div>
                 <div>
                   <span className="font-bold text-white text-xs block">Mis Asistencias</span>
-                  <span className="text-[10px] text-slate-400 block mt-0.5">Historial y racha</span>
+                  <span className="text-xs text-slate-400 block mt-0.5">Historial y racha</span>
                 </div>
               </Link>
 
@@ -283,7 +283,7 @@ export default function MiMembresiaPage() {
                 </div>
                 <div>
                   <span className="font-bold text-white text-xs block">Beneficios & Retos</span>
-                  <span className="text-[10px] text-slate-400 block mt-0.5">Puntos y recompensas</span>
+                  <span className="text-xs text-slate-400 block mt-0.5">Puntos y recompensas</span>
                 </div>
               </Link>
             </div>

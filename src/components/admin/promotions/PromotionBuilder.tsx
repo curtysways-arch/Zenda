@@ -462,10 +462,10 @@ export default function PromotionBuilder({
               <Sparkles className="w-5 h-5" />
             </span>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 block">
+              <span className="text-xs font-bold uppercase tracking-wide text-amber-600 block">
                 {isStore ? 'Asistente de Ofertas E-Commerce' : isRestaurant ? 'Asistente de Promociones Gastronómicas' : 'Asistente de Promociones Citiox'}
               </span>
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 italic uppercase">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 ">
                 {initialData ? '✏️ Editar Oferta' : isStore ? '✨ Crear Nueva Oferta de Tienda' : isRestaurant ? '✨ Crear Nueva Oferta para Restaurante' : '✨ Crear Nueva Oferta'}
               </h2>
             </div>
@@ -484,7 +484,7 @@ export default function PromotionBuilder({
             <button
               type="submit"
               disabled={!!validationError}
-              className="py-2.5 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center gap-2 disabled:opacity-50"
+              className="py-2.5 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center gap-2 disabled:opacity-50"
             >
               <Check size={18} /> Publicar Oferta
             </button>
@@ -492,7 +492,7 @@ export default function PromotionBuilder({
             <button
               type="button"
               onClick={() => setCurrentStep(prev => Math.min(5, prev + 1))}
-              className="py-2.5 px-5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center gap-2"
+              className="py-2.5 px-5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center gap-2"
             >
               <span>Continuar</span>
               <ArrowRight size={16} />
@@ -517,13 +517,13 @@ export default function PromotionBuilder({
               key={s.step}
               type="button"
               onClick={() => setCurrentStep(s.step)}
-              className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                isActive 
-                  ? 'bg-amber-500 text-slate-950 shadow-md ring-2 ring-amber-500/20' 
-                  : isDone
-                  ? 'bg-amber-50 text-amber-900 border border-amber-200'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-500'
-              }`}
+              className={`flex-1 min-w-[120px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+ isActive 
+ ? 'bg-amber-500 text-slate-950 shadow-md ring-2 ring-amber-500/20' 
+ : isDone
+ ? 'bg-amber-50 text-amber-900 border border-amber-200'
+ : 'bg-slate-50 hover:bg-slate-100 text-slate-500'
+ }`}
             >
               <span>{isDone ? '✓' : s.step}</span>
               <span className="truncate">{s.label.split('. ')[1]}</span>
@@ -542,8 +542,8 @@ export default function PromotionBuilder({
           {currentStep === 1 && (
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 animate-in fade-in duration-200">
               <div>
-                <span className="text-[10px] font-black uppercase text-amber-600 tracking-wider block">Paso 1</span>
-                <h3 className="text-lg font-black text-slate-900 uppercase">¿Qué quieres promocionar?</h3>
+                <span className="text-xs font-bold uppercase text-amber-600 tracking-wider block">Paso 1</span>
+                <h3 className="text-lg font-bold text-slate-900 ">¿Qué quieres promocionar?</h3>
                 <p className="text-xs text-slate-500 font-medium">
                   {isStore ? 'Selecciona qué producto o categoría de tu catálogo recibirá la oferta.' : 'Selecciona qué elemento de tu menú o servicio recibirá la oferta.'}
                 </p>
@@ -563,18 +563,18 @@ export default function PromotionBuilder({
                       : 'bg-slate-50/70 border-slate-200 hover:border-amber-300'
                   }`}
                 >
-                  <span className="p-3 bg-amber-500 text-slate-950 rounded-xl font-black text-xl shrink-0">
+                  <span className="p-3 bg-amber-500 text-slate-950 rounded-xl font-bold text-xl shrink-0">
                     {isStore ? '🛍️' : '🍔'}
                   </span>
                   <div>
-                    <span className="text-sm font-black text-slate-900 block">
+                    <span className="text-sm font-bold text-slate-900 block">
                       {isStore ? 'Un Producto o Variante' : 'Un Platillo o Bebida'}
                     </span>
                     <span className="text-xs text-slate-500 font-medium leading-relaxed block mt-0.5">
                       {isStore ? 'Promociona un producto específico de tu tienda (ej. Camiseta Oversize).' : 'Promociona un elemento específico de tu catálogo (ej. Hamburguesa Clásica).'}
                     </span>
                     {selectedProduct && alcance === 'PRODUCTOS' && (
-                      <span className="inline-flex items-center gap-1 mt-2 text-xs font-black text-amber-900 bg-amber-200/80 px-2.5 py-1 rounded-lg">
+                      <span className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-amber-900 bg-amber-200/80 px-2.5 py-1 rounded-lg">
                         <span>Seleccionado: {selectedProduct.nombre} (${(Number(selectedProduct.precio) || 0).toFixed(2)})</span>
                       </span>
                     )}
@@ -594,16 +594,16 @@ export default function PromotionBuilder({
                       : 'bg-slate-50/70 border-slate-200 hover:border-amber-300'
                   }`}
                 >
-                  <span className="p-3 bg-orange-500 text-white rounded-xl font-black text-xl shrink-0">📂</span>
+                  <span className="p-3 bg-orange-500 text-white rounded-xl font-bold text-xl shrink-0">📂</span>
                   <div>
-                    <span className="text-sm font-black text-slate-900 block">
+                    <span className="text-sm font-bold text-slate-900 block">
                       {isStore ? 'Una Categoría de Tienda' : 'Una Categoría del Menú'}
                     </span>
                     <span className="text-xs text-slate-500 font-medium leading-relaxed block mt-0.5">
                       {isStore ? 'Aplica la oferta a todos los productos de una categoría (ej. Ropa & Moda).' : 'Aplica la oferta a todos los platillos de una categoría (ej. Pizzas o Bebidas).'}
                     </span>
                     {selectedCategory && alcance === 'SERVICIOS' && (
-                      <span className="inline-flex items-center gap-1 mt-2 text-xs font-black text-orange-900 bg-orange-200/80 px-2.5 py-1 rounded-lg">
+                      <span className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-orange-900 bg-orange-200/80 px-2.5 py-1 rounded-lg">
                         <span>Categoría: {selectedCategory.nombre}</span>
                       </span>
                     )}
@@ -624,9 +624,9 @@ export default function PromotionBuilder({
                       : 'bg-slate-50/70 border-slate-200 hover:border-amber-300'
                   }`}
                 >
-                  <span className="p-3 bg-slate-900 text-amber-400 rounded-xl font-black text-xl shrink-0">🛒</span>
+                  <span className="p-3 bg-slate-900 text-amber-400 rounded-xl font-bold text-xl shrink-0">🛒</span>
                   <div>
-                    <span className="text-sm font-black text-slate-900 block">Todo el Pedido / Carrito</span>
+                    <span className="text-sm font-bold text-slate-900 block">Todo el Pedido / Carrito</span>
                     <span className="text-xs text-slate-500 font-medium leading-relaxed block mt-0.5">
                       {isStore ? 'Aplica el descuento al valor total de la compra en la tienda online.' : 'Aplica el descuento al valor total del consumo de la mesa o pedido online.'}
                     </span>
@@ -646,9 +646,9 @@ export default function PromotionBuilder({
                       : 'bg-slate-50/70 border-slate-200 hover:border-amber-300'
                   }`}
                 >
-                  <span className="p-3 bg-purple-600 text-white rounded-xl font-black text-xl shrink-0">🎁</span>
+                  <span className="p-3 bg-purple-600 text-white rounded-xl font-bold text-xl shrink-0">🎁</span>
                   <div>
-                    <span className="text-sm font-black text-slate-900 block">
+                    <span className="text-sm font-bold text-slate-900 block">
                       {isStore ? 'Crear un Pack de Productos' : 'Crear un Combo / Paquete'}
                     </span>
                     <span className="text-xs text-slate-500 font-medium leading-relaxed block mt-0.5">
@@ -670,9 +670,9 @@ export default function PromotionBuilder({
                       : 'bg-slate-50/70 border-slate-200 hover:border-amber-300'
                   }`}
                 >
-                  <span className="p-3 bg-blue-600 text-white rounded-xl font-black text-xl shrink-0">🚚</span>
+                  <span className="p-3 bg-blue-600 text-white rounded-xl font-bold text-xl shrink-0">🚚</span>
                   <div>
-                    <span className="text-sm font-black text-slate-900 block">El Envío (Delivery)</span>
+                    <span className="text-sm font-bold text-slate-900 block">El Envío (Delivery)</span>
                     <span className="text-xs text-slate-500 font-medium leading-relaxed block mt-0.5">
                       Crea una promoción de envío gratis o subsidio parcial de flete.
                     </span>
@@ -685,14 +685,14 @@ export default function PromotionBuilder({
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     {isStore ? <Package className="w-5 h-5 text-amber-600" /> : <Utensils className="w-5 h-5 text-amber-600" />}
-                    <span className="text-xs font-black text-amber-950">
+                    <span className="text-xs font-bold text-amber-950">
                       {selectedProduct ? `${itemSingular}: ${selectedProduct.nombre} ($${(Number(selectedProduct.precio) || 0).toFixed(2)})` : `Ningún ${itemSingular.toLowerCase()} seleccionado aún`}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowProductModal(true)}
-                    className="py-2 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xs cursor-pointer"
+                    className="py-2 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-xs cursor-pointer"
                   >
                     {selectedProduct ? `Cambiar ${itemSingular}` : `Seleccionar ${itemSingular}`}
                   </button>
@@ -703,14 +703,14 @@ export default function PromotionBuilder({
                 <div className="p-4 bg-orange-50 border border-orange-200 rounded-2xl flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <Layers className="w-5 h-5 text-orange-600" />
-                    <span className="text-xs font-black text-orange-950">
+                    <span className="text-xs font-bold text-orange-950">
                       {selectedCategory ? `Categoría: ${selectedCategory.nombre}` : 'Ninguna categoría seleccionada aún'}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowCategoryModal(true)}
-                    className="py-2 px-4 bg-orange-500 hover:bg-orange-400 text-white font-black text-xs rounded-xl shadow-xs cursor-pointer"
+                    className="py-2 px-4 bg-orange-500 hover:bg-orange-400 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer"
                   >
                     {selectedCategory ? 'Cambiar Categoría' : 'Seleccionar Categoría'}
                   </button>
@@ -722,13 +722,13 @@ export default function PromotionBuilder({
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <Gift className="w-5 h-5 text-purple-600" />
-                      <span className="text-xs font-black text-purple-950">
+                      <span className="text-xs font-bold text-purple-950">
                         {selectedComboProducts.length > 0 
                           ? `${selectedComboProducts.length} ${itemPlural} seleccionados para este combo:` 
                           : `Selecciona los ${itemPlural.toLowerCase()} que formarán este combo:`}
                       </span>
                     </div>
-                    <span className="text-[10px] font-black uppercase px-2.5 py-1 bg-purple-200 text-purple-900 rounded-xl">
+                    <span className="text-xs font-bold uppercase px-2.5 py-1 bg-purple-200 text-purple-900 rounded-xl">
                       {selectedComboProducts.length} seleccionados
                     </span>
                   </div>
@@ -748,10 +748,10 @@ export default function PromotionBuilder({
                         >
                           <span className="truncate">{p.nombre}</span>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="font-mono text-[11px] opacity-80">${(Number(p.precio) || 0).toFixed(2)}</span>
-                            <span className={`size-5 rounded-md flex items-center justify-center text-[10px] font-black ${
-                              isChecked ? 'bg-white text-purple-700' : 'bg-slate-100 text-slate-400'
-                            }`}>
+                            <span className="font-mono text-xs opacity-80">${(Number(p.precio) || 0).toFixed(2)}</span>
+                            <span className={`size-5 rounded-md flex items-center justify-center text-xs font-bold ${
+ isChecked ? 'bg-white text-purple-700' : 'bg-slate-100 text-slate-400'
+ }`}>
                               {isChecked ? '✓' : '+'}
                             </span>
                           </div>
@@ -766,7 +766,7 @@ export default function PromotionBuilder({
                 <button
                   type="button"
                   onClick={() => setCurrentStep(2)}
-                  className="py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer flex items-center gap-2"
+                  className="py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer flex items-center gap-2"
                 >
                   <span>Siguiente: Tipo de Oferta</span>
                   <ArrowRight size={16} />
@@ -779,8 +779,8 @@ export default function PromotionBuilder({
           {currentStep === 2 && (
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 animate-in fade-in duration-200">
               <div>
-                <span className="text-[10px] font-black uppercase text-amber-600 tracking-wider block">Paso 2</span>
-                <h3 className="text-lg font-black text-slate-900 uppercase">¿Qué oferta quieres hacer?</h3>
+                <span className="text-xs font-bold uppercase text-amber-600 tracking-wider block">Paso 2</span>
+                <h3 className="text-lg font-bold text-slate-900 ">¿Qué oferta quieres hacer?</h3>
                 <p className="text-xs text-slate-500 font-medium">Elige el tipo de beneficio comercial que recibirá el cliente.</p>
               </div>
 
@@ -810,13 +810,13 @@ export default function PromotionBuilder({
                         }
                       }}
                       className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                        isSelected 
-                          ? 'bg-amber-50 border-amber-500 text-amber-950 font-black shadow-xs ring-2 ring-amber-500/20' 
-                          : 'bg-slate-50/70 border-slate-200 text-slate-700 hover:border-amber-300'
-                      }`}
+ isSelected 
+ ? 'bg-amber-50 border-amber-500 text-amber-950 font-bold shadow-xs ring-2 ring-amber-500/20' 
+ : 'bg-slate-50/70 border-slate-200 text-slate-700 hover:border-amber-300'
+ }`}
                     >
-                      <span className="text-xs font-black block truncate">{b.label}</span>
-                      <span className="text-[10px] text-slate-400 font-medium mt-1 leading-tight block">{b.desc}</span>
+                      <span className="text-xs font-bold block truncate">{b.label}</span>
+                      <span className="text-xs text-slate-400 font-medium mt-1 leading-tight block">{b.desc}</span>
                     </button>
                   );
                 })}
@@ -834,7 +834,7 @@ export default function PromotionBuilder({
                 <button
                   type="button"
                   onClick={() => setCurrentStep(3)}
-                  className="py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer flex items-center gap-2"
+                  className="py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer flex items-center gap-2"
                 >
                   <span>Siguiente: Configurar Oferta</span>
                   <ArrowRight size={16} />
@@ -847,8 +847,8 @@ export default function PromotionBuilder({
           {currentStep === 3 && (
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 animate-in fade-in duration-200">
               <div>
-                <span className="text-[10px] font-black uppercase text-amber-600 tracking-wider block">Paso 3</span>
-                <h3 className="text-lg font-black text-slate-900 uppercase">Configura la Oferta</h3>
+                <span className="text-xs font-bold uppercase text-amber-600 tracking-wider block">Paso 3</span>
+                <h3 className="text-lg font-bold text-slate-900 ">Configura la Oferta</h3>
                 <p className="text-xs text-slate-500 font-medium">Ajusta los precios y porcentajes con cálculo automático en tiempo real.</p>
               </div>
 
@@ -862,14 +862,14 @@ export default function PromotionBuilder({
                           <img src={selectedProduct.imagenUrl} alt="" className="w-10 h-10 rounded-lg object-cover" />
                         )}
                         <div>
-                          <span className="text-xs font-black text-slate-900 block">{selectedProduct.nombre}</span>
-                          <span className="text-[10px] text-slate-400 font-bold">Precio Actual: ${selectedProduct.precio.toFixed(2)}</span>
+                          <span className="text-xs font-bold text-slate-900 block">{selectedProduct.nombre}</span>
+                          <span className="text-xs text-slate-400 font-bold">Precio Actual: ${selectedProduct.precio.toFixed(2)}</span>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => setShowProductModal(true)}
-                        className="text-[11px] font-black text-amber-700 hover:underline cursor-pointer"
+                        className="text-xs font-bold text-amber-700 hover:underline cursor-pointer"
                       >
                         Cambiar
                       </button>
@@ -878,7 +878,7 @@ export default function PromotionBuilder({
                     <button
                       type="button"
                       onClick={() => setShowProductModal(true)}
-                      className="w-full p-3 bg-white border border-dashed border-amber-300 rounded-xl text-xs font-black text-amber-800 text-center hover:bg-amber-50 cursor-pointer"
+                      className="w-full p-3 bg-white border border-dashed border-amber-300 rounded-xl text-xs font-bold text-amber-800 text-center hover:bg-amber-50 cursor-pointer"
                     >
                       + Seleccionar {itemSingular} para Precio Especial
                     </button>
@@ -886,24 +886,24 @@ export default function PromotionBuilder({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-black uppercase text-slate-600 block mb-1">Nuevo Precio Promocional ($)</label>
+                      <label className="text-xs font-bold uppercase text-slate-600 block mb-1">Nuevo Precio Promocional ($)</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-2.5 font-black text-slate-400 text-sm">$</span>
+                        <span className="absolute left-3 top-2.5 font-bold text-slate-400 text-sm">$</span>
                         <input
                           type="number"
                           step="0.25"
                           value={precioPromo}
                           onChange={e => setPrecioPromo(parseFloat(e.target.value) || 0)}
-                          className="w-full pl-7 pr-3 py-2 bg-white border border-slate-200 rounded-xl font-black text-base text-slate-900 outline-none focus:border-amber-500"
+                          className="w-full pl-7 pr-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-base text-slate-900 outline-none focus:border-amber-500"
                         />
                       </div>
                     </div>
 
                     <div className="p-3 bg-white rounded-xl border border-slate-200 flex flex-col justify-between">
-                      <span className="text-[10px] font-black uppercase text-slate-400 block">Cálculo de Ahorro</span>
+                      <span className="text-xs font-bold uppercase text-slate-400 block">Cálculo de Ahorro</span>
                       <div className="flex items-baseline justify-between">
                         <span className="text-xs font-bold text-slate-600">Ahorro Cliente:</span>
-                        <span className="text-sm font-black text-emerald-600">${previewCalculation.savings.toFixed(2)} ({previewCalculation.percentageOff}% OFF)</span>
+                        <span className="text-sm font-bold text-emerald-600">${previewCalculation.savings.toFixed(2)} ({previewCalculation.percentageOff}% OFF)</span>
                       </div>
                     </div>
                   </div>
@@ -914,7 +914,7 @@ export default function PromotionBuilder({
               {tipoPromo === 'PORCENTAJE' && (
                 <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-2xl space-y-4">
                   <div>
-                    <label className="text-[10px] font-black uppercase text-slate-600 block mb-1">Porcentaje de Descuento (%)</label>
+                    <label className="text-xs font-bold uppercase text-slate-600 block mb-1">Porcentaje de Descuento (%)</label>
                     <div className="relative">
                       <input
                         type="number"
@@ -922,9 +922,9 @@ export default function PromotionBuilder({
                         max="100"
                         value={precioPromo}
                         onChange={e => setPrecioPromo(parseFloat(e.target.value) || 0)}
-                        className="w-full pr-8 pl-3 py-2.5 bg-white border border-slate-200 rounded-xl font-black text-lg text-slate-900 outline-none focus:border-amber-500"
+                        className="w-full pr-8 pl-3 py-2.5 bg-white border border-slate-200 rounded-xl font-bold text-lg text-slate-900 outline-none focus:border-amber-500"
                       />
-                      <span className="absolute right-3 top-3 font-black text-slate-400 text-base">%</span>
+                      <span className="absolute right-3 top-3 font-bold text-slate-400 text-base">%</span>
                     </div>
                   </div>
 
@@ -937,7 +937,7 @@ export default function PromotionBuilder({
                       <span>Descuento Calculado ({precioPromo}%):</span>
                       <span>-${previewCalculation.savings.toFixed(2)}</span>
                     </div>
-                    <div className="border-t border-slate-100 pt-1 flex justify-between font-black text-slate-900">
+                    <div className="border-t border-slate-100 pt-1 flex justify-between font-bold text-slate-900">
                       <span>Cliente Paga:</span>
                       <span className="text-amber-600">${previewCalculation.totalPromo.toFixed(2)}</span>
                     </div>
@@ -949,15 +949,15 @@ export default function PromotionBuilder({
               {tipoPromo === 'DESCUENTO_FIJO' && (
                 <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-2xl space-y-4">
                   <div>
-                    <label className="text-[10px] font-black uppercase text-slate-600 block mb-1">Monto de Descuento Directo ($)</label>
+                    <label className="text-xs font-bold uppercase text-slate-600 block mb-1">Monto de Descuento Directo ($)</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2.5 font-black text-slate-400 text-base">$</span>
+                      <span className="absolute left-3 top-2.5 font-bold text-slate-400 text-base">$</span>
                       <input
                         type="number"
                         step="0.5"
                         value={precioPromo}
                         onChange={e => setPrecioPromo(parseFloat(e.target.value) || 0)}
-                        className="w-full pl-7 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl font-black text-lg text-slate-900 outline-none focus:border-amber-500"
+                        className="w-full pl-7 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl font-bold text-lg text-slate-900 outline-none focus:border-amber-500"
                       />
                     </div>
                   </div>
@@ -971,7 +971,7 @@ export default function PromotionBuilder({
                       <span>Descuento Directo:</span>
                       <span>-${precioPromo.toFixed(2)}</span>
                     </div>
-                    <div className="border-t border-slate-100 pt-1 flex justify-between font-black text-slate-900">
+                    <div className="border-t border-slate-100 pt-1 flex justify-between font-bold text-slate-900">
                       <span>Cliente Paga:</span>
                       <span className="text-amber-600">${previewCalculation.totalPromo.toFixed(2)}</span>
                     </div>
@@ -982,19 +982,19 @@ export default function PromotionBuilder({
               {/* CARD 2X1 Y 3X2 */}
               {(tipoPromo === 'DOS_POR_UNO' || tipoPromo === '2X1' || tipoPromo === 'TRES_POR_DOS' || tipoPromo === '3X2') && (
                 <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl space-y-3">
-                  <span className="text-xs font-black text-purple-900 block">
+                  <span className="text-xs font-bold text-purple-900 block">
                     {tipoPromo.includes('3') ? '🎁 Oferta 3x2 (Lleva 3, Paga 2)' : '🎁 Oferta 2x1 (Lleva 2, Paga 1)'}
                   </span>
                   {selectedProduct ? (
                     <div className="p-3 bg-white rounded-xl border border-purple-200 flex justify-between items-center text-xs">
-                      <span className="font-black text-slate-900">{selectedProduct.nombre} (${selectedProduct.precio.toFixed(2)} c/u)</span>
+                      <span className="font-bold text-slate-900">{selectedProduct.nombre} (${selectedProduct.precio.toFixed(2)} c/u)</span>
                       <span className="font-bold text-purple-700">Pagas ${previewCalculation.totalPromo.toFixed(2)} (Ahorras ${previewCalculation.savings.toFixed(2)})</span>
                     </div>
                   ) : (
                     <button
                       type="button"
                       onClick={() => setShowProductModal(true)}
-                      className="w-full p-3 bg-white border border-dashed border-purple-300 rounded-xl text-xs font-black text-purple-800 text-center hover:bg-purple-50 cursor-pointer"
+                      className="w-full p-3 bg-white border border-dashed border-purple-300 rounded-xl text-xs font-bold text-purple-800 text-center hover:bg-purple-50 cursor-pointer"
                     >
                       + Seleccionar {itemSingular} que participa
                     </button>
@@ -1006,11 +1006,11 @@ export default function PromotionBuilder({
               {tipoPromo === 'COMBO' && (
                 <div className="p-4 bg-purple-50/70 border border-purple-200 rounded-2xl space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-black text-purple-950">{itemPlural} Incluidos en el Combo ({selectedComboProducts.length})</span>
+                    <span className="text-xs font-bold text-purple-950">{itemPlural} Incluidos en el Combo ({selectedComboProducts.length})</span>
                     <button
                       type="button"
                       onClick={() => setShowProductModal(true)}
-                      className="text-xs font-black text-purple-700 hover:underline cursor-pointer"
+                      className="text-xs font-bold text-purple-700 hover:underline cursor-pointer"
                     >
                       + Seleccionar {itemPlural}
                     </button>
@@ -1029,7 +1029,7 @@ export default function PromotionBuilder({
                           }`}
                         >
                           <span className="truncate">{p.nombre}</span>
-                          <span className="font-mono text-[11px] ml-2 shrink-0">${(Number(p.precio) || 0).toFixed(2)}</span>
+                          <span className="font-mono text-xs ml-2 shrink-0">${(Number(p.precio) || 0).toFixed(2)}</span>
                         </button>
                       );
                     })}
@@ -1037,18 +1037,18 @@ export default function PromotionBuilder({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2">
                     <div>
-                      <label className="text-[10px] font-black uppercase text-purple-900 block mb-1">Precio Combo Sugerido ($)</label>
+                      <label className="text-xs font-bold uppercase text-purple-900 block mb-1">Precio Combo Sugerido ($)</label>
                       <input
                         type="number"
                         step="0.5"
                         value={precioPromo}
                         onChange={e => setPrecioPromo(parseFloat(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl font-black text-slate-900"
+                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl font-bold text-slate-900"
                       />
                     </div>
                     <div className="p-2.5 bg-white rounded-xl border border-purple-200 flex flex-col justify-between">
-                      <span className="text-[10px] font-bold text-slate-400">Valor Normal Sumado:</span>
-                      <span className="font-black text-purple-900 text-sm">${basePrice.toFixed(2)} (Ahorro: ${previewCalculation.savings.toFixed(2)})</span>
+                      <span className="text-xs font-bold text-slate-400">Valor Normal Sumado:</span>
+                      <span className="font-bold text-purple-900 text-sm">${basePrice.toFixed(2)} (Ahorro: ${previewCalculation.savings.toFixed(2)})</span>
                     </div>
                   </div>
                 </div>
@@ -1057,7 +1057,7 @@ export default function PromotionBuilder({
               {/* CARD ENVÍO GRATIS */}
               {tipoPromo === 'ENVIO_GRATIS' && (
                 <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-2xl space-y-4">
-                  <span className="text-xs font-black text-blue-900 block">¿Cómo quieres cubrir el envío?</span>
+                  <span className="text-xs font-bold text-blue-900 block">¿Cómo quieres cubrir el envío?</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <button
                       type="button"
@@ -1065,12 +1065,12 @@ export default function PromotionBuilder({
                         setEsCostoCompleto(true);
                         setCostoMaximoSubsidiado(undefined);
                       }}
-                      className={`p-3 rounded-xl border text-xs font-black text-left transition-all ${
-                        esCostoCompleto ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200'
-                      }`}
+                      className={`p-3 rounded-xl border text-xs font-bold text-left transition-all ${
+ esCostoCompleto ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200'
+ }`}
                     >
                       <span>🚚 Envío 100% Gratis</span>
-                      <span className="text-[10px] font-normal block mt-0.5 opacity-90">
+                      <span className="text-xs font-normal block mt-0.5 opacity-90">
                         {isStore ? 'La tienda cubre el costo total.' : isRestaurant ? 'El restaurante cubre el costo total.' : 'El negocio cubre el costo total.'}
                       </span>
                     </button>
@@ -1081,25 +1081,25 @@ export default function PromotionBuilder({
                         setEsCostoCompleto(false);
                         if (!costoMaximoSubsidiado) setCostoMaximoSubsidiado(3.00);
                       }}
-                      className={`p-3 rounded-xl border text-xs font-black text-left transition-all ${
-                        !esCostoCompleto ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200'
-                      }`}
+                      className={`p-3 rounded-xl border text-xs font-bold text-left transition-all ${
+ !esCostoCompleto ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200'
+ }`}
                     >
                       <span>💰 Subsidio de Envío</span>
-                      <span className="text-[10px] font-normal block mt-0.5 opacity-90">Cubrir hasta un monto máximo.</span>
+                      <span className="text-xs font-normal block mt-0.5 opacity-90">Cubrir hasta un monto máximo.</span>
                     </button>
                   </div>
 
                   {!esCostoCompleto && (
                     <div>
-                      <label className="text-[10px] font-black uppercase text-blue-900 block mb-1">Monto Máximo Subsidiado ($)</label>
+                      <label className="text-xs font-bold uppercase text-blue-900 block mb-1">Monto Máximo Subsidiado ($)</label>
                       <input
                         type="number"
                         step="0.5"
                         value={costoMaximoSubsidiado || ''}
                         onChange={e => setCostoMaximoSubsidiado(parseFloat(e.target.value) || 0)}
                         placeholder="Ej: 3.00"
-                        className="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl font-black text-slate-900"
+                        className="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl font-bold text-slate-900"
                       />
                     </div>
                   )}
@@ -1111,19 +1111,19 @@ export default function PromotionBuilder({
                 <div className="p-4 bg-purple-50/70 border border-purple-200 rounded-2xl space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
-                      <label className="text-[10px] font-black uppercase text-purple-900 block mb-1">Código del Cupón *</label>
+                      <label className="text-xs font-bold uppercase text-purple-900 block mb-1">Código del Cupón *</label>
                       <input
                         type="text"
                         required
                         value={cuponCodigo}
                         onChange={e => setCuponCodigo(e.target.value.toUpperCase())}
                         placeholder="Ej. VERANO10"
-                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl font-mono font-black text-purple-800 uppercase outline-none focus:border-purple-500"
+                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl font-mono font-bold text-purple-800 uppercase outline-none focus:border-purple-500"
                       />
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-black uppercase text-purple-900 block mb-1">Modalidad del Beneficio</label>
+                      <label className="text-xs font-bold uppercase text-purple-900 block mb-1">Modalidad del Beneficio</label>
                       <select
                         value={cuponTipoModalidad}
                         onChange={e => setCuponTipoModalidad(e.target.value as any)}
@@ -1137,13 +1137,13 @@ export default function PromotionBuilder({
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black uppercase text-purple-900 block mb-1">Valor del Beneficio</label>
+                    <label className="text-xs font-bold uppercase text-purple-900 block mb-1">Valor del Beneficio</label>
                     <input
                       type="number"
                       step="0.5"
                       value={precioPromo}
                       onChange={e => setPrecioPromo(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl font-black text-slate-900"
+                      className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl font-bold text-slate-900"
                     />
                   </div>
                 </div>
@@ -1151,7 +1151,7 @@ export default function PromotionBuilder({
 
               {/* MUESTRA ERROR DE VALIDACIÓN EN VIVO SI EXISTE */}
               {validationError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs font-black text-red-700 flex items-center gap-2">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs font-bold text-red-700 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
                   <span>{validationError}</span>
                 </div>
@@ -1169,7 +1169,7 @@ export default function PromotionBuilder({
                 <button
                   type="button"
                   onClick={() => setCurrentStep(4)}
-                  className="py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer flex items-center gap-2"
+                  className="py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer flex items-center gap-2"
                 >
                   <span>Siguiente: Reglas & Fechas</span>
                   <ArrowRight size={16} />
@@ -1182,14 +1182,14 @@ export default function PromotionBuilder({
           {currentStep === 4 && (
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 animate-in fade-in duration-200">
               <div>
-                <span className="text-[10px] font-black uppercase text-amber-600 tracking-wider block">Paso 4</span>
-                <h3 className="text-lg font-black text-slate-900 uppercase">¿Cuándo y para quién?</h3>
+                <span className="text-xs font-bold uppercase text-amber-600 tracking-wider block">Paso 4</span>
+                <h3 className="text-lg font-bold text-slate-900 ">¿Cuándo y para quién?</h3>
                 <p className="text-xs text-slate-500 font-medium">Define los segmentos de cliente, mínimos de compra y horarios de validez.</p>
               </div>
 
               {/* BOTONES DE SUGERENCIA RÁPIDA DE ESTRATEGIA (GOAL PRESETS) */}
               <div className="space-y-2">
-                <span className="text-[10px] font-black uppercase text-slate-400 block tracking-wider">💡 Sugerencias de Estrategia Comercial (1-Clic)</span>
+                <span className="text-xs font-bold uppercase text-slate-400 block tracking-wider">💡 Sugerencias de Estrategia Comercial (1-Clic)</span>
                 <div className="flex flex-wrap gap-2">
                   {[
                     { id: 'TODAY', label: '🔥 Vender más hoy' },
@@ -1201,9 +1201,9 @@ export default function PromotionBuilder({
                       key={p.id}
                       type="button"
                       onClick={() => handleApplyPreset(p.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                        goalPreset === p.id ? 'bg-amber-500 text-slate-950 shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                      }`}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+ goalPreset === p.id ? 'bg-amber-500 text-slate-950 shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+ }`}
                     >
                       {p.label}
                     </button>
@@ -1213,7 +1213,7 @@ export default function PromotionBuilder({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-100">
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Segmento de Clientes</label>
+                  <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Segmento de Clientes</label>
                   <select
                     value={tipoCliente}
                     onChange={e => setTipoCliente(e.target.value as any)}
@@ -1226,7 +1226,7 @@ export default function PromotionBuilder({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Compra Mínima en Productos ($)</label>
+                  <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Compra Mínima en Productos ($)</label>
                   <input
                     type="number"
                     step="0.5"
@@ -1240,11 +1240,11 @@ export default function PromotionBuilder({
 
               {/* Fechas & Días */}
               <div className="space-y-3 pt-3 border-t border-slate-100">
-                <span className="text-xs font-black uppercase text-slate-800 block">🗓️ Vigencia & Días de la Semana</span>
+                <span className="text-xs font-bold uppercase text-slate-800 block">🗓️ Vigencia & Días de la Semana</span>
                 
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Fecha Inicio</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1">Fecha Inicio</label>
                     <input
                       type="date"
                       value={fechaInicio}
@@ -1253,7 +1253,7 @@ export default function PromotionBuilder({
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Fecha Fin</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1">Fecha Fin</label>
                     <input
                       type="date"
                       value={fechaFin}
@@ -1264,7 +1264,7 @@ export default function PromotionBuilder({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 block mb-1.5">Días de la semana válidos</label>
+                  <label className="text-xs font-bold text-slate-500 block mb-1.5">Días de la semana válidos</label>
                   <div className="flex flex-wrap gap-1.5">
                     {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map(day => {
                       const isChecked = diasValidos.includes(day);
@@ -1274,8 +1274,8 @@ export default function PromotionBuilder({
                           type="button"
                           onClick={() => toggleDay(day)}
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            isChecked ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'bg-slate-100 text-slate-600'
-                          }`}
+ isChecked ? 'bg-amber-500 text-slate-950 font-bold shadow-xs' : 'bg-slate-100 text-slate-600'
+ }`}
                         >
                           {day.substring(0, 3)}
                         </button>
@@ -1286,7 +1286,7 @@ export default function PromotionBuilder({
 
                 <div className="grid grid-cols-2 gap-3 text-xs pt-1">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Hora Inicio (Opcional)</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1">Hora Inicio (Opcional)</label>
                     <input
                       type="time"
                       value={horaInicioValida}
@@ -1295,7 +1295,7 @@ export default function PromotionBuilder({
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Hora Fin (Opcional)</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1">Hora Fin (Opcional)</label>
                     <input
                       type="time"
                       value={horaFinValida}
@@ -1318,7 +1318,7 @@ export default function PromotionBuilder({
                 <button
                   type="button"
                   onClick={() => setCurrentStep(5)}
-                  className="py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer flex items-center gap-2"
+                  className="py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer flex items-center gap-2"
                 >
                   <span>Siguiente: Vista Previa & Publicar</span>
                   <ArrowRight size={16} />
@@ -1331,14 +1331,14 @@ export default function PromotionBuilder({
           {currentStep === 5 && (
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 animate-in fade-in duration-200">
               <div>
-                <span className="text-[10px] font-black uppercase text-amber-600 tracking-wider block">Paso 5</span>
-                <h3 className="text-lg font-black text-slate-900 uppercase">Así quedará tu oferta</h3>
+                <span className="text-xs font-bold uppercase text-amber-600 tracking-wider block">Paso 5</span>
+                <h3 className="text-lg font-bold text-slate-900 ">Así quedará tu oferta</h3>
                 <p className="text-xs text-slate-500 font-medium">Revisa la presentación pública y completa la publicación.</p>
               </div>
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-600 block mb-1">Título Público de la Oferta *</label>
+                  <label className="text-xs font-bold uppercase text-slate-600 block mb-1">Título Público de la Oferta *</label>
                   <input
                     type="text"
                     required
@@ -1352,7 +1352,7 @@ export default function PromotionBuilder({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-600 block mb-1">Descripción / Leyenda Comercial</label>
+                  <label className="text-xs font-bold uppercase text-slate-600 block mb-1">Descripción / Leyenda Comercial</label>
                   <textarea
                     rows={2}
                     value={descripcion}
@@ -1367,7 +1367,7 @@ export default function PromotionBuilder({
                 <button
                   type="button"
                   onClick={() => setShowAdvancedOptions(prev => !prev)}
-                  className="w-full p-3.5 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-xs font-black text-slate-800 cursor-pointer transition-colors"
+                  className="w-full p-3.5 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-xs font-bold text-slate-800 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <Settings className="w-4 h-4 text-slate-500" />
@@ -1379,7 +1379,7 @@ export default function PromotionBuilder({
                 {showAdvancedOptions && (
                   <div className="p-4 bg-white space-y-4 text-xs border-t border-slate-200 animate-in fade-in duration-150">
                     <div>
-                      <label className="text-[10px] font-black uppercase text-slate-500 block mb-2">Canales de Venta Permitidos</label>
+                      <label className="text-xs font-bold uppercase text-slate-500 block mb-2">Canales de Venta Permitidos</label>
                       <div className="flex flex-wrap gap-2">
                         {[
                           { id: 'POS', label: '🏬 POS / Caja' },
@@ -1395,8 +1395,8 @@ export default function PromotionBuilder({
                               type="button"
                               onClick={() => toggleChannel(ch.id)}
                               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                                isChecked ? 'bg-slate-900 text-white font-black' : 'bg-slate-100 text-slate-600'
-                              }`}
+ isChecked ? 'bg-slate-900 text-white font-bold' : 'bg-slate-100 text-slate-600'
+ }`}
                             >
                               {ch.label}
                             </button>
@@ -1407,7 +1407,7 @@ export default function PromotionBuilder({
 
                     <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-500 block mb-1">Límite Usos Totales</label>
+                        <label className="text-xs font-bold text-slate-500 block mb-1">Límite Usos Totales</label>
                         <input
                           type="number"
                           value={usosTotalesMaximo || ''}
@@ -1417,7 +1417,7 @@ export default function PromotionBuilder({
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-500 block mb-1">Límite por Cliente</label>
+                        <label className="text-xs font-bold text-slate-500 block mb-1">Límite por Cliente</label>
                         <input
                           type="number"
                           value={usosPorClienteMaximo || ''}
@@ -1455,7 +1455,7 @@ export default function PromotionBuilder({
                 <button
                   type="submit"
                   disabled={!!validationError}
-                  className="py-3.5 px-8 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
+                  className="py-3.5 px-8 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
                 >
                   <Check size={18} /> Publicar Promoción
                 </button>
@@ -1476,11 +1476,11 @@ export default function PromotionBuilder({
                   <Flame className="w-5 h-5" />
                 </span>
                 <div>
-                  <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider">Vista Previa de la Promoción</h3>
-                  <p className="text-[10px] text-slate-500 font-medium">Así verán tus clientes esta oferta</p>
+                  <h3 className="text-xs font-bold uppercase text-slate-900 tracking-wider">Vista Previa de la Promoción</h3>
+                  <p className="text-xs text-slate-500 font-medium">Así verán tus clientes esta oferta</p>
                 </div>
               </div>
-              <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-black rounded-full border border-indigo-200 flex items-center gap-1">
+              <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full border border-indigo-200 flex items-center gap-1">
                 <Eye className="w-3 h-3" /> Vista en vivo
               </span>
             </div>
@@ -1489,7 +1489,7 @@ export default function PromotionBuilder({
             <div className="relative rounded-3xl bg-gradient-to-b from-[#2d1154] via-[#1c0a38] to-[#0d031c] text-white p-5 text-center shadow-xl overflow-hidden space-y-3.5 border border-purple-900/40">
               {/* Badges superiores */}
               <div className="flex items-center justify-between gap-2">
-                <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-black text-[10px] uppercase rounded-full shadow-md flex items-center gap-1.5 tracking-wider">
+                <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-bold text-xs uppercase rounded-full shadow-md flex items-center gap-1.5 tracking-wider">
                   <Flame className="w-3 h-3 text-slate-950 fill-slate-950" />
                   <span>
                     {previewCalculation.percentageOff > 0 
@@ -1503,7 +1503,7 @@ export default function PromotionBuilder({
                       : (tipoPromo || 'OFERTA').replace(/_/g, ' ')}
                   </span>
                 </span>
-                <span className="px-3 py-1 bg-white/15 backdrop-blur-md font-black text-[10px] uppercase rounded-full border border-white/20 shadow-xs flex items-center gap-1" style={{ color: '#ffffff' }}>
+                <span className="px-3 py-1 bg-white/15 backdrop-blur-md font-bold text-xs uppercase rounded-full border border-white/20 shadow-xs flex items-center gap-1" style={{ color: '#ffffff' }}>
                   <Clock className="w-3 h-3 text-amber-300" />
                   <span>Tiempo Limitado</span>
                 </span>
@@ -1527,7 +1527,7 @@ export default function PromotionBuilder({
               {/* Título & Divisor con texto en blanco asegurado */}
               <div className="space-y-1">
                 <div 
-                  className="text-base sm:text-lg font-black tracking-wide uppercase italic leading-tight drop-shadow-md"
+                  className="text-base sm:text-lg font-bold tracking-wide leading-tight drop-shadow-md"
                   style={{ color: '#ffffff' }}
                 >
                   {isCombo 
@@ -1559,7 +1559,7 @@ export default function PromotionBuilder({
 
               {/* Botón CTA Promocional */}
               <div className="pt-2">
-                <div className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg flex items-center justify-between gap-2 border border-amber-300/40">
+                <div className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg flex items-center justify-between gap-2 border border-amber-300/40">
                   <span className="flex items-center gap-2 truncate">
                     <ShoppingBag className="w-4 h-4 shrink-0 text-slate-950" />
                     <span className="truncate">
@@ -1570,7 +1570,7 @@ export default function PromotionBuilder({
                         : `APROVECHAR OFERTA`}
                     </span>
                   </span>
-                  <span className="text-xs font-black bg-slate-950/15 px-2 py-0.5 rounded-lg shrink-0">
+                  <span className="text-xs font-bold bg-slate-950/15 px-2 py-0.5 rounded-lg shrink-0">
                     ${previewCalculation.totalPromo.toFixed(2)}
                   </span>
                 </div>
@@ -1580,7 +1580,7 @@ export default function PromotionBuilder({
                     {selectedComboProducts.map(p => (
                       <span 
                         key={p.id} 
-                        className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-white/10 border border-white/15 truncate max-w-[130px]"
+                        className="text-xs font-bold px-2 py-0.5 rounded-lg bg-white/10 border border-white/15 truncate max-w-[130px]"
                         style={{ color: '#e2e8f0' }}
                       >
                         • {p.nombre}
@@ -1594,14 +1594,14 @@ export default function PromotionBuilder({
             {/* CARD 2: BENEFICIO PRINCIPAL CON ICONO CIRCULAR Y % */}
             <div className="p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-black text-lg shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg shrink-0">
                   <Tag className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-black text-emerald-700 uppercase">
+                  <div className="text-xs font-bold text-emerald-700 uppercase">
                     {previewCalculation.percentageOff > 0 ? `${previewCalculation.percentageOff}% DE DESCUENTO` : 'OFERTA ESPECIAL'}
                   </div>
-                  <p className="text-[11px] text-slate-600 font-bold leading-tight">
+                  <p className="text-xs text-slate-600 font-bold leading-tight">
                     {isCombo 
                       ? `en combo de ${selectedComboProducts.length} ${itemPlural.toLowerCase()} (${selectedComboProducts.map(p => p.nombre).join(', ')})`
                       : selectedProduct 
@@ -1610,19 +1610,19 @@ export default function PromotionBuilder({
                       ? `en categoría ${selectedCategory.nombre}` 
                       : `en todo el ${catalogTerm.toLowerCase()}`}
                   </p>
-                  <p className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">
+                  <p className="text-xs text-slate-400 font-medium leading-tight mt-0.5">
                     {descripcion || 'Aprovecha esta promoción especial.'}
                   </p>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-xl shrink-0 opacity-70">
+              <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xl shrink-0 opacity-70">
                 %
               </div>
             </div>
 
             {/* CARD 3: DESGLOSE DE PRECIO Y CASILLA DE AHORRO */}
             <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-              <div className="flex items-center gap-1.5 text-indigo-950 font-black text-[11px] uppercase tracking-wider">
+              <div className="flex items-center gap-1.5 text-indigo-950 font-bold text-xs uppercase tracking-wider">
                 <Tag className="w-3.5 h-3.5 text-indigo-600" />
                 <span>
                   {previewCalculation.normType.includes('3') 
@@ -1640,20 +1640,20 @@ export default function PromotionBuilder({
                       ${previewCalculation.totalNormal.toFixed(2)}
                     </span>
                   )}
-                  <span className="text-2xl font-black text-indigo-600">
+                  <span className="text-2xl font-bold text-indigo-600">
                     ${previewCalculation.totalPromo.toFixed(2)}
                   </span>
                 </div>
 
                 {previewCalculation.savings > 0 && (
                   <div className="px-3.5 py-1.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
-                    <span className="text-[9px] font-black uppercase text-emerald-800 block">AHORRAS</span>
-                    <span className="text-base font-black text-emerald-600">${previewCalculation.savings.toFixed(2)}</span>
+                    <span className="text-xs font-bold uppercase text-emerald-800 block">Ahorras</span>
+                    <span className="text-base font-bold text-emerald-600">${previewCalculation.savings.toFixed(2)}</span>
                   </div>
                 )}
               </div>
 
-              <p className="text-[10px] text-slate-400 font-medium italic pt-1.5 border-t border-slate-100">
+              <p className="text-xs text-slate-400 font-medium pt-1.5 border-t border-slate-100">
                 Este descuento se aplicará automáticamente al finalizar tu pedido.
               </p>
             </div>
@@ -1663,8 +1663,8 @@ export default function PromotionBuilder({
               <div className="flex items-start gap-2">
                 <Users className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="text-[9px] font-black uppercase text-slate-400 block">APLICA PARA</span>
-                  <span className="font-extrabold text-slate-800 text-[11px]">
+                  <span className="text-xs font-bold uppercase text-slate-400 block">Aplica para</span>
+                  <span className="font-extrabold text-slate-800 text-xs">
                     {tipoCliente === 'NEW' ? 'Clientes Nuevos' : tipoCliente === 'RECURRING' ? 'Clientes Recurrentes' : 'Todos los clientes'}
                   </span>
                 </div>
@@ -1673,8 +1673,8 @@ export default function PromotionBuilder({
               <div className="flex items-start gap-2 border-l border-slate-100 pl-2">
                 <Calendar className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="text-[9px] font-black uppercase text-slate-400 block">VIGENCIA</span>
-                  <span className="font-bold text-slate-700 text-[10px] block leading-tight">
+                  <span className="text-xs font-bold uppercase text-slate-400 block">Vigencia</span>
+                  <span className="font-bold text-slate-700 text-xs block leading-tight">
                     Del {fechaInicio} al {fechaFin}
                   </span>
                 </div>
@@ -1684,8 +1684,8 @@ export default function PromotionBuilder({
             {/* CARD 5: MENSAJE IMPORTANTE */}
             <div className="p-3 bg-purple-50/80 border border-purple-200 rounded-2xl flex items-center gap-2 text-xs text-purple-900">
               <Info className="w-4 h-4 text-purple-600 shrink-0" />
-              <span className="text-[10px] font-medium leading-tight">
-                <strong className="font-black uppercase text-purple-950">IMPORTANTE:</strong> Esta promoción será visible para tus clientes una vez que sea publicada.
+              <span className="text-xs font-medium leading-tight">
+                <strong className="font-bold uppercase text-purple-950">Importante:</strong> Esta promoción será visible para tus clientes una vez que sea publicada.
               </span>
             </div>
 
@@ -1693,10 +1693,10 @@ export default function PromotionBuilder({
             <button
               type="submit"
               disabled={!!validationError}
-              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Zap className="w-4 h-4 fill-white" />
-              <span>PUBLICAR PROMOCIÓN</span>
+              <span>Publicar promoción</span>
             </button>
 
           </div>
@@ -1760,7 +1760,7 @@ function ProductSelectorModal({
         <div className="p-4 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-amber-500" />
-            <h3 className="font-black text-sm uppercase text-slate-900">Seleccionar Producto del Catálogo</h3>
+            <h3 className="font-bold text-sm uppercase text-slate-900">Seleccionar Producto del Catálogo</h3>
           </div>
           <button type="button" onClick={onClose} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 cursor-pointer">
             <X className="w-5 h-5" />
@@ -1798,17 +1798,17 @@ function ProductSelectorModal({
                     {p.imagenUrl ? (
                       <img src={p.imagenUrl} alt="" className="w-12 h-12 rounded-xl object-cover shrink-0" />
                     ) : (
-                      <div className="w-12 h-12 rounded-xl bg-slate-200 flex items-center justify-center shrink-0 text-slate-400 font-black text-xs">🍔</div>
+                      <div className="w-12 h-12 rounded-xl bg-slate-200 flex items-center justify-center shrink-0 text-slate-400 font-bold text-xs">🍔</div>
                     )}
                     <div>
-                      <span className="text-xs font-black text-slate-900 block">{p.nombre}</span>
-                      <span className="text-[10px] text-slate-500 font-bold">${(Number(p.precio) || 0).toFixed(2)}</span>
+                      <span className="text-xs font-bold text-slate-900 block">{p.nombre}</span>
+                      <span className="text-xs text-slate-500 font-bold">${(Number(p.precio) || 0).toFixed(2)}</span>
                     </div>
                   </div>
 
-                  <span className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 ${
-                    isSelected ? 'bg-amber-500 text-slate-950' : 'bg-white border border-slate-200 text-slate-700'
-                  }`}>
+                  <span className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 ${
+ isSelected ? 'bg-amber-500 text-slate-950' : 'bg-white border border-slate-200 text-slate-700'
+ }`}>
                     {isSelected ? 'Seleccionado' : 'Elegir'}
                   </span>
                 </div>
@@ -1839,7 +1839,7 @@ function CategorySelectorModal({
         <div className="p-4 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-orange-500" />
-            <h3 className="font-black text-sm uppercase text-slate-900">Seleccionar Categoría del Menú</h3>
+            <h3 className="font-bold text-sm uppercase text-slate-900">Seleccionar Categoría del Menú</h3>
           </div>
           <button type="button" onClick={onClose} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 cursor-pointer">
             <X className="w-5 h-5" />
@@ -1857,10 +1857,10 @@ function CategorySelectorModal({
                   isSelected ? 'bg-orange-50 border-orange-500 ring-2 ring-orange-500/20' : 'bg-slate-50/70 border-slate-200 hover:border-slate-300'
                 }`}
               >
-                <span className="text-xs font-black text-slate-900">{c.nombre}</span>
-                <span className={`px-3 py-1 rounded-xl text-xs font-black ${
-                  isSelected ? 'bg-orange-500 text-white' : 'bg-white border border-slate-200 text-slate-700'
-                }`}>
+                <span className="text-xs font-bold text-slate-900">{c.nombre}</span>
+                <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
+ isSelected ? 'bg-orange-500 text-white' : 'bg-white border border-slate-200 text-slate-700'
+ }`}>
                   {isSelected ? 'Seleccionada' : 'Elegir'}
                 </span>
               </div>

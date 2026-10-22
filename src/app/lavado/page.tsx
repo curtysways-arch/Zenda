@@ -14,10 +14,15 @@ export default async function LavadoPage() {
   });
 
   let services: any[] = [];
+  let paginas: any[] = [];
   if (negocio?.id) {
     try {
       services = await prisma.service.findMany({
         where: { negocioId: negocio.id }
+      });
+      paginas = await prisma.page.findMany({
+        where: { businessId: negocio.id },
+        orderBy: { updatedAt: 'desc' }
       });
     } catch (e) {
       console.error(e);
@@ -34,5 +39,5 @@ export default async function LavadoPage() {
         services: []
       };
 
-  return <ShoeCareLanding negocio={negocioData} />;
+  return <ShoeCareLanding negocio={negocioData} paginasPersonalizadas={paginas} />;
 }

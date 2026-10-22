@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
 import prisma from "@/lib/prisma";
 import { startOfToday } from 'date-fns';
 
 export async function GET(request: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session?.user) {
             return NextResponse.json({ error: "No autorizado" }, { status: 401 });
         }

@@ -1,37 +1,50 @@
 /**
  * @file PricingEngine.ts
  * @module core/pricing
- * @description Adaptador del motor de precios para Citiox Enterprise vNext.
- * @responsibility Envolver la lógica actual de cálculo de subtotales, reglas de empaque por producto (NOT_REQUIRED, OPTIONAL, REQUIRED, SPECIAL), costo delivery GPS por distancia (Haversine/Zonas), descuentos y total final bajo la interfaz del ServiceRegistry.
- * @dependencies RuntimeLogger
- * @status Stable (Core Runtime - v1.0)
+ * @description Adaptador del motor de precios para Citiox Enterprise vNext con precisión Decimal.
+ * @responsibility Envolver la lógica actual de cálculo de subtotales, reglas de empaque por producto (NOT_REQUIRED, OPTIONAL, REQUIRED, SPECIAL), costo delivery GPS por distancia (Haversine/Zonas), descuentos y total final bajo precisión Decimal y redondeo bancario exacto.
+ * @dependencies RuntimeLogger, decimal.ts
+ * @status Stable (Core Runtime - v1.1 Decimal Compatible)
  */
 
 import { RuntimeLogger } from '../observability/RuntimeLogger';
+import {
+  toDecimal,
+  decimalAdd,
+  decimalSub,
+  decimalMul,
+  decimalDiv,
+  roundMoney,
+  roundQty,
+  DecimalInput
+} from '@/lib/math/decimal';
+import { Prisma } from '@prisma/client';
 
 export type PackagingRequirement = 'NOT_REQUIRED' | 'OPTIONAL' | 'REQUIRED' | 'SPECIAL';
 
 export interface PricingItem {
   productId: string;
   name: string;
-  unitPrice: number;
-  quantity: number;
-  takeawayQty?: number;
+  unitPrice: DecimalInput;
+  quantity: DecimalInput;
+  takeawayQty?: DecimalInput;
   packagingRequirement?: PackagingRequirement;
 }
 
 export interface CalculatePricingInput {
   items: PricingItem[];
   deliveryType: 'PICKUP_ORDER' | 'DELIVERY_ORDER' | 'TABLE_ORDER';
-  packagingUnitPrice?: number;
-  distanceKm?: number;
+  packagingUnitPrice?: DecimalInput;
+  distanceKm?: DecimalInput;
+  tipoNegocio?: string;
+  isRoundTrip?: boolean;
   deliveryConfig?: {
     enabled?: boolean;
-    baseCost?: number;
-    costPerKm?: number;
-    zones?: Array<{ minKm: number; maxKm: number; cost: number }>;
+    baseCost?: DecimalInput;
+    costPerKm?: DecimalInput;
+    zones?: Array<{ minKm: number; maxKm: number; cost: DecimalInput }>;
   };
-  discountAmount?: number;
+  discountAmount?: DecimalInput;
 }
 
 export interface PricingResult {
@@ -39,8 +52,14 @@ export interface PricingResult {
   packagingCost: number;
   totalTakeawayUnits: number;
   deliveryCost: number;
+  pickupFee?: number;
+  deliveryFee?: number;
+  totalLogisticsFee?: number;
   discountAmount: number;
   total: number;
+  // Campos Decimal nativos para consumidores contables de alta precisión
+  subtotalDecimal?: Prisma.Decimal;
+  totalDecimal?: Prisma.Decimal;
 }
 
 export class PricingEngine {
@@ -69,35 +88,48 @@ export class PricingEngine {
   }
 
   /**
-   * Calcula el resumen financiero total aplicando empaque por producto y delivery dinámico.
+   * Calcula el resumen financiero total aplicando empaque por producto y delivery dinámico
+   * con precisión Decimal y sin truncamiento de cantidades fraccionarias.
    */
   public calculate(input: CalculatePricingInput): PricingResult {
-    const packagingUnitPrice = input.packagingUnitPrice ?? 0.25;
-    let subtotal = 0;
-    let totalTakeawayUnits = 0;
+    const packagingUnitPrice = toDecimal(input.packagingUnitPrice, '0.25');
+    let subtotalDec = toDecimal(0);
+    let totalTakeawayUnitsDec = toDecimal(0);
 
-    for (const item of input.items) {
-      const price = item.unitPrice ?? (item as any).precioUnitario ?? 0;
-      subtotal += price * item.quantity;
+    for (const item of (input.items || [])) {
+      const price = toDecimal(item.unitPrice ?? (item as any).precioUnitario ?? 0);
+      const qty = roundQty(item.quantity ?? (item as any).cantidad ?? 1);
+      const itemSubtotal = decimalMul(price, qty);
+      subtotalDec = decimalAdd(subtotalDec, itemSubtotal);
 
       const req = item.packagingRequirement || 'OPTIONAL';
       if (req === 'NOT_REQUIRED') {
         // Cero empaque
       } else if (req === 'REQUIRED') {
-        totalTakeawayUnits += item.quantity;
+        totalTakeawayUnitsDec = decimalAdd(totalTakeawayUnitsDec, qty);
       } else if (req === 'OPTIONAL') {
-        totalTakeawayUnits += Math.min(item.quantity, item.takeawayQty || 0);
+        const takeawayQty = roundQty(item.takeawayQty ?? 0);
+        const applicableUnits = qty.lessThan(takeawayQty) ? qty : takeawayQty;
+        totalTakeawayUnitsDec = decimalAdd(totalTakeawayUnitsDec, applicableUnits);
       } else if (req === 'SPECIAL') {
-        totalTakeawayUnits += item.quantity * 1.5; // Coeficiente especial
+        const specialUnits = decimalMul(qty, '1.5');
+        totalTakeawayUnitsDec = decimalAdd(totalTakeawayUnitsDec, specialUnits);
       }
     }
 
-    const packagingCost = totalTakeawayUnits * packagingUnitPrice;
+    const packagingCostDec = roundMoney(decimalMul(totalTakeawayUnitsDec, packagingUnitPrice));
 
     // Cálculo dinámico de Delivery
-    let deliveryCost = 0;
+    let deliveryCostDec = toDecimal(0);
     if (input.deliveryType === 'DELIVERY_ORDER') {
-      const dist = input.distanceKm || 0;
+      const distDec = toDecimal(input.distanceKm ?? 0);
+      const distNum = distDec.toNumber();
+      const isLaundry = Boolean(
+        input.isRoundTrip ||
+        (input.tipoNegocio && ['LAVANDERIA', 'SHOE_CARE', 'ORDENES-SERVICIO'].includes(input.tipoNegocio.toUpperCase()))
+      );
+      const billableDistDec = isLaundry ? decimalMul(distDec, 2) : distDec;
+
       const cfg = input.deliveryConfig || {
         enabled: true,
         baseCost: 1.50,
@@ -110,27 +142,50 @@ export class PricingEngine {
       };
 
       if (cfg.zones && Array.isArray(cfg.zones) && cfg.zones.length > 0) {
-        const matchedZone = cfg.zones.find(z => dist >= z.minKm && dist < z.maxKm);
+        const matchedZone = cfg.zones.find(z => distNum >= z.minKm && distNum < z.maxKm);
         if (matchedZone) {
-          deliveryCost = matchedZone.cost;
+          deliveryCostDec = roundMoney(matchedZone.cost);
         } else {
-          deliveryCost = Math.round(((cfg.baseCost || 1.5) + (dist * (cfg.costPerKm || 0.25))) * 100) / 100;
+          const baseCost = toDecimal(cfg.baseCost ?? 1.5);
+          const costPerKm = toDecimal(cfg.costPerKm ?? 0.25);
+          deliveryCostDec = roundMoney(decimalAdd(baseCost, decimalMul(billableDistDec, costPerKm)));
         }
       } else {
-        deliveryCost = Math.round(((cfg.baseCost || 1.5) + (dist * (cfg.costPerKm || 0.25))) * 100) / 100;
+        const baseCost = toDecimal(cfg.baseCost ?? 1.5);
+        const costPerKm = toDecimal(cfg.costPerKm ?? 0.25);
+        deliveryCostDec = roundMoney(decimalAdd(baseCost, decimalMul(billableDistDec, costPerKm)));
       }
     }
 
-    const discountAmount = input.discountAmount || 0;
-    const total = Math.max(0, subtotal + packagingCost + deliveryCost - discountAmount);
+    const discountAmountDec = roundMoney(input.discountAmount ?? 0);
+    const grossTotalDec = decimalSub(
+      decimalAdd(decimalAdd(subtotalDec, packagingCostDec), deliveryCostDec),
+      discountAmountDec
+    );
+    const totalDec = roundMoney(grossTotalDec.isNegative() ? toDecimal(0) : grossTotalDec);
+
+    const isLaundry = Boolean(
+      input.isRoundTrip ||
+      (input.tipoNegocio && ['LAVANDERIA', 'SHOE_CARE', 'ORDENES-SERVICIO'].includes(input.tipoNegocio.toUpperCase()))
+    );
+
+    const pickupFeeDec = isLaundry ? roundMoney(decimalDiv(deliveryCostDec, 2)) : toDecimal(0);
+    const driverDeliveryFeeDec = isLaundry ? decimalSub(deliveryCostDec, pickupFeeDec) : deliveryCostDec;
+
+    const subtotalFinal = roundMoney(subtotalDec);
 
     const result: PricingResult = {
-      subtotal: Math.round(subtotal * 100) / 100,
-      packagingCost: Math.round(packagingCost * 100) / 100,
-      totalTakeawayUnits,
-      deliveryCost: Math.round(deliveryCost * 100) / 100,
-      discountAmount: Math.round(discountAmount * 100) / 100,
-      total: Math.round(total * 100) / 100
+      subtotal: subtotalFinal.toNumber(),
+      packagingCost: packagingCostDec.toNumber(),
+      totalTakeawayUnits: totalTakeawayUnitsDec.toNumber(),
+      deliveryCost: deliveryCostDec.toNumber(),
+      pickupFee: pickupFeeDec.toNumber(),
+      deliveryFee: driverDeliveryFeeDec.toNumber(),
+      totalLogisticsFee: deliveryCostDec.toNumber(),
+      discountAmount: discountAmountDec.toNumber(),
+      total: totalDec.toNumber(),
+      subtotalDecimal: subtotalFinal,
+      totalDecimal: totalDec
     };
 
     this.logger.info(`[PricingEngine] Cálculo completado: Subtotal=$${result.subtotal}, Empaque=$${result.packagingCost}, Delivery=$${result.deliveryCost}, Total=$${result.total}`);

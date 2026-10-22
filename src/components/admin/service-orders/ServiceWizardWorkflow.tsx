@@ -141,12 +141,12 @@ export function ServiceWizardWorkflow({
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
           <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Orden de Servicio</span>
-            <h2 className="text-xl font-black text-slate-900">Orden #{numeroPedido}</h2>
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-400">Orden de Servicio</span>
+            <h2 className="text-xl font-bold text-slate-900">Orden #{numeroPedido}</h2>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-slate-500">Estado:</span>
-            <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-xs font-black uppercase tracking-wider">
+            <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-xs font-bold uppercase tracking-wider">
               {currentStatus.replace(/_/g, ' ')}
             </span>
           </div>
@@ -161,19 +161,19 @@ export function ServiceWizardWorkflow({
             return (
               <div key={st.key} className="flex flex-col items-center text-center space-y-2">
                 <div
-                  className={`size-10 rounded-2xl flex items-center justify-center text-xs font-black transition-all ${
-                    isCurrent
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-105 ring-4 ring-emerald-100'
-                      : isDone
-                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                      : 'bg-slate-100 text-slate-400 border border-slate-200'
-                  }`}
+                  className={`size-10 rounded-2xl flex items-center justify-center text-xs font-bold transition-all ${
+ isCurrent
+ ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-105 ring-4 ring-emerald-100'
+ : isDone
+ ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+ : 'bg-slate-100 text-slate-400 border border-slate-200'
+ }`}
                 >
                   {isDone ? <CheckCircle2 className="size-5" /> : idx + 1}
                 </div>
-                <span className={`text-[10px] font-black uppercase tracking-tight ${
-                  isCurrent ? 'text-slate-900 font-extrabold' : isDone ? 'text-emerald-800 font-semibold' : 'text-slate-400'
-                }`}>
+                <span className={`text-xs font-bold uppercase tracking-tight ${
+ isCurrent ? 'text-slate-900 font-extrabold' : isDone ? 'text-emerald-800 font-semibold' : 'text-slate-400'
+ }`}>
                   {st.label}
                 </span>
               </div>
@@ -189,12 +189,12 @@ export function ServiceWizardWorkflow({
         {currentStatus === 'RECIBIDO' && (
           <div className="space-y-5 text-left">
             <div className="flex items-center gap-3">
-              <div className="size-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-md">
+              <div className="size-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md">
                 1
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Etapa 1: Recepción</span>
-                <h3 className="text-lg font-black text-slate-900">Verificar Datos e Ingreso de Orden</h3>
+                <span className="text-xs font-bold uppercase tracking-wide text-emerald-700">Etapa 1: Recepción</span>
+                <h3 className="text-lg font-bold text-slate-900">Verificar Datos e Ingreso de Orden</h3>
               </div>
             </div>
 
@@ -208,9 +208,9 @@ export function ServiceWizardWorkflow({
               type="button"
               disabled={saving}
               onClick={() => handleAdvance('EN_PROCESO')}
-              className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+              className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
             >
-              <span>CONFIRMAR RECEPCIÓN & INICIAR WORKFLOW</span>
+              <span>Confirmar recepción & iniciar workflow</span>
               <ArrowRight className="size-5" />
             </button>
           </div>
@@ -220,12 +220,12 @@ export function ServiceWizardWorkflow({
         {currentStatus === 'EN_PROCESO' && (
           <div className="space-y-5 text-left">
             <div className="flex items-center gap-3">
-              <div className="size-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-md">
+              <div className="size-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md">
                 2
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-700">Etapa 2: Trabajo en Taller / Producción</span>
-                <h3 className="text-lg font-black text-slate-900">Servicio en Ejecución</h3>
+                <span className="text-xs font-bold uppercase tracking-wide text-blue-700">Etapa 2: Trabajo en Taller / Producción</span>
+                <h3 className="text-lg font-bold text-slate-900">Servicio en Ejecución</h3>
               </div>
             </div>
 
@@ -237,10 +237,10 @@ export function ServiceWizardWorkflow({
               type="button"
               disabled={saving}
               onClick={() => handleAdvance(hasDelivery ? 'LISTO_PARA_ENTREGA' : 'LISTO')}
-              className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+              className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
             >
               <CheckCircle2 className="size-5" />
-              <span>MARCAR COMO LISTO</span>
+              <span>Marcar como listo</span>
             </button>
           </div>
         )}
@@ -249,12 +249,12 @@ export function ServiceWizardWorkflow({
         {(currentStatus === 'LISTO' || currentStatus === 'LISTO_PARA_ENTREGA') && (
           <div className="space-y-5 text-left">
             <div className="flex items-center gap-3">
-              <div className="size-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black shadow-md">
+              <div className="size-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md">
                 3
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">Etapa 3: Servicio Concluido</span>
-                <h3 className="text-lg font-black text-slate-900">
+                <span className="text-xs font-bold uppercase tracking-wide text-amber-700">Etapa 3: Servicio Concluido</span>
+                <h3 className="text-lg font-bold text-slate-900">
                   {hasDelivery ? 'Preparado para Asignación de Logística' : 'Listo para Retiro en Local'}
                 </h3>
               </div>
@@ -266,7 +266,7 @@ export function ServiceWizardWorkflow({
                 <p className="font-bold flex items-center gap-1.5">
                   <AlertTriangle className="size-4 text-rose-600" /> Cobro Obligatorio antes de Entregar
                 </p>
-                <p className="text-[11px] text-rose-700">
+                <p className="text-xs text-rose-700">
                   Este negocio requiere registrar el pago completo antes de permitir la entrega del pedido.
                 </p>
               </div>
@@ -282,10 +282,10 @@ export function ServiceWizardWorkflow({
                   type="button"
                   disabled={saving || !canBeDeliveredWithoutPayment}
                   onClick={() => handleAdvance('ENTREGADO')}
-                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
                 >
                   <ShieldCheck className="size-5" />
-                  <span>ENTREGAR AL CLIENTE (EN LOCAL)</span>
+                  <span>Entregar al cliente (en local)</span>
                 </button>
               </div>
             ) : (
@@ -294,7 +294,7 @@ export function ServiceWizardWorkflow({
                   <p className="font-bold flex items-center gap-1">
                     <Truck className="size-4 text-amber-700" /> Orden con Servicio de Delivery Activo
                   </p>
-                  <p className="text-[11px] text-amber-800">
+                  <p className="text-xs text-amber-800">
                     No se permite entregar directamente desde producción. Asigna un repartidor en la tarjeta de Logística para generar los PINs de seguridad.
                   </p>
                 </div>
@@ -303,13 +303,13 @@ export function ServiceWizardWorkflow({
                   <div className="bg-white p-4 rounded-2xl border border-slate-200 text-xs space-y-3">
                     <div className="flex justify-between items-center border-b pb-2">
                       <span className="font-bold text-slate-700">PIN de Retiro para Repartidor:</span>
-                      <span className="font-mono font-black text-indigo-600 text-base bg-indigo-50 px-3 py-1 rounded-lg">
+                      <span className="font-mono font-bold text-indigo-600 text-base bg-indigo-50 px-3 py-1 rounded-lg">
                         {extraInfo.pinRetiro || '483291'}
                       </span>
                     </div>
 
                     <div className="space-y-2 pt-1">
-                      <label className="block text-[11px] font-bold text-slate-600">Ingresar PIN del Repartidor al retirar:</label>
+                      <label className="block text-xs font-bold text-slate-600">Ingresar PIN del Repartidor al retirar:</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -328,7 +328,7 @@ export function ServiceWizardWorkflow({
                           Validar PIN Retiro
                         </button>
                       </div>
-                      {pinError && <p className="text-[11px] font-bold text-rose-600">{pinError}</p>}
+                      {pinError && <p className="text-xs font-bold text-rose-600">{pinError}</p>}
                     </div>
                   </div>
                 )}
@@ -341,19 +341,19 @@ export function ServiceWizardWorkflow({
         {currentStatus === 'EN_RUTA' && (
           <div className="space-y-5 text-left">
             <div className="flex items-center gap-3">
-              <div className="size-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-md">
+              <div className="size-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md">
                 <Truck className="size-6" />
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Etapa 4: En Ruta a Domicilio</span>
-                <h3 className="text-lg font-black text-slate-900">Confirmación de Entrega con PIN de Cliente</h3>
+                <span className="text-xs font-bold uppercase tracking-wide text-indigo-700">Etapa 4: En Ruta a Domicilio</span>
+                <h3 className="text-lg font-bold text-slate-900">Confirmación de Entrega con PIN de Cliente</h3>
               </div>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 text-xs space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-slate-600 font-medium">PIN enviado por WhatsApp al cliente:</span>
-                <span className="font-mono font-black text-emerald-600 text-base bg-emerald-50 px-3 py-1 rounded-lg">
+                <span className="font-mono font-bold text-emerald-600 text-base bg-emerald-50 px-3 py-1 rounded-lg">
                   {extraInfo.pinEntrega || '812544'}
                 </span>
               </div>
@@ -380,7 +380,7 @@ export function ServiceWizardWorkflow({
                     Confirmar Entrega
                   </button>
                 </div>
-                {pinError && <p className="text-[11px] font-bold text-rose-600">{pinError}</p>}
+                {pinError && <p className="text-xs font-bold text-rose-600">{pinError}</p>}
               </div>
             </div>
           </div>
@@ -390,12 +390,12 @@ export function ServiceWizardWorkflow({
         {currentStatus === 'ENTREGADO' && (
           <div className="space-y-5 text-left">
             <div className="flex items-center gap-3">
-              <div className="size-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black shadow-md">
+              <div className="size-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-bold shadow-md">
                 5
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-purple-700">Etapa 5: Entrega Registrada</span>
-                <h3 className="text-lg font-black text-slate-900">Verificación de Pago & Cierre</h3>
+                <span className="text-xs font-bold uppercase tracking-wide text-purple-700">Etapa 5: Entrega Registrada</span>
+                <h3 className="text-lg font-bold text-slate-900">Verificación de Pago & Cierre</h3>
               </div>
             </div>
 
@@ -404,10 +404,10 @@ export function ServiceWizardWorkflow({
               <div className="bg-white p-5 rounded-3xl border border-slate-200 space-y-4 shadow-xs">
                 <div className="flex justify-between items-center border-b pb-3">
                   <div>
-                    <span className="text-[10px] font-black uppercase text-slate-400 block">Saldo Pendiente de Cobro</span>
-                    <span className="text-2xl font-black text-slate-900">${total.toFixed(2)}</span>
+                    <span className="text-xs font-bold uppercase text-slate-400 block">Saldo Pendiente de Cobro</span>
+                    <span className="text-2xl font-bold text-slate-900">${total.toFixed(2)}</span>
                   </div>
-                  <span className="px-3 py-1 bg-amber-100 text-amber-900 rounded-full text-xs font-black uppercase">
+                  <span className="px-3 py-1 bg-amber-100 text-amber-900 rounded-full text-xs font-bold uppercase">
                     PENDIENTE
                   </span>
                 </div>
@@ -436,7 +436,7 @@ export function ServiceWizardWorkflow({
                   type="button"
                   disabled={saving}
                   onClick={() => onRegisterPayment(paymentMethod, 'PAGO_CONFIRMADO')}
-                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer"
+                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer"
                 >
                   REGISTRAR PAGO COMPLETO (${total.toFixed(2)})
                 </button>
@@ -447,7 +447,7 @@ export function ServiceWizardWorkflow({
                   <CheckCircle2 className="size-5 text-emerald-600" />
                   <span className="font-bold">Pago Completo Verificado (${total.toFixed(2)})</span>
                 </div>
-                <span className="bg-emerald-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
+                <span className="bg-emerald-600 text-white text-xs font-bold uppercase px-2.5 py-1 rounded-full">
                   PAGADO
                 </span>
               </div>
@@ -458,10 +458,10 @@ export function ServiceWizardWorkflow({
               type="button"
               disabled={saving || !isPaid}
               onClick={handleFinalizeOrder}
-              className="w-full py-4 bg-slate-900 hover:bg-black disabled:opacity-40 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+              className="w-full py-4 bg-slate-900 hover:bg-black disabled:opacity-40 text-white font-bold text-sm uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
             >
               <Sparkles className="size-5 text-amber-400" />
-              <span>FINALIZAR ORDEN Y ENVIAR WHATSAPP DE CIERRE</span>
+              <span>Finalizar orden y enviar whatsapp de cierre</span>
             </button>
           </div>
         )}
@@ -472,7 +472,7 @@ export function ServiceWizardWorkflow({
             <div className="size-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-md">
               <CheckCircle2 className="size-8" />
             </div>
-            <h3 className="text-xl font-black text-slate-900">¡Orden Finalizada Exitosamente!</h3>
+            <h3 className="text-xl font-bold text-slate-900">¡Orden Finalizada Exitosamente!</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
               El servicio ha sido completado, cobrado y notificado al cliente por WhatsApp.
             </p>

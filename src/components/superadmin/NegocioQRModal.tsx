@@ -215,7 +215,7 @@ export default function NegocioQRModal({ isOpen, onClose, negocio }: NegocioQRMo
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-            <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 lg:p-8 border border-slate-100 dark:border-white/5 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300">
+            <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 lg:p-8 border border-slate-100 dark:border-white/5 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300">
                 {/* Botón de cerrar */}
                 <button
                     onClick={onClose}
@@ -224,7 +224,7 @@ export default function NegocioQRModal({ isOpen, onClose, negocio }: NegocioQRMo
                     <X size={18} />
                 </button>
 
-                <h3 className="text-xl font-black text-slate-950 dark:text-white uppercase italic tracking-tighter mb-1 mt-2">
+                <h3 className="text-xl font-bold text-slate-950 dark:text-white tracking-tight mb-1 mt-2">
                     Código QR de Reservas
                 </h3>
                 <p className="text-xs text-slate-400 font-medium mb-6 text-center">
@@ -232,26 +232,26 @@ export default function NegocioQRModal({ isOpen, onClose, negocio }: NegocioQRMo
                 </p>
 
                 {/* Vista previa de la tarjeta */}
-                <div className="w-[280px] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-white/5 rounded-[2.2rem] p-5 shadow-lg flex flex-col items-center text-center">
+                <div className="w-[280px] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-white/5 rounded-2xl p-5 shadow-lg flex flex-col items-center text-center">
                     <div className="flex items-center gap-3 mb-4 w-full justify-center">
                         {negocio.logoUrl ? (
                             <img src={negocio.logoUrl} alt={negocio.nombre} className="w-10 h-10 rounded-full object-cover shadow-sm" />
                         ) : (
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-base shadow-sm" style={{ backgroundColor: primaryColor }}>
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base shadow-sm" style={{ backgroundColor: primaryColor }}>
                                 {negocio.nombre.charAt(0).toUpperCase()}
                             </div>
                         )}
                         <div className="text-left">
-                            <h4 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xs leading-none max-w-[180px] truncate">
+                            <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight text-xs leading-none max-w-[180px] truncate">
                                 {negocio.nombre}
                             </h4>
-                            <span className="text-[9px] text-slate-400 font-black tracking-widest uppercase">
+                            <span className="text-xs text-slate-400 font-bold tracking-wide uppercase">
                                 Reservas Online
                             </span>
                         </div>
                     </div>
 
-                    <div className="bg-white p-3 rounded-[1.6rem] shadow-sm border border-slate-100 mb-4">
+                    <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 mb-4">
                         <img
                             src={qrCodeUrl}
                             alt="Código QR de reservas"
@@ -259,7 +259,7 @@ export default function NegocioQRModal({ isOpen, onClose, negocio }: NegocioQRMo
                         />
                     </div>
 
-                    <p className="text-[10px] text-slate-500 font-black tracking-widest uppercase mb-4">
+                    <p className="text-xs text-slate-500 font-bold tracking-wide uppercase mb-4">
                         ¡Escanea para agendar!
                     </p>
 
@@ -271,7 +271,7 @@ export default function NegocioQRModal({ isOpen, onClose, negocio }: NegocioQRMo
                             <Globe size={14} />
                         </div>
                         <div className="overflow-hidden">
-                            <div className="text-[9px] font-black text-white/75 uppercase tracking-widest leading-none mb-1">
+                            <div className="text-xs font-bold text-white/75 uppercase tracking-wide leading-none mb-1">
                                 O visítanos en:
                             </div>
                             <div className="text-sm font-bold text-white truncate leading-normal">
@@ -285,14 +285,14 @@ export default function NegocioQRModal({ isOpen, onClose, negocio }: NegocioQRMo
                 <div className="grid grid-cols-2 gap-3 w-full mt-6">
                     <button
                         onClick={handleDownload}
-                        className="flex items-center justify-center gap-2 px-5 py-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-2xl font-black text-[10px] text-slate-700 dark:text-slate-300 uppercase tracking-widest transition-all cursor-pointer active:scale-95"
+                        className="flex items-center justify-center gap-2 px-5 py-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-2xl font-bold text-xs text-slate-700 dark:text-slate-300 uppercase tracking-wide transition-all cursor-pointer active:scale-95"
                     >
                         <Download size={14} />
                         Descargar
                     </button>
                     <button
                         onClick={handlePrint}
-                        className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer active:scale-95"
+                        className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all cursor-pointer active:scale-95"
                         style={{
                             backgroundColor: primaryColor,
                             boxShadow: `0 10px 15px -3px ${primaryColor}33, 0 4px 6px -4px ${primaryColor}33`

@@ -228,7 +228,7 @@ export default function AddonCheckoutModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
             <div 
-                className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 max-w-2xl w-full max-h-[90vh] rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl"
+                className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 max-w-2xl w-full max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -239,11 +239,11 @@ export default function AddonCheckoutModal({
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300">
+                                <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300">
                                     {addon.type === 'LIMIT' ? 'Extensión de Límite' : 'Capacidad de Módulo'}
                                 </span>
                             </div>
-                            <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mt-0.5">
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
                                 Contratar {addon.name}
                             </h3>
                         </div>
@@ -263,7 +263,7 @@ export default function AddonCheckoutModal({
                             <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
                                 <CheckCircle2 size={36} />
                             </div>
-                            <h4 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                            <h4 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                                 ¡Solicitud Registrada!
                             </h4>
                             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
@@ -281,15 +281,15 @@ export default function AddonCheckoutModal({
                                                 <Sparkles size={16} />
                                             </span>
                                             <div>
-                                                <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white block">
+                                                <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white block">
                                                     1. Selecciona tu Plan Base
                                                 </span>
-                                                <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                                                <span className="text-xs text-slate-500 dark:text-slate-400 block">
                                                     Se requiere un plan comercial activo para incorporar este Add-on
                                                 </span>
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                                        <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300">
                                             Requerido
                                         </span>
                                     </div>
@@ -310,11 +310,11 @@ export default function AddonCheckoutModal({
                                                         }`}
                                                     >
                                                         <div>
-                                                            <span className="text-xs font-black text-slate-900 dark:text-white block">
+                                                            <span className="text-xs font-bold text-slate-900 dark:text-white block">
                                                                 {plan.name}
                                                             </span>
                                                             <span className="text-xs font-mono font-bold text-purple-600 dark:text-purple-400">
-                                                                ${Number(plan.price).toFixed(2)} <span className="text-[10px] text-slate-400">/mes</span>
+                                                                ${Number(plan.price).toFixed(2)} <span className="text-xs text-slate-400">/mes</span>
                                                             </span>
                                                         </div>
                                                         <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
@@ -340,10 +340,10 @@ export default function AddonCheckoutModal({
                             {addon.stackable && (
                                 <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                     <div>
-                                        <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white block">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white block">
                                             Cantidad de Add-on a Contratar
                                         </span>
-                                        <span className="text-[11px] text-slate-500">
+                                        <span className="text-xs text-slate-500">
                                             Límite máximo permitido: {maxQty} unidades
                                         </span>
                                     </div>
@@ -356,7 +356,7 @@ export default function AddonCheckoutModal({
                                         >
                                             <Minus size={16} />
                                         </button>
-                                        <span className="font-mono font-black text-lg text-slate-900 dark:text-white min-w-[24px] text-center">
+                                        <span className="font-mono font-bold text-lg text-slate-900 dark:text-white min-w-[24px] text-center">
                                             {quantity}
                                         </span>
                                         <button
@@ -379,22 +379,22 @@ export default function AddonCheckoutModal({
                                             <Calendar size={14} className="text-purple-500" />
                                             Días restantes del ciclo actual:
                                         </span>
-                                        <span className="font-black text-slate-900 dark:text-white">
+                                        <span className="font-bold text-slate-900 dark:text-white">
                                             {proration.daysRemaining} de {proration.totalDaysInCycle} días
                                         </span>
                                     </div>
 
                                     <div className="flex items-baseline justify-between pt-2 border-t border-slate-200/60 dark:border-white/10">
                                         <div>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
+                                            <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block">
                                                 Monto a Pagar Ahora (Prorrateado)
                                             </span>
-                                            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                                            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                                                 ${proration.proratedAmount.toFixed(2)} USD
                                             </span>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
+                                            <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block">
                                                 Próxima Renovación
                                             </span>
                                             <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
@@ -403,13 +403,13 @@ export default function AddonCheckoutModal({
                                         </div>
                                     </div>
 
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight italic">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight ">
                                         * Solo pagas los días restantes hasta tu próximo corte. Tu precio base de plan no sufrirá modificaciones.
                                     </p>
                                 </div>
                             ) : (
                                 <div className="p-5 rounded-3xl bg-linear-to-br from-purple-500/10 via-slate-50 to-emerald-500/10 dark:from-purple-950/30 dark:via-slate-900 dark:to-emerald-950/30 border border-purple-200/50 dark:border-purple-500/20 space-y-3">
-                                    <div className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    <div className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                                         Desglose de Activación (Combo Plan + Add-on)
                                     </div>
 
@@ -430,15 +430,15 @@ export default function AddonCheckoutModal({
 
                                     <div className="flex items-baseline justify-between pt-2 border-t border-slate-200/60 dark:border-white/10">
                                         <div>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
+                                            <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block">
                                                 Total a Pagar Ahora
                                             </span>
-                                            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                                            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                                                 ${totalToPay.toFixed(2)} USD
                                             </span>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
+                                            <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block">
                                                 Renovación Mensual
                                             </span>
                                             <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
@@ -447,7 +447,7 @@ export default function AddonCheckoutModal({
                                         </div>
                                     </div>
 
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight italic">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight ">
                                         * Al verificar tu comprobante se activará tu plan comercial y el módulo Add-on simultáneamente por 1 mes.
                                     </p>
                                 </div>
@@ -455,18 +455,18 @@ export default function AddonCheckoutModal({
 
                             {/* Método de Pago */}
                             <div className="space-y-2">
-                                <label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                                     Método de Pago
                                 </label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setMetodo('TRANSFERENCIA')}
-                                        className={`p-3.5 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
-                                            metodo === 'TRANSFERENCIA'
-                                                ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20'
-                                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
-                                        }`}
+                                        className={`p-3.5 rounded-2xl border text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+ metodo === 'TRANSFERENCIA'
+ ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20'
+ : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
+ }`}
                                     >
                                         <Landmark size={16} />
                                         Transferencia
@@ -474,11 +474,11 @@ export default function AddonCheckoutModal({
                                     <button
                                         type="button"
                                         onClick={() => setMetodo('DEUNA')}
-                                        className={`p-3.5 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
-                                            metodo === 'DEUNA'
-                                                ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20'
-                                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
-                                        }`}
+                                        className={`p-3.5 rounded-2xl border text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+ metodo === 'DEUNA'
+ ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20'
+ : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50'
+ }`}
                                     >
                                         <Sparkles size={16} />
                                         DeUna (QR)
@@ -495,7 +495,7 @@ export default function AddonCheckoutModal({
                             ) : dbAccounts.length > 0 && selectedAccount && (
                                 <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
                                             Cuenta Oficial de Recepción Citiox
                                         </span>
                                         {dbAccounts.length > 1 && (
@@ -521,7 +521,7 @@ export default function AddonCheckoutModal({
                                             <span className="text-xs text-slate-500 block">
                                                 Titular: {selectedAccount.nombreCuenta}
                                             </span>
-                                            <span className="font-mono font-black text-sm text-purple-600 dark:text-purple-400">
+                                            <span className="font-mono font-bold text-sm text-purple-600 dark:text-purple-400">
                                                 {selectedAccount.numeroCuenta}
                                             </span>
                                         </div>
@@ -548,7 +548,7 @@ export default function AddonCheckoutModal({
 
                             {/* Referencia */}
                             <div className="space-y-1.5">
-                                <label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                                     Nº de Referencia / Comprobante
                                 </label>
                                 <input
@@ -562,7 +562,7 @@ export default function AddonCheckoutModal({
 
                             {/* Comprobante de pago */}
                             <div className="space-y-1.5">
-                                <label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                                     Adjuntar Comprobante (Imagen o PDF)
                                 </label>
                                 <div className="relative border-2 border-dashed border-slate-200 dark:border-white/10 hover:border-purple-500 dark:hover:border-purple-500 rounded-2xl p-4 text-center transition-colors">
@@ -577,7 +577,7 @@ export default function AddonCheckoutModal({
                                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                                             {fileName ? fileName : 'Seleccionar archivo o arrastrar aquí'}
                                         </span>
-                                        <span className="text-[10px] text-slate-400">
+                                        <span className="text-xs text-slate-400">
                                             Formatos JPG, PNG, WEBP o PDF
                                         </span>
                                     </div>
@@ -589,7 +589,7 @@ export default function AddonCheckoutModal({
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 active:scale-95 disabled:opacity-50 transition-all cursor-pointer"
+                                    className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 active:scale-95 disabled:opacity-50 transition-all cursor-pointer"
                                 >
                                     {loading ? (
                                         <>

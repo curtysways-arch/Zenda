@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { roundQty, roundMoney } from '@/lib/math/decimal';
 
 function parseNumeric(val: any, fallback: number | null = null): number | null {
   if (val === undefined || val === null || val === '') return fallback;
@@ -138,7 +139,7 @@ export async function POST(
           atributos: atributos || null,
           precio: parseSafePrice(precio),
           precioAnterior: parseSafePrice(precioAnterior),
-          stock: stock !== undefined && stock !== null ? Math.max(0, parseInt(String(stock))) : 0,
+          stock: 0,
           imagenUrl: imagenUrl || null,
           activo: activo !== undefined ? Boolean(activo) : true,
         }
@@ -151,6 +152,23 @@ export async function POST(
 
       return v;
     });
+
+    if (stock !== undefined && stock !== null && Number(stock) > 0) {
+      try {
+        const { InventoryEngine } = await import('@/core/inventory/InventoryEngine');
+        await InventoryEngine.recordMovement({
+          businessId: negocioId,
+          productId: productoId,
+          variantId: nuevaVariante.id,
+          quantity: roundQty(stock),
+          type: 'INICIAL',
+          reason: `Inventario inicial variante ${nuevaVariante.nombre}`,
+          createdBy: (session.user as any)?.name || (session.user as any)?.email || 'ADMIN'
+        });
+      } catch (invErr: any) {
+        console.warn('[VARIANT_CREATE_INITIAL_STOCK_WARN]', invErr?.message);
+      }
+    }
 
     return NextResponse.json(nuevaVariante, { status: 201 });
   } catch (e) {
@@ -204,7 +222,6 @@ export async function PUT(
         atributos: atributos !== undefined ? atributos : varianteExistente.atributos,
         precio: precio !== undefined ? parseNumeric(precio, null) : varianteExistente.precio,
         precioAnterior: precioAnterior !== undefined ? parseNumeric(precioAnterior, null) : varianteExistente.precioAnterior,
-        stock: stock !== undefined ? parseInt(String(stock)) : varianteExistente.stock,
         imagenUrl: imagenUrl !== undefined ? (imagenUrl || null) : varianteExistente.imagenUrl,
         activo: activo !== undefined ? Boolean(activo) : varianteExistente.activo,
       }

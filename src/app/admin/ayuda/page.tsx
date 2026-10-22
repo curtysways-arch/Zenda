@@ -24,13 +24,13 @@ export default async function AdminAyudaPage() {
     return (
         <div className="max-w-6xl mx-auto space-y-8 pb-16 text-slate-900 font-sans">
             {/* Header Hero */}
-            <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-teal-950 rounded-[2.5rem] p-8 md:p-12 text-white shadow-xl relative overflow-hidden">
+            <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-teal-950 rounded-2xl p-8 md:p-12 text-white shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="relative z-10 max-w-2xl space-y-4">
-                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-full text-[10px] font-black uppercase tracking-widest">
+                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-full text-xs font-bold uppercase tracking-wide">
                         <BookOpen size={12} /> Centro de Guías & Documentación
                     </span>
-                    <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight uppercase italic !text-white text-white drop-shadow-sm">
+                    <h1 className="text-3xl md:text-3xl font-bold tracking-tight leading-tight !text-white text-white drop-shadow-sm">
                         Aprende a configurar tu tienda al 100%
                     </h1>
                     <p className="!text-slate-200 text-slate-200 font-medium text-sm md:text-base leading-relaxed">
@@ -43,7 +43,7 @@ export default async function AdminAyudaPage() {
             <div className="space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-4">
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 uppercase italic tracking-tight">
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                             Guías Oficiales Citiox
                         </h2>
                         <p className="text-xs text-slate-500 font-medium">Actualizadas directamente por el equipo técnico</p>
@@ -59,15 +59,15 @@ export default async function AdminAyudaPage() {
                         >
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="px-3 py-1 bg-teal-50 text-teal-700 text-[10px] font-black uppercase tracking-wider rounded-xl border border-teal-200">
+                                    <span className="px-3 py-1 bg-teal-50 text-teal-700 text-xs font-bold uppercase tracking-wider rounded-xl border border-teal-200">
                                         {guia.category || "General"}
                                     </span>
-                                    <span className="text-[10px] font-semibold text-slate-400">
+                                    <span className="text-xs font-semibold text-slate-400">
                                         {guia.updatedAt ? new Date(guia.updatedAt).toLocaleDateString() : "Actualizado"}
                                     </span>
                                 </div>
 
-                                <h3 className="text-lg sm:text-xl font-black text-slate-900 leading-snug">
+                                <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
                                     {guia.title}
                                 </h3>
 
@@ -82,14 +82,14 @@ export default async function AdminAyudaPage() {
                             </div>
 
                             <div className="pt-2 flex items-center justify-between border-t border-slate-100">
-                                <span className="text-[11px] font-bold text-teal-600 flex items-center gap-1.5">
+                                <span className="text-xs font-bold text-teal-600 flex items-center gap-1.5">
                                     <CheckCircle2 size={14} /> Paso a paso verificado
                                 </span>
                                 <a
                                     href={`https://wa.me/593968118444?text=Hola%20CitiOx,%20tengo%20dudas%20sobre%20la%20guía%20${encodeURIComponent(guia.title)}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-[11px] font-black uppercase text-slate-600 hover:text-teal-600 transition-colors"
+                                    className="text-xs font-bold uppercase text-slate-600 hover:text-teal-600 transition-colors"
                                 >
                                     ¿Dudas? Hablar con soporte →
                                 </a>

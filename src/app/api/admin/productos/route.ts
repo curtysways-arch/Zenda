@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import prisma from '@/lib/prisma';
 import { EntitlementsService } from '@/core/entitlements/EntitlementsService';
+import { roundQty, roundMoney, toDecimal, serializeDecimal } from '@/lib/math/decimal';
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -74,7 +74,7 @@ async function checkBusinessSkuUniqueness(
 }
 
 export async function POST(req: Request) {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -138,36 +138,71 @@ export async function POST(req: Request) {
             data: {
                 nombre,
                 descripcion,
-                precio: parseNumeric(precio, 0),
+                precio: roundMoney(parseNumeric(precio, 0)).toNumber(),
                 imagenUrl: imagenesList[0] || imagenUrl || null,
                 extraInfo: Object.keys(extraData).length > 0 ? extraData : undefined,
                 activo: activo !== undefined ? Boolean(activo) : true,
-                stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(String(stock)) : null,
+                stock: 0,
                 sku: sku ? sku.trim() : null,
                 tieneVariantes: Boolean(tieneVariantes),
                 orden: parseNumeric(orden, 0),
                 llevaEmpaque: llevaEmpaque !== undefined ? Boolean(llevaEmpaque) : true,
-                precioEmpaque: parseNumeric(precioEmpaque, 0.25),
+                precioEmpaque: roundMoney(parseNumeric(precioEmpaque, 0.25)).toNumber(),
                 categoriaId: categoriaId || null,
                 negocioId
             }
         });
 
+        const { InventoryEngine } = await import('@/core/inventory/InventoryEngine');
+        const createdByName = (session.user as any)?.name || (session.user as any)?.email || 'ADMIN';
+
+        // Si es producto simple y se especificó stock inicial positivo, registrarlo vía InventoryEngine
+        if (!tieneVariantes && stock !== undefined && stock !== null && stock !== '' && Number(stock) > 0) {
+            try {
+                await InventoryEngine.recordMovement({
+                    businessId: negocioId,
+                    productId: nuevoProducto.id,
+                    quantity: roundQty(stock),
+                    type: 'INICIAL',
+                    reason: 'Inventario inicial al crear producto',
+                    createdBy: createdByName
+                });
+            } catch (invErr: any) {
+                console.warn('[PRODUCT_CREATE_INITIAL_STOCK_WARN]', invErr?.message);
+            }
+        }
+
         // Crear variantes iniciales si fueron enviadas al crear producto nuevo
         if (tieneVariantes && Array.isArray(variantesIniciales) && variantesIniciales.length > 0) {
             for (const v of variantesIniciales) {
                 const varSku = v.sku ? v.sku.trim() : (sku ? `${sku.trim()}-${v.nombre.replace(/\s+/g, '-').toUpperCase()}` : null);
-                await (prisma as any).productoVariante.create({
+                const nuevaVar = await (prisma as any).productoVariante.create({
                     data: {
                         productoId: nuevoProducto.id,
                         nombre: v.nombre,
                         sku: varSku,
-                        precio: parseNumeric(v.precio, parseNumeric(precio, 0)),
-                        stock: parseNumeric(v.stock, 0),
+                        precio: roundMoney(parseNumeric(v.precio, parseNumeric(precio, 0))).toNumber(),
+                        stock: 0,
                         activo: v.activo !== undefined ? Boolean(v.activo) : true,
                         atributos: typeof v.atributos === 'string' ? v.atributos : (v.atributos || null)
                     }
                 });
+
+                if (v.stock !== undefined && v.stock !== null && v.stock !== '' && Number(v.stock) > 0) {
+                    try {
+                        await InventoryEngine.recordMovement({
+                            businessId: negocioId,
+                            productId: nuevoProducto.id,
+                            variantId: nuevaVar.id,
+                            quantity: roundQty(v.stock),
+                            type: 'INICIAL',
+                            reason: `Inventario inicial variante ${v.nombre}`,
+                            createdBy: createdByName
+                        });
+                    } catch (varInvErr: any) {
+                        console.warn('[VARIANT_CREATE_INITIAL_STOCK_WARN]', varInvErr?.message);
+                    }
+                }
             }
         }
 
@@ -184,7 +219,7 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -231,16 +266,15 @@ export async function PUT(req: Request) {
             data: {
                 nombre,
                 descripcion,
-                precio: parseNumeric(precio, 0),
+                precio: roundMoney(parseNumeric(precio, 0)).toNumber(),
                 imagenUrl: imagenesList[0] || imagenUrl || null,
                 extraInfo: updatedExtra,
                 activo: activo !== undefined ? Boolean(activo) : true,
-                stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(String(stock)) : null,
                 sku: sku || null,
                 tieneVariantes: tieneVariantes !== undefined ? Boolean(tieneVariantes) : prod.tieneVariantes,
                 orden: parseNumeric(orden, 0),
                 llevaEmpaque: llevaEmpaque !== undefined ? Boolean(llevaEmpaque) : true,
-                precioEmpaque: parseNumeric(precioEmpaque, 0.25),
+                precioEmpaque: roundMoney(parseNumeric(precioEmpaque, 0.25)).toNumber(),
                 categoriaId: categoriaId || null
             }
         });
@@ -253,7 +287,7 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }

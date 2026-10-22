@@ -244,7 +244,7 @@ export default function GymAccessScanner() {
               <Zap className="w-3 h-3 mr-1" /> Control de Acceso en Vivo
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
             <Scan className="w-8 h-8 text-emerald-400" />
             Torno & Recepción
           </h1>
@@ -258,20 +258,20 @@ export default function GymAccessScanner() {
           <div className="flex items-center gap-2.5 bg-emerald-500/10 border border-emerald-500/30 px-3.5 py-2 rounded-xl text-xs">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
             <div>
-              <div className="text-emerald-400 font-black text-base leading-none">{insideCount}</div>
-              <div className="text-emerald-300/80 text-[10px] font-bold uppercase tracking-wider">Dentro Ahora</div>
+              <div className="text-emerald-400 font-bold text-base leading-none">{insideCount}</div>
+              <div className="text-emerald-300/80 text-xs font-bold uppercase tracking-wider">Dentro Ahora</div>
             </div>
           </div>
 
           <div className="flex items-center gap-3 bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700 text-xs">
             <div className="text-right">
               <div className="text-emerald-400 font-bold text-base leading-none">{stats.grantedToday}</div>
-              <div className="text-slate-400 text-[10px]">Permitidos</div>
+              <div className="text-slate-400 text-xs">Permitidos</div>
             </div>
             <div className="h-6 w-px bg-slate-700" />
             <div className="text-right">
               <div className="text-rose-400 font-bold text-base leading-none">{stats.deniedToday}</div>
-              <div className="text-slate-400 text-[10px]">Rechazados</div>
+              <div className="text-slate-400 text-xs">Rechazados</div>
             </div>
           </div>
 
@@ -365,11 +365,11 @@ export default function GymAccessScanner() {
                 </div>
 
                 <div className="flex-1 text-center md:text-left space-y-3">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-emerald-500 text-white shadow-sm">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-emerald-500 text-white shadow-sm">
                     <ShieldCheck className="w-3.5 h-3.5" /> ACCESO CONCEDIDO
                   </div>
 
-                  <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                  <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
                     {lastResult.member?.nombre || 'Socio Activo'}
                   </h2>
 
@@ -413,11 +413,11 @@ export default function GymAccessScanner() {
                 </div>
 
                 <div className="flex-1 text-center md:text-left space-y-3">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-rose-500 text-white shadow-sm">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-rose-500 text-white shadow-sm">
                     <AlertTriangle className="w-3.5 h-3.5" /> ACCESO DENEGADO
                   </div>
 
-                  <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                  <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
                     {lastResult.member?.nombre || 'No Autorizado'}
                   </h2>
 
@@ -482,10 +482,10 @@ export default function GymAccessScanner() {
                     )}
                     <div className="truncate">
                       <p className="font-bold truncate">{log.member?.nombre || 'Desconocido'}</p>
-                      <p className="text-[10px] text-slate-400 truncate">{log.reason}</p>
+                      <p className="text-xs text-slate-400 truncate">{log.reason}</p>
                     </div>
                   </div>
-                  <span className="text-[10px] text-slate-400 shrink-0 ml-2 font-mono">
+                  <span className="text-xs text-slate-400 shrink-0 ml-2 font-mono">
                     {log.timestamp}
                   </span>
                 </div>

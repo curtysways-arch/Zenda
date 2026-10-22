@@ -1,38 +1,38 @@
 import { getNegocioBySlug } from '@/lib/services';
 import { featureService } from '@/lib/services/featureService';
 import { notFound } from 'next/navigation';
-import QuestList from './QuestList';
+import ClubHub from './ClubHub';
 
 export const dynamic = 'force-dynamic';
 
+const TABS = ['misiones', 'premios', 'mis-premios', 'invitar'] as const;
+type Tab = (typeof TABS)[number];
+
 export default async function PublicMisionesPage({
-    params
+    params,
+    searchParams,
 }: {
     params: Promise<{ slug: string }>;
+    searchParams: Promise<{ tab?: string; questId?: string }>;
 }) {
     const { slug } = await params;
+    const { tab, questId } = await searchParams;
     const negocio = await getNegocioBySlug(slug);
-
-    if (!negocio) {
-        notFound();
-    }
+    if (!negocio) notFound();
 
     const isLoyaltyEnabled = await featureService.canUseFeature(negocio.id, 'loyalty_module');
-    if (!isLoyaltyEnabled) {
-        notFound();
-    }
+    if (!isLoyaltyEnabled) notFound();
 
-    const primaryColor = (negocio as any).colorPrimario || '#ec4899'; // fucsia por defecto
-    const textColor = (negocio as any).colorTexto || '#1e293b';
+    const initialTab: Tab = (TABS as readonly string[]).includes(String(tab)) ? (tab as Tab) : 'misiones';
 
     return (
-        <main className="min-h-screen bg-slate-50/60 pb-24 select-none">
-            {/* Listado de misiones interactivo con diseño premium unificado */}
-            <QuestList 
-                slug={slug} 
-                primaryColor={primaryColor} 
-                textColor={textColor} 
+        <main className="min-h-screen bg-slate-50">
+            <ClubHub
+                slug={slug}
+                primaryColor={(negocio as any).colorPrimario || '#ec4899'}
                 negocioNombre={negocio.nombre}
+                initialTab={initialTab}
+                focusQuestId={questId || null}
             />
         </main>
     );

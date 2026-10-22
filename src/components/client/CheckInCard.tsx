@@ -123,7 +123,7 @@ export default function CheckInCard({ appointment }: CheckInCardProps) {
 
     return (
         <div
-            className={`rounded-[2.5rem] border shadow-xl overflow-hidden transition-all duration-700 ${currentStyles.bg} ${currentStyles.border}`}
+            className={`rounded-3xl border shadow-xl overflow-hidden transition-all duration-700 ${currentStyles.bg} ${currentStyles.border}`}
             style={currentMode === 'arrival' ? { borderColor: color } : {}}
         >
             {/* Header con color de marca */}
@@ -132,7 +132,7 @@ export default function CheckInCard({ appointment }: CheckInCardProps) {
                 style={{ background: currentMode === 'arrival' || currentMode === 'waiting' ? `linear-gradient(135deg, ${color}15, ${color}05)` : undefined }}
             >
                 <div className="flex-1 min-w-0">
-                    <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-3 ${currentStyles.badge} ${currentStyles.badgeText}`}>
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full mb-3 ${currentStyles.badge} ${currentStyles.badgeText}`}>
                         {currentMode === 'waiting' ? <><CheckCircle2 size={11} /> Check-in realizado</> :
                          currentMode === 'in_progress' ? <><Sparkles size={11} /> En progreso</> :
                          currentMode === 'completed' ? <><CheckCircle2 size={11} /> Completado</> :
@@ -141,10 +141,10 @@ export default function CheckInCard({ appointment }: CheckInCardProps) {
                          currentMode === 'alert' ? '⏰ Próximamente' :
                          '📅 Confirmado'}
                     </span>
-                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight leading-none">
+                    <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-none">
                         {appointment.servicio}
                     </h2>
-                    <p className="text-sm font-bold text-slate-500 mt-1 italic">{appointment.negocio}</p>
+                    <p className="text-sm font-bold text-slate-500 mt-1 ">{appointment.negocio}</p>
                 </div>
                 {appointment.logoUrl && (
                     <img src={appointment.logoUrl} alt={appointment.negocio} className="w-14 h-14 rounded-2xl object-cover border border-white shadow-md shrink-0 ml-4" />
@@ -179,7 +179,7 @@ export default function CheckInCard({ appointment }: CheckInCardProps) {
                         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: `${color}20` }}>
                             <CheckCircle2 size={32} style={{ color }} />
                         </div>
-                        <p className="text-xl font-black text-slate-900 uppercase tracking-tight">
+                        <p className="text-xl font-bold text-slate-900 tracking-tight">
                             ¡Te estamos esperando!
                         </p>
                         <p className="text-sm font-bold text-slate-500">
@@ -190,27 +190,27 @@ export default function CheckInCard({ appointment }: CheckInCardProps) {
                     <div className="space-y-2">
                         <div className="flex items-center justify-center gap-2">
                             <div className="w-3 h-3 rounded-full bg-purple-500 animate-pulse" />
-                            <p className="text-xl font-black text-purple-700 uppercase">Servicio en progreso</p>
+                            <p className="text-xl font-bold text-purple-700 ">Servicio en progreso</p>
                         </div>
                         <p className="text-sm font-bold text-slate-400">Relájate y disfruta tu experiencia ✨</p>
                     </div>
                 ) : currentMode === 'completed' ? (
                     <div className="space-y-2">
-                        <p className="text-2xl font-black text-slate-900 uppercase">¡Gracias por visitarnos!</p>
+                        <p className="text-2xl font-bold text-slate-900 ">¡Gracias por visitarnos!</p>
                         <p className="text-sm font-bold text-slate-500">Esperamos verte pronto. 💖</p>
                     </div>
                 ) : (
                     <div className="space-y-1">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">
                             {isNegative ? 'Lleva esperando' : 'Tu cita en'}
                         </p>
                         <div
-                            className="text-5xl font-black tracking-tighter leading-none"
+                            className="text-5xl font-bold tracking-tight leading-none"
                             style={{ color: currentMode === 'arrival' ? color : '#0f172a' }}
                         >
                             {timerStr}
                         </div>
-                        <p className="text-[11px] font-bold text-slate-400 mt-2 uppercase tracking-widest">
+                        <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-wide">
                             {currentMode === 'arrival' ? MODE_LABELS.arrival : MODE_LABELS[currentMode]}
                         </p>
                     </div>
@@ -223,7 +223,7 @@ export default function CheckInCard({ appointment }: CheckInCardProps) {
                     <button
                         onClick={handleCheckIn}
                         disabled={loading}
-                        className="w-full py-5 rounded-[1.5rem] text-white font-black text-lg uppercase tracking-widest transition-all active:scale-95 shadow-xl disabled:opacity-60 flex items-center justify-center gap-3"
+                        className="w-full py-5 rounded-2xl text-white font-bold text-lg tracking-wide transition-all active:scale-95 shadow-xl disabled:opacity-60 flex items-center justify-center gap-3"
                         style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, boxShadow: `0 12px 40px ${color}40` }}
                     >
                         {loading ? (
@@ -234,7 +234,7 @@ export default function CheckInCard({ appointment }: CheckInCardProps) {
                     </button>
                     {error && (
                         <div className="mt-4 space-y-3">
-                            <p className="text-center text-xs font-bold text-red-500 uppercase tracking-widest">{error}</p>
+                            <p className="text-center text-xs font-bold text-red-500 uppercase tracking-wide">{error}</p>
                             {error.toLowerCase().includes('expirado') && appointment.whatsapp && (
                                 <button
                                     onClick={() => {
@@ -242,7 +242,7 @@ export default function CheckInCard({ appointment }: CheckInCardProps) {
                                         const msg = `Hola, mi check-in para la cita de las ${appointment.horaInicio} aparece como expirado pero ya estoy aquí.`;
                                         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
                                     }}
-                                    className="w-full py-3 bg-emerald-500/10 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2"
+                                    className="w-full py-3 bg-emerald-500/10 text-emerald-600 rounded-xl text-xs font-bold uppercase tracking-wide border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2"
                                 >
                                     <svg viewBox="0 0 24 24" fill="currentColor" className="size-4"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.82 9.82 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
                                     AVISAR POR WHATSAPP
@@ -250,7 +250,7 @@ export default function CheckInCard({ appointment }: CheckInCardProps) {
                             )}
                         </div>
                     )}
-                    <p className="text-center text-[10px] font-bold text-slate-400 mt-3 uppercase tracking-widest">
+                    <p className="text-center text-xs font-bold text-slate-400 mt-3 uppercase tracking-wide">
                         Presiona cuando estés en el negocio
                     </p>
                 </div>
@@ -259,7 +259,7 @@ export default function CheckInCard({ appointment }: CheckInCardProps) {
             {/* Si ya hizo check-in o está pendiente, mostrar mensaje apropiado */}
             {!canCheckIn && (currentMode === 'normal' || currentMode === 'pending') && (
                 <div className="px-7 pb-6">
-                    <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-wide">
                         {currentMode === 'pending' 
                             ? 'Completa el pago o espera la confirmación' 
                             : 'El botón de llegada aparecerá 30 min antes de tu cita'}

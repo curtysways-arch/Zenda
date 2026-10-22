@@ -246,14 +246,14 @@ export default function GymPromocionesView({ initialPromotions, membershipPlans,
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <h3 className="font-bold text-gray-900 text-sm truncate">{promo.titulo}</h3>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${estadoInfo.color}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${estadoInfo.color}`}>
                         {estadoInfo.label}
                       </span>
                     </div>
                     {cleanDesc && <p className="text-xs text-gray-500 line-clamp-1">{cleanDesc}</p>}
                     <div className="flex flex-wrap gap-3 mt-1.5">
                       {promo.precioPromo != null && (
-                        <span className="text-sm font-black text-gray-900">
+                        <span className="text-sm font-bold text-gray-900">
                           ${promo.precioPromo}
                           {promo.precioAnterior && promo.precioAnterior > promo.precioPromo && (
                             <span className="text-xs text-gray-400 line-through ml-1.5">${promo.precioAnterior}</span>
@@ -261,12 +261,12 @@ export default function GymPromocionesView({ initialPromotions, membershipPlans,
                         </span>
                       )}
                       {planName && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100">
                           {planName}
                         </span>
                       )}
                       {promo.fechaFin && (
-                        <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                        <span className="text-xs text-gray-400 flex items-center gap-1">
                           <Calendar size={10} />
                           Hasta {new Date(promo.fechaFin).toLocaleDateString('es', { day: '2-digit', month: 'short' })}
                         </span>

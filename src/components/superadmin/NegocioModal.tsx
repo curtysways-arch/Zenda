@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import PhoneInput from "../ui/PhoneInput";
 import ImageUploader from "../ui/ImageUploader";
 import { clsx } from "clsx";
-import BusinessProvisioningWizard from './wizard/BusinessProvisioningWizard';
+import AppDeliveryWizard from './wizard/AppDeliveryWizard';
 
 interface NegocioModalProps {
     isOpen: boolean;
@@ -297,7 +297,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                             <Check strokeWidth={3} className="w-8 h-8" />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-xl font-black italic">¡Negocio Aprovisionado!</h3>
+                            <h3 className="text-xl font-bold ">¡Negocio Aprovisionado!</h3>
                             <p className="text-xs text-slate-400">El negocio <span className="text-emerald-400 font-bold">{negocioCreadoInfo.slug}</span> ha sido instanciado exitosamente.</p>
                         </div>
                         <button
@@ -306,7 +306,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                 onClose();
                                 router.refresh();
                             }}
-                            className="w-full py-4 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-emerald-400"
+                            className="w-full py-4 bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-2xl hover:bg-emerald-400"
                         >
                             Finalizar e ir a Citiox Studio
                         </button>
@@ -317,12 +317,11 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         }
 
         return createPortal(
-            <div className="fixed inset-0 z-[999999] bg-slate-950/85 backdrop-blur-md overflow-y-auto flex items-center justify-center p-2 sm:p-4">
-                <BusinessProvisioningWizard
+            <div className="dark fixed inset-0 z-[999999] bg-slate-950/85 backdrop-blur-md overflow-y-auto flex items-center justify-center p-2 sm:p-4 text-white">
+                <AppDeliveryWizard
                     onClose={onClose}
                     onSuccess={(info) => {
-                        setNegocioCreadoInfo(info);
-                        setCreadoExitosamente(true);
+                        router.refresh();
                     }}
                 />
             </div>,
@@ -505,16 +504,16 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         return createPortal(
             <div className="fixed inset-0 z-[999999] bg-slate-50 dark:bg-[#080d0b] text-slate-900 dark:text-white overflow-y-auto">
                 <div className="min-h-full flex items-center justify-center p-4 py-8">
-                <div className="max-w-2xl w-full bg-white dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-[3.5rem] p-8 md:p-12 space-y-8 relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.05)] dark:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)]">
+                <div className="max-w-2xl w-full bg-white dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-2xl p-8 md:p-12 space-y-8 relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.05)] dark:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)]">
                     <div className="absolute -top-32 -right-32 w-80 h-80 bg-cyan-500/5 dark:bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
                     
                     <div className="text-center space-y-4">
-                        <div className="w-20 h-20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 rounded-[2rem] flex items-center justify-center mx-auto shadow-[0_20px_40px_rgba(6,182,212,0.1)] animate-bounce">
+                        <div className="w-20 h-20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 rounded-2xl flex items-center justify-center mx-auto shadow-[0_20px_40px_rgba(6,182,212,0.1)] animate-bounce">
                             <Award size={40} />
                         </div>
                         <div className="space-y-1">
-                            <span className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-[0.4em] italic">¡Listo para despegar!</span>
-                            <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight italic text-slate-900 dark:text-white leading-none">Negocio Creado</h2>
+                            <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide ">¡Listo para despegar!</span>
+                            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">Negocio Creado</h2>
                         </div>
                         <p className="text-slate-550 dark:text-slate-400 text-sm max-w-md mx-auto">
                             CitiOx ha configurado el branding, los servicios, los horarios y las credenciales. La plataforma está operativa para recibir citas en vivo.
@@ -523,27 +522,27 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
                     <div className="space-y-6">
                         {/* Ficha Negocio */}
-                        <div className="p-6 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 rounded-[2.5rem] grid grid-cols-2 gap-4">
+                        <div className="p-6 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 rounded-2xl grid grid-cols-2 gap-4">
                             <div>
-                                <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest">Nombre Comercial</span>
-                                <span className="text-base font-black text-slate-900 dark:text-white uppercase italic">{negocioCreadoInfo.nombre}</span>
+                                <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Nombre Comercial</span>
+                                <span className="text-base font-bold text-slate-900 dark:text-white uppercase ">{negocioCreadoInfo.nombre}</span>
                             </div>
                             <div>
-                                <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest">Plan Actual</span>
-                                <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 uppercase flex items-center gap-1.5 mt-0.5">
+                                <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Plan Actual</span>
+                                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase flex items-center gap-1.5 mt-0.5">
                                     <Zap size={14} className="fill-emerald-600 dark:fill-emerald-400" /> Plan PRO (Trial 14 días)
                                 </span>
-                                <span className="block text-[9px] text-slate-500 font-bold mt-0.5">Vence: {vencimientoTrial.toLocaleDateString()}</span>
+                                <span className="block text-xs text-slate-500 font-bold mt-0.5">Vence: {vencimientoTrial.toLocaleDateString()}</span>
                             </div>
                         </div>
 
                         {/* Enlaces y Acceso */}
                         <div className="space-y-4">
-                            <h4 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] italic px-1">Enlaces de Acceso</h4>
+                            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1">Enlaces de Acceso</h4>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl">
                                     <div>
-                                        <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Página Pública</span>
+                                        <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Página Pública</span>
                                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300 break-all select-all">{publicLink}</span>
                                     </div>
                                     <button onClick={() => copyToClipboard(publicLink, "Enlace público")} className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
@@ -552,7 +551,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                 </div>
                                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl">
                                     <div>
-                                        <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Panel de Control</span>
+                                        <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Panel de Control</span>
                                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300 break-all select-all">{adminLink}</span>
                                     </div>
                                     <button onClick={() => copyToClipboard(adminLink, "Enlace del panel")} className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
@@ -564,8 +563,8 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
                         {/* Credenciales de Acceso */}
                         <div className="space-y-4">
-                            <h4 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] italic px-1">Credenciales Administrador</h4>
-                            <div className="p-6 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/5 rounded-[2.5rem] space-y-3 relative">
+                            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1">Credenciales Administrador</h4>
+                            <div className="p-6 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/5 rounded-2xl space-y-3 relative">
                                 <button 
                                     onClick={() => copyToClipboard(`Usuario: ${formData.adminEmail || formData.emailContacto}\nContraseña: ${formData.adminPassword}`, "Credenciales")} 
                                     className="absolute top-4 right-4 p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
@@ -573,12 +572,12 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                     <Copy size={18} />
                                 </button>
                                 <div>
-                                    <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest">Correo de Acceso</span>
+                                    <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Correo de Acceso</span>
                                     <span className="text-sm font-bold text-slate-900 dark:text-white select-all">{formData.adminEmail || formData.emailContacto}</span>
                                 </div>
                                 <div>
-                                    <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest">Contraseña Temporal</span>
-                                    <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 select-all tracking-wider font-mono">{formData.adminPassword}</span>
+                                    <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Contraseña Temporal</span>
+                                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 select-all tracking-wider font-mono">{formData.adminPassword}</span>
                                 </div>
                             </div>
                         </div>
@@ -589,21 +588,21 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         <a 
                             href={publicLink} 
                             target="_blank" 
-                            className="flex items-center justify-center gap-2 py-4 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-all"
+                            className="flex items-center justify-center gap-2 py-4 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all"
                         >
                             <ExternalLink size={14} /> Abrir Landing Pública
                         </a>
                         <a 
                             href={adminLink} 
                             target="_blank" 
-                            className="flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white hover:bg-indigo-700 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-all shadow-lg shadow-indigo-600/20"
+                            className="flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white hover:bg-indigo-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-indigo-600/20"
                         >
                             <Smartphone size={14} /> Abrir Panel Admin
                         </a>
                         <a 
                             href={`https://api.whatsapp.com/send?phone=${formData.whatsapp.replace(/\D/g, "")}&text=${encodeURIComponent(waMessageText)}`}
                             target="_blank"
-                            className="md:col-span-2 flex items-center justify-center gap-2 py-4 bg-emerald-600 text-white hover:bg-emerald-700 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-all shadow-lg shadow-emerald-600/20"
+                            className="md:col-span-2 flex items-center justify-center gap-2 py-4 bg-emerald-600 text-white hover:bg-emerald-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-600/20"
                         >
                             <MessageSquareIcon size={14} /> Enviar datos por WhatsApp
                         </a>
@@ -636,9 +635,9 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
                                 <div className="h-1 w-6 bg-emerald-500 rounded-full" />
-                                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] italic leading-none">Management</span>
+                                <span className="text-xs font-bold text-emerald-500 uppercase tracking-wide leading-none">Management</span>
                             </div>
-                            <h3 className="text-xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic leading-none">
+                            <h3 className="text-xl lg:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
                                 Editar <span className="text-emerald-500">Negocio</span>
                             </h3>
                         </div>
@@ -657,7 +656,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                     className="flex-1 overflow-y-auto px-5 lg:px-20 py-8 space-y-8 bg-white dark:bg-[#0d1511] custom-scrollbar min-h-0"
                 >
                     {error && (
-                        <div className="max-w-4xl mx-auto p-6 bg-rose-500/10 border border-rose-500/20 rounded-3xl text-rose-500 text-xs font-black uppercase tracking-widest flex items-center gap-4 italic animate-in slide-in-from-top-4">
+                        <div className="max-w-4xl mx-auto p-6 bg-rose-500/10 border border-rose-500/20 rounded-3xl text-rose-500 text-xs font-bold uppercase tracking-wide flex items-center gap-4 animate-in slide-in-from-top-4">
                             <Zap size={20} fill="currentColor" />
                             {error}
                         </div>
@@ -761,9 +760,9 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         <SectionTitle icon={Zap} title="Suscripción y Estado" color="emerald" />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2 text-left">
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 ml-1">Estado del Negocio</label>
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1 ml-1">Estado del Negocio</label>
                                 <select
-                                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-transparent rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white shadow-inner dark:shadow-none appearance-none italic"
+                                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-transparent rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white shadow-inner dark:shadow-none appearance-none "
                                     value={formData.estado}
                                     onChange={e => setFormData(prev => ({ ...prev, estado: e.target.value }))}
                                 >
@@ -773,24 +772,24 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                 </select>
                             </div>
                             <div className="space-y-2 text-left">
-                                <label className="text-[9px] font-black text-amber-500 uppercase tracking-widest px-1 ml-1">Estado Suscripción</label>
+                                <label className="text-xs font-bold text-amber-500 uppercase tracking-wide px-1 ml-1">Estado Suscripción</label>
                                 <select
-                                    className="w-full px-6 py-4 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 text-sm font-bold text-amber-700 dark:text-amber-400 appearance-none italic"
+                                    className="w-full px-6 py-4 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 text-sm font-bold text-amber-700 dark:text-amber-400 appearance-none "
                                     value={formData.plan_status}
                                     onChange={e => setFormData(prev => ({ ...prev, plan_status: e.target.value }))}
                                 >
-                                    <option value="trial" style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>PERIODO DE PRUEBA</option>
-                                    <option value="active" style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>ACTIVO / PAGADO</option>
-                                    <option value="expired" style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>EXPIRADO / CANCELADO</option>
+                                    <option value="trial" style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>Periodo de prueba</option>
+                                    <option value="active" style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>Activo / pagado</option>
+                                    <option value="expired" style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>Expirado / cancelado</option>
                                 </select>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-6">
                             <div className="space-y-2 text-left">
-                                <label className="text-[9px] font-black text-emerald-500 uppercase tracking-widest px-1 ml-1">Plan de Suscripción</label>
+                                <label className="text-xs font-bold text-emerald-500 uppercase tracking-wide px-1 ml-1">Plan de Suscripción</label>
                                 <select
-                                    className="w-full px-6 py-4 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 text-sm font-bold text-emerald-700 dark:text-amber-400 appearance-none italic"
+                                    className="w-full px-6 py-4 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 text-sm font-bold text-emerald-700 dark:text-amber-400 appearance-none "
                                     value={formData.plan_id}
                                     onChange={e => setFormData(prev => ({ ...prev, plan_id: e.target.value }))}
                                 >
@@ -806,7 +805,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         <div 
                             onClick={() => setFormData(prev => ({ ...prev, crearDemo: !prev.crearDemo }))}
                             className={clsx(
-                                "flex items-center justify-between p-6 rounded-[2rem] border cursor-pointer transition-colors group text-left",
+                                "flex items-center justify-between p-6 rounded-2xl border cursor-pointer transition-colors group text-left",
                                 formData.crearDemo 
                                     ? "bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10" 
                                     : "bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/20 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-900/40"
@@ -817,8 +816,8 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                     <Award size={20} fill={formData.crearDemo ? "black" : "none"} />
                                 </div>
                                 <div className="text-left">
-                                    <span className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest block italic leading-none">Negocio Demo</span>
-                                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tight mt-1 block">Si está activado, este negocio se marcará como demostración y se excluirá de la facturación y métricas del SaaS en el panel de control.</span>
+                                    <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide block leading-none">Negocio Demo</span>
+                                    <span className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-1 block">Si está activado, este negocio se marcará como demostración y se excluirá de la facturación y métricas del SaaS en el panel de control.</span>
                                 </div>
                             </div>
                             <button
@@ -835,7 +834,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 px-8 py-5 bg-white dark:bg-slate-900 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-3xl font-black text-xs uppercase tracking-[0.3em] border border-slate-100 dark:border-white/5 transition-all italic active:scale-95"
+                        className="flex-1 px-8 py-5 bg-white dark:bg-slate-900 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-3xl font-bold text-xs uppercase tracking-wide border border-slate-100 dark:border-white/5 transition-all active:scale-95"
                     >
                         Cancelar
                     </button>
@@ -843,7 +842,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         form="negocio-form-edit"
                         type="submit"
                         disabled={loading}
-                        className="flex-[2] flex items-center justify-center gap-3 bg-emerald-600 text-white px-10 py-5 rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:bg-emerald-700 transition shadow-[0_20px_40px_rgba(16,185,129,0.3)] disabled:opacity-50 active:scale-95 italic"
+                        className="flex-[2] flex items-center justify-center gap-3 bg-emerald-600 text-white px-10 py-5 rounded-3xl font-bold text-xs uppercase tracking-wide hover:bg-emerald-700 transition shadow-[0_20px_40px_rgba(16,185,129,0.3)] disabled:opacity-50 active:scale-95 "
                     >
                         {loading ? <Loader2 className="animate-spin" size={20} strokeWidth={3} /> : <Save size={20} strokeWidth={3} />}
                         Guardar Cambios
@@ -860,7 +859,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
     if (creationMode === "none") {
         return createPortal(
             <div className="fixed inset-0 z-[999999] bg-slate-50 dark:bg-[#0d1511] text-slate-900 dark:text-white flex flex-col items-center justify-center p-4">
-                <div className="max-w-3xl w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-[3.5rem] p-8 md:p-14 space-y-12 relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.05)] dark:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)]">
+                <div className="max-w-3xl w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl p-8 md:p-14 space-y-12 relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.05)] dark:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)]">
                     {/* Ambient Glow */}
                     <div className="absolute -top-32 -left-32 w-96 h-96 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
                     
@@ -874,9 +873,9 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                     <div className="text-center space-y-4">
                         <div className="flex items-center justify-center gap-2 mb-2">
                             <div className="h-1.5 w-8 bg-cyan-500 rounded-full" />
-                            <span className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-[0.5em] italic">CitiOx Superadmin</span>
+                            <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide ">CitiOx Superadmin</span>
                         </div>
-                        <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight italic leading-none text-slate-900 dark:text-white">Nuevo Negocio</h2>
+                        <h2 className="text-3xl md:text-3xl font-bold tracking-tight leading-none text-slate-900 dark:text-white">Nuevo Negocio</h2>
                         <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-lg mx-auto">
                             Elige el método de creación de negocio. La configuración asistida dejará el sistema pre-configurado y listo para demostraciones inmediatamente.
                         </p>
@@ -886,18 +885,18 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         {/* Creación Rápida */}
                         <div 
                             onClick={() => setCreationMode("fast")}
-                            className="p-8 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/40 dark:hover:bg-slate-900/80 border border-slate-200 dark:border-white/5 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 rounded-[2.5rem] cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group relative overflow-hidden flex flex-col justify-between min-h-[220px]"
+                            className="p-8 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/40 dark:hover:bg-slate-900/80 border border-slate-200 dark:border-white/5 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 rounded-2xl cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group relative overflow-hidden flex flex-col justify-between min-h-[220px]"
                         >
                             <div className="space-y-4">
                                 <div className="w-12 h-12 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:bg-emerald-500/10 rounded-2xl flex items-center justify-center transition-all">
                                     <Building2 size={24} />
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="text-lg font-black uppercase tracking-tight italic text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Creación Rápida</h3>
+                                    <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Creación Rápida</h3>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Solo nombre, teléfono y propietario. Ideal para altas rápidas de uso inmediato.</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white uppercase tracking-widest mt-6">
+                            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white uppercase tracking-wide mt-6">
                                 Comenzar <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                             </div>
                         </div>
@@ -908,21 +907,21 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                 setCreationMode("assisted");
                                 handleCategoriaChange("Spa / Centro Estético"); // Cargar plantilla inicial
                             }}
-                            className="p-8 bg-gradient-to-br from-emerald-500/5 to-emerald-500/[0.02] hover:from-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/40 rounded-[2.5rem] cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group relative overflow-hidden flex flex-col justify-between min-h-[220px] shadow-[0_15px_30px_rgba(16,185,129,0.05)]"
+                            className="p-8 bg-gradient-to-br from-emerald-500/5 to-emerald-500/[0.02] hover:from-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/40 rounded-2xl cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group relative overflow-hidden flex flex-col justify-between min-h-[220px] shadow-[0_15px_30px_rgba(16,185,129,0.05)]"
                         >
                             <div className="absolute top-4 right-4">
-                                <span className="px-2 py-0.5 bg-emerald-500 text-black font-black text-[8px] tracking-widest uppercase rounded">Recomendado</span>
+                                <span className="px-2 py-0.5 bg-emerald-500 text-black font-bold text-xs tracking-wide uppercase rounded">Recomendado</span>
                             </div>
                             <div className="space-y-4">
                                 <div className="w-12 h-12 bg-emerald-500 text-black rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
                                     <Sparkles size={24} fill="black" />
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="text-lg font-black uppercase tracking-tight italic text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-500 dark:group-hover:text-emerald-300">Configuración Asistida</h3>
+                                    <h3 className="text-lg font-bold tracking-tight text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-500 dark:group-hover:text-emerald-300">Configuración Asistida</h3>
                                     <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">Configura branding, colores corporativos, horarios comerciales, servicios predefinidos y profesionales.</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 text-[10px] font-black text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700 dark:group-hover:text-white uppercase tracking-widest mt-6">
+                            <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700 dark:group-hover:text-white uppercase tracking-wide mt-6">
                                 Abrir Wizard Setup <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                             </div>
                         </div>
@@ -947,7 +946,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         >
                             <ArrowLeft size={12} /> Volver a opciones
                         </button>
-                        <h3 className="text-2xl font-black uppercase tracking-tighter italic">Creación Rápida</h3>
+                        <h3 className="text-2xl font-bold tracking-tight ">Creación Rápida</h3>
                     </div>
                     <button onClick={onClose} className="size-10 bg-slate-100 dark:bg-white/5 rounded-xl flex items-center justify-center">
                         <X size={18} />
@@ -956,7 +955,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
                 <form onSubmit={handleSaveSubmit} className="flex-1 overflow-y-auto px-6 py-8 max-w-3xl mx-auto w-full space-y-6">
                     {error && (
-                        <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-black uppercase tracking-widest rounded-2xl flex items-center gap-3">
+                        <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-bold uppercase tracking-wide rounded-2xl flex items-center gap-3">
                             <Zap size={16} /> {error}
                         </div>
                     )}
@@ -1006,7 +1005,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                     />
 
                     <div className="space-y-1.5">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 ml-1">Contraseña Administrador</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1 ml-1">Contraseña Administrador</label>
                         <div className="flex gap-3">
                             <div className="relative flex-1 group">
                                 <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 flex items-center">
@@ -1024,7 +1023,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                             <button 
                                 type="button" 
                                 onClick={handleGenerarPassword} 
-                                className="px-5 py-4 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-2xl text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-white transition-all active:scale-95"
+                                className="px-5 py-4 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-2xl text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white transition-all active:scale-95"
                             >
                                 Generar
                             </button>
@@ -1033,13 +1032,13 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                 </form>
 
                 <div className="p-6 border-t border-slate-100 dark:border-white/5 flex gap-4 bg-slate-50 dark:bg-slate-950/20 shrink-0">
-                    <button onClick={() => setCreationMode("none")} className="flex-1 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl font-black text-[10px] uppercase tracking-wider text-slate-400">
+                    <button onClick={() => setCreationMode("none")} className="flex-1 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl font-bold text-xs uppercase tracking-wider text-slate-400">
                         Atrás
                     </button>
                     <button 
                         onClick={() => handleSaveSubmit()}
                         disabled={loading || !formData.nombre || !formData.adminEmail || !formData.adminPassword} 
-                        className="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-wider hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-bold text-xs uppercase tracking-wider hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                         {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                         Crear Negocio (PRO Trial)
@@ -1066,10 +1065,10 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[8px] font-black tracking-widest uppercase rounded border border-emerald-500/20">Configuración Asistida</span>
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Paso {step} de {totalSteps}</span>
+                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold tracking-wide uppercase rounded border border-emerald-500/20">Configuración Asistida</span>
+                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Paso {step} de {totalSteps}</span>
                         </div>
-                        <h3 className="text-xl lg:text-2xl font-black uppercase tracking-tight italic text-slate-900 dark:text-white leading-none mt-1">
+                        <h3 className="text-xl lg:text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none mt-1">
                             Creación de <span className="text-emerald-600 dark:text-emerald-400">Negocio</span>
                         </h3>
                     </div>
@@ -1092,7 +1091,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                 <div className="flex-1 overflow-y-auto px-6 py-8 md:px-12 lg:px-20 bg-white dark:bg-slate-950/20 custom-scrollbar min-h-0 text-left">
                     <div className="max-w-2xl mx-auto space-y-8">
                         {error && (
-                            <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-black uppercase tracking-widest rounded-2xl flex items-center gap-3 animate-pulse">
+                            <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-bold uppercase tracking-wide rounded-2xl flex items-center gap-3 animate-pulse">
                                 <Zap size={16} /> {error}
                             </div>
                         )}
@@ -1101,7 +1100,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         {step === 1 && (
                             <div className="space-y-6 animate-in fade-in duration-300">
                                 <div>
-                                    <h3 className="text-2xl font-black uppercase tracking-tight italic text-slate-900 dark:text-white leading-none">Información Básica</h3>
+                                    <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">Información Básica</h3>
                                     <p className="text-slate-550 dark:text-slate-400 text-xs mt-1 font-semibold uppercase tracking-wider">Define el perfil comercial e industrial de tu negocio.</p>
                                 </div>
 
@@ -1115,7 +1114,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                 />
 
                                 <div className="space-y-2">
-                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1 ml-1">Tipo de Negocio / Especialidad</label>
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1 ml-1">Tipo de Negocio / Especialidad</label>
                                     <select
                                         value={formData.tipoNegocio}
                                         onChange={(e) => {
@@ -1126,7 +1125,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                 setFormData(prev => ({ ...prev, businessTypeId: foundBt.id }));
                                             }
                                         }}
-                                        className="w-full px-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl outline-none focus:border-emerald-500/30 text-sm font-bold italic"
+                                        className="w-full px-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl outline-none focus:border-emerald-500/30 text-sm font-bold "
                                         style={{ color: '#1e293b' }}
                                     >
                                         {dbBusinessTypes.length > 0 ? (
@@ -1141,7 +1140,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                             ))
                                         )}
                                     </select>
-                                    <p className="text-[9px] text-slate-500 font-bold italic ml-1">Esto cargará la máquina de estados y plantillas del tipo de negocio asignado.</p>
+                                    <p className="text-xs text-slate-500 font-bold ml-1">Esto cargará la máquina de estados y plantillas del tipo de negocio asignado.</p>
                                 </div>
 
                                 <InputField 
@@ -1180,7 +1179,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                 />
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1 ml-1">Contraseña Administrador</label>
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1 ml-1">Contraseña Administrador</label>
                                     <div className="flex gap-3">
                                         <div className="relative flex-1 group">
                                             <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 flex items-center">
@@ -1198,7 +1197,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                         <button 
                                             type="button" 
                                             onClick={handleGenerarPassword} 
-                                            className="px-5 py-4 bg-emerald-500 text-black hover:bg-emerald-450 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1.5"
+                                            className="px-5 py-4 bg-emerald-500 text-black hover:bg-emerald-450 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1.5"
                                         >
                                             <Sparkles size={12} fill="black" /> Generar
                                         </button>
@@ -1211,13 +1210,13 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         {step === 2 && (
                             <div className="space-y-6 animate-in fade-in duration-300">
                                 <div>
-                                    <h3 className="text-2xl font-black uppercase tracking-tight italic text-slate-900 dark:text-white leading-none">Branding e Identidad</h3>
+                                    <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">Branding e Identidad</h3>
                                     <p className="text-slate-550 dark:text-slate-400 text-xs mt-1 font-semibold uppercase tracking-wider">Personaliza la visualización de tu marca.</p>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Logo Corporativo (Cuadrado)</span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Logo Corporativo (Cuadrado)</span>
                                         <ImageUploader 
                                             category="logo" 
                                             currentUrl={formData.logoUrl} 
@@ -1230,7 +1229,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Fotos de Portada (Múltiple)</span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Fotos de Portada (Múltiple)</span>
                                         
                                         {/* Grid de banners existentes */}
                                         {formData.bannerUrls && formData.bannerUrls.length > 0 && (
@@ -1252,7 +1251,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                         >
                                                             <X size={12} strokeWidth={2.5} />
                                                         </button>
-                                                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-[8px] font-black uppercase tracking-widest">
+                                                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-xs font-bold uppercase tracking-wide">
                                                             {index === 0 ? "Principal" : `Foto ${index + 1}`}
                                                         </div>
                                                     </div>
@@ -1282,7 +1281,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Color Primario */}
                                     <div className="space-y-3">
-                                        <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1 ml-1">Color Principal (Botones/Links)</label>
+                                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1 ml-1">Color Principal (Botones/Links)</label>
                                         <div className="flex gap-3">
                                             <input 
                                                 type="color" 
@@ -1316,7 +1315,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
                                     {/* Color Secundario */}
                                     <div className="space-y-3">
-                                        <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1 ml-1">Color Secundario (Fondo App)</label>
+                                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1 ml-1">Color Secundario (Fondo App)</label>
                                         <div className="flex gap-3">
                                             <input 
                                                 type="color" 
@@ -1371,7 +1370,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         {step === 3 && (
                             <div className="space-y-6 animate-in fade-in duration-300">
                                 <div>
-                                    <h3 className="text-2xl font-black uppercase tracking-tight italic text-slate-900 dark:text-white leading-none">Horarios de Atención</h3>
+                                    <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">Horarios de Atención</h3>
                                     <p className="text-slate-550 dark:text-slate-400 text-xs mt-1 font-semibold uppercase tracking-wider">Define el rango operativo y días de apertura.</p>
                                 </div>
 
@@ -1393,7 +1392,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1 ml-1">Días Hábiles de Atención</label>
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1 ml-1">Días Hábiles de Atención</label>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                         {[
                                             { num: 1, label: "Lunes" },
@@ -1409,9 +1408,9 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                 type="button"
                                                 onClick={() => setDiasAtencion(prev => ({ ...prev, [day.num]: !prev[day.num] }))}
                                                 className={clsx(
-                                                    "py-3 rounded-xl text-xs font-black uppercase tracking-wider border transition-all active:scale-95",
+                                                    "py-3 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all active:scale-95",
                                                     diasAtencion[day.num] 
-                                                        ? "bg-emerald-500 text-black border-emerald-500 font-black shadow-md shadow-emerald-500/10" 
+                                                        ? "bg-emerald-500 text-black border-emerald-500 font-bold shadow-md shadow-emerald-500/10" 
                                                         : "bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-500 border-slate-200 dark:border-white/5 hover:border-slate-350 dark:hover:border-white/10"
                                                 )}
                                             >
@@ -1427,14 +1426,14 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         {step === 4 && (
                             <div className="space-y-6 animate-in fade-in duration-300">
                                 <div>
-                                    <h3 className="text-2xl font-black uppercase tracking-tight italic text-slate-900 dark:text-white leading-none">Servicios</h3>
+                                    <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">Servicios</h3>
                                     <p className="text-slate-555 dark:text-slate-400 text-xs mt-1 font-semibold uppercase tracking-wider">Carga los tratamientos y servicios iniciales.</p>
                                 </div>
 
                                 {/* Sugerencias rápidas */}
                                 {PLANTILLAS_SERVICIOS[formData.tipoNegocio] && (
-                                    <div className="p-6 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 rounded-[2rem] space-y-3">
-                                        <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Sugerencias rápidas para tu categoría</span>
+                                    <div className="p-6 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 rounded-2xl space-y-3">
+                                        <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Sugerencias rápidas para tu categoría</span>
                                         <div className="flex flex-wrap gap-2">
                                             {PLANTILLAS_SERVICIOS[formData.tipoNegocio].map((s, idx) => {
                                                 const yaAñadido = wizardServicios.some(ws => ws.nombre.toLowerCase() === s.nombre.toLowerCase());
@@ -1464,7 +1463,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
                                 {/* Lista de servicios agregados */}
                                 <div className="space-y-3">
-                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1 ml-1">Servicios a registrar (Mín. 1)</label>
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1 ml-1">Servicios a registrar (Mín. 1)</label>
                                     {wizardServicios.length === 0 ? (
                                         <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-white/5 rounded-3xl text-slate-500">
                                             Aún no has agregado ningún servicio. Usa las sugerencias de arriba o introduce uno nuevo abajo.
@@ -1486,7 +1485,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                             inputMode="text"
                                                             value={serv.nombre} 
                                                             onChange={(e) => setWizardServicios(prev => prev.map(ws => ws.id === serv.id ? { ...ws, nombre: e.target.value } : ws))}
-                                                            className="col-span-1 bg-transparent border-0 outline-none text-xs font-black uppercase italic text-slate-900 dark:text-slate-100"
+                                                            className="col-span-1 bg-transparent border-0 outline-none text-xs font-bold uppercase text-slate-900 dark:text-slate-100"
                                                             placeholder="Nombre"
                                                         />
                                                         <div className="flex items-center gap-1">
@@ -1498,16 +1497,16 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                                 className="w-14 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 outline-none text-xs font-bold text-right text-slate-900 dark:text-slate-300"
                                                                 placeholder="0"
                                                             />
-                                                            <span className="text-[10px] text-slate-500">min</span>
+                                                            <span className="text-xs text-slate-500">min</span>
                                                         </div>
                                                         <div className="flex items-center gap-1 justify-end">
-                                                            <span className="text-[10px] text-slate-500">$</span>
+                                                            <span className="text-xs text-slate-500">$</span>
                                                             <input 
                                                                 type="text"
                                                                 inputMode="numeric"
                                                                 value={serv.precio} 
                                                                 onChange={(e) => setWizardServicios(prev => prev.map(ws => ws.id === serv.id ? { ...ws, precio: parseFloat(e.target.value) || 0 } : ws))}
-                                                                className="w-14 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 outline-none text-xs font-black text-right text-emerald-600 dark:text-emerald-450"
+                                                                className="w-14 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 outline-none text-xs font-bold text-right text-emerald-600 dark:text-emerald-450"
                                                                 placeholder="0"
                                                             />
                                                         </div>
@@ -1527,7 +1526,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
                                 {/* Formulario para nuevo servicio */}
                                 <div className="p-5 bg-slate-50 dark:bg-slate-900/10 border border-slate-200 dark:border-white/5 rounded-3xl space-y-4">
-                                    <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Crear Servicio Manual</span>
+                                    <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Crear Servicio Manual</span>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <input 
                                             type="text" 
@@ -1559,7 +1558,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                             <button
                                                 type="button"
                                                 onClick={handleAddServicioManual}
-                                                className="px-4 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase transition-all hover:bg-emerald-700 active:scale-95"
+                                                className="px-4 bg-emerald-600 text-white rounded-xl text-xs font-bold uppercase transition-all hover:bg-emerald-700 active:scale-95"
                                             >
                                                 Añadir
                                             </button>
@@ -1574,7 +1573,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                             <div className="space-y-6 animate-in fade-in duration-300">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h3 className="text-2xl font-black uppercase tracking-tight italic text-slate-900 dark:text-white leading-none">Profesionales (Staff)</h3>
+                                        <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">Profesionales (Staff)</h3>
                                         <p className="text-slate-505 dark:text-slate-400 text-xs mt-1 font-semibold uppercase tracking-wider">Crea los miembros del equipo que brindan los servicios.</p>
                                     </div>
                                     <button 
@@ -1583,7 +1582,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                             setWizardStaff([]);
                                             setStep(6);
                                         }}
-                                        className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 hover:border-slate-350 dark:hover:border-white/20 px-4 py-2 rounded-xl uppercase tracking-widest font-black"
+                                        className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 hover:border-slate-350 dark:hover:border-white/20 px-4 py-2 rounded-xl uppercase tracking-wide font-bold"
                                     >
                                         Omitir este paso
                                     </button>
@@ -1591,7 +1590,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
                                 {/* Lista de profesionales locales */}
                                 <div className="space-y-3">
-                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1 ml-1">Profesionales registrados</label>
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1 ml-1">Profesionales registrados</label>
                                     {wizardStaff.length === 0 ? (
                                         <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-white/5 rounded-3xl text-slate-500">
                                             No se han registrado profesionales aún. Agrega uno abajo o presiona "Omitir" si atiende el propio negocio.
@@ -1601,13 +1600,13 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                             {wizardStaff.map(st => (
                                                 <div key={st.id} className="p-5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl flex items-center justify-between gap-4 group">
                                                     <div>
-                                                        <span className="text-sm font-black text-slate-900 dark:text-white uppercase italic">{st.name}</span>
-                                                        <span className="block text-[9px] text-slate-550 dark:text-slate-400 uppercase tracking-wider font-bold mt-0.5">{st.role}</span>
+                                                        <span className="text-sm font-bold text-slate-900 dark:text-white uppercase ">{st.name}</span>
+                                                        <span className="block text-xs text-slate-550 dark:text-slate-400 uppercase tracking-wider font-bold mt-0.5">{st.role}</span>
                                                         <div className="flex flex-wrap gap-1 mt-2">
                                                             {st.servicesIds.map(sid => {
                                                                 const sObj = wizardServicios.find(s => s.id === sid);
                                                                 return sObj ? (
-                                                                    <span key={sid} className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[8px] font-black uppercase tracking-widest rounded-md text-slate-600 dark:text-slate-300">
+                                                                    <span key={sid} className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-bold uppercase tracking-wide rounded-md text-slate-600 dark:text-slate-300">
                                                                         {sObj.nombre}
                                                                     </span>
                                                                 ) : null;
@@ -1629,7 +1628,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
                                 {/* Formulario para agregar profesional */}
                                 <div className="p-6 bg-slate-50 dark:bg-slate-900/10 border border-slate-200 dark:border-white/5 rounded-3xl space-y-4">
-                                    <span className="block text-[8px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">Crear Profesional</span>
+                                    <span className="block text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wide">Crear Profesional</span>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <input 
                                             type="text" 
@@ -1649,9 +1648,9 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
                                     {/* Selección de servicios para el profesional */}
                                     <div className="space-y-2">
-                                        <span className="block text-[8px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest px-1">Servicios que realiza</span>
+                                        <span className="block text-xs font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wide px-1">Servicios que realiza</span>
                                         {wizardServicios.length === 0 ? (
-                                            <p className="text-[10px] text-slate-500 font-bold italic">Debes agregar servicios primero en el paso anterior.</p>
+                                            <p className="text-xs text-slate-500 font-bold ">Debes agregar servicios primero en el paso anterior.</p>
                                         ) : (
                                             <div className="flex flex-wrap gap-2">
                                                 {wizardServicios.map(serv => {
@@ -1662,7 +1661,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                             type="button"
                                                             onClick={() => toggleServiceInStaff(serv.id)}
                                                             className={clsx(
-                                                                "px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg border transition-all",
+                                                                "px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg border transition-all",
                                                                 seleccionado 
                                                                     ? "bg-indigo-600 text-white border-indigo-600" 
                                                                     : "bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-500 border-slate-200 dark:border-white/5 hover:border-slate-350 dark:hover:border-white/10"
@@ -1680,7 +1679,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                         type="button"
                                         onClick={handleAddStaffManual}
                                         disabled={!newStaff.name.trim() || newStaff.servicesIds.length === 0}
-                                        className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all disabled:opacity-50"
+                                        className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
                                     >
                                         Agregar Profesional
                                     </button>
@@ -1692,27 +1691,27 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         {step === 6 && (
                             <div className="space-y-6 animate-in fade-in duration-300">
                                 <div>
-                                    <h3 className="text-2xl font-black uppercase tracking-tight italic text-slate-900 dark:text-white leading-none">Resumen y Opciones</h3>
+                                    <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">Resumen y Opciones</h3>
                                     <p className="text-slate-505 dark:text-slate-400 text-xs mt-1 font-semibold uppercase tracking-wider">Verifica que todos los datos comerciales sean correctos antes del despliegue.</p>
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="p-6 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-[2.5rem] grid grid-cols-2 gap-6">
+                                    <div className="p-6 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-2xl grid grid-cols-2 gap-6">
                                         <div>
-                                            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Negocio</span>
-                                            <span className="text-base font-black text-slate-900 dark:text-white uppercase italic leading-none">{formData.nombre}</span>
-                                            <span className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold mt-1">/{formData.slug}</span>
+                                            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Negocio</span>
+                                            <span className="text-base font-bold text-slate-900 dark:text-white uppercase leading-none">{formData.nombre}</span>
+                                            <span className="block text-xs text-slate-500 dark:text-slate-400 font-bold mt-1">/{formData.slug}</span>
                                         </div>
                                         <div>
-                                            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Categoría</span>
-                                            <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 uppercase italic leading-none">{formData.tipoNegocio}</span>
+                                            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Categoría</span>
+                                            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase leading-none">{formData.tipoNegocio}</span>
                                         </div>
                                         <div>
-                                            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Contacto</span>
+                                            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Contacto</span>
                                             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{formData.whatsapp}</span>
                                         </div>
                                         <div>
-                                            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Usuario Administrador</span>
+                                            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Usuario Administrador</span>
                                             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 break-all">{formData.adminEmail || formData.emailContacto}</span>
                                         </div>
                                     </div>
@@ -1720,18 +1719,18 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                     {/* Stats rápidos */}
                                     <div className="grid grid-cols-3 gap-4">
                                         <div className="p-4 bg-slate-50 dark:bg-slate-900/20 border border-slate-200 dark:border-white/5 rounded-2xl text-center">
-                                            <span className="text-xl font-black text-slate-900 dark:text-white italic">{wizardServicios.length}</span>
-                                            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mt-0.5">Servicios</span>
+                                            <span className="text-xl font-bold text-slate-900 dark:text-white ">{wizardServicios.length}</span>
+                                            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide mt-0.5">Servicios</span>
                                         </div>
                                         <div className="p-4 bg-slate-50 dark:bg-slate-900/20 border border-slate-200 dark:border-white/5 rounded-2xl text-center">
-                                            <span className="text-xl font-black text-slate-900 dark:text-white italic">{wizardStaff.length}</span>
-                                            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mt-0.5">Especialistas</span>
+                                            <span className="text-xl font-bold text-slate-900 dark:text-white ">{wizardStaff.length}</span>
+                                            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide mt-0.5">Especialistas</span>
                                         </div>
                                         <div className="p-4 bg-slate-50 dark:bg-slate-900/20 border border-slate-200 dark:border-white/5 rounded-2xl text-center">
-                                            <span className="text-xl font-black text-slate-900 dark:text-white italic">
+                                            <span className="text-xl font-bold text-slate-900 dark:text-white ">
                                                 {Object.values(diasAtencion).filter(Boolean).length}
                                             </span>
-                                            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mt-0.5">Días Hábiles</span>
+                                            <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide mt-0.5">Días Hábiles</span>
                                         </div>
                                     </div>
 
@@ -1739,7 +1738,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                     <div 
                                         onClick={() => setFormData(prev => ({ ...prev, crearDemo: !prev.crearDemo }))}
                                         className={clsx(
-                                            "flex items-center justify-between p-6 rounded-[2.5rem] border cursor-pointer transition-colors group",
+                                            "flex items-center justify-between p-6 rounded-2xl border cursor-pointer transition-colors group",
                                             formData.crearDemo 
                                                 ? "bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10" 
                                                 : "bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/20 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-900/40"
@@ -1750,8 +1749,8 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                 <Award size={20} fill={formData.crearDemo ? "black" : "none"} />
                                             </div>
                                             <div className="text-left">
-                                                <span className="text-sm font-black text-slate-955 dark:text-white uppercase tracking-widest block italic leading-none">Crear como Negocio Demo</span>
-                                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tight mt-1 block">Genera automáticamente imágenes, servicios plantilla, un profesional y reservas simuladas para demostraciones inmediatas.</span>
+                                                <span className="text-sm font-bold text-slate-955 dark:text-white uppercase tracking-wide block leading-none">Crear como Negocio Demo</span>
+                                                <span className="text-xs text-slate-500 font-bold uppercase tracking-tight mt-1 block">Genera automáticamente imágenes, servicios plantilla, un profesional y reservas simuladas para demostraciones inmediatas.</span>
                                             </div>
                                         </div>
                                         <button
@@ -1772,11 +1771,11 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                     <div className="space-y-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                             <Smartphone size={14} className="text-slate-505 dark:text-slate-400" />
-                            <span className="text-[8px] font-black text-slate-505 dark:text-slate-400 uppercase tracking-widest">Vista previa móvil en tiempo real</span>
+                            <span className="text-xs font-bold text-slate-505 dark:text-slate-400 uppercase tracking-wide">Vista previa móvil en tiempo real</span>
                         </div>
 
                         {/* Teléfono Mockup */}
-                        <div className="w-[280px] h-[540px] bg-slate-950 border-4 border-slate-800 rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col justify-between text-left" style={{ backgroundColor: formData.colorSecundario }}>
+                        <div className="w-[280px] h-[540px] bg-slate-950 border-4 border-slate-800 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col justify-between text-left" style={{ backgroundColor: formData.colorSecundario }}>
                             {/* Parlante superior */}
                             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-800 rounded-full z-20 flex items-center justify-center">
                                 <div className="w-10 h-1 bg-slate-700 rounded-full" />
@@ -1790,11 +1789,11 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                         {formData.logoUrl ? (
                                             <img src={formData.logoUrl} alt="logo" className="w-6 h-6 rounded-full object-cover" />
                                         ) : (
-                                            <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] text-black font-black uppercase italic">
+                                            <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-xs text-black font-bold uppercase ">
                                                 {formData.nombre ? formData.nombre.charAt(0) : "C"}
                                             </div>
                                         )}
-                                        <span className="text-xs font-black uppercase tracking-tight text-white max-w-[130px] truncate">{formData.nombre || "Mi Spa"}</span>
+                                        <span className="text-xs font-bold uppercase tracking-tight text-white max-w-[130px] truncate">{formData.nombre || "Mi Spa"}</span>
                                     </div>
                                 </div>
 
@@ -1806,31 +1805,31 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                         <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent" />
                                     )}
                                     <div className="relative p-4 z-10">
-                                        <h4 className="text-sm font-black uppercase italic text-white leading-tight break-words">{formData.heroTitulo || `Bienvenido a ${formData.nombre || 'CitiOx'}`}</h4>
+                                        <h4 className="text-sm font-bold uppercase text-white leading-tight break-words">{formData.heroTitulo || `Bienvenido a ${formData.nombre || 'CitiOx'}`}</h4>
                                     </div>
                                 </div>
 
                                 {/* Frase secundaria */}
-                                <p className="text-[10px] text-slate-400 font-bold leading-normal">{formData.heroSubtitulo || "Reserva tus tratamientos de manera ágil."}</p>
+                                <p className="text-xs text-slate-400 font-bold leading-normal">{formData.heroSubtitulo || "Reserva tus tratamientos de manera ágil."}</p>
 
                                 {/* Simular Servicios */}
                                 <div className="space-y-2">
-                                    <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Nuestros Servicios</span>
+                                    <span className="block text-xs font-bold text-slate-500 uppercase tracking-wide">Nuestros Servicios</span>
                                     {wizardServicios.length === 0 ? (
-                                        <div className="p-3 text-center bg-white/5 rounded-xl text-[9px] text-slate-500 italic">No hay servicios añadidos</div>
+                                        <div className="p-3 text-center bg-white/5 rounded-xl text-xs text-slate-500 ">No hay servicios añadidos</div>
                                     ) : (
                                         <div className="space-y-1.5">
                                             {wizardServicios.slice(0, 3).map(s => (
                                                 <div key={s.id} className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between">
                                                     <div>
-                                                        <span className="block text-[9px] font-black text-white uppercase italic max-w-[130px] truncate">{s.nombre}</span>
-                                                        <span className="block text-[8px] text-slate-500">{s.duracion} min</span>
+                                                        <span className="block text-xs font-bold text-white uppercase max-w-[130px] truncate">{s.nombre}</span>
+                                                        <span className="block text-xs text-slate-500">{s.duracion} min</span>
                                                     </div>
-                                                    <span className="text-[10px] font-black text-emerald-400">${s.precio}</span>
+                                                    <span className="text-xs font-bold text-emerald-400">${s.precio}</span>
                                                 </div>
                                             ))}
                                             {wizardServicios.length > 3 && (
-                                                <span className="block text-center text-[8px] text-slate-500 font-bold uppercase mt-1">Y {wizardServicios.length - 3} servicios más...</span>
+                                                <span className="block text-center text-xs text-slate-500 font-bold uppercase mt-1">Y {wizardServicios.length - 3} servicios más...</span>
                                             )}
                                         </div>
                                     )}
@@ -1841,7 +1840,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                             <div className="p-4 bg-slate-950/20 border-t border-white/5">
                                 <button 
                                     type="button" 
-                                    className="w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-widest text-center shadow-lg transition-transform active:scale-95" 
+                                    className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wide text-center shadow-lg transition-transform active:scale-95" 
                                     style={{ backgroundColor: formData.colorPrimario, color: "#fff" }}
                                 >
                                     Reservar Ahora
@@ -1858,7 +1857,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                     type="button"
                     disabled={step === 1 || loading}
                     onClick={() => setStep(prev => prev - 1)}
-                    className="flex-1 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-wider transition-all disabled:opacity-30 active:scale-95 flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-2xl font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-30 active:scale-95 flex items-center justify-center gap-2"
                 >
                     <ArrowLeft size={14} /> Atrás
                 </button>
@@ -1870,7 +1869,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                             (step === 4 && wizardServicios.length === 0)
                         }
                         onClick={() => setStep(prev => prev + 1)}
-                        className="flex-[2] py-4 bg-emerald-500 text-black hover:bg-emerald-400 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-all disabled:opacity-40 active:scale-95 flex items-center justify-center gap-2"
+                        className="flex-[2] py-4 bg-emerald-500 text-black hover:bg-emerald-400 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-40 active:scale-95 flex items-center justify-center gap-2"
                     >
                         Siguiente <ArrowRight size={14} />
                     </button>
@@ -1879,7 +1878,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                         type="button"
                         disabled={loading}
                         onClick={() => handleSaveSubmit()}
-                        className="flex-[2] py-4 bg-emerald-600 text-white hover:bg-emerald-700 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2"
+                        className="flex-[2] py-4 bg-emerald-600 text-white hover:bg-emerald-700 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                         Confirmar y Crear (PRO Trial)
@@ -1947,7 +1946,7 @@ function ServiceImageUploader({
                 ) : (
                     <div className="flex flex-col items-center gap-0.5">
                         <ImageIcon size={14} className="text-slate-600" />
-                        <span className="text-[7px] text-slate-600 font-black uppercase tracking-wider">Img</span>
+                        <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">Img</span>
                     </div>
                 )}
             </div>
@@ -1988,7 +1987,7 @@ function SectionTitle({ icon: Icon, title, color = "emerald" }: { icon: any; tit
             <div className={clsx("w-8 h-8 rounded-xl flex items-center justify-center", colorClasses[color] || colorClasses.emerald)}>
                 <Icon size={16} strokeWidth={2.5} />
             </div>
-            <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] italic">{title}</h4>
+            <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide ">{title}</h4>
             <div className="h-px flex-1 bg-slate-100 dark:bg-white/5" />
         </div>
     );
@@ -1997,7 +1996,7 @@ function SectionTitle({ icon: Icon, title, color = "emerald" }: { icon: any; tit
 function InputField({ label, icon: Icon, ...props }: any) {
     return (
         <div className="space-y-1.5 text-left">
-            {label && <label className="text-[9px] font-black text-slate-400 dark:text-slate-505 uppercase tracking-widest px-1 ml-1">{label}</label>}
+            {label && <label className="text-xs font-bold text-slate-400 dark:text-slate-505 uppercase tracking-wide px-1 ml-1">{label}</label>}
             <div className="relative group">
                 <div className="absolute inset-0 bg-emerald-500/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-all duration-500" />
                 {Icon && (
@@ -2007,7 +2006,7 @@ function InputField({ label, icon: Icon, ...props }: any) {
                 )}
                 <input
                     {...props}
-                    className="relative w-full !pl-16 pr-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-500/30 outline-none transition-all text-sm font-bold !text-slate-900 dark:!text-white shadow-inner dark:shadow-none placeholder:text-slate-300 dark:placeholder:text-slate-700 italic"
+                    className="relative w-full !pl-16 pr-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-500/30 outline-none transition-all text-sm font-bold !text-slate-900 dark:!text-white shadow-inner dark:shadow-none placeholder:text-slate-300 dark:placeholder:text-slate-700 "
                 />
             </div>
         </div>

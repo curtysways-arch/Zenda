@@ -2,8 +2,13 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* El modo oscuro solo se activa con la clase .dark (no con el modo oscuro del sistema operativo),
+   para que no aparezcan textos blancos sobre fondos claros. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tamaño base estándar (16px). Antes estaba forzado a 12px y achicaba toda la app un 25%. */
 html {
-    font-size: 12px !important;
+    font-size: 16px;
 }
 
 /* Fix global: forzar popup de <select> siempre en modo claro para evitar texto blanco sobre fondo blanco */
@@ -76,7 +81,7 @@ select option {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(0, 0, 0, 0.05);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
-    border-radius: 2.5rem;
+    border-radius: 1rem;
     transition: all 0.3s ease;
 }
 
@@ -92,7 +97,7 @@ select option {
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-    border-radius: 2.5rem;
+    border-radius: 1.25rem;
 }
 
 .glass-nav {
@@ -126,26 +131,43 @@ h1, h2, h3, h4 {
     font-weight: 700;
 }
 
-input, select, textarea {
-    border-radius: var(--button-radius);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    padding: 0.75rem 1rem;
-    transition: all 0.2s;
-    background: rgba(0, 0, 0, 0.02);
-    color: #0f172a;
+@layer base {
+    input, textarea {
+        border-radius: var(--button-radius);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 0.75rem 1rem;
+        transition: all 0.2s;
+        background: rgba(0, 0, 0, 0.02);
+        color: inherit;
+    }
+
+    .dark input, .dark textarea {
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        color: inherit;
+    }
 }
 
-.dark input, .dark select, .dark textarea {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
+/* Forzar que inputs con clases oscuras o de texto blanco siempre muestren el texto y cursor con contraste nítido */
+.dark input:not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-slate-"]):not([class*="text-gray-"]),
+.dark textarea:not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-slate-"]):not([class*="text-gray-"]),
+input[class*="text-white"],
+textarea[class*="text-white"] {
+    color: #ffffff !important;
+    caret-color: #ffffff !important;
 }
 
-input:focus {
-    outline: none;
-    border-color: var(--brand-primary);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+input[class*="text-emerald-400"] {
+    color: #34d399 !important;
+    caret-color: #34d399 !important;
 }
+
+/* Evitar outlines duplicados en inputs con fondo transparente */
+input.bg-transparent:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
 
 /* Premium Button Utility */
 .btn-premium {
@@ -317,30 +339,12 @@ input:focus {
 }
 
 .custom-page-content ol,
-.custom-features-content ol,
-.custom-page-content ul,
-.custom-features-content ul {
-    list-style: none;
-    padding-left: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 0.75rem;
+.custom-page-content ul {
     margin: 1rem 0;
 }
 
-.custom-page-content li,
-.custom-features-content li {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 1rem;
-    padding: 0.85rem 1.15rem;
-    font-weight: 600;
-    color: #1e293b;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-
-
+/* Landing principal: tipografía de títulos y animaciones suaves */
+.font-display { font-family: var(--font-display, var(--font-heading)); letter-spacing: -0.02em; }
+@keyframes landing-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+.landing-in { animation: landing-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) { .landing-in { animation: none; } }

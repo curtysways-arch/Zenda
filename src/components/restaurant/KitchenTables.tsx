@@ -57,7 +57,7 @@ export default function KitchenTables({ slug, mesas = [], onUpdateStatus }: Kitc
           <div key={m.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className={`px-2.5 py-1 rounded-lg text-xs font-black border ${getStatusColor(m.status)}`}>
+                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${getStatusColor(m.status)}`}>
                   {m.status}
                 </span>
                 <button
@@ -88,9 +88,9 @@ export default function KitchenTables({ slug, mesas = [], onUpdateStatus }: Kitc
                 <button
                   key={st}
                   onClick={() => onUpdateStatus && onUpdateStatus(m.id, st)}
-                  className={`flex-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-center border transition-all ${
-                    m.status === st ? getStatusColor(st) : 'border-slate-800 bg-slate-950 text-slate-500 hover:text-white'
-                  }`}
+                  className={`flex-1 py-1 px-1.5 rounded-lg text-xs font-bold text-center border transition-all ${
+ m.status === st ? getStatusColor(st) : 'border-slate-800 bg-slate-950 text-slate-500 hover:text-white'
+ }`}
                 >
                   {st}
                 </button>
@@ -115,7 +115,7 @@ export default function KitchenTables({ slug, mesas = [], onUpdateStatus }: Kitc
               />
             </div>
 
-            <p className="text-[11px] text-amber-400 font-mono break-all bg-slate-950 p-2 rounded-xl border border-slate-800">
+            <p className="text-xs text-amber-400 font-mono break-all bg-slate-950 p-2 rounded-xl border border-slate-800">
               https://citiox.com/{slug}?table={selectedQR.code}
             </p>
 

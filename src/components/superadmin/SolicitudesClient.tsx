@@ -124,11 +124,11 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
 
     if (solicitudes.length === 0) {
         return (
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-16 text-center">
-                <div className="p-6 bg-emerald-50 text-emerald-300 rounded-[2rem] w-fit mx-auto mb-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-16 text-center">
+                <div className="p-6 bg-emerald-50 text-emerald-300 rounded-2xl w-fit mx-auto mb-6">
                     <CheckCircle2 size={64} />
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
+                <h3 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">
                     Todo al día
                 </h3>
                 <p className="text-slate-400 max-w-md mx-auto font-medium">
@@ -143,7 +143,7 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
             {/* Confirm Modal */}
             {confirmAction && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
-                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-xl my-auto animate-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl my-auto animate-in zoom-in-95 duration-200">
                         <div className="p-8">
                             <div className="flex items-center justify-between mb-8">
                                 <div className={`p-4 rounded-2xl ${confirmAction.action === 'APPROVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
@@ -157,7 +157,7 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
                                 </button>
                             </div>
 
-                            <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">
+                            <h3 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">
                                 {confirmAction.action === 'APPROVE' ? 'Validar y Aprobar Pago' : 'Rechazar esta solicitud'}
                             </h3>
                             <p className="text-slate-500 font-medium mb-8">
@@ -172,19 +172,19 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
                                     {/* Resumen de Plan */}
                                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between mb-8">
                                         <div className="text-xs">
-                                            <span className="block text-slate-400 font-black uppercase tracking-widest mb-1 italic">Nuevo Plan</span>
-                                            <span className="text-lg font-black text-slate-900">{confirmAction.solicitud?.planSolicitado?.name}</span>
+                                            <span className="block text-slate-400 font-bold uppercase tracking-wide mb-1 ">Nuevo Plan</span>
+                                            <span className="text-lg font-bold text-slate-900">{confirmAction.solicitud?.planSolicitado?.name}</span>
                                         </div>
                                         <div className="text-right">
-                                            <span className="block text-slate-400 font-black uppercase tracking-widest mb-1 italic">Monto Sugerido</span>
-                                            <span className="text-xl font-black text-indigo-600 text-lg decoration-emerald-500 underline decoration-2 underline-offset-4">${confirmAction.solicitud?.planSolicitado?.price}</span>
+                                            <span className="block text-slate-400 font-bold uppercase tracking-wide mb-1 ">Monto Sugerido</span>
+                                            <span className="text-xl font-bold text-indigo-600 text-lg decoration-emerald-500 underline decoration-2 underline-offset-4">${confirmAction.solicitud?.planSolicitado?.price}</span>
                                         </div>
                                     </div>
 
                                     {/* Formulario */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Referencia / Nro Op</label>
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Referencia / Nro Op</label>
                                             <input
                                                 type="text"
                                                 autoFocus
@@ -195,19 +195,19 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Monto Validado ($)</label>
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Monto Validado ($)</label>
                                             <input
                                                 type="number"
                                                 placeholder="0.00"
                                                 value={pagoMonto}
                                                 onChange={(e) => setPagoMonto(e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all !font-black !text-emerald-600"
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all !font-bold !text-emerald-600"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Notas Internas</label>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Notas Internas</label>
                                         <textarea
                                             rows={2}
                                             value={pagoNotas}
@@ -222,17 +222,17 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
                             <div className="flex gap-4 mt-10">
                                 <button
                                     onClick={() => setConfirmAction(null)}
-                                    className="px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-colors flex-1"
+                                    className="px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-slate-200 transition-colors flex-1"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={() => handleAction(confirmAction.id, confirmAction.action)}
                                     disabled={!!processingId || (confirmAction.action === 'APPROVE' && (!pagoReferencia || !pagoMonto))}
-                                    className={`px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white transition-all flex items-center justify-center gap-2 flex-[2] ${confirmAction.action === 'APPROVE'
-                                        ? 'bg-emerald-600 hover:bg-emerald-700 shadow-xl shadow-emerald-600/20'
-                                        : 'bg-rose-600 hover:bg-rose-700 shadow-xl shadow-rose-600/20'
-                                        } ${(!pagoReferencia || !pagoMonto) && confirmAction.action === 'APPROVE' ? 'opacity-50 grayscale' : ''}`}
+                                    className={`px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-wide text-white transition-all flex items-center justify-center gap-2 flex-[2] ${confirmAction.action === 'APPROVE'
+ ? 'bg-emerald-600 hover:bg-emerald-700 shadow-xl shadow-emerald-600/20'
+ : 'bg-rose-600 hover:bg-rose-700 shadow-xl shadow-rose-600/20'
+ } ${(!pagoReferencia || !pagoMonto) && confirmAction.action === 'APPROVE' ? 'opacity-50 grayscale' : ''}`}
                                 >
                                     {processingId ? <Loader2 size={18} className="animate-spin" /> : (confirmAction.action === 'APPROVE' ? 'Validar y Activar Plan' : 'Confirmar Rechazo')}
                                 </button>
@@ -247,7 +247,7 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
                 {solicitudes.map((sol) => (
                     <div
                         key={sol.id}
-                        className="bg-white rounded-[2rem] border border-slate-200 shadow-sm hover:shadow-lg hover:border-slate-300 transition-all duration-300 overflow-hidden group"
+                        className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-slate-300 transition-all duration-300 overflow-hidden group"
                     >
                         <div className="p-6 md:p-8">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -258,10 +258,10 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-3 mb-1">
-                                            <h4 className="text-lg font-black text-slate-900 truncate">
+                                            <h4 className="text-lg font-bold text-slate-900 truncate">
                                                 {sol.negocio.nombre}
                                             </h4>
-                                            <div className="shrink-0 px-3 py-1 bg-orange-100 text-orange-700 border border-orange-200 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                                            <div className="shrink-0 px-3 py-1 bg-orange-100 text-orange-700 border border-orange-200 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1.5">
                                                 <Clock size={10} className="animate-pulse" />
                                                 Pendiente
                                             </div>
@@ -277,26 +277,26 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
                                 {/* Center: Plan Change */}
                                 <div className="flex items-center gap-3 shrink-0">
                                     <div className="text-center">
-                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Plan Actual</div>
-                                        <div className="px-4 py-1.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-black uppercase tracking-wider">
+                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Plan Actual</div>
+                                        <div className="px-4 py-1.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold uppercase tracking-wider">
                                             {sol.plan?.name || 'Sin plan'}
                                         </div>
-                                        <div className="text-xs font-black text-slate-400 mt-1">${sol.plan?.price || 0}/mes</div>
+                                        <div className="text-xs font-bold text-slate-400 mt-1">${sol.plan?.price || 0}/mes</div>
                                     </div>
                                     <ArrowRight size={20} className="text-indigo-400 mx-2" />
                                     <div className="text-center">
-                                        <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">Plan Solicitado</div>
-                                        <div className="px-4 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                                        <div className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-1">Plan Solicitado</div>
+                                        <div className="px-4 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                                             <Zap size={12} className="text-amber-300 fill-amber-300" />
                                             {sol.planSolicitado?.name || 'Desconocido'}
                                         </div>
                                         {/* Badge de Periodo */}
                                         <div className="flex justify-center mt-1 gap-1 flex-wrap">
-                                            <div className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase">
+                                            <div className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase">
                                                 ${sol.planSolicitado?.price || 0}/mes
                                             </div>
                                             {(sol.metodoPago?.toUpperCase().includes('ANNUAL') || sol.metodoPago?.toUpperCase().includes('ANUAL')) && (
-                                                <div className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">
+                                                <div className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">
                                                     Anual
                                                 </div>
                                             )}
@@ -309,7 +309,7 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
                                     <button
                                         onClick={() => setConfirmAction({ id: sol.id, action: 'REJECT', solicitud: sol })}
                                         disabled={!!processingId}
-                                        className="px-4 py-3 bg-rose-50 text-rose-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-100 transition-colors border border-rose-100 flex items-center gap-2"
+                                        className="px-4 py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-xs uppercase tracking-wide hover:bg-rose-100 transition-colors border border-rose-100 flex items-center gap-2"
                                     >
                                         <XCircle size={16} />
                                         Rechazar
@@ -317,7 +317,7 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
                                     <button
                                         onClick={() => setConfirmAction({ id: sol.id, action: 'APPROVE', solicitud: sol })}
                                         disabled={!!processingId}
-                                        className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2 active:scale-95"
+                                        className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-wide hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2 active:scale-95"
                                     >
                                         {processingId === sol.id ? (
                                             <Loader2 size={16} className="animate-spin" />
@@ -333,7 +333,7 @@ export default function SolicitudesClient({ solicitudes: initialSolicitudes }: S
                             <div className="mt-6 pt-5 border-t border-slate-100 flex flex-wrap items-center gap-6 text-xs">
                                 <div className="flex items-center gap-2">
                                     {getMetodoPagoIcon(sol.metodoPago)}
-                                    <span className="font-black text-slate-600 uppercase tracking-wider">
+                                    <span className="font-bold text-slate-600 uppercase tracking-wider">
                                         {getMetodoPagoLabel(sol.metodoPago)}
                                     </span>
                                 </div>

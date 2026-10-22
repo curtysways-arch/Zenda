@@ -116,7 +116,7 @@ export default function GlobalAnnouncements() {
                 <Megaphone className="w-4 h-4" />
               </div>
               <p className="text-xs font-semibold text-slate-200 truncate">
-                <span className="font-black text-white uppercase tracking-wider mr-2 bg-indigo-500/10 px-2 py-0.5 rounded text-[9px] border border-indigo-500/20">
+                <span className="font-bold text-white uppercase tracking-wider mr-2 bg-indigo-500/10 px-2 py-0.5 rounded text-xs border border-indigo-500/20">
                   {activeBanner.tipo}
                 </span>
                 {activeBanner.titulo}
@@ -132,7 +132,7 @@ export default function GlobalAnnouncements() {
                   // Puedes navegar o abrir URL si la campaña la tiene en metadatos
                   handleCloseBanner();
                 }}
-                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 shadow-md shadow-indigo-500/10"
+                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-md shadow-indigo-500/10"
               >
                 Ver Más <ArrowRight className="w-3.5 h-3.5" />
               </button>
@@ -163,7 +163,7 @@ export default function GlobalAnnouncements() {
                   <div className="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
                     <Sparkles className="w-5 h-5 animate-spin" style={{ animationDuration: '3s' }} />
                   </div>
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wide">
                     Anuncio Oficial
                   </span>
                 </div>
@@ -182,7 +182,7 @@ export default function GlobalAnnouncements() {
               )}
 
               <div className="space-y-2">
-                <h3 className="text-xl font-black text-white tracking-tight leading-snug">
+                <h3 className="text-xl font-bold text-white tracking-tight leading-snug">
                   {activePopup.titulo}
                 </h3>
                 {activePopup.subtitulo && (
@@ -201,7 +201,7 @@ export default function GlobalAnnouncements() {
                     handleClosePopup();
                   }}
                   style={{ backgroundColor: activePopup.color }}
-                  className="flex-1 py-3.5 hover:opacity-90 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg transition-all"
+                  className="flex-1 py-3.5 hover:opacity-90 text-white rounded-xl text-xs font-bold uppercase tracking-wide shadow-lg transition-all"
                 >
                   Entendido / Participar
                 </button>

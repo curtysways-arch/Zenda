@@ -40,11 +40,11 @@ export default function PlanesFilterableGrid({ planes }: PlanesFilterableGridPro
             <button
               key={type.id}
               onClick={() => setSelectedType(type.id)}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-black tracking-wider transition-all shrink-0 flex items-center gap-2 cursor-pointer border ${
-                active
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-              }`}
+              className={`px-4 py-2.5 rounded-2xl text-xs font-bold tracking-wider transition-all shrink-0 flex items-center gap-2 cursor-pointer border ${
+ active
+ ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105'
+ : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+ }`}
             >
               <span>{type.emoji}</span>
               <span>{type.label}</span>
@@ -81,28 +81,28 @@ export default function PlanesFilterableGrid({ planes }: PlanesFilterableGridPro
                       TODOS: '🌐 Universal'
                     };
                     return (
-                      <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-200">
+                      <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-bold uppercase tracking-wide border border-purple-200">
                         {tipoLabels[tipo] || tipo}
                       </span>
                     );
                   })()}
                   {plan.trial_days > 0 && (
-                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold uppercase tracking-wide">
                       {plan.trial_days} Días Trial
                     </span>
                   )}
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${plan.activo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${plan.activo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
                     {plan.activo ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
               </div>
-              <h3 className="text-2xl font-black text-slate-900 mb-2 relative z-10">{plan.name}</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2 relative z-10">{plan.name}</h3>
               <div className="flex items-baseline gap-1 relative z-10">
                 <span className="text-4xl font-extrabold text-slate-900">${plan.price}</span>
                 <span className="text-slate-500 font-medium">/ mes</span>
               </div>
               {plan.description && (
-                <p className="text-sm text-slate-500 mt-4 line-clamp-2 italic">
+                <p className="text-sm text-slate-500 mt-4 line-clamp-2 ">
                   "{plan.description}"
                 </p>
               )}

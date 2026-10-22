@@ -1,1116 +1,605 @@
 import Link from 'next/link';
-import { 
-    Check, 
-    ArrowRight, 
-    Smartphone, 
-    Star, 
-    BarChart3, 
-    Sparkles, 
-    Calendar, 
-    Users, 
-    ChevronDown, 
-    UtensilsCrossed, 
-    ShoppingBag, 
-    Scissors, 
-    Shirt, 
-    Trophy, 
-    Dumbbell, 
-    Store, 
-    SlidersHorizontal, 
-    CreditCard, 
-    Tag, 
-    CheckCircle2, 
-    XCircle,
-    Bell,
-    ExternalLink,
-    Lock,
-    Shield
-} from 'lucide-react';
 import type { Metadata } from 'next';
+import { Bricolage_Grotesque } from 'next/font/google';
+import {
+    ArrowRight,
+    Check,
+    X,
+    Users,
+    Store,
+    Calendar,
+    CreditCard,
+    Tag,
+    Star,
+    SlidersHorizontal,
+    BarChart3,
+    LayoutGrid,
+    Palette,
+    Share2,
+    ChevronDown,
+    Smartphone,
+    Clock,
+    Trophy,
+    Gift,
+    Target,
+    Crown,
+} from 'lucide-react';
+import BusinessVerticalsGrid from '@/components/landing/BusinessVerticalsGrid';
+import HeroShowcase from '@/components/landing/HeroShowcase';
+
+const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
 
 export const metadata: Metadata = {
-    title: "Citiox | Tu negocio. Tu propia app.",
-    description: "No importa qué tipo de negocio tengas. Con Citiox puedes crear la app de tu negocio para recibir clientes, vender, gestionar reservas, pedidos, servicios, membresías y mucho más.",
+    title: 'Citiox | Tu negocio. Tu propia app.',
+    description:
+        'Crea la app de tu negocio en minutos: tus clientes reservan, piden y compran desde el celular, y tú lo manejas todo desde un solo panel.',
     openGraph: {
-        title: "Citiox | Tu negocio. Tu propia app.",
-        description: "No importa qué tipo de negocio tengas. Con Citiox crea la app de tu negocio.",
-        images: ["/logo-citiox.png"],
-        type: "website"
-    }
+        title: 'Citiox | Tu negocio. Tu propia app.',
+        description: 'Tus clientes reservan, piden y compran desde el celular. Tú lo manejas todo desde un solo panel.',
+        images: ['/logo-citiox.png'],
+        type: 'website',
+    },
 };
 
-const ToothIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M7 3C4.24 3 2 5.24 2 8c0 3.5 2 6 3 9.5C6 21 8 21 9 18c.5-1.5 1-3 3-3s2.5 1.5 3 3c1 3 3 3 4-0.5 1-3.5 3-6 3-9.5 0-2.76-2.24-5-5-5-1.5 0-2.8.7-3.8 1.8-.2.2-.4.4-.6.6a1 1 0 0 1-1.2 0c-.2-.2-.4-.4-.6-.6C10.8 3.7 9.5 3 7 3z" />
-    </svg>
-);
+const BRAND = '#0066FF';
 
-const CitioxBrandLogo = ({ className = "h-11 sm:h-12 w-auto" }: { className?: string }) => (
-    <div className="flex items-center">
-        <img 
-            src="/citiox-logo-horizontal.png" 
-            alt="Citiox" 
-            className={`object-contain select-none ${className}`} 
-        />
-    </div>
-);
-export default function LandingPage() {
+const STEPS = [
+    {
+        icon: LayoutGrid,
+        title: 'Elige tu tipo de negocio',
+        text: 'Spa, restaurante, tienda, gimnasio, canchas, clínica o lavandería. Tu app arranca con todo lo que ese negocio necesita.',
+    },
+    {
+        icon: Palette,
+        title: 'Ponle tu marca',
+        text: 'Sube tu logo, fotos, servicios o productos y precios. Lo cambias cuando quieras, también desde el celular.',
+    },
+    {
+        icon: Share2,
+        title: 'Compártela',
+        text: 'Recibes tu enlace propio y un código QR. Ponlos en Instagram, WhatsApp o en el mostrador y empieza a recibir clientes.',
+    },
+];
+
+const COMPARISON: [string, string][] = [
+    ['Solo muestra información', 'El cliente reserva, pide o compra ahí mismo'],
+    ['Te escriben para preguntar horarios y precios', 'Ven horarios y precios actualizados al instante'],
+    ['Necesitas a alguien para actualizarla', 'La actualizas tú desde el celular'],
+    ['Te visitan una vez y se olvidan', 'Promociones y premios para que regresen'],
+    ['No sabes qué está funcionando', 'Reportes claros de ventas y clientes'],
+];
+
+const SMALL_FEATURES = [
+    { icon: Users, title: 'Clientes', text: 'Historial, datos de contacto y lo que más compra cada uno.', tint: 'bg-blue-50 text-blue-600' },
+    { icon: CreditCard, title: 'Pagos', text: 'Cobra en efectivo, transferencia o tarjeta y lleva tu caja al día.', tint: 'bg-violet-50 text-violet-600' },
+    { icon: Tag, title: 'Promociones', text: 'Crea ofertas y cupones en segundos para llenar tus horas flojas.', tint: 'bg-pink-50 text-pink-600' },
+    { icon: Star, title: 'Fidelización', text: 'Premios y misiones que hacen que tus clientes vuelvan.', tint: 'bg-amber-50 text-amber-600' },
+    { icon: SlidersHorizontal, title: 'Operación', text: 'Equipo, horarios, inventario y sucursales en un solo lugar.', tint: 'bg-slate-100 text-slate-700' },
+    { icon: BarChart3, title: 'Reportes', text: 'Cuánto vendiste, qué funciona y qué mejorar, sin hojas de cálculo.', tint: 'bg-teal-50 text-teal-600' },
+];
+
+const FAQ = [
+    {
+        q: '¿Necesito saber de tecnología?',
+        a: 'No. Eliges tu tipo de negocio, cargas tus servicios o productos y tu app queda lista para compartir. Todo se maneja con botones y formularios sencillos.',
+    },
+    {
+        q: '¿Mis clientes tienen que descargar algo?',
+        a: 'No hace falta pasar por ninguna tienda de aplicaciones. Tus clientes abren tu enlace o escanean tu código QR desde el celular y ya pueden reservar, pedir o comprar.',
+    },
+    {
+        q: '¿Puedo cambiar precios, fotos y horarios yo mismo?',
+        a: 'Sí. Desde tu panel cambias lo que quieras, cuando quieras, desde la computadora o el celular. Los cambios se ven al instante en tu app.',
+    },
+    {
+        q: '¿Sirve para mi tipo de negocio?',
+        a: 'Citiox tiene versiones pensadas para spas y salones, barberías, restaurantes y cafeterías, tiendas, gimnasios, canchas deportivas, clínicas y lavanderías. Si tu negocio es distinto, elige el tipo más parecido al crear tu cuenta.',
+    },
+    {
+        q: '¿Puedo manejarlo con mi equipo?',
+        a: 'Sí. Puedes invitar a tu equipo y cada persona ve solo lo que necesita para su trabajo.',
+    },
+];
+
+function CitioxLogo({ className = 'h-9 w-auto' }: { className?: string }) {
+    return <img src="/citiox-logo-horizontal.png" alt="Citiox" className={`object-contain select-none ${className}`} />;
+}
+
+function SectionLabel({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
     return (
-        <div className="min-h-screen bg-[#FAFCFF] text-slate-900 font-sans selection:bg-[#0066FF] selection:text-white overflow-x-hidden">
+        <span className={`inline-flex items-center gap-2 text-sm font-semibold ${light ? 'text-sky-300' : 'text-[#0066FF]'}`}>
+            <span className={`h-px w-6 ${light ? 'bg-sky-300' : 'bg-[#0066FF]'}`} />
+            {children}
+        </span>
+    );
+}
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* 1. NAVBAR SUPERIOR                                              */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100">
-                <div className="max-w-7xl mx-auto px-6 h-16 sm:h-18 flex justify-between items-center">
-                    
-                    {/* Brand Logo */}
-                    <Link href="/" className="group flex items-center transition-transform hover:scale-105">
-                        <CitioxBrandLogo className="h-10 sm:h-11 w-auto" />
+export default function LandingPage() {
+    const year = new Date().getFullYear();
+
+    return (
+        <div
+            className={`${display.variable} min-h-screen bg-[#F7F8FB] text-slate-900 selection:bg-[#0066FF] selection:text-white overflow-x-hidden`}
+            style={{ ['--font-heading' as string]: 'var(--font-display), Inter, sans-serif' }}
+        >
+            {/* ─────────────── Navegación ─────────────── */}
+            <nav className="sticky top-0 z-50 bg-[#F7F8FB]/85 backdrop-blur-md border-b border-slate-200/70">
+                <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between gap-4">
+                    <Link href="/" aria-label="Citiox, inicio">
+                        <CitioxLogo className="h-9 sm:h-10 w-auto" />
                     </Link>
-                    
-                    {/* Menú de Enlaces */}
-                    <div className="hidden lg:flex items-center gap-7 text-xs font-bold text-slate-600">
-                        <a href="#verticales" className="hover:text-[#0066FF] transition-colors flex items-center gap-1">
-                            Soluciones <ChevronDown size={13} className="text-slate-400" />
-                        </a>
-                        <a href="#como-funciona" className="hover:text-[#0066FF] transition-colors flex items-center gap-1">
-                            Cómo funciona <ChevronDown size={13} className="text-slate-400" />
-                        </a>
-                        <a href="#verticales" className="hover:text-[#0066FF] transition-colors flex items-center gap-1">
-                            Para tu negocio <ChevronDown size={13} className="text-slate-400" />
-                        </a>
-                        <a href="/admin/plan" className="hover:text-[#0066FF] transition-colors">
-                            Precios
-                        </a>
-                        <a href="#funciones" className="hover:text-[#0066FF] transition-colors flex items-center gap-1">
-                            Recursos <ChevronDown size={13} className="text-slate-400" />
-                        </a>
+                    <div className="hidden md:flex items-center gap-8 text-[15px] font-medium text-slate-600">
+                        <a href="#como-funciona" className="hover:text-slate-950 transition-colors">Cómo funciona</a>
+                        <a href="#verticales" className="hover:text-slate-950 transition-colors">Tipos de negocio</a>
+                        <a href="#funciones" className="hover:text-slate-950 transition-colors">Funciones</a>
+                        <a href="#club" className="hover:text-slate-950 transition-colors">Club de beneficios</a>
+                        <a href="#preguntas" className="hover:text-slate-950 transition-colors">Preguntas</a>
                     </div>
-
-                    {/* Acciones */}
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href="/login"
-                            className="text-xs font-bold text-slate-700 hover:text-[#0066FF] px-2 py-1.5 transition-colors"
-                        >
-                            Iniciar sesión
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <Link href="/login" className="text-[15px] font-semibold text-slate-700 hover:text-slate-950 px-2 py-2 transition-colors">
+                            Entrar
                         </Link>
                         <Link
                             href="/register"
-                            className="bg-[#0066FF] hover:bg-[#0052cc] text-white px-5 py-2.5 rounded-full font-extrabold text-xs transition-all shadow-md shadow-blue-500/20 active:scale-95 flex items-center gap-1.5"
+                            className="inline-flex items-center gap-1.5 bg-slate-950 hover:bg-[#0066FF] text-white px-4 sm:px-5 py-2.5 rounded-full text-sm font-semibold transition-colors"
                         >
-                            <span>Crear mi app</span>
-                            <ArrowRight size={13} />
+                            Crear mi app
+                            <ArrowRight size={15} />
                         </Link>
                     </div>
                 </div>
             </nav>
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* 2. HERO PRINCIPAL CON MOCKUPS INTERACTIVOS Y RESPONSIVOS        */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            <header className="relative pt-5 sm:pt-7 md:pt-8 pb-8 md:pb-14 overflow-hidden bg-gradient-to-b from-[#EEF5FF]/80 via-[#F7FAFF]/50 to-[#FAFCFF]">
-                
-                {/* Resplandores de fondo */}
-                <div className="absolute top-1/4 right-10 w-[550px] h-[550px] bg-gradient-to-tr from-blue-200/40 via-sky-200/40 to-indigo-100/30 rounded-full blur-3xl -z-10 pointer-events-none" />
-                <div className="absolute top-10 left-1/3 w-[300px] h-[300px] bg-blue-100/30 rounded-full blur-2xl -z-10 pointer-events-none" />
+            {/* ─────────────── Hero ─────────────── */}
+            <header className="relative overflow-hidden">
+                <div
+                    className="absolute inset-0 -z-0 pointer-events-none opacity-60"
+                    style={{
+                        backgroundImage:
+                            'linear-gradient(to right, rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.06) 1px, transparent 1px)',
+                        backgroundSize: '44px 44px',
+                        maskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 75%)',
+                        WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 75%)',
+                    }}
+                    aria-hidden
+                />
+                <div className="relative max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 pt-8 sm:pt-12 lg:pt-10 pb-12 lg:pb-16 grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 lg:gap-12 items-start">
+                    <div className="min-w-0 text-center lg:text-left flex flex-col items-center lg:items-start lg:pt-16 xl:pt-20">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-white ring-1 ring-slate-200 pl-1.5 pr-3.5 py-1.5 text-[13px] font-medium text-slate-600 shadow-sm">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#0066FF] text-white px-2 py-0.5 text-xs font-semibold">
+                                <Smartphone size={12} /> App
+                            </span>
+                            Para spas, restaurantes, tiendas, gimnasios y más
+                        </span>
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                    <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-6 lg:gap-6 xl:gap-8">
-                        
-                        {/* Columna Izquierda: Mensaje y CTA */}
-                        <div className="w-full lg:w-[350px] xl:w-[390px] shrink-0 space-y-4 sm:space-y-5 text-center lg:text-left z-20 flex flex-col items-center lg:items-start">
-                            
-                            {/* Tag Badge */}
-                            <div className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-[#E8F1FF] text-[#0066FF] text-[11px] font-black uppercase tracking-wider">
-                                TU NEGOCIO EN UNA APP
-                            </div>
-                            
-                            {/* Titular */}
-                            <h1 className="text-3xl sm:text-4xl lg:text-[38px] xl:text-[46px] font-black text-slate-950 tracking-tight leading-[1.1]">
-                                Tu negocio.<br />
-                                <span className="text-[#0066FF]">Tu propia app.</span>
-                            </h1>
-                            
-                            {/* Subtítulo */}
-                            <div className="space-y-1 text-slate-600 text-sm md:text-base leading-relaxed max-w-lg font-medium mx-auto lg:mx-0">
-                                <p className="font-bold text-slate-900">
-                                    No importa qué tipo de negocio tengas.
-                                </p>
-                                <p className="text-slate-500 text-xs md:text-sm">
-                                    Con Citiox puedes crear la app de tu negocio para recibir clientes, vender, gestionar reservas, pedidos, servicios, membresías y mucho más.
-                                </p>
-                            </div>
+                        <h1 className="mt-5 text-[2.6rem] leading-[1.03] sm:text-6xl lg:text-[3.6rem] xl:text-[4.25rem] font-bold tracking-tight text-slate-950">
+                            Tu negocio.
+                            <br />
+                            <span className="relative inline-block text-[#0066FF]">
+                                Tu propia app.
+                                <svg className="absolute left-0 -bottom-2 w-full h-3 text-[#0066FF]/35" viewBox="0 0 300 12" preserveAspectRatio="none" aria-hidden>
+                                    <path d="M2 9 C 60 2, 140 2, 298 7" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+                                </svg>
+                            </span>
+                        </h1>
 
-                            {/* Botón Principal */}
-                            <div className="pt-1 w-full flex justify-center lg:justify-start">
-                                <Link
-                                    href="/register"
-                                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#0066FF] hover:bg-[#0052cc] text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-blue-500/30 hover:shadow-blue-500/40 active:scale-95 transition-all"
-                                >
-                                    <span>Crear mi app gratis</span>
-                                    <ArrowRight size={15} />
-                                </Link>
-                            </div>
+                        <p className="mt-5 text-lg sm:text-xl text-slate-600 leading-relaxed max-w-xl">
+                            Tus clientes reservan, piden y compran desde el celular. Tú lo manejas todo desde un solo panel, sin saber de tecnología.
+                        </p>
 
-                            {/* Checks de Confianza */}
-                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-y-1.5 gap-x-4 text-xs font-semibold text-slate-600 pt-1">
-                                <span className="flex items-center gap-1.5">
-                                    <Check size={14} className="text-[#0066FF] stroke-[3]" />
-                                    Sin complicaciones
-                                </span>
-                                <span className="flex items-center gap-1.5">
-                                    <Check size={14} className="text-[#0066FF] stroke-[3]" />
-                                    Configúrala a tu manera
-                                </span>
-                                <span className="flex items-center gap-1.5">
-                                    <Check size={14} className="text-[#0066FF] stroke-[3]" />
-                                    Empieza en minutos
-                                </span>
-                            </div>
+                        <div className="mt-8 flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                            <Link
+                                href="/register"
+                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-full bg-[#0066FF] hover:bg-[#0052cc] text-white text-base font-semibold shadow-lg shadow-blue-600/25 transition-colors"
+                            >
+                                Crear mi app gratis
+                                <ArrowRight size={18} />
+                            </Link>
+                            <a
+                                href="#verticales"
+                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-full bg-white ring-1 ring-slate-200 hover:ring-slate-300 text-slate-800 text-base font-semibold transition-shadow"
+                            >
+                                Ver ejemplos
+                            </a>
                         </div>
 
-                        {/* Columna Derecha: Mockups Realistas (Móvil y Desktop diferenciados) */}
-                        <div className="w-full flex-1 flex justify-center items-center overflow-visible">
-                            
-                            {/* ─── VISTA MÓVIL: LAS 2 DEMOS QUE LE GUSTABAN (Gimnasio & Dentista - Sin Lavandería) ─── */}
-                            <div className="lg:hidden w-full flex justify-center items-center py-4">
-                                <div className="relative flex items-center justify-center -space-x-6 xs:-space-x-8 sm:-space-x-10 max-w-full select-none">
-                                    
-                                    {/* Móvil Demo 1: GIMNASIO & FITNESS */}
-                                    <div className="w-[165px] xs:w-[185px] sm:w-[215px] h-[345px] xs:h-[385px] sm:h-[445px] bg-white rounded-[2.2rem] xs:rounded-[2.6rem] p-1.5 xs:p-2 shadow-2xl shadow-blue-500/20 border-[5px] xs:border-[6px] border-slate-950 shrink-0 z-20 transform -rotate-3 hover:rotate-0 transition-all duration-300 group/phoneM1">
-                                        {/* Isla Dinámica con acceso a pantalla completa */}
-                                        <div className="relative flex items-center justify-between px-2 mb-1 pt-0.5">
-                                            <div className="w-12 xs:w-16 h-2.5 xs:h-3.5 bg-slate-950 rounded-full mx-auto flex items-center justify-center">
-                                                <div className="size-1 xs:size-1.5 rounded-full bg-slate-800 ml-auto mr-1" />
-                                            </div>
-                                            <a 
-                                                href="/vortex-fitness" 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="absolute right-1 top-0 size-5 rounded-full bg-slate-950 text-white flex items-center justify-center text-[8px] hover:bg-[#0066FF] transition-colors"
-                                                title="Abrir app en pantalla completa"
-                                            >
-                                                <ExternalLink size={10} />
-                                            </a>
-                                        </div>
+                        <ul className="mt-7 flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 text-sm text-slate-600">
+                            {['Lista en minutos', 'Sin instalar nada', 'La manejas desde el celular'].map((t) => (
+                                <li key={t} className="inline-flex items-center gap-1.5">
+                                    <span className="size-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                                        <Check size={12} strokeWidth={3} />
+                                    </span>
+                                    {t}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
 
-                                        {/* Pantalla con Iframe */}
-                                        <div className="h-[calc(100%-20px)] xs:h-[calc(100%-25px)] bg-slate-950 rounded-[1.6rem] xs:rounded-[1.9rem] overflow-hidden relative border border-slate-900 shadow-inner">
-                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-blue-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6.5px] xs:text-[7.5px] font-black">
-                                                <span className="size-1 rounded-full bg-emerald-300 animate-pulse" />
-                                                <span>Gimnasio & Fitness</span>
-                                            </div>
-                                            <iframe 
-                                                src="/vortex-fitness" 
-                                                title="FitZone Vortex Demo"
-                                                className="w-[390px] h-[800px] origin-top-left scale-[0.40] xs:scale-[0.45] sm:scale-[0.52] border-0 select-none pointer-events-auto"
-                                                loading="lazy"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Móvil Demo 2: DENTAL CHIP (Clínica Dental) */}
-                                    <div className="w-[155px] xs:w-[175px] sm:w-[205px] h-[335px] xs:h-[375px] sm:h-[430px] bg-white rounded-[2.2rem] xs:rounded-[2.5rem] p-1.5 xs:p-2 shadow-2xl shadow-slate-900/10 border-[5px] xs:border-[5.5px] border-slate-900 shrink-0 z-10 transform rotate-3 translate-y-2 hover:rotate-0 transition-all duration-300 group/phoneM2">
-                                        <div className="relative flex items-center justify-between px-2 mb-1 pt-0.5">
-                                            <div className="w-10 xs:w-14 h-2.5 xs:h-3 bg-slate-900 rounded-full mx-auto" />
-                                            <a 
-                                                href="/dental-chip" 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-sky-600 transition-colors"
-                                                title="Abrir app en pantalla completa"
-                                            >
-                                                <ExternalLink size={10} />
-                                            </a>
-                                        </div>
-
-                                        {/* Pantalla con Iframe */}
-                                        <div className="h-[calc(100%-20px)] xs:h-[calc(100%-24px)] bg-slate-50 rounded-[1.6rem] xs:rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-sky-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6.5px] xs:text-[7.5px] font-bold">
-                                                <ToothIcon className="w-2 h-2 text-white" />
-                                                <span>Clínica Dental</span>
-                                            </div>
-                                            <iframe 
-                                                src="/dental-chip" 
-                                                title="Dental Chip Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.38] xs:scale-[0.43] sm:scale-[0.50] border-0 select-none pointer-events-auto"
-                                                loading="lazy"
-                                            />
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            {/* ─── VISTA DESKTOP: LOS 4 DEMOS CLAROS, COMPLETOS Y VISIBLES SIMULTÁNEAMENTE ─── */}
-                            <div className="hidden lg:flex w-full justify-center items-center select-none overflow-visible">
-                                <div className="relative flex items-center -space-x-4 lg:-space-x-4.5 xl:-space-x-5 shrink-0">
-                                    
-                                    {/* TELÉFONO 1: RESTAURANTE (La Parrilla Citiox) */}
-                                    <div className="w-[142px] lg:w-[152px] xl:w-[172px] h-[308px] lg:h-[328px] xl:h-[372px] bg-white rounded-[2rem] xl:rounded-[2.4rem] p-1.5 xl:p-2 shadow-2xl shadow-slate-900/10 border-[4px] xl:border-[4.5px] border-slate-900/95 shrink-0 transform -rotate-2 translate-y-1 hover:rotate-0 hover:scale-105 hover:-translate-y-2 hover:z-30 transition-all duration-300 z-10 group/phone1 cursor-pointer">
-                                        <div className="relative flex items-center justify-between px-1.5 mb-1 pt-0.5">
-                                            <div className="w-9 xl:w-11 h-2 xl:h-2.5 bg-slate-900 rounded-full mx-auto" />
-                                            <a 
-                                                href="/parrilla-citiox-demo" 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="absolute right-1 top-0 size-4.5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[7px] hover:bg-[#0066FF] transition-colors"
-                                                title="Abrir app en pantalla completa"
-                                            >
-                                                <ExternalLink size={9} />
-                                            </a>
-                                        </div>
-                                        <div className="h-[calc(100%-18px)] xl:h-[calc(100%-22px)] bg-white rounded-[1.4rem] xl:rounded-[1.7rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-amber-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6px] xl:text-[7px] font-bold">
-                                                <span className="size-1 rounded-full bg-amber-300 animate-pulse" />
-                                                <span>🍔 Restaurante</span>
-                                            </div>
-                                            <iframe 
-                                                src="/parrilla-citiox-demo" 
-                                                title="La Parrilla Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.38] lg:scale-[0.41] xl:scale-[0.46] border-0 select-none pointer-events-auto"
-                                                loading="lazy"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* TELÉFONO 2: GIMNASIO & FITNESS (Vortex Club - Central Destacado) */}
-                                    <div className="w-[152px] lg:w-[162px] xl:w-[184px] h-[326px] lg:h-[346px] xl:h-[394px] bg-white rounded-[2.2rem] xl:rounded-[2.6rem] p-1.5 xl:p-2 shadow-2xl shadow-blue-500/20 border-[5px] xl:border-[5.5px] border-slate-950 shrink-0 z-20 transform -translate-y-1 hover:scale-105 hover:-translate-y-3 hover:z-30 transition-all duration-300 group/phone2 cursor-pointer">
-                                        <div className="relative flex items-center justify-between px-1.5 mb-1 pt-0.5">
-                                            <div className="w-12 xl:w-14 h-2.5 xl:h-3 bg-slate-950 rounded-full mx-auto flex items-center justify-center">
-                                                <div className="size-1 xl:size-1.5 rounded-full bg-slate-800 ml-auto mr-1" />
-                                            </div>
-                                            <a 
-                                                href="/vortex-fitness" 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="absolute right-1 top-0 size-4.5 rounded-full bg-slate-950 text-white flex items-center justify-center text-[7px] hover:bg-[#0066FF] transition-colors"
-                                                title="Abrir app en pantalla completa"
-                                            >
-                                                <ExternalLink size={9} />
-                                            </a>
-                                        </div>
-                                        <div className="h-[calc(100%-20px)] xl:h-[calc(100%-24px)] bg-slate-950 rounded-[1.5rem] xl:rounded-[1.8rem] overflow-hidden relative border border-slate-900 shadow-inner">
-                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-blue-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6.5px] xl:text-[7.5px] font-black">
-                                                <span className="size-1 rounded-full bg-emerald-300 animate-pulse" />
-                                                <span>⚡ Gimnasio</span>
-                                            </div>
-                                            <iframe 
-                                                src="/vortex-fitness" 
-                                                title="FitZone Vortex Demo"
-                                                className="w-[390px] h-[800px] origin-top-left scale-[0.39] lg:scale-[0.42] xl:scale-[0.47] border-0 select-none pointer-events-auto"
-                                                loading="lazy"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* TELÉFONO 3: CLÍNICA DENTAL (Dental Chip - Citas y Servicios) */}
-                                    <div className="w-[150px] lg:w-[160px] xl:w-[182px] h-[322px] lg:h-[342px] xl:h-[390px] bg-white rounded-[2.1rem] xl:rounded-[2.5rem] p-1.5 xl:p-2 shadow-2xl shadow-sky-500/15 border-[4.5px] xl:border-[5px] border-slate-900/95 shrink-0 z-20 transform translate-y-0 hover:scale-105 hover:-translate-y-3 hover:z-30 transition-all duration-300 group/phone3 cursor-pointer">
-                                        <div className="relative flex items-center justify-between px-1.5 mb-1 pt-0.5">
-                                            <div className="w-11 xl:w-13 h-2 xl:h-2.5 bg-slate-900 rounded-full mx-auto" />
-                                            <a 
-                                                href="/dental-chip" 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="absolute right-1 top-0 size-4.5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[7px] hover:bg-sky-600 transition-colors"
-                                                title="Abrir app en pantalla completa"
-                                            >
-                                                <ExternalLink size={9} />
-                                            </a>
-                                        </div>
-                                        <div className="h-[calc(100%-20px)] xl:h-[calc(100%-22px)] bg-slate-50 rounded-[1.5rem] xl:rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-sky-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6px] xl:text-[7px] font-bold">
-                                                <ToothIcon className="w-2 h-2 text-white" />
-                                                <span>🦷 Clínica Dental</span>
-                                            </div>
-                                            <iframe 
-                                                src="/dental-chip" 
-                                                title="Dental Chip Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.40] lg:scale-[0.43] xl:scale-[0.49] border-0 select-none pointer-events-auto"
-                                                loading="lazy"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* TELÉFONO 4: TIENDA & RETAIL (E-commerce - Productos y Compras) */}
-                                    <div className="w-[142px] lg:w-[152px] xl:w-[172px] h-[308px] lg:h-[328px] xl:h-[372px] bg-white rounded-[2rem] xl:rounded-[2.4rem] p-1.5 xl:p-2 shadow-2xl shadow-purple-500/15 border-[4px] xl:border-[4.5px] border-slate-900/95 shrink-0 transform rotate-2 translate-y-1 hover:rotate-0 hover:scale-105 hover:-translate-y-2 hover:z-30 transition-all duration-300 z-10 group/phone4 cursor-pointer">
-                                        <div className="relative flex items-center justify-between px-1.5 mb-1 pt-0.5">
-                                            <div className="w-9 xl:w-11 h-2 xl:h-2.5 bg-slate-900 rounded-full mx-auto" />
-                                            <a 
-                                                href="/tienda" 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="absolute right-1 top-0 size-4.5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[7px] hover:bg-purple-600 transition-colors"
-                                                title="Abrir app en pantalla completa"
-                                            >
-                                                <ExternalLink size={9} />
-                                            </a>
-                                        </div>
-                                        <div className="h-[calc(100%-18px)] xl:h-[calc(100%-20px)] bg-white rounded-[1.4rem] xl:rounded-[1.6rem] overflow-hidden relative border border-slate-100 shadow-inner">
-                                            <div className="absolute top-1 left-1.5 z-20 pointer-events-none flex items-center gap-1 bg-purple-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[6px] xl:text-[7px] font-bold">
-                                                <span className="size-1 rounded-full bg-emerald-300 animate-pulse" />
-                                                <span>🛍️ Tienda & Retail</span>
-                                            </div>
-                                            <iframe 
-                                                src="/tienda" 
-                                                title="Citiox Store Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.38] lg:scale-[0.41] xl:scale-[0.46] border-0 select-none pointer-events-auto"
-                                                loading="lazy"
-                                            />
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                        </div>
-
+                    <div className="min-w-0">
+                        <HeroShowcase />
                     </div>
                 </div>
             </header>
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* 3. GRID DE VERTICALES: UNA APP DIFERENTE PARA CADA NEGOCIO     */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            <section id="verticales" className="py-20 bg-white border-t border-slate-100 relative">
-                <div className="max-w-7xl mx-auto px-6">
-                    
-                    {/* Encabezado con Anotación Manuscrita */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-                        <div className="space-y-3 max-w-2xl text-left">
-                            <span className="inline-block px-3 py-1 rounded-full bg-[#E8F1FF] text-[#0066FF] text-[11px] font-black tracking-wider uppercase">
-                                ¿QUÉ TIPO DE NEGOCIO TIENES?
-                            </span>
-                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-950 tracking-tight leading-tight">
-                                Una app diferente<br />
-                                para cada forma de hacer negocios.
-                            </h2>
-                            <p className="text-slate-500 text-sm sm:text-base font-medium">
-                                Citiox adapta la experiencia de tu app a la manera en que funciona tu negocio.
-                            </p>
-                        </div>
-
-                        {/* Anotación decorativa manuscrita con flecha */}
-                        <div className="hidden md:flex items-center gap-2 text-sky-600 font-serif italic text-sm font-semibold select-none pb-2">
-                            <span>Elige tu vertical y empieza hoy</span>
-                            <svg width="40" height="40" viewBox="0 0 50 50" fill="none" className="text-sky-500 stroke-current -rotate-12">
-                                <path d="M12 12 C 26 14, 38 24, 36 40 M 36 40 L 26 36 M 36 40 L 40 30" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    {/* Las 7 Tarjetas de Verticales */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-                        
-                        {/* 1. SERVICIOS */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
-                            <div>
-                                <div className="size-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Scissors size={20} />
-                                </div>
-                                <h3 className="text-base font-black text-slate-900 mb-1">Servicios</h3>
-                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
-                                    Citas, clientes y servicios.
-                                </p>
-                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Peluquerías</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Barberías</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Spas</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Uñas y más</li>
-                                </ul>
-                            </div>
-                            <Link 
-                                href="/register?tipo=servicios" 
-                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
-                            >
-                                <span>Crear app de servicios</span>
-                                <span>&rarr;</span>
-                            </Link>
-                        </div>
-
-                        {/* 2. RESTAURANTES */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
-                            <div>
-                                <div className="size-11 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <UtensilsCrossed size={20} />
-                                </div>
-                                <h3 className="text-base font-black text-slate-900 mb-1">Restaurantes</h3>
-                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
-                                    Pedidos, mesas y ventas.
-                                </p>
-                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Menú digital</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Pedidos</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Mesas QR</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Delivery y más</li>
-                                </ul>
-                            </div>
-                            <Link 
-                                href="/register?tipo=restaurante" 
-                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
-                            >
-                                <span>Crear app para restaurante</span>
-                                <span>&rarr;</span>
-                            </Link>
-                        </div>
-
-                        {/* 3. TIENDAS */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
-                            <div>
-                                <div className="size-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <ShoppingBag size={20} />
-                                </div>
-                                <h3 className="text-base font-black text-slate-900 mb-1">Tiendas</h3>
-                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
-                                    Tu tienda siempre en el bolsillo de tus clientes.
-                                </p>
-                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Catálogo</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Variantes</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Carrito</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Pagos y más</li>
-                                </ul>
-                            </div>
-                            <Link 
-                                href="/register?tipo=tienda" 
-                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
-                            >
-                                <span>Crear tienda app</span>
-                                <span>&rarr;</span>
-                            </Link>
-                        </div>
-
-                        {/* 4. CANCHAS */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
-                            <div>
-                                <div className="size-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Trophy size={20} />
-                                </div>
-                                <h3 className="text-base font-black text-slate-900 mb-1">Canchas</h3>
-                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
-                                    Tus canchas, reservas y clientes en un solo lugar.
-                                </p>
-                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Reservas</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Disponibilidad</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Horarios</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Pagos y más</li>
-                                </ul>
-                            </div>
-                            <Link 
-                                href="/register?tipo=canchas" 
-                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
-                            >
-                                <span>Crear app de canchas</span>
-                                <span>&rarr;</span>
-                            </Link>
-                        </div>
-
-                        {/* 5. LAVANDERÍAS */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
-                            <div>
-                                <div className="size-11 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Shirt size={20} />
-                                </div>
-                                <h3 className="text-base font-black text-slate-900 mb-1">Lavanderías</h3>
-                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
-                                    Recibe, gestiona y entrega tus servicios.
-                                </p>
-                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Solicitudes</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Recolección</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Artículos</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Estados y más</li>
-                                </ul>
-                            </div>
-                            <Link 
-                                href="/register?tipo=lavanderia" 
-                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
-                            >
-                                <span>Crear app de lavandería</span>
-                                <span>&rarr;</span>
-                            </Link>
-                        </div>
-
-                        {/* 6. GIMNASIOS */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
-                            <div>
-                                <div className="size-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Dumbbell size={20} />
-                                </div>
-                                <h3 className="text-base font-black text-slate-900 mb-1">Gimnasios</h3>
-                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
-                                    Convierte tu gimnasio en una experiencia digital.
-                                </p>
-                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Membresías</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Planes</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Asistencias</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Clases y más</li>
-                                </ul>
-                            </div>
-                            <Link 
-                                href="/register?tipo=gimnasio" 
-                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
-                            >
-                                <span>Crear app de gimnasio</span>
-                                <span>&rarr;</span>
-                            </Link>
-                        </div>
-
-                        {/* 7. CLÍNICAS Y ODONTOLOGÍA */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
-                            <div>
-                                <div className="size-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <ToothIcon className="size-5" />
-                                </div>
-                                <h3 className="text-base font-black text-slate-900 mb-1">Clínicas y odontología</h3>
-                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
-                                    Una experiencia digital para tus pacientes.
-                                </p>
-                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Pacientes</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Citas</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Historia clínica</li>
-                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Tratamientos y más</li>
-                                </ul>
-                            </div>
-                            <Link 
-                                href="/register?tipo=dentista" 
-                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
-                            >
-                                <span>Crear app para mi clínica</span>
-                                <span>&rarr;</span>
-                            </Link>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
-
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* 4. COMPARATIVA: NO ES SOLO UNA WEB. ES LA APP DE TU NEGOCIO.    */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            <section id="como-funciona" className="py-20 md:py-28 bg-[#EEF5FF]/70 border-t border-b border-blue-100/60 relative overflow-hidden">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                        
-                        {/* Texto Izquierdo */}
-                        <div className="lg:col-span-4 space-y-5 text-left">
-                            <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-950 tracking-tight leading-[1.12]">
-                                No es solo una página web.<br />
-                                <span className="text-[#0066FF]">Es la app de tu negocio.</span>
-                            </h2>
-                            <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed">
-                                Una experiencia móvil, rápida y completa para que tus clientes te encuentren, compren, reserven y vuelvan.
-                            </p>
-                            <div className="pt-2">
-                                <Link
-                                    href="/register"
-                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#0066FF] hover:bg-[#0052cc] text-white font-extrabold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all"
-                                >
-                                    <span>Ver cómo funciona</span>
-                                    <ArrowRight size={14} />
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Comparativa Cara a Cara en el Centro */}
-                        <div className="lg:col-span-5 flex items-center justify-center">
-                            <div className="relative flex items-center gap-3 w-full max-w-md">
-                                
-                                {/* Tarjeta: Página Web Tradicional */}
-                                <div className="flex-1 bg-white/90 rounded-2xl p-4 border border-slate-200/80 shadow-xs text-left">
-                                    <div className="flex items-center gap-1.5 pb-2 mb-3 border-b border-slate-100">
-                                        <span className="text-sm">📄</span>
-                                        <span className="text-[11px] font-extrabold text-slate-600 truncate">Página web tradicional</span>
-                                    </div>
-                                    <ul className="space-y-2 text-[11px] font-semibold text-slate-400">
-                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Información</li>
-                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> El cliente visita</li>
-                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Catálogo</li>
-                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Contacto</li>
-                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Formulario</li>
-                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Una URL</li>
-                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Difícil de actualizar</li>
-                                    </ul>
-                                </div>
-
-                                {/* Insignia VS Central */}
-                                <div className="size-8 rounded-full bg-[#0066FF] text-white flex items-center justify-center font-black text-[10px] shadow-md shadow-blue-500/30 shrink-0 z-10">
-                                    VS
-                                </div>
-
-                                {/* Tarjeta: Tu App Citiox */}
-                                <div className="flex-1 bg-white rounded-2xl p-4 border-2 border-blue-500/40 shadow-lg shadow-blue-500/10 text-left relative">
-                                    <div className="flex items-center gap-1.5 pb-2 mb-3 border-b border-blue-100">
-                                        <span className="text-sm">📱</span>
-                                        <span className="text-[11px] font-black text-[#0066FF] truncate">Tu app Citiox</span>
-                                    </div>
-                                    <ul className="space-y-2 text-[11px] font-extrabold text-slate-800">
-                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Información + interacción</li>
-                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> El cliente vuelve</li>
-                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Catálogo + compra</li>
-                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Acciones directas</li>
-                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Reservas / pedidos</li>
-                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Experiencia de app</li>
-                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Tú la gestionas</li>
-                                    </ul>
-                                </div>
-
-                            </div>
-                        </div>
-
-                        {/* Teléfono con Simulación de Admin Citiox a la Derecha */}
-                        <div className="lg:col-span-3 flex justify-center items-center">
-                            <div className="w-[230px] h-[430px] bg-slate-950 rounded-[2.8rem] p-2.5 shadow-2xl shadow-blue-950/30 border-[5px] border-slate-900 relative overflow-hidden flex flex-col justify-between select-none">
-                                
-                                {/* Dynamic Island / Speaker & Status Bar */}
-                                <div className="relative z-20 flex items-center justify-between px-3 pt-1 text-[9px] font-semibold text-slate-400">
-                                    <span>9:41</span>
-                                    <div className="w-16 h-3.5 bg-black rounded-full flex items-center justify-end px-1.5">
-                                        <div className="size-1.5 rounded-full bg-emerald-500 animate-ping" />
-                                    </div>
-                                    <div className="flex items-center gap-1 text-[8px]">
-                                        <span>5G</span>
-                                        <div className="w-3.5 h-1.5 border border-slate-700 rounded-xs p-[0.5px]">
-                                            <div className="h-full w-full bg-emerald-500 rounded-[1px]" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Pantalla del Admin (Simulación Visual sin acciones) */}
-                                <div className="flex-1 bg-slate-900 text-white rounded-[2rem] mt-1.5 p-2.5 flex flex-col justify-between border border-white/10 overflow-hidden relative">
-                                    
-                                    {/* Cabecera del Admin Móvil */}
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="size-5 rounded-lg bg-[#0066FF] flex items-center justify-center font-black text-[9px] text-white">
-                                                    C
-                                                </div>
-                                                <div className="text-left">
-                                                    <p className="text-[9px] font-black tracking-tight leading-none">Mi Negocio</p>
-                                                    <p className="text-[7px] text-slate-400 font-medium">Panel Admin</p>
-                                                </div>
-                                            </div>
-                                            <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[7px] font-black uppercase tracking-wider flex items-center gap-1">
-                                                <span className="size-1 rounded-full bg-emerald-400 animate-pulse" /> En Vivo
-                                            </span>
-                                        </div>
-
-                                        {/* Tarjeta de Ingresos y Operación del Día */}
-                                        <div className="bg-white/5 border border-white/10 rounded-xl p-2 text-left">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <span className="text-[7px] font-bold text-slate-400 uppercase tracking-wider">Hoy en Caja</span>
-                                                    <h4 className="text-sm font-black text-white">$485.00</h4>
-                                                </div>
-                                                <span className="text-[7px] font-bold text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded">
-                                                    ▲ +24%
-                                                </span>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-1.5 mt-1.5 pt-1.5 border-t border-white/5 text-[7px]">
-                                                <div>
-                                                    <span className="text-slate-400">Accesos / Turnos:</span>
-                                                    <p className="font-bold text-slate-200">18 hoy</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-slate-400">Clientes activos:</span>
-                                                    <p className="font-bold text-slate-200">9 dentro</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Botones de Acción Rápida (Simulados) */}
-                                        <div className="grid grid-cols-2 gap-1.5 text-left">
-                                            <div className="bg-[#0066FF]/20 border border-[#0066FF]/40 rounded-lg p-1.5 flex items-center gap-1.5">
-                                                <div className="size-4 rounded-md bg-[#0066FF] flex items-center justify-center text-white text-[8px]">
-                                                    ⚡
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-[7px] font-black text-white truncate">Escanear QR</p>
-                                                    <p className="text-[6px] text-blue-200 truncate">Acceso rápido</p>
-                                                </div>
-                                            </div>
-                                            <div className="bg-white/5 border border-white/10 rounded-lg p-1.5 flex items-center gap-1.5">
-                                                <div className="size-4 rounded-md bg-white/10 flex items-center justify-center text-amber-400 text-[8px]">
-                                                    💰
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-[7px] font-black text-white truncate">Cobro / Caja</p>
-                                                    <p className="text-[6px] text-slate-400 truncate">Turno abierto</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Actividad en Vivo Reciente */}
-                                        <div className="space-y-1 text-left">
-                                            <span className="text-[7px] font-black uppercase text-slate-400 tracking-wider">Actividad en Vivo</span>
-                                            <div className="space-y-1">
-                                                <div className="bg-white/[0.04] rounded-lg p-1.5 flex items-center justify-between border border-white/5">
-                                                    <div className="flex items-center gap-1.5 min-w-0">
-                                                        <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" />
-                                                        <span className="text-[7px] font-bold text-slate-200 truncate">Check-in QR • Sofía M.</span>
-                                                    </div>
-                                                    <span className="text-[6px] text-slate-400 shrink-0">10:24</span>
-                                                </div>
-                                                <div className="bg-white/[0.04] rounded-lg p-1.5 flex items-center justify-between border border-white/5">
-                                                    <div className="flex items-center gap-1.5 min-w-0">
-                                                        <span className="size-1.5 rounded-full bg-blue-400 shrink-0" />
-                                                        <span className="text-[7px] font-bold text-slate-200 truncate">Plan Mensual • $35</span>
-                                                    </div>
-                                                    <span className="text-[6px] text-slate-400 shrink-0">10:18</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Barra de Navegación Inferior Móvil de la App */}
-                                    <div className="bg-white/5 rounded-xl px-3 py-1 flex justify-between items-center border border-white/10 text-[7px] text-slate-400 mt-2">
-                                        <span className="text-[#0066FF] font-bold">Inicio</span>
-                                        <span>Accesos</span>
-                                        <span>Caja</span>
-                                        <span>Socios</span>
-                                    </div>
-
-                                    {/* Indicador Home Bar de iPhone */}
-                                    <div className="w-16 h-1 bg-white/30 rounded-full mx-auto mt-1" />
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
-
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* 5. TU NEGOCIO CRECE. TU APP TAMBIÉN. (8 MÓDULOS)                */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            <section id="funciones" className="py-20 bg-white">
-                <div className="max-w-7xl mx-auto px-6">
-                    
-                    {/* Encabezado */}
-                    <div className="text-left space-y-2 mb-12">
-                        <span className="inline-block px-3.5 py-1.5 rounded-full bg-[#E8F1FF] text-[#0066FF] text-[11px] font-black tracking-wider uppercase">
-                            TODO LO QUE TU APP PUEDE HACER
-                        </span>
-                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-950 tracking-tight leading-tight">
-                            Tu negocio crece.<br />
-                            Tu app también.
+            {/* ─────────────── Cómo funciona ─────────────── */}
+            <section id="como-funciona" className="scroll-mt-20 bg-white border-y border-slate-200/70">
+                <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-20 lg:py-24">
+                    <div className="max-w-2xl">
+                        <SectionLabel>Cómo funciona</SectionLabel>
+                        <h2 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-slate-950 leading-[1.05]">
+                            Tres pasos y tu negocio ya está en el celular de tus clientes.
                         </h2>
-                        <p className="text-slate-500 text-sm sm:text-base font-medium">
-                            Gestiona todo desde un solo lugar, sin complicaciones.
+                    </div>
+                    <ol className="mt-14 grid md:grid-cols-3 gap-6 lg:gap-10">
+                        {STEPS.map((s, i) => {
+                            const Icon = s.icon;
+                            return (
+                                <li key={s.title} className="relative">
+                                    <div className="flex items-center gap-4 mb-5">
+                                        <span className="font-display text-6xl font-bold text-slate-200 leading-none">{i + 1}</span>
+                                        <span className="size-12 rounded-2xl bg-[#0066FF]/10 text-[#0066FF] flex items-center justify-center">
+                                            <Icon size={22} />
+                                        </span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-950">{s.title}</h3>
+                                    <p className="mt-2 text-base text-slate-600 leading-relaxed">{s.text}</p>
+                                </li>
+                            );
+                        })}
+                    </ol>
+                </div>
+            </section>
+
+            {/* ─────────────── Tipos de negocio ─────────────── */}
+            <section id="verticales" className="scroll-mt-20">
+                <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-20 lg:py-24">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                        <div className="max-w-2xl">
+                            <SectionLabel>¿Qué tipo de negocio tienes?</SectionLabel>
+                            <h2 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-slate-950 leading-[1.05]">
+                                Una app pensada para cómo trabaja tu negocio.
+                            </h2>
+                        </div>
+                        <p className="text-base text-slate-600 max-w-sm">
+                            Abre un ejemplo para probarlo como si fueras tu cliente, o crea la tuya directamente.
+                        </p>
+                    </div>
+                    <BusinessVerticalsGrid />
+                </div>
+            </section>
+
+            {/* ─────────────── Web vs app ─────────────── */}
+            <section className="bg-slate-950 text-white relative overflow-hidden">
+                <div className="absolute -top-40 -right-40 size-[520px] rounded-full bg-[#0066FF]/25 blur-3xl pointer-events-none" aria-hidden />
+                <div className="relative max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-20 lg:py-24 grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-12 items-center">
+                    <div>
+                        <SectionLabel light>La diferencia</SectionLabel>
+                        <h2 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05]" style={{ color: 'white' }}>
+                            No es solo una página web.{' '}
+                            <span className="text-sky-300">Es la app de tu negocio.</span>
+                        </h2>
+                        <p className="mt-5 text-lg text-slate-300 leading-relaxed max-w-md">
+                            Una página web se mira. Una app se usa: tus clientes resuelven solos lo que antes te preguntaban por mensaje.
+                        </p>
+                        <Link
+                            href="/register"
+                            className="mt-8 inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-white text-slate-950 hover:bg-sky-100 text-base font-semibold transition-colors"
+                        >
+                            Crear mi app
+                            <ArrowRight size={17} />
+                        </Link>
+                    </div>
+
+                    <div className="rounded-3xl bg-white/[0.04] ring-1 ring-white/10 overflow-hidden">
+                        <div className="grid grid-cols-2 text-sm font-semibold border-b border-white/10">
+                            <div className="px-5 py-4 text-slate-400">Página web común</div>
+                            <div className="px-5 py-4 text-sky-300 bg-[#0066FF]/10">Tu app Citiox</div>
+                        </div>
+                        {COMPARISON.map(([before, after]) => (
+                            <div key={before} className="grid grid-cols-2 border-b border-white/5 last:border-0">
+                                <div className="px-5 py-4 flex items-start gap-2.5 text-[15px] text-slate-400">
+                                    <X size={16} className="mt-0.5 shrink-0 text-slate-600" />
+                                    {before}
+                                </div>
+                                <div className="px-5 py-4 flex items-start gap-2.5 text-[15px] text-white bg-[#0066FF]/10">
+                                    <Check size={16} strokeWidth={3} className="mt-0.5 shrink-0 text-sky-300" />
+                                    {after}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ─────────────── Funciones ─────────────── */}
+            <section id="funciones" className="scroll-mt-20">
+                <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-20 lg:py-24">
+                    <div className="max-w-2xl mb-12">
+                        <SectionLabel>Todo en un solo lugar</SectionLabel>
+                        <h2 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-slate-950 leading-[1.05]">
+                            Tu negocio crece. Tu app también.
+                        </h2>
+                        <p className="mt-4 text-lg text-slate-600">Empiezas con lo básico y activas más funciones cuando las necesites.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                        {/* Reservas */}
+                        <div className="md:col-span-3 rounded-3xl bg-white ring-1 ring-slate-200/80 p-6 sm:p-8 flex flex-col">
+                            <span className="size-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center"><Calendar size={20} /></span>
+                            <h3 className="mt-4 text-2xl font-bold text-slate-950">Reservas y citas</h3>
+                            <p className="mt-2 text-base text-slate-600">Tus clientes eligen servicio, profesional y horario. Tú ves tu agenda del día de un vistazo.</p>
+                            <div className="mt-6 rounded-2xl bg-slate-50 ring-1 ring-slate-200/70 p-4 space-y-2" aria-hidden>
+                                {[
+                                    ['09:00', 'Limpieza facial', 'Ana V.', 'bg-sky-500'],
+                                    ['10:30', 'Masaje relajante', 'Lucía M.', 'bg-rose-500'],
+                                    ['12:00', 'Manicure spa', 'Ana V.', 'bg-amber-500'],
+                                ].map(([t, s, p, c]) => (
+                                    <div key={t} className="flex items-center gap-3 bg-white rounded-xl px-3 py-2.5 ring-1 ring-slate-200/60">
+                                        <span className="text-sm font-semibold text-slate-500 w-[60px] shrink-0 flex items-center gap-1"><Clock size={12} />{t}</span>
+                                        <span className={`w-1 h-7 rounded-full ${c}`} />
+                                        <span className="flex-1 min-w-0">
+                                            <span className="block text-sm font-semibold text-slate-900 truncate">{s}</span>
+                                            <span className="block text-xs text-slate-500">con {p}</span>
+                                        </span>
+                                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">Confirmada</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Ventas */}
+                        <div className="md:col-span-3 rounded-3xl bg-white ring-1 ring-slate-200/80 p-6 sm:p-8 flex flex-col">
+                            <span className="size-11 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center"><Store size={20} /></span>
+                            <h3 className="mt-4 text-2xl font-bold text-slate-950">Ventas y pedidos</h3>
+                            <p className="mt-2 text-base text-slate-600">Recibe pedidos para mesa, retiro o domicilio y vende tus productos con carrito y pago.</p>
+                            <div className="mt-6 rounded-2xl bg-slate-50 ring-1 ring-slate-200/70 p-4 space-y-2" aria-hidden>
+                                {[
+                                    ['#1042', 'Mesa 4 · 2 productos', '$24.50', 'En cocina', 'bg-amber-50 text-amber-700'],
+                                    ['#1041', 'Retiro en local', '$11.00', 'Listo', 'bg-emerald-50 text-emerald-700'],
+                                    ['#1040', 'Domicilio · Av. Amazonas', '$32.00', 'En camino', 'bg-sky-50 text-sky-700'],
+                                ].map(([n, d, a, st, cls]) => (
+                                    <div key={n} className="flex items-center gap-3 bg-white rounded-xl px-3 py-2.5 ring-1 ring-slate-200/60">
+                                        <span className="text-sm font-semibold text-slate-400 w-12">{n}</span>
+                                        <span className="flex-1 min-w-0 text-sm font-semibold text-slate-900 truncate">{d}</span>
+                                        <span className="text-sm font-bold text-slate-900">{a}</span>
+                                        <span className={`hidden sm:inline text-xs font-semibold rounded-full px-2 py-0.5 ${cls}`}>{st}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {SMALL_FEATURES.map((f) => {
+                            const Icon = f.icon;
+                            return (
+                                <div key={f.title} className="md:col-span-2 rounded-3xl bg-white ring-1 ring-slate-200/80 p-6 hover:ring-slate-300 hover:shadow-lg hover:shadow-slate-900/5 transition-all">
+                                    <span className={`size-11 rounded-2xl flex items-center justify-center ${f.tint}`}><Icon size={20} /></span>
+                                    <h3 className="mt-4 text-lg font-bold text-slate-950">{f.title}</h3>
+                                    <p className="mt-1.5 text-[15px] text-slate-600 leading-relaxed">{f.text}</p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </section>
+
+            {/* ─────────────── Club de beneficios y días gratis ─────────────── */}
+            <section id="club" className="scroll-mt-20 bg-white border-t border-slate-200/70">
+                <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-20 lg:py-24">
+                    <div className="max-w-2xl mb-12">
+                        <SectionLabel>Club de beneficios</SectionLabel>
+                        <h2 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-slate-950 leading-[1.05]">
+                            Clientes que vuelven. Y un negocio que gana premios.
+                        </h2>
+                        <p className="mt-4 text-lg text-slate-600">
+                            Tus clientes juntan puntos y premios por volver a tu negocio. Y tú, por hacer crecer tu negocio con Citiox, ganas días gratis de suscripción.
                         </p>
                     </div>
 
-                    {/* Fila de 8 Módulos Funcionales */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
-                        
-                        {/* 1. Clientes */}
-                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-200 transition-all text-center flex flex-col items-center">
-                            <div className="size-10 rounded-xl bg-blue-50 text-[#0066FF] flex items-center justify-center mb-3">
-                                <Users size={18} />
-                            </div>
-                            <h4 className="text-xs font-black text-slate-900 mb-1">Clientes</h4>
-                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
-                                Conoce y administra tus clientes.
-                            </p>
-                        </div>
-
-                        {/* 2. Ventas */}
-                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-orange-200 transition-all text-center flex flex-col items-center">
-                            <div className="size-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-3">
-                                <Store size={18} />
-                            </div>
-                            <h4 className="text-xs font-black text-slate-900 mb-1">Ventas</h4>
-                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
-                                Recibe pedidos y controla tus ventas.
-                            </p>
-                        </div>
-
-                        {/* 3. Reservas */}
-                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-sky-200 transition-all text-center flex flex-col items-center">
-                            <div className="size-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-3">
-                                <Calendar size={18} />
-                            </div>
-                            <h4 className="text-xs font-black text-slate-900 mb-1">Reservas</h4>
-                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
-                                Gestiona citas, horarios y disponibilidad.
-                            </p>
-                        </div>
-
-                        {/* 4. Pagos */}
-                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-purple-200 transition-all text-center flex flex-col items-center">
-                            <div className="size-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
-                                <CreditCard size={18} />
-                            </div>
-                            <h4 className="text-xs font-black text-slate-900 mb-1">Pagos</h4>
-                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
-                                Recibe pagos de forma segura y fácil.
-                            </p>
-                        </div>
-
-                        {/* 5. Promociones */}
-                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-pink-200 transition-all text-center flex flex-col items-center">
-                            <div className="size-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center mb-3">
-                                <Tag size={18} />
-                            </div>
-                            <h4 className="text-xs font-black text-slate-900 mb-1">Promociones</h4>
-                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
-                                Haz que tus clientes regresen.
-                            </p>
-                        </div>
-
-                        {/* 6. Fidelización */}
-                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-amber-200 transition-all text-center flex flex-col items-center">
-                            <div className="size-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
-                                <Star size={18} />
-                            </div>
-                            <h4 className="text-xs font-black text-slate-900 mb-1">Fidelización</h4>
-                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
-                                Misiones, premios y recompensas.
-                            </p>
-                        </div>
-
-                        {/* 7. Operación */}
-                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all text-center flex flex-col items-center">
-                            <div className="size-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-3">
-                                <SlidersHorizontal size={18} />
-                            </div>
-                            <h4 className="text-xs font-black text-slate-900 mb-1">Operación</h4>
-                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
-                                Gestiona el día a día de tu negocio.
-                            </p>
-                        </div>
-
-                        {/* 8. Reportes */}
-                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-teal-200 transition-all text-center flex flex-col items-center">
-                            <div className="size-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center mb-3">
-                                <BarChart3 size={18} />
-                            </div>
-                            <h4 className="text-xs font-black text-slate-900 mb-1">Reportes</h4>
-                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
-                                Entiende cómo está funcionando tu negocio.
-                            </p>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
-
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* 6. BANNER AZUL CTA: HOY PUEDES CREARLA                          */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            <section className="py-12 bg-white">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="relative rounded-[2.5rem] bg-gradient-to-r from-[#0052cc] via-[#0066FF] to-[#0055EE] text-white p-8 sm:p-12 overflow-hidden shadow-2xl shadow-blue-500/25 flex flex-col lg:flex-row items-center justify-between gap-8">
-                        
-                        {/* Decoración de ondas de fondo */}
-                        <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                        <div className="absolute left-10 -top-20 w-72 h-72 bg-sky-300/10 rounded-full blur-xl pointer-events-none" />
-
-                        {/* Teléfonos miniatura a la izquierda */}
-                        <div className="hidden sm:flex items-center -space-x-4 shrink-0">
-                            <div className="w-16 h-28 bg-slate-900 rounded-2xl border-2 border-white/40 p-1 shadow-lg transform -rotate-6 overflow-hidden">
-                                <img 
-                                    src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=150&auto=format&fit=crop&q=80" 
-                                    alt="Restaurante App" 
-                                    className="w-full h-full object-cover rounded-xl"
-                                />
-                            </div>
-                            <div className="w-20 h-32 bg-slate-950 rounded-2xl border-2 border-white/60 p-1 shadow-xl z-10 overflow-hidden">
-                                <img 
-                                    src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=200&auto=format&fit=crop&q=80" 
-                                    alt="Gym App" 
-                                    className="w-full h-full object-cover rounded-xl"
-                                />
-                            </div>
-                            <div className="w-16 h-28 bg-slate-900 rounded-2xl border-2 border-white/40 p-1 shadow-lg transform rotate-6 overflow-hidden">
-                                <img 
-                                    src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150&auto=format&fit=crop&q=80" 
-                                    alt="Tienda App" 
-                                    className="w-full h-full object-cover rounded-xl"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Texto Central y Chips */}
-                        <div className="space-y-3 text-center lg:text-left flex-1 max-w-xl z-10">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-blue-200">
-                                ¿Y SI TU NEGOCIO TUVIERA SU PROPIA APP?
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        {/* Para tus clientes */}
+                        <div className="rounded-3xl bg-gradient-to-br from-rose-50 via-white to-amber-50 ring-1 ring-slate-200/80 p-6 sm:p-8 flex flex-col">
+                            <span className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-rose-600 bg-rose-100/70 rounded-full px-3 py-1">
+                                <Users size={14} /> Para tus clientes
                             </span>
-                            <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-                                Hoy puedes crearla.
-                            </h3>
-                            <p className="text-xs sm:text-sm text-blue-100 font-medium">
-                                Elige tu tipo de negocio y empieza.
-                            </p>
+                            <h3 className="mt-4 text-2xl font-bold text-slate-950">Un club con tu marca</h3>
+                            <ul className="mt-4 space-y-2.5 text-[15px] text-slate-700">
+                                {[
+                                    'Puntos automáticos en cada visita, reserva o compra',
+                                    'Misiones: reseñar, recomendar a un amigo, venir en su cumpleaños',
+                                    'Niveles Bronce, Plata y Oro con beneficios que tú eliges',
+                                    'Plantillas listas para tu tipo de negocio: lo activas en un minuto',
+                                ].map((t) => (
+                                    <li key={t} className="flex items-start gap-2.5">
+                                        <Check size={17} strokeWidth={3} className="mt-0.5 text-rose-500 shrink-0" />
+                                        {t}
+                                    </li>
+                                ))}
+                            </ul>
 
-                            {/* Chips de Tipos de Negocio */}
-                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 pt-2">
-                                <Link href="/register?tipo=servicios" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
-                                    ✂ Servicios
-                                </Link>
-                                <Link href="/register?tipo=restaurante" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
-                                    🍴 Restaurantes
-                                </Link>
-                                <Link href="/register?tipo=tienda" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
-                                    🛍 Tiendas
-                                </Link>
-                                <Link href="/register?tipo=canchas" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
-                                    ⚽ Canchas
-                                </Link>
-                                <Link href="/register?tipo=lavanderia" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
-                                    👕 Lavanderías
-                                </Link>
-                                <Link href="/register?tipo=gimnasio" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
-                                    🏋 Gimnasios
-                                </Link>
-                                <Link href="/register?tipo=dentista" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
-                                    🦷 Clínicas
-                                </Link>
-                                <Link href="/register" className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-[10px] font-bold transition-colors">
-                                    + Más
-                                </Link>
+                            {/* Tarjeta de ejemplo del cliente */}
+                            <div className="mt-8 rounded-2xl bg-slate-950 text-white p-5 shadow-xl max-w-sm" aria-hidden>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-xs text-slate-400">Club Aura Spa</p>
+                                        <p className="font-bold">Hola, Camila</p>
+                                    </div>
+                                    <span className="inline-flex items-center gap-1 text-xs font-semibold bg-amber-400/15 text-amber-300 rounded-full px-2.5 py-1">
+                                        <Crown size={12} /> Nivel Plata
+                                    </span>
+                                </div>
+                                <div className="mt-4 flex items-end justify-between">
+                                    <p className="text-3xl font-bold">340 <span className="text-sm font-medium text-slate-400">puntos</span></p>
+                                    <p className="text-xs text-slate-400">160 para Oro</p>
+                                </div>
+                                <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
+                                    <div className="h-full w-[68%] rounded-full bg-gradient-to-r from-rose-400 to-amber-300" />
+                                </div>
+                                <div className="mt-4 flex items-center gap-2.5 bg-white/5 rounded-xl px-3 py-2.5">
+                                    <Gift size={16} className="text-rose-300 shrink-0" />
+                                    <p className="text-sm">5 visitas = <span className="font-semibold">facial gratis</span> · llevas 4</p>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Botón Blanco a la Derecha */}
-                        <div className="shrink-0 z-10">
+                        {/* Para ti */}
+                        <div className="rounded-3xl bg-slate-950 text-white p-6 sm:p-8 relative overflow-hidden flex flex-col">
+                            <div className="absolute -right-24 -top-24 size-72 rounded-full bg-[#0066FF]/35 blur-3xl pointer-events-none" aria-hidden />
+                            <span className="relative inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-sky-300 bg-sky-400/10 rounded-full px-3 py-1">
+                                <Trophy size={14} /> Para ti
+                            </span>
+                            <h3 className="relative mt-4 text-2xl font-bold" style={{ color: 'white' }}>Usa Citiox y gana días gratis</h3>
+                            <p className="relative mt-3 text-[15px] text-slate-300 max-w-md">
+                                Cumple retos mientras haces crecer tu negocio: carga tus servicios, recibe tus primeras reservas, comparte tu QR o recomienda Citiox a otro negocio. Cada reto suma días a tu suscripción.
+                            </p>
+
+                            <div className="relative mt-8 space-y-2.5 max-w-sm" aria-hidden>
+                                {[
+                                    { t: 'Recibe tus primeras 10 reservas en línea', p: 70, r: '+7 días', done: false },
+                                    { t: 'Comparte tu enlace en Instagram', p: 100, r: '+3 días', done: true },
+                                    { t: 'Recomienda Citiox a otro negocio', p: 0, r: '+30 días', done: false },
+                                ].map((m) => (
+                                    <div key={m.t} className="bg-white/5 ring-1 ring-white/10 rounded-2xl px-4 py-3">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="text-sm font-medium text-white flex items-center gap-2">
+                                                {m.done ? <Check size={15} strokeWidth={3} className="text-emerald-400" /> : <Target size={15} className="text-sky-300" />}
+                                                {m.t}
+                                            </p>
+                                            <span className="text-xs font-bold text-emerald-300 shrink-0">{m.r}</span>
+                                        </div>
+                                        <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                            <div className={`h-full rounded-full ${m.done ? 'bg-emerald-400' : 'bg-sky-400'}`} style={{ width: `${m.p}%` }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
                             <Link
                                 href="/register"
-                                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white text-[#0066FF] hover:bg-blue-50 font-black text-xs shadow-lg transition-all active:scale-95"
+                                className="relative mt-8 inline-flex w-fit items-center gap-2 px-6 py-3 rounded-full bg-white text-slate-950 hover:bg-sky-100 text-base font-semibold transition-colors"
                             >
-                                <span>Crear mi app</span>
-                                <ArrowRight size={14} />
+                                Empezar a ganar días
+                                <ArrowRight size={17} />
                             </Link>
                         </div>
-
                     </div>
                 </div>
             </section>
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* 6. FOOTER PRINCIPAL (OPTIMIZADO PARA MÓVIL Y DESKTOP)           */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            <footer className="bg-white border-t border-slate-200/80 pt-16 pb-12 overflow-hidden">
-                <div className="max-w-7xl mx-auto px-6">
-                    
-                    {/* Sección Superior del Footer */}
-                    <div className="pb-12 border-b border-slate-100">
-                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-10">
-                            
-                            {/* Marca Citiox y Propuesta de Valor */}
-                            <div className="space-y-4 max-w-sm text-left">
-                                <Link href="/" className="inline-block transition-transform hover:scale-105">
-                                    <CitioxBrandLogo className="h-12 sm:h-14 w-auto" />
-                                </Link>
-                                <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                    La plataforma todo-en-uno para crear la app de tu negocio, vender productos, agendar citas y fidelizar clientes en minutos.
-                                </p>
-                                
-                                {/* Badges de Confianza */}
-                                <div className="flex flex-wrap gap-2 pt-1 text-[11px] font-bold text-slate-600">
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700">
-                                        <Check size={12} className="text-[#0066FF] stroke-[3]" /> Sin comisiones ocultas
+            {/* ─────────────── Preguntas ─────────────── */}
+            <section id="preguntas" className="scroll-mt-20 bg-white border-y border-slate-200/70">
+                <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-20 lg:py-24 grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-10">
+                    <div>
+                        <SectionLabel>Preguntas frecuentes</SectionLabel>
+                        <h2 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-slate-950 leading-[1.05]">
+                            Lo que todos preguntan antes de empezar.
+                        </h2>
+                    </div>
+                    <div className="divide-y divide-slate-200 border-y border-slate-200">
+                        {FAQ.map((item) => (
+                            <details key={item.q} className="group py-5">
+                                <summary className="flex items-center justify-between gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                                    <span className="text-lg font-semibold text-slate-950">{item.q}</span>
+                                    <span className="size-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 transition-transform group-open:rotate-180">
+                                        <ChevronDown size={17} />
                                     </span>
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700">
-                                        <Check size={12} className="text-[#0066FF] stroke-[3]" /> En minutos
-                                    </span>
-                                </div>
+                                </summary>
+                                <p className="mt-3 text-base text-slate-600 leading-relaxed pr-12">{item.a}</p>
+                            </details>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ─────────────── Llamado final ─────────────── */}
+            <section className="px-4 sm:px-6 py-16 lg:py-20">
+                <div className="max-w-7xl mx-auto relative overflow-hidden rounded-[2rem] text-white px-6 sm:px-12 py-14 sm:py-16" style={{ background: `linear-gradient(135deg, ${BRAND} 0%, #0047B3 100%)` }}>
+                    <div className="absolute -right-24 -bottom-32 size-96 rounded-full bg-white/10 pointer-events-none" aria-hidden />
+                    <div className="absolute right-40 -top-24 size-60 rounded-full bg-sky-300/20 pointer-events-none" aria-hidden />
+                    <div className="relative grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-10 items-center">
+                        <div>
+                            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05]" style={{ color: 'white' }}>
+                                ¿Y si tu negocio tuviera su propia app desde hoy?
+                            </h2>
+                            <p className="mt-4 text-lg text-blue-100">Elige tu tipo de negocio y empieza en minutos.</p>
+                            <div className="mt-6 flex flex-wrap gap-2">
+                                {[
+                                    ['Servicios y spa', 'servicios'],
+                                    ['Restaurantes', 'restaurante'],
+                                    ['Tiendas', 'tienda'],
+                                    ['Canchas', 'canchas'],
+                                    ['Gimnasios', 'gimnasio'],
+                                    ['Clínicas', 'dentista'],
+                                    ['Lavanderías', 'lavanderia'],
+                                ].map(([label, tipo]) => (
+                                    <Link
+                                        key={tipo}
+                                        href={`/register?tipo=${tipo}`}
+                                        className="px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 text-sm font-medium transition-colors"
+                                    >
+                                        {label}
+                                    </Link>
+                                ))}
                             </div>
-
-                            {/* Grid de Enlaces: 2 Columnas en Móvil, 3 Columnas en Desktop */}
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12 text-left flex-1 max-w-xl">
-                                
-                                {/* Columna 1: Soluciones */}
-                                <div className="space-y-3">
-                                    <h5 className="font-black text-slate-900 text-xs tracking-wider uppercase">
-                                        Soluciones
-                                    </h5>
-                                    <ul className="space-y-2 text-xs font-semibold text-slate-600">
-                                        <li><Link href="/restaurantes" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>🍔</span> Restaurantes</Link></li>
-                                        <li><Link href="/tiendas" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>🛍️</span> Tiendas & Retail</Link></li>
-                                        <li><Link href="/canchas" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>⚽</span> Canchas Deportivas</Link></li>
-                                        <li><Link href="/register?tipo=gimnasio" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>💪</span> Gimnasios</Link></li>
-                                        <li><Link href="/register?tipo=dentista" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>🦷</span> Clínicas & Dentistas</Link></li>
-                                        <li><Link href="/lavanderias" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>🧺</span> Lavanderías</Link></li>
-                                        <li><Link href="/servicios" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>✨</span> Servicios & Spa</Link></li>
-                                    </ul>
-                                </div>
-
-                                {/* Columna 2: Empresa */}
-                                <div className="space-y-3">
-                                    <h5 className="font-black text-slate-900 text-xs tracking-wider uppercase">
-                                        Empresa
-                                    </h5>
-                                    <ul className="space-y-2 text-xs font-semibold text-slate-600">
-                                        <li><a href="#como-funciona" className="hover:text-[#0066FF] transition-colors">Cómo funciona</a></li>
-                                        <li><Link href="/admin/plan" className="hover:text-[#0066FF] transition-colors">Planes y Precios</Link></li>
-                                        <li><Link href="/register" className="hover:text-[#0066FF] transition-colors">Crear mi app gratis</Link></li>
-                                        <li><Link href="/login" className="hover:text-[#0066FF] transition-colors">Iniciar sesión</Link></li>
-                                        <li><a href="https://wa.me/" target="_blank" rel="noopener noreferrer" className="hover:text-[#0066FF] transition-colors">Soporte WhatsApp</a></li>
-                                    </ul>
-                                </div>
-
-                                {/* Columna 3: Legal (ocupa las 2 columnas en pantallas ultra-pequeñas o columna propia) */}
-                                <div className="space-y-3 col-span-2 sm:col-span-1">
-                                    <h5 className="font-black text-slate-900 text-xs tracking-wider uppercase">
-                                        Legal & Seguridad
-                                    </h5>
-                                    <ul className="space-y-2 text-xs font-semibold text-slate-600">
-                                        <li><Link href="/terminos" className="hover:text-[#0066FF] transition-colors">Términos de servicio</Link></li>
-                                        <li><Link href="/privacidad" className="hover:text-[#0066FF] transition-colors">Política de privacidad</Link></li>
-                                        <li className="text-slate-400 text-[11px] pt-1">🔒 Encriptación SSL 256-bit</li>
-                                    </ul>
-                                </div>
-
-                            </div>
-
+                        </div>
+                        <div className="flex lg:justify-end">
+                            <Link
+                                href="/register"
+                                className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-white text-[#0047B3] hover:bg-blue-50 text-lg font-semibold shadow-xl shadow-blue-950/20 transition-colors"
+                            >
+                                Crear mi app gratis
+                                <ArrowRight size={20} />
+                            </Link>
                         </div>
                     </div>
+                </div>
+            </section>
 
-                    {/* Fila Inferior: Redes Sociales, Estado del Sistema y Copyright */}
-                    <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-slate-500 text-xs">
-                        
-                        {/* Redes Sociales con Botones Táctiles Amplios */}
-                        <div className="flex items-center gap-3">
-                            <a href="#" className="size-9 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0066FF] flex items-center justify-center transition-all shadow-xs" aria-label="Instagram">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-                            </a>
-                            <a href="#" className="size-9 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0066FF] flex items-center justify-center transition-all shadow-xs" aria-label="Facebook">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-                            </a>
-                            <a href="#" className="size-9 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0066FF] flex items-center justify-center transition-all shadow-xs" aria-label="YouTube">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><polygon points="10 15 15 12 10 9 10 15"/></svg>
-                            </a>
-                            <a href="#" className="size-9 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0066FF] flex items-center justify-center transition-all shadow-xs" aria-label="TikTok">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
-                            </a>
-                            <a href="#" className="size-9 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0066FF] flex items-center justify-center transition-all shadow-xs" aria-label="LinkedIn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
-                            </a>
+            {/* ─────────────── Pie de página ─────────────── */}
+            <footer className="border-t border-slate-200/70 bg-white">
+                <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 pt-14 pb-10">
+                    <div className="flex flex-col md:flex-row justify-between gap-10">
+                        <div className="max-w-sm">
+                            <CitioxLogo className="h-10 w-auto" />
+                            <p className="mt-4 text-[15px] text-slate-600 leading-relaxed">
+                                La app de tu negocio para recibir reservas, pedidos y ventas, y hacer que tus clientes vuelvan.
+                            </p>
                         </div>
-
-                        {/* Indicador de Estado Operativo */}
-                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>Sistemas 100% Operativos</span>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 sm:gap-14 text-[15px]">
+                            <div>
+                                <p className="font-semibold text-slate-950 mb-3">Soluciones</p>
+                                <ul className="space-y-2.5 text-slate-600">
+                                    <li><Link href="/servicios" className="hover:text-slate-950">Servicios y spa</Link></li>
+                                    <li><Link href="/restaurantes" className="hover:text-slate-950">Restaurantes</Link></li>
+                                    <li><Link href="/tiendas" className="hover:text-slate-950">Tiendas</Link></li>
+                                    <li><Link href="/canchas" className="hover:text-slate-950">Canchas</Link></li>
+                                    <li><Link href="/lavanderias" className="hover:text-slate-950">Lavanderías</Link></li>
+                                    <li><Link href="/register?tipo=gimnasio" className="hover:text-slate-950">Gimnasios</Link></li>
+                                    <li><Link href="/register?tipo=dentista" className="hover:text-slate-950">Clínicas</Link></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p className="font-semibold text-slate-950 mb-3">Citiox</p>
+                                <ul className="space-y-2.5 text-slate-600">
+                                    <li><a href="#como-funciona" className="hover:text-slate-950">Cómo funciona</a></li>
+                                    <li><a href="#preguntas" className="hover:text-slate-950">Preguntas</a></li>
+                                    <li><Link href="/register" className="hover:text-slate-950">Crear cuenta</Link></li>
+                                    <li><Link href="/login" className="hover:text-slate-950">Entrar</Link></li>
+                                </ul>
+                            </div>
+                            <div className="col-span-2 sm:col-span-1">
+                                <p className="font-semibold text-slate-950 mb-3">Legal</p>
+                                <ul className="space-y-2.5 text-slate-600">
+                                    <li><Link href="/terminos" className="hover:text-slate-950">Términos de servicio</Link></li>
+                                    <li><Link href="/privacidad" className="hover:text-slate-950">Política de privacidad</Link></li>
+                                </ul>
+                            </div>
                         </div>
-
-                        {/* Copyright */}
-                        <div className="text-center sm:text-right font-medium text-slate-500">
-                            © 2026 Citiox. Todos los derechos reservados.
-                        </div>
-
                     </div>
-
+                    <div className="mt-12 pt-6 border-t border-slate-200/70 text-sm text-slate-500">
+                        © {year} Citiox. Todos los derechos reservados.
+                    </div>
                 </div>
             </footer>
-
         </div>
     );
 }

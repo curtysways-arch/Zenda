@@ -1,130 +1,122 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import {
+  getDentalContext,
+  jsonError,
+  cleanText,
+  findOwnedRecord,
+  resolveRecord,
+  validateStaffId,
+  validateAppointmentId,
+  isValidDateKey,
+} from '@/modules/dental/server/context';
 
 export const dynamic = 'force-dynamic';
 
-async function getSessionNegocioId() {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user) return null;
-
-  let negocioId = (session.user as any).negocioId;
-  if (!negocioId && session.user.email) {
-    const u = await prisma.usuario.findUnique({ where: { email: session.user.email } });
-    negocioId = u?.negocioId;
+function cleanVitals(input: unknown) {
+  const out: Record<string, string> = {};
+  if (!input || typeof input !== 'object') return out;
+  for (const key of ['presionArterial', 'frecuenciaCardiaca', 'frecuenciaRespiratoria', 'temperatura', 'saturacion']) {
+    const v = cleanText((input as any)[key], 20);
+    if (v) out[key] = v;
   }
-  return negocioId || null;
+  return out;
 }
 
 export async function GET(req: NextRequest) {
   try {
-    const negocioId = await getSessionNegocioId();
-    if (!negocioId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const access = await getDentalContext();
+    if (!access.ok) return access.response;
+    const { negocioId } = access.ctx;
 
-    const { searchParams } = new URL(req.url);
-    const clinicalRecordId = searchParams.get('clinicalRecordId');
-
-    if (!clinicalRecordId) {
-      return NextResponse.json({ error: 'clinicalRecordId es requerido' }, { status: 400 });
-    }
-
-    // Verificar pertenencia del registro al negocio
-    const record = await prisma.clinicalRecord.findUnique({
-      where: { id: clinicalRecordId },
-      select: { id: true, negocioId: true }
-    });
-
-    if (!record || record.negocioId !== negocioId) {
-      return NextResponse.json({ error: 'Registro no encontrado o acceso denegado' }, { status: 403 });
-    }
+    const clinicalRecordId = new URL(req.url).searchParams.get('clinicalRecordId');
+    const record = await findOwnedRecord(negocioId, clinicalRecordId);
+    if (!record) return jsonError('Historia clínica no encontrada.', 404);
 
     const encounters = await prisma.clinicalEncounter.findMany({
-      where: { clinicalRecordId, negocioId },
+      where: { clinicalRecordId: record.id, negocioId },
       include: {
         Staff: { select: { id: true, name: true } },
         Appointment: { select: { id: true, fecha: true, horaInicio: true } },
-        Odontogram: { select: { id: true, titulo: true, snapshotNumber: true } }
+        Odontogram: { select: { id: true, titulo: true, snapshotNumber: true } },
       },
-      orderBy: { fecha: 'desc' }
+      orderBy: { fecha: 'desc' },
     });
-
     return NextResponse.json({ success: true, encounters });
-  } catch (err: any) {
+  } catch (err) {
     console.error('Error en GET /api/admin/dental/encounters:', err);
-    return NextResponse.json({ error: err.message || 'Error interno' }, { status: 500 });
+    return jsonError('No se pudieron cargar las consultas.', 500);
   }
 }
 
+/** POST — registra una consulta (evolución). Las consultas no se editan: quedan como registro clínico. */
 export async function POST(req: NextRequest) {
   try {
-    const negocioId = await getSessionNegocioId();
-    if (!negocioId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const access = await getDentalContext({ withStaff: true });
+    if (!access.ok) return access.response;
+    const { negocioId, staffId: sessionStaffId } = access.ctx;
+
+    const body = await req.json().catch(() => ({}));
+    const motivoConsulta = cleanText(body.motivoConsulta, 300);
+    if (!motivoConsulta) return jsonError('Escribe el motivo de la consulta.');
+
+    const record = await resolveRecord(negocioId, body);
+    if (!record) return jsonError('Paciente o historia clínica no encontrados.', 404);
+
+    const staffId = await validateStaffId(negocioId, body.staffId);
+    if (staffId === false) return jsonError('El doctor seleccionado no pertenece a la clínica.');
+    const appointmentId = await validateAppointmentId(negocioId, body.appointmentId);
+    if (appointmentId === false) return jsonError('La cita indicada no pertenece a la clínica.');
+
+    let odontogramId: string | null = null;
+    if (body.odontogramId) {
+      const od = await prisma.dentalOdontogram.findUnique({
+        where: { id: String(body.odontogramId) },
+        select: { clinicalRecordId: true },
+      });
+      if (!od || od.clinicalRecordId !== record.id) return jsonError('El odontograma indicado no es de este paciente.');
+      odontogramId = String(body.odontogramId);
     }
 
-    const body = await req.json();
-    const {
-      clinicalRecordId,
-      appointmentId,
-      staffId,
-      fecha,
-      motivoConsulta,
-      problemaActual,
-      signosVitales,
-      examenFisico,
-      diagnostico,
-      codigoCIE,
-      procedimientoRealizado,
-      prescripcion,
-      indicaciones,
-      proximaCita,
-      odontogramId
-    } = body;
-
-    if (!clinicalRecordId || !motivoConsulta) {
-      return NextResponse.json({ error: 'clinicalRecordId y motivoConsulta son requeridos' }, { status: 400 });
+    let proximaCita: Date | null = null;
+    if (body.proximaCita) {
+      if (!isValidDateKey(body.proximaCita)) return jsonError('La fecha del próximo control no es válida.');
+      proximaCita = new Date(`${body.proximaCita}T12:00:00Z`);
     }
 
-    // Verificar seguridad: registro clínico debe pertenecer al negocio activo
-    const record = await prisma.clinicalRecord.findUnique({
-      where: { id: clinicalRecordId },
-      select: { id: true, negocioId: true }
-    });
-
-    if (!record || record.negocioId !== negocioId) {
-      return NextResponse.json({ error: 'Acceso denegado a este registro clínico' }, { status: 403 });
-    }
+    const problema = cleanText(
+      typeof body.problemaActual === 'object' ? body.problemaActual?.descripcion : body.problemaActual,
+      2000
+    );
 
     const encounter = await prisma.clinicalEncounter.create({
       data: {
         negocioId,
-        clinicalRecordId,
-        appointmentId: appointmentId || null,
-        staffId: staffId || null,
-        fecha: fecha ? new Date(fecha) : new Date(),
+        clinicalRecordId: record.id,
+        appointmentId,
+        staffId: staffId || sessionStaffId || null,
+        fecha: new Date(),
         motivoConsulta,
-        problemaActual: problemaActual || {},
-        signosVitales: signosVitales || {},
-        examenFisico: examenFisico || null,
-        diagnostico: diagnostico || null,
-        codigoCIE: codigoCIE || null,
-        procedimientoRealizado: procedimientoRealizado || null,
-        prescripcion: prescripcion || null,
-        indicaciones: indicaciones || null,
-        proximaCita: proximaCita ? new Date(proximaCita) : null,
-        odontogramId: odontogramId || null
+        problemaActual: problema ? { descripcion: problema } : {},
+        signosVitales: cleanVitals(body.signosVitales),
+        examenFisico: cleanText(body.examenFisico, 2000),
+        diagnostico: cleanText(body.diagnostico, 1000),
+        codigoCIE: cleanText(body.codigoCIE, 20)?.toUpperCase() || null,
+        procedimientoRealizado: cleanText(body.procedimientoRealizado, 2000),
+        prescripcion: cleanText(body.prescripcion, 2000),
+        indicaciones: cleanText(body.indicaciones, 2000),
+        proximaCita,
+        odontogramId,
       },
-      include: {
-        Staff: { select: { id: true, name: true } }
-      }
+      include: { Staff: { select: { id: true, name: true } } },
     });
 
-    return NextResponse.json({ success: true, encounter });
-  } catch (err: any) {
+    // Mantener "actualizado" el expediente para ordenar por actividad reciente.
+    await prisma.clinicalRecord.update({ where: { id: record.id }, data: { updatedAt: new Date() } }).catch(() => {});
+
+    return NextResponse.json({ success: true, encounter }, { status: 201 });
+  } catch (err) {
     console.error('Error en POST /api/admin/dental/encounters:', err);
-    return NextResponse.json({ error: err.message || 'Error interno' }, { status: 500 });
+    return jsonError('No se pudo guardar la consulta.', 500);
   }
 }

@@ -147,11 +147,11 @@ export default function SolutionsSection() {
                 {/* Header de la sección */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
                     <div className="space-y-2">
-                        <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#4f46e5]">
+                        <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#4f46e5]">
                             <span>⚛️</span>
-                            <span>SOLUCIONES PARA CADA NEGOCIO</span>
+                            <span>Soluciones para cada negocio</span>
                         </div>
-                        <h2 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight">
+                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-950 tracking-tight">
                             Elige el tipo de negocio que <span className="text-[#6366f1]">mejor te represente</span>
                         </h2>
                     </div>
@@ -159,9 +159,9 @@ export default function SolutionsSection() {
                     <button 
                         type="button"
                         onClick={() => handleOpenModal()}
-                        className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#4f46e5] hover:text-[#4338ca] bg-indigo-50 hover:bg-indigo-100/80 px-4 py-2.5 rounded-xl border border-indigo-200/80 transition-all cursor-pointer self-start md:self-auto shadow-2xs group"
+                        className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#4f46e5] hover:text-[#4338ca] bg-indigo-50 hover:bg-indigo-100/80 px-4 py-2.5 rounded-xl border border-indigo-200/80 transition-all cursor-pointer self-start md:self-auto shadow-2xs group"
                     >
-                        <span>VER TODOS LOS TIPOS</span>
+                        <span>Ver todos los tipos</span>
                         <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                     </button>
                 </div>
@@ -177,7 +177,7 @@ export default function SolutionsSection() {
                             >
                                 {sol.badge && (
                                     <div className="absolute top-4 right-4">
-                                        <span className="bg-indigo-100 text-indigo-800 text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider border border-indigo-200">
+                                        <span className="bg-indigo-100 text-indigo-800 text-xs font-bold uppercase px-2 py-0.5 rounded-full tracking-wider border border-indigo-200">
                                             {sol.badge}
                                         </span>
                                     </div>
@@ -188,7 +188,7 @@ export default function SolutionsSection() {
                                         <Icon size={22} />
                                     </div>
                                     <div>
-                                        <h3 className="text-base font-black text-slate-900 group-hover:text-[#4f46e5] transition-colors leading-tight">
+                                        <h3 className="text-base font-bold text-slate-900 group-hover:text-[#4f46e5] transition-colors leading-tight">
                                             {sol.title}
                                         </h3>
                                         <p className="text-xs text-slate-500 font-medium mt-1.5 leading-relaxed line-clamp-3">
@@ -200,7 +200,7 @@ export default function SolutionsSection() {
                                 <div className="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between">
                                     <Link 
                                         href={sol.href}
-                                        className={`text-xs font-black ${sol.textColor} hover:underline flex items-center gap-1`}
+                                        className={`text-xs font-bold ${sol.textColor} hover:underline flex items-center gap-1`}
                                     >
                                         <span>Ver solución</span>
                                         <ArrowRight size={12} />
@@ -209,7 +209,7 @@ export default function SolutionsSection() {
                                     <button
                                         type="button"
                                         onClick={() => handleOpenModal(sol)}
-                                        className="text-[11px] font-bold text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                                        className="text-xs font-bold text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                                         title="Ver detalles"
                                     >
                                         + Info
@@ -234,11 +234,11 @@ export default function SolutionsSection() {
                         {/* Cabecera del Modal */}
                         <div className="p-6 sm:p-7 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
                             <div className="space-y-1">
-                                <div className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-[#4f46e5]">
+                                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#4f46e5]">
                                     <Layers size={14} />
                                     <span>Ecosistema Citiox</span>
                                 </div>
-                                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                                     Modelos de Negocio Disponibles
                                 </h3>
                                 <p className="text-xs text-slate-500 font-medium">
@@ -279,17 +279,17 @@ export default function SolutionsSection() {
                                                             <Icon size={20} />
                                                         </div>
                                                         <div>
-                                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                                                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
                                                                 {sol.subtitle}
                                                             </span>
-                                                            <h4 className="text-base font-black text-slate-900 leading-tight">
+                                                            <h4 className="text-base font-bold text-slate-900 leading-tight">
                                                                 {sol.title}
                                                             </h4>
                                                         </div>
                                                     </div>
 
                                                     {sol.badge && (
-                                                        <span className="bg-indigo-100 text-indigo-800 text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-indigo-200">
+                                                        <span className="bg-indigo-100 text-indigo-800 text-xs font-bold uppercase px-2 py-0.5 rounded-full border border-indigo-200">
                                                             {sol.badge}
                                                         </span>
                                                     )}
@@ -301,7 +301,7 @@ export default function SolutionsSection() {
 
                                                 {/* Características Clave */}
                                                 <div className="space-y-1.5 pt-1">
-                                                    <span className="text-[10px] font-extrabold uppercase text-slate-400 block">
+                                                    <span className="text-xs font-extrabold uppercase text-slate-400 block">
                                                         Incluye en la app:
                                                     </span>
                                                     <div className="grid grid-cols-1 gap-1">
@@ -320,7 +320,7 @@ export default function SolutionsSection() {
                                                 <Link
                                                     href={sol.href}
                                                     onClick={() => setIsModalOpen(false)}
-                                                    className={`text-xs font-black ${sol.textColor} hover:underline flex items-center gap-1.5`}
+                                                    className={`text-xs font-bold ${sol.textColor} hover:underline flex items-center gap-1.5`}
                                                 >
                                                     <span>Explorar Solución</span>
                                                     <ExternalLink size={13} />
@@ -329,7 +329,7 @@ export default function SolutionsSection() {
                                                 <Link
                                                     href={`/register?tipo=${sol.id}`}
                                                     onClick={() => setIsModalOpen(false)}
-                                                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-[#4f46e5] text-white text-[11px] font-black uppercase rounded-xl transition-all shadow-2xs"
+                                                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-[#4f46e5] text-white text-xs font-bold uppercase rounded-xl transition-all shadow-2xs"
                                                 >
                                                     Crear Negocio
                                                 </Link>

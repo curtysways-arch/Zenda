@@ -317,8 +317,8 @@ export default function AdminProductos() {
             if (prodRes.ok && catRes.ok) {
                 const prodData = await prodRes.json();
                 const catData = await catRes.json();
-                setProducts(prodData);
-                setCategories(catData.filter((c: any) => c.activo));
+                setProducts(Array.isArray(prodData) ? prodData : (prodData.productos || []));
+                setCategories(Array.isArray(catData) ? catData.filter((c: any) => c.activo) : []);
             }
         } catch (e) {
             console.error(e);
@@ -550,7 +550,7 @@ export default function AdminProductos() {
                 imagenes: imagenesList,
                 dimensiones: tieneVariantes ? dimensions : [],
                 activo,
-                stock: stock.trim() !== '' ? parseInt(stock) : null,
+                stock: stock.trim() !== '' ? parseNum(stock, 0) : null,
                 sku: sku.trim() || null,
                 tieneVariantes,
                 orden: orden || 0,
@@ -628,7 +628,7 @@ export default function AdminProductos() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none italic uppercase">
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none ">
                         Productos
                     </h1>
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">
@@ -643,21 +643,21 @@ export default function AdminProductos() {
                     <TemplateDownloadButton size="small" />
                     <Link
                         href="/admin/catalogo/importar"
-                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all shadow-sm"
                     >
                         <FileSpreadsheet className="size-4 text-emerald-600" />
                         Importar Catálogo
                     </Link>
                     <Link
                         href="/admin/categorias"
-                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wide transition-all"
                     >
                         <FolderPlus className="size-4 text-slate-600" />
                         Categorías
                     </Link>
                     <button
                         onClick={handleCreateNew}
-                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md"
+                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-md"
                     >
                         <Plus className="size-4" />
                         Nuevo Producto
@@ -694,23 +694,23 @@ export default function AdminProductos() {
             </div>
 
             {/* Listado */}
-            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <Loader2 className="size-8 text-slate-300 animate-spin mb-3" />
-                        <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Cargando productos...</span>
+                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wide">Cargando productos...</span>
                     </div>
                 ) : filteredProducts.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b border-slate-100 bg-slate-50/50">
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Producto</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoría</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Precio</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Stock</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wide">Producto</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wide">Categoría</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wide">Precio</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wide">Stock</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wide text-center">Estado</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wide text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -722,26 +722,26 @@ export default function AdminProductos() {
                                                     {p.imagenUrl ? (
                                                         <img src={p.imagenUrl} alt={p.nombre} className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase">
+                                                        <span className="text-xs font-bold text-slate-400 uppercase">
                                                             {p.nombre.substring(0, 2)}
                                                         </span>
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight">{p.nombre}</h3>
+                                                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-tight leading-tight">{p.nombre}</h3>
                                                     {p.descripcion && (
-                                                        <p className="text-[9px] text-slate-400 font-bold mt-0.5 max-w-[200px] truncate">{p.descripcion}</p>
+                                                        <p className="text-xs text-slate-400 font-bold mt-0.5 max-w-[200px] truncate">{p.descripcion}</p>
                                                     )}
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-wider">
                                                 {p.categoria?.nombre || 'Sin Categoría'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-xs font-black text-slate-800">${p.precio.toFixed(2)}</span>
+                                            <span className="text-xs font-bold text-slate-800">${p.precio.toFixed(2)}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-xs font-bold text-slate-600">
@@ -755,9 +755,9 @@ export default function AdminProductos() {
                                                     className="focus:outline-none"
                                                 >
                                                     {p.activo ? (
-                                                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-wider">Activo</span>
+                                                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-xs font-bold uppercase tracking-wider">Activo</span>
                                                     ) : (
-                                                        <span className="px-3 py-1 bg-slate-200 text-slate-500 rounded-full text-[9px] font-black uppercase tracking-wider">Inactivo</span>
+                                                        <span className="px-3 py-1 bg-slate-200 text-slate-500 rounded-full text-xs font-bold uppercase tracking-wider">Inactivo</span>
                                                     )}
                                                 </button>
                                             </div>
@@ -788,8 +788,8 @@ export default function AdminProductos() {
                 ) : (
                     <div className="text-center py-20">
                         <ShoppingBag className="size-12 text-slate-200 mx-auto mb-3" />
-                        <h3 className="text-xs font-black text-slate-700 mb-1">Sin productos</h3>
-                        <p className="text-[11px] text-slate-400 font-medium">Crea productos para poblar tu menú.</p>
+                        <h3 className="text-xs font-bold text-slate-700 mb-1">Sin productos</h3>
+                        <p className="text-xs text-slate-400 font-medium">Crea productos para poblar tu menú.</p>
                     </div>
                 )}
             </div>
@@ -804,7 +804,7 @@ export default function AdminProductos() {
                                     <Tag className="size-5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-base sm:text-lg font-black text-slate-950 uppercase tracking-wide flex items-center gap-2">
+                                    <h3 className="text-base sm:text-lg font-bold text-slate-950 tracking-wide flex items-center gap-2">
                                         <span>{editingProduct ? 'EDITAR PRODUCTO' : 'NUEVO PRODUCTO'}</span>
                                     </h3>
                                     <p className="text-xs text-slate-500 font-medium">
@@ -826,26 +826,26 @@ export default function AdminProductos() {
                                 <button
                                     type="button"
                                     onClick={() => setCreationMode('simple')}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                                        creationMode === 'simple'
-                                            ? 'bg-white text-teal-900 shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+ creationMode === 'simple'
+ ? 'bg-white text-teal-900 shadow-xs'
+ : 'text-slate-600 hover:text-slate-900'
+ }`}
                                 >
                                     <Zap className="size-3.5 text-teal-600" />
                                     <span>Modo Simple</span>
-                                    <span className="hidden sm:inline text-[9px] font-extrabold uppercase bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded-md">
+                                    <span className="hidden sm:inline text-xs font-extrabold uppercase bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded-md">
                                         Predeterminado
                                     </span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setCreationMode('advanced')}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                                        creationMode === 'advanced'
-                                            ? 'bg-white text-teal-900 shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+ creationMode === 'advanced'
+ ? 'bg-white text-teal-900 shadow-xs'
+ : 'text-slate-600 hover:text-slate-900'
+ }`}
                                 >
                                     <Settings2 className="size-3.5 text-teal-600" />
                                     <span>Opciones Avanzadas</span>
@@ -854,7 +854,7 @@ export default function AdminProductos() {
                                     )}
                                 </button>
                             </div>
-                            <div className="text-[11px] text-slate-400 font-medium hidden sm:block">
+                            <div className="text-xs text-slate-400 font-medium hidden sm:block">
                                 {creationMode === 'simple' 
                                     ? '⚡ Nombre, fotos, categoría, precio, stock y descripción' 
                                     : '🛠️ Variantes, inventario, SKU, ficha técnica y reseñas'}
@@ -868,11 +868,11 @@ export default function AdminProductos() {
                                     {/* 1. Galería de Imágenes */}
                                     <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
                                         <div className="flex items-center justify-between">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                                                 <ImageIcon className="size-3.5 text-teal-600" />
                                                 <span>Imágenes del producto ({imagenesList.length})</span>
                                             </label>
-                                            <span className="text-[10px] text-teal-600 font-bold">
+                                            <span className="text-xs text-teal-600 font-bold">
                                                 La primera foto será la principal
                                             </span>
                                         </div>
@@ -885,7 +885,7 @@ export default function AdminProductos() {
                                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
                                                         {idx === 0 && (
-                                                            <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-teal-600 text-white font-black text-[8px] uppercase shadow-xs">
+                                                            <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-teal-600 text-white font-bold text-xs uppercase shadow-xs">
                                                                 Principal
                                                             </span>
                                                         )}
@@ -922,7 +922,7 @@ export default function AdminProductos() {
                                     {/* 2. Datos Clave: Nombre y Categoría */}
                                     <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                                 Nombre del producto <span className="text-rose-500">*</span>
                                             </label>
                                             <input
@@ -937,13 +937,13 @@ export default function AdminProductos() {
 
                                         <div>
                                             <div className="flex justify-between items-center mb-1.5">
-                                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                                                     Categoría <span className="text-rose-500">*</span>
                                                 </label>
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsCategoryModalOpen(true)}
-                                                    className="text-[10px] font-black text-teal-700 hover:text-teal-800 uppercase tracking-wider flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
+                                                    className="text-xs font-bold text-teal-700 hover:text-teal-800 uppercase tracking-wider flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
                                                 >
                                                     <FolderPlus className="size-3" />
                                                     <span>+ Nueva</span>
@@ -965,7 +965,7 @@ export default function AdminProductos() {
                                         {/* Precio y Stock en 2 columnas */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                                     Precio ($) <span className="text-rose-500">*</span>
                                                 </label>
                                                 <div className="relative">
@@ -985,15 +985,15 @@ export default function AdminProductos() {
 
                                             <div>
                                                 <div className="flex items-center justify-between mb-1.5">
-                                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                                                         Stock disponible
                                                     </label>
                                                     <button
                                                         type="button"
                                                         onClick={() => setStock(stock === '' ? '20' : '')}
-                                                        className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
-                                                            stock === '' ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                                                        }`}
+                                                        className={`text-xs font-extrabold uppercase px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+ stock === '' ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+ }`}
                                                     >
                                                         {stock === '' ? '∞ Ilimitado' : 'Definir número'}
                                                     </button>
@@ -1011,7 +1011,7 @@ export default function AdminProductos() {
 
                                         {/* Descripción */}
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                                 Descripción del producto
                                             </label>
                                             <textarea
@@ -1027,18 +1027,18 @@ export default function AdminProductos() {
                                     {/* Banner Opciones Avanzadas */}
                                     <div className="bg-gradient-to-r from-teal-50/90 to-emerald-50/90 p-4 rounded-2xl sm:rounded-3xl border border-teal-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
                                         <div className="space-y-0.5">
-                                            <div className="flex items-center gap-1.5 text-teal-950 font-black text-xs">
+                                            <div className="flex items-center gap-1.5 text-teal-950 font-bold text-xs">
                                                 <Sparkles className="size-3.5 text-teal-600" />
                                                 <span>¿Quieres agregar variantes, SKU o ficha técnica?</span>
                                             </div>
-                                            <p className="text-[11px] text-slate-500 font-medium">
+                                            <p className="text-xs text-slate-500 font-medium">
                                                 Crea opciones de tallas/colores, control de empaque para llevar, viñetas de características y reseñas.
                                             </p>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={() => setCreationMode('advanced')}
-                                            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white hover:bg-teal-50 text-teal-900 border border-teal-200 text-xs font-black shadow-xs transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                                            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white hover:bg-teal-50 text-teal-900 border border-teal-200 text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
                                         >
                                             <span>Opciones avanzadas</span>
                                             <ArrowRight className="size-3.5 text-teal-600" />
@@ -1114,16 +1114,16 @@ export default function AdminProductos() {
                                                             : 'bg-white hover:bg-slate-100/70 border-slate-200/80 text-slate-700'
                                                     }`}
                                                 >
-                                                    <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-black ${
-                                                        modalTab === step.id ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600'
-                                                    }`}>
+                                                    <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
+ modalTab === step.id ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600'
+ }`}>
                                                         <IconComp className="size-4" />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <div className="text-xs font-extrabold line-clamp-1">
                                                             {step.num}. {step.title}
                                                         </div>
-                                                        <div className="text-[10px] text-slate-400 font-medium line-clamp-1">
+                                                        <div className="text-xs text-slate-400 font-medium line-clamp-1">
                                                             {step.desc}
                                                         </div>
                                                     </div>
@@ -1134,7 +1134,7 @@ export default function AdminProductos() {
                                             <button
                                                 type="button"
                                                 onClick={() => setModalTab('all')}
-                                                className="w-full text-center text-[10px] font-bold text-teal-700 hover:underline pt-1 cursor-pointer"
+                                                className="w-full text-center text-xs font-bold text-teal-700 hover:underline pt-1 cursor-pointer"
                                             >
                                                 Mostrar todas las secciones
                                             </button>
@@ -1147,11 +1147,11 @@ export default function AdminProductos() {
                                             <HelpCircle className="size-4 text-teal-600" />
                                             <span>¿Necesitas ayuda?</span>
                                         </div>
-                                        <p className="text-[10px] text-slate-400 font-medium">Consulta nuestra guía de variantes e inventario.</p>
+                                        <p className="text-xs text-slate-400 font-medium">Consulta nuestra guía de variantes e inventario.</p>
                                         <a
                                             href="/admin/ayuda"
                                             target="_blank"
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 text-[10px] font-bold text-slate-700 bg-slate-50 transition-colors w-full justify-center"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 text-xs font-bold text-slate-700 bg-slate-50 transition-colors w-full justify-center"
                                         >
                                             <span>Ver guía</span>
                                             <ExternalLink className="size-3 text-slate-400" />
@@ -1177,10 +1177,10 @@ export default function AdminProductos() {
                                                 {/* Carga Imágenes Múltiples del Producto */}
                                                 <div className="lg:col-span-4 space-y-2">
                                                     <div className="flex items-center justify-between">
-                                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
+                                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                                                             Imágenes ({imagenesList.length})
                                                         </label>
-                                                        <span className="text-[9px] text-teal-600 font-extrabold uppercase tracking-wider">
+                                                        <span className="text-xs text-teal-600 font-extrabold uppercase tracking-wider">
                                                             Galería del Producto
                                                         </span>
                                                     </div>
@@ -1193,7 +1193,7 @@ export default function AdminProductos() {
                                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                                                     <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
                                                                     {idx === 0 && (
-                                                                        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-teal-600 text-white font-black text-[8px] uppercase shadow-xs">
+                                                                        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-teal-600 text-white font-bold text-xs uppercase shadow-xs">
                                                                             Principal
                                                                         </span>
                                                                     )}
@@ -1226,7 +1226,7 @@ export default function AdminProductos() {
                                                         label={imagenesList.length === 0 ? "Subir Foto Principal" : "+ Añadir Otra Foto"}
                                                         compact={true}
                                                     />
-                                                    <span className="text-[10px] text-slate-400 block font-medium leading-tight">
+                                                    <span className="text-xs text-slate-400 block font-medium leading-tight">
                                                         Sube 1 o varias fotos para activar el carrusel de miniaturas en la tienda.
                                                     </span>
                                                 </div>
@@ -1235,7 +1235,7 @@ export default function AdminProductos() {
                                                 <div className="lg:col-span-8 space-y-4">
                                                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                                                         <div className="sm:col-span-8">
-                                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                                                 Nombre del producto
                                                             </label>
                                                             <input
@@ -1246,12 +1246,12 @@ export default function AdminProductos() {
                                                                 onChange={e => setNombre(e.target.value)}
                                                                 className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 border border-slate-200 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:bg-white"
                                                             />
-                                                            <span className="text-[10px] text-slate-400 block mt-1">Ej: TSH-OVS-BLACK</span>
+                                                            <span className="text-xs text-slate-400 block mt-1">Ej: TSH-OVS-BLACK</span>
                                                         </div>
 
                                                         <div className="sm:col-span-4 bg-slate-50/80 p-3 rounded-2xl border border-slate-200 flex flex-col justify-between">
                                                             <div className="flex items-center justify-between">
-                                                                <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider">
+                                                                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                                                                     ¿TIENE VARIANTES?
                                                                 </span>
                                                                 <span title="Activa para crear opciones como talla, color, memoria, etc.">
@@ -1270,7 +1270,7 @@ export default function AdminProductos() {
                                                                 ) : (
                                                                     <ToggleLeft className="size-7 text-slate-300 stroke-[1.5]" />
                                                                 )}
-                                                                <span className="text-[10px] font-extrabold text-slate-800 line-clamp-1">
+                                                                <span className="text-xs font-extrabold text-slate-800 line-clamp-1">
                                                                     {tieneVariantes ? 'Sí, tiene variantes' : 'No, producto simple'}
                                                                 </span>
                                                             </label>
@@ -1279,7 +1279,7 @@ export default function AdminProductos() {
 
                                                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                                                         <div className="sm:col-span-6">
-                                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                                                 Descripción
                                                             </label>
                                                             <textarea
@@ -1292,13 +1292,13 @@ export default function AdminProductos() {
                                                         </div>
                                                         <div className="sm:col-span-6">
                                                             <div className="flex justify-between items-center mb-1.5">
-                                                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                                                                     Categoría
                                                                 </label>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => setIsCategoryModalOpen(true)}
-                                                                    className="text-[9px] font-black text-teal-700 hover:text-teal-800 uppercase tracking-wider flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
+                                                                    className="text-xs font-bold text-teal-700 hover:text-teal-800 uppercase tracking-wider flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
                                                                 >
                                                                     <FolderPlus className="size-3" />
                                                                     <span>+ Nueva</span>
@@ -1335,7 +1335,7 @@ export default function AdminProductos() {
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                 <div>
                                                     <div className="flex items-center gap-1 mb-1.5">
-                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                                                             STOCK (VACÍO = ILIMITADO)
                                                         </label>
                                                         <span title="Si tiene variantes, el stock se controla por cada combinación">
@@ -1355,7 +1355,7 @@ export default function AdminProductos() {
 
                                                 <div>
                                                     <div className="flex items-center gap-1 mb-1.5">
-                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
                                                             ORDEN VISUAL
                                                         </label>
                                                         <span title="Posición relativa de aparición en el catálogo">
@@ -1373,7 +1373,7 @@ export default function AdminProductos() {
                                                 </div>
 
                                                 <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200 flex flex-col justify-between">
-                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
+                                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                                                         ESTADO DEL PRODUCTO
                                                     </span>
                                                     <label className="flex items-center gap-2 cursor-pointer select-none pt-1">
@@ -1388,7 +1388,7 @@ export default function AdminProductos() {
                                                         ) : (
                                                             <ToggleLeft className="size-7 text-slate-300 stroke-[1.5]" />
                                                         )}
-                                                        <span className="text-[10px] font-bold text-slate-700">
+                                                        <span className="text-xs font-bold text-slate-700">
                                                             {activo ? 'Activo (Visible en tienda)' : 'Inactivo (Oculto)'}
                                         </span>
                                     </label>
@@ -1408,12 +1408,12 @@ export default function AdminProductos() {
                                             MATRIZ DE VARIANTES DEL PRODUCTO
                                         </h4>
                                         {tieneVariantes && (
-                                            <span className="px-2.5 py-0.5 bg-teal-50 text-teal-700 text-[10px] font-black rounded-full border border-teal-200 uppercase">
+                                            <span className="px-2.5 py-0.5 bg-teal-50 text-teal-700 text-xs font-bold rounded-full border border-teal-200 uppercase">
                                                 {editingProduct ? `${editingProduct.variantes?.length || 0} Variantes` : `${initialVariants.length} Combinaciones`}
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                                    <p className="text-xs text-slate-500 font-medium mt-0.5">
                                         Visualiza, edita o elimina las variantes de este producto (precio, SKU, stock y estado).
                                     </p>
                                 </div>
@@ -1465,13 +1465,13 @@ export default function AdminProductos() {
                                             ) : (
                                                 <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
                                                     <div className="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                                                        <h5 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                                                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                                                             MATRIZ DE VARIANTES A CREAR ({initialVariants.length} COMBINACIONES)
                                                         </h5>
                                                         <button
                                                             type="button"
                                                             onClick={() => setInitialVariants([])}
-                                                            className="text-xs font-black text-rose-600 hover:text-rose-700 hover:underline cursor-pointer flex items-center gap-1"
+                                                            className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer flex items-center gap-1"
                                                         >
                                                             <span>Limpiar todo</span>
                                                             <Trash2 className="size-3.5" />
@@ -1479,7 +1479,7 @@ export default function AdminProductos() {
                                                     </div>
                                                     <table className="w-full text-left text-xs border-collapse">
                                                         <thead>
-                                                            <tr className="bg-slate-100/70 border-b border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                                            <tr className="bg-slate-100/70 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                                                                 <th className="p-3.5">Variante</th>
                                                                 <th className="p-3.5">SKU</th>
                                                                 <th className="p-3.5">Precio ($)</th>
@@ -1493,7 +1493,7 @@ export default function AdminProductos() {
                                                                     <td className="p-3">
                                                                         <div className="font-extrabold text-slate-900 text-xs mb-0.5">{v.nombre}</div>
                                                                         {v.atributos && (
-                                                                            <div className="text-[10px] text-slate-400 font-medium">
+                                                                            <div className="text-xs text-slate-400 font-medium">
                                                                                 {Object.entries(v.atributos).map(([k, val]) => `${k}: ${val}`).join(' | ')}
                                                                             </div>
                                                                         )}
@@ -1581,7 +1581,7 @@ export default function AdminProductos() {
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                                         Precio Base del Producto ($)
                                                     </label>
                                                     <input
@@ -1596,7 +1596,7 @@ export default function AdminProductos() {
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                                         SKU Base del Producto
                                                     </label>
                                                     <input
@@ -1639,7 +1639,7 @@ export default function AdminProductos() {
 
                                             {llevaEmpaque && (
                                                 <div className="pt-2 border-t border-amber-200/60">
-                                                    <label className="block text-[10px] font-black text-amber-900 uppercase tracking-wider mb-1.5">
+                                                    <label className="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1.5">
                                                         Precio del Empaque ($)
                                                     </label>
                                                     <input
@@ -1666,7 +1666,7 @@ export default function AdminProductos() {
                                                         FICHA TÉCNICA, DETALLES Y RESEÑAS
                                                     </h4>
                                                 </div>
-                                                <span className="text-[10px] font-bold text-slate-400">
+                                                <span className="text-xs font-bold text-slate-400">
                                                     Personaliza las pestañas de la tienda online
                                                 </span>
                                             </div>
@@ -1674,11 +1674,11 @@ export default function AdminProductos() {
                                             {/* 1. Características destacadas con Check */}
                                             <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
                                                 <div className="flex items-center justify-between">
-                                                    <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                                                         <CheckCircle2 className="size-3.5 text-teal-600" />
                                                         <span>Características destacadas (Viñetas con Check)</span>
                                                     </label>
-                                                    <span className="text-[10px] text-slate-400 font-medium">Se muestran en la pestaña "Descripción"</span>
+                                                    <span className="text-xs text-slate-400 font-medium">Se muestran en la pestaña "Descripción"</span>
                                                 </div>
 
                                                 <div className="flex gap-2">
@@ -1737,16 +1737,16 @@ export default function AdminProductos() {
                                             {/* 2. Ficha Técnica */}
                                             <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
                                                 <div className="flex items-center justify-between">
-                                                    <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                                                         <FileText className="size-3.5 text-teal-600" />
                                                         <span>Ficha Técnica y Cuidados</span>
                                                     </label>
-                                                    <span className="text-[10px] text-slate-400 font-medium">Se muestran en la pestaña "Detalles"</span>
+                                                    <span className="text-xs text-slate-400 font-medium">Se muestran en la pestaña "Detalles"</span>
                                                 </div>
 
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                     <div>
-                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                             Material / Composición
                                                         </label>
                                                         <input
@@ -1759,7 +1759,7 @@ export default function AdminProductos() {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                             Instrucciones de Cuidado
                                                         </label>
                                                         <input
@@ -1772,7 +1772,7 @@ export default function AdminProductos() {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                             Garantía del Producto
                                                         </label>
                                                         <input
@@ -1785,7 +1785,7 @@ export default function AdminProductos() {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                             Corte / Estilo
                                                         </label>
                                                         <input
@@ -1802,7 +1802,7 @@ export default function AdminProductos() {
                                             {/* 3. Fotos de Detalle con Etiquetas (3 Fotos) */}
                                             <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
                                                 <div className="flex items-center justify-between">
-                                                    <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                                                         <ImageIcon className="size-3.5 text-teal-600" />
                                                         <span>Cuadrícula de Fotos de Detalle con Etiquetas</span>
                                                     </label>
@@ -1816,7 +1816,7 @@ export default function AdminProductos() {
                                                                     { url: imagenesList[2] || imagenesList[0] || '', label: fotosDetalle[2]?.label || 'Visera plana premium' },
                                                                 ]);
                                                             }}
-                                                            className="text-[10px] font-bold text-teal-700 hover:underline cursor-pointer"
+                                                            className="text-xs font-bold text-teal-700 hover:underline cursor-pointer"
                                                         >
                                                             Usar fotos de la galería
                                                         </button>
@@ -1826,7 +1826,7 @@ export default function AdminProductos() {
                                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                     {[0, 1, 2].map(idx => (
                                                         <div key={idx} className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
-                                                            <div className="text-[10px] font-black text-slate-400 uppercase">
+                                                            <div className="text-xs font-bold text-slate-400 uppercase">
                                                                 Foto {idx + 1} {idx === 0 ? '(Principal Ancha)' : '(Inferior)'}
                                                             </div>
                                                             <div className="h-20 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
@@ -1837,11 +1837,11 @@ export default function AdminProductos() {
                                                                         className="w-full h-full object-cover"
                                                                     />
                                                                 ) : (
-                                                                    <span className="text-[9px] text-slate-400 font-bold">Sin foto</span>
+                                                                    <span className="text-xs text-slate-400 font-bold">Sin foto</span>
                                                                 )}
                                                             </div>
                                                             <div>
-                                                                <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">
+                                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                                                                     Texto de la Insignia
                                                                 </label>
                                                                 <input
@@ -1860,7 +1860,7 @@ export default function AdminProductos() {
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">
+                                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                                                                     URL Foto Específica (Opcional)
                                                                 </label>
                                                                 <input
@@ -1875,7 +1875,7 @@ export default function AdminProductos() {
                                                                         });
                                                                     }}
                                                                     placeholder="https://..."
-                                                                    className="w-full bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200 text-[11px] font-mono text-slate-700 focus:outline-none focus:border-teal-500"
+                                                                    className="w-full bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200 text-xs font-mono text-slate-700 focus:outline-none focus:border-teal-500"
                                                                 />
                                                             </div>
                                                         </div>
@@ -1886,16 +1886,16 @@ export default function AdminProductos() {
                                             {/* 4. Reseñas y Calificaciones */}
                                             <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
                                                 <div className="flex items-center justify-between">
-                                                    <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                                                         <Star className="size-3.5 text-amber-500 fill-amber-500" />
                                                         <span>Calificaciones y Reseñas Destacadas</span>
                                                     </label>
-                                                    <span className="text-[10px] text-slate-400 font-medium">Se muestran en la pestaña "Reseñas"</span>
+                                                    <span className="text-xs text-slate-400 font-medium">Se muestran en la pestaña "Reseñas"</span>
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div>
-                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                             Puntuación Promedio (1.0 - 5.0)
                                                         </label>
                                                         <input
@@ -1909,7 +1909,7 @@ export default function AdminProductos() {
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                             Número Total de Opiniones
                                                         </label>
                                                         <input
@@ -1924,7 +1924,7 @@ export default function AdminProductos() {
 
                                                 <div className="space-y-3 pt-2">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
+                                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                                                             Opiniones de Clientes Verificadas ({resenasConfig.reviews.length})
                                                         </span>
                                                         <button
@@ -1939,7 +1939,7 @@ export default function AdminProductos() {
                                                                     ]
                                                                 }));
                                                             }}
-                                                            className="text-[10px] font-black text-teal-700 hover:text-teal-800 uppercase tracking-wider flex items-center gap-1 bg-teal-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer border border-teal-200"
+                                                            className="text-xs font-bold text-teal-700 hover:text-teal-800 uppercase tracking-wider flex items-center gap-1 bg-teal-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer border border-teal-200"
                                                         >
                                                             <span>+ Nueva Opinión</span>
                                                         </button>
@@ -1957,7 +1957,7 @@ export default function AdminProductos() {
                                                                         reviews: [{ autor: '', calif: 5, comentario: '' }]
                                                                     }));
                                                                 }}
-                                                                className="mt-2 text-[10px] font-bold text-teal-600 hover:underline cursor-pointer"
+                                                                className="mt-2 text-xs font-bold text-teal-600 hover:underline cursor-pointer"
                                                             >
                                                                 Agregar la primera opinión
                                                             </button>
@@ -1982,7 +1982,7 @@ export default function AdminProductos() {
                                                                     />
                                                                     <div className="flex items-center gap-2 shrink-0">
                                                                         <div className="flex items-center gap-1">
-                                                                            <span className="text-[10px] font-bold text-slate-400">Estrellas:</span>
+                                                                            <span className="text-xs font-bold text-slate-400">Estrellas:</span>
                                                                             <select
                                                                                 value={rev.calif}
                                                                                 onChange={e => {
@@ -2067,7 +2067,7 @@ export default function AdminProductos() {
                                     type="submit"
                                     form="productForm"
                                     disabled={saving}
-                                    className="px-5 sm:px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-md active:scale-98 cursor-pointer disabled:opacity-50"
+                                    className="px-5 sm:px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-md active:scale-98 cursor-pointer disabled:opacity-50"
                                 >
                                     {saving ? (
                                         <>
@@ -2089,9 +2089,9 @@ export default function AdminProductos() {
             {/* Modal Creación Rápida de Categoría */}
             {isCategoryModalOpen && (
                 <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
-                    <div className="w-full max-w-sm bg-white rounded-[2rem] p-6 shadow-2xl border border-slate-100 animate-fade-in text-left">
+                    <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl border border-slate-100 animate-fade-in text-left">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
-                            <h3 className="text-xs font-black text-slate-950 uppercase tracking-widest flex items-center gap-2">
+                            <h3 className="text-xs font-bold text-slate-950 uppercase tracking-wide flex items-center gap-2">
                                 <FolderPlus className="size-4 text-slate-700" />
                                 Nueva Categoría
                             </h3>
@@ -2102,7 +2102,7 @@ export default function AdminProductos() {
 
                         <form onSubmit={handleQuickCreateCategory} className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Nombre de la Categoría</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nombre de la Categoría</label>
                                 <input
                                     type="text"
                                     required
@@ -2117,7 +2117,7 @@ export default function AdminProductos() {
                             <button
                                 type="submit"
                                 disabled={creatingCategory}
-                                className="w-full mt-4 py-3 bg-slate-900 hover:bg-slate-950 text-white rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-transform flex items-center justify-center gap-2"
+                                className="w-full mt-4 py-3 bg-slate-900 hover:bg-slate-950 text-white rounded-2xl text-xs font-bold uppercase tracking-wide active:scale-95 transition-transform flex items-center justify-center gap-2"
                             >
                                 {creatingCategory ? (
                                     <>
@@ -2143,12 +2143,12 @@ export default function AdminProductos() {
                         {/* Header Modal Variantes */}
                         <div className="px-6 py-4.5 border-b border-slate-150 flex items-center justify-between bg-slate-900 text-white shrink-0">
                             <div className="flex items-center gap-3.5">
-                                <div className="size-11 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black text-sm border border-cyan-500/30 shrink-0">
+                                <div className="size-11 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm border border-cyan-500/30 shrink-0">
                                     <Sparkles className="size-5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-base sm:text-lg font-black uppercase tracking-wide flex items-center gap-2 text-white">
-                                        <span>CREAR & GENERAR VARIANTES</span>
+                                    <h3 className="text-base sm:text-lg font-bold tracking-wide flex items-center gap-2 text-white">
+                                        <span>Crear & generar variantes</span>
                                     </h3>
                                     <p className="text-xs text-slate-300 font-medium">
                                         {nombre ? `Producto: ${nombre}` : 'Configura dimensiones (Color, Talla, Memoria) para generar la matriz'}
@@ -2180,17 +2180,17 @@ export default function AdminProductos() {
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <div className="size-7 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-black text-xs">
+                                                <div className="size-7 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-xs">
                                                     <Box className="size-4 text-teal-600" />
                                                 </div>
                                                 <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                                                    <span>GENERADOR DE VARIANTES</span>
-                                                    <span className="px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 text-[9px] font-black border border-cyan-200 uppercase">
+                                                    <span>Generador de variantes</span>
+                                                    <span className="px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 text-xs font-bold border border-cyan-200 uppercase">
                                                         {dimensions.length} DIMENSIONES
                                                     </span>
                                                 </h4>
                                             </div>
-                                            <p className="text-[11px] text-slate-500 font-medium">
+                                            <p className="text-xs text-slate-500 font-medium">
                                                 Selecciona los atributos (ej. Color, Talla) y genera todas las combinaciones posibles.
                                             </p>
                                         </div>
@@ -2202,13 +2202,13 @@ export default function AdminProductos() {
                                                 className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs uppercase tracking-wider rounded-xl border border-slate-300 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
                                             >
                                                 <Plus className="size-3.5" />
-                                                <span>+ AGREGAR ATRIBUTO</span>
+                                                <span>+ Agregar atributo</span>
                                             </button>
 
                                             <button
                                                 type="button"
                                                 onClick={handleGenerateInitialCombinations}
-                                                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                                                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
                                             >
                                                 <Sparkles className="size-3.5" />
                                                 <span>⚡ GENERAR MATRIZ ({dimensions.length} ATRIBUTOS)</span>
@@ -2224,7 +2224,7 @@ export default function AdminProductos() {
                                                 <div key={dim.id} className="p-4 bg-slate-50/60 rounded-2xl border border-slate-200 space-y-3 relative">
                                                     <div className="flex flex-col gap-2">
                                                         <div className="flex items-center justify-between gap-2">
-                                                            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                                                            <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
                                                                 Atributo {index + 1}
                                                             </span>
                                                             {dimensions.length > 1 && (
@@ -2248,7 +2248,7 @@ export default function AdminProductos() {
                                                                     setDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, name: val } : d));
                                                                 }}
                                                                 placeholder="Ej. Color, Talla, Peso"
-                                                                className="text-xs font-black text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-xl outline-none focus:border-teal-500 flex-1"
+                                                                className="text-xs font-bold text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-xl outline-none focus:border-teal-500 flex-1"
                                                             />
                                                             
                                                             <select
@@ -2290,7 +2290,7 @@ export default function AdminProductos() {
                                                                                     type="text"
                                                                                     value={optInfo.hex || '#000000'}
                                                                                     onChange={e => handleUpdateOptionHex(dim.id, val, e.target.value)}
-                                                                                    className="w-16 text-[10px] font-mono border border-slate-200 rounded px-1 text-slate-600"
+                                                                                    className="w-16 text-xs font-mono border border-slate-200 rounded px-1 text-slate-600"
                                                                                 />
                                                                             </div>
                                                                         )}
@@ -2310,7 +2310,7 @@ export default function AdminProductos() {
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => handleUpdateOptionImage(dim.id, val, '')}
-                                                                                    className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
+                                                                                    className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
                                                                                     title="Quitar imagen"
                                                                                 >
                                                                                     <X className="size-3" />
@@ -2318,7 +2318,7 @@ export default function AdminProductos() {
                                                                             </div>
                                                                         ) : (
                                                                             <label
-                                                                                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-extrabold cursor-pointer flex items-center gap-1 transition-colors"
+                                                                                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-extrabold cursor-pointer flex items-center gap-1 transition-colors"
                                                                                 title="Subir imagen opcional para esta opción"
                                                                             >
                                                                                 <ImageIcon className="size-3 text-slate-400" />
@@ -2353,7 +2353,7 @@ export default function AdminProductos() {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleRemoveValueFromDimension(dim.id, val)}
-                                                                            className="text-slate-400 hover:text-rose-600 font-black cursor-pointer text-xs p-0.5"
+                                                                            className="text-slate-400 hover:text-rose-600 font-bold cursor-pointer text-xs p-0.5"
                                                                         >
                                                                             <X className="size-3.5" />
                                                                         </button>
@@ -2384,7 +2384,7 @@ export default function AdminProductos() {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleAddValueToDimension(dim.id, dim.newValueInput || '')}
-                                                            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs rounded-xl cursor-pointer transition-colors"
+                                                            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl cursor-pointer transition-colors"
                                                         >
                                                             +
                                                         </button>
@@ -2398,13 +2398,13 @@ export default function AdminProductos() {
                                     {initialVariants.length > 0 && (
                                         <div className="space-y-3 pt-4 border-t border-slate-200">
                                             <div className="flex justify-between items-center">
-                                                <h5 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                                                <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                                                     VARIANTES A CREAR ({initialVariants.length} COMBINACIONES)
                                                 </h5>
                                                 <button
                                                     type="button"
                                                     onClick={() => setInitialVariants([])}
-                                                    className="text-xs font-black text-rose-600 hover:text-rose-700 hover:underline cursor-pointer flex items-center gap-1"
+                                                    className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer flex items-center gap-1"
                                                 >
                                                     <span>Limpiar lista</span>
                                                     <Trash2 className="size-3.5" />
@@ -2414,7 +2414,7 @@ export default function AdminProductos() {
                                             <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
                                                 <table className="w-full text-left text-xs border-collapse">
                                                     <thead>
-                                                        <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                                                        <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-wider">
                                                             <th className="p-3.5">Combinación</th>
                                                             <th className="p-3.5">Código (SKU)</th>
                                                             <th className="p-3.5">Precio</th>
@@ -2430,14 +2430,14 @@ export default function AdminProductos() {
                                                                         {v.nombre.split(' / ').map((part, pIdx) => (
                                                                             <React.Fragment key={pIdx}>
                                                                                 {pIdx > 0 && <span className="text-slate-400 font-bold text-xs">+</span>}
-                                                                                <span className="px-2.5 py-1 rounded-xl bg-slate-900 text-white font-extrabold text-[11px] shadow-2xs">
+                                                                                <span className="px-2.5 py-1 rounded-xl bg-slate-900 text-white font-extrabold text-xs shadow-2xs">
                                                                                     {part}
                                                                                 </span>
                                                                             </React.Fragment>
                                                                         ))}
                                                                     </div>
                                                                 </td>
-                                                                <td className="p-3 font-mono text-[11px] text-slate-600 font-semibold">{v.sku}</td>
+                                                                <td className="p-3 font-mono text-xs text-slate-600 font-semibold">{v.sku}</td>
                                                                 <td className="p-3 font-bold text-slate-900">${v.precio}</td>
                                                                 <td className="p-3 font-bold text-slate-700">{v.stock}</td>
                                                                 <td className="p-3 text-center">
@@ -2483,14 +2483,14 @@ export default function AdminProductos() {
                     <div className="bg-white rounded-3xl p-6 max-w-md w-full border border-slate-100 shadow-2xl space-y-4 text-left">
                         <div className="flex items-center gap-3 text-amber-600">
                             <AlertTriangle className="size-6 shrink-0" />
-                            <h4 className="font-black text-sm uppercase tracking-wider text-slate-900">
+                            <h4 className="font-bold text-sm uppercase tracking-wider text-slate-900">
                                 Convertir a Producto Simple
                             </h4>
                         </div>
                         <p className="text-xs font-semibold text-slate-600">
                             Este producto actualmente posee variantes registradas.
                         </p>
-                        <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/80 text-[11px] text-amber-950 space-y-1.5 font-medium">
+                        <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/80 text-xs text-amber-950 space-y-1.5 font-medium">
                             <p>• Las variantes dejarán de utilizarse para nuevas ventas en la tienda.</p>
                             <p>• Las variantes existentes se conservarán intactas en la base de datos.</p>
                             <p>• El historial de pedidos pasados no será alterado.</p>
@@ -2500,7 +2500,7 @@ export default function AdminProductos() {
                             <button
                                 type="button"
                                 onClick={() => setShowConvertConfirmModal(false)}
-                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase rounded-xl transition-all cursor-pointer"
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase rounded-xl transition-all cursor-pointer"
                             >
                                 Cancelar
                             </button>
@@ -2510,7 +2510,7 @@ export default function AdminProductos() {
                                     setTieneVariantes(false);
                                     setShowConvertConfirmModal(false);
                                 }}
-                                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-black text-xs uppercase rounded-xl shadow-md transition-all cursor-pointer"
+                                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase rounded-xl shadow-md transition-all cursor-pointer"
                             >
                                 Convertir a producto simple
                             </button>

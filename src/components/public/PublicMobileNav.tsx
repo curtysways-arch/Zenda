@@ -1,11 +1,13 @@
 'use client';
 
-import { Home, Calendar, User, Gift, Sparkles, PackageCheck, GraduationCap, CreditCard, QrCode, CalendarCheck, Dumbbell } from 'lucide-react';
+import { Home, Calendar, User, Gift, Sparkles, PackageCheck, GraduationCap, CreditCard, QrCode, CalendarCheck, Dumbbell, Smile } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
 import { hasModule } from '@/lib/business/BusinessModuleResolver';
+import { isLaundryOrShoeCareBusiness } from '@/lib/businessTypeHelper';
+import { ToothIcon } from '@/components/icons/ToothIcon';
 
 interface PublicMobileNavProps {
     slug: string;
@@ -61,6 +63,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
         pathname.includes('/cancha/') ||
         pathname.includes('/servicio/') ||
         pathname.includes('/promo/') ||
+        pathname.includes('/promocion') ||
         pathname.includes('/servicios');
 
     const isEnrolmentDetail = pathname.includes('/cursos/inscripcion/');
@@ -80,9 +83,9 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
         return null;
     }
 
-    const canAppointments = hasModule(tipoNegocio, 'APPOINTMENTS') || hasModule(tipoNegocio, 'RESERVATIONS');
-    const canOrders = hasModule(tipoNegocio, 'ORDERS');
-    const isShoeCare = tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
+    const isShoeCare = isLaundryOrShoeCareBusiness({ tipoNegocio, slug });
+    const canAppointments = !isShoeCare && (hasModule(tipoNegocio, 'APPOINTMENTS') || hasModule(tipoNegocio, 'RESERVATIONS'));
+    const canOrders = isShoeCare || hasModule(tipoNegocio, 'ORDERS') || tipoNegocio === 'LAVANDERIA' || tipoNegocio === 'SHOE_CARE';
 
     const isGym = tipoNegocio === 'GIMNASIO' || tipoNegocio === 'GYM' || tipoNegocio === 'FITNESS' || slug.includes('gym') || slug.includes('fitness') || slug.includes('vortex');
 
@@ -187,21 +190,21 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             visible: true
         });
 
-        // 2. Tab Secundario: "Agenda" (RESERVA) vs "Mis Pedidos / Órdenes" (PRODUCTOS / SHOE_CARE) vs "Reservas" (SPORTS_COURTS)
-        if (canAppointments) {
-            tabs.push({
-                label: 'Agenda',
-                icon: Calendar,
-                href: `/${slug}/mis-reservas`,
-                active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
-                visible: true
-            });
-        } else if (canOrders) {
+        // 2. Tab Secundario: "Mis Órdenes" (LAVANDERIA / SHOE_CARE / PRODUCTOS) vs "Agenda" (RESERVA) vs "Reservas" (SPORTS_COURTS)
+        if (canOrders) {
             tabs.push({
                 label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
                 icon: PackageCheck,
                 href: `/${slug}/pedidos`,
                 active: pathname.includes('/pedidos'),
+                visible: true
+            });
+        } else if (canAppointments) {
+            tabs.push({
+                label: 'Agenda',
+                icon: Calendar,
+                href: `/${slug}/mis-reservas`,
+                active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
                 visible: true
             });
         }
@@ -217,12 +220,13 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             });
         }
 
-        // 3. Tab Central: Servicios / Catálogo
-        const isServicesModule = hasModule(tipoNegocio, 'SERVICES') || tipoNegocio === 'SPA' || tipoNegocio === 'RESERVA' || slug.includes('symechas');
+        // 3. Tab Central: Servicios / Tratamientos / Catálogo
+        const isDental = tipoNegocio === 'ODONTOLOGIA' || tipoNegocio === 'DENTISTA' || slug.includes('dental') || slug.includes('dentar');
+        const isServicesModule = (hasModule(tipoNegocio, 'SERVICES') || tipoNegocio === 'SPA' || tipoNegocio === 'RESERVA' || slug.includes('symechas')) && !isShoeCare;
         tabs.push({
-            label: isServicesModule ? 'Servicios' : 'Catálogo',
-            icon: Sparkles,
-            href: isServicesModule ? `/${slug}/servicios` : `/${slug}#catalogo`,
+            label: isDental ? 'Tratamientos' : (isShoeCare ? 'Catálogo' : (isServicesModule ? 'Servicios' : 'Catálogo')),
+            icon: isDental ? ToothIcon : (isShoeCare ? PackageCheck : Sparkles),
+            href: isShoeCare ? `/${slug}#servicios` : (isServicesModule ? `/${slug}/servicios` : `/${slug}#catalogo`),
             active: pathname.includes('/servicios'),
             isCentral: true,
             visible: true
@@ -280,7 +284,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                     <CentralIcon size={24} style={{ color: 'var(--primary, #ec4899)' }} />
                                 </div>
                                 <span 
-                                    className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5"
+                                    className="text-xs font-bold uppercase tracking-wide leading-none mt-1.5"
                                     style={{ color: 'var(--nav-active, #ffffff)' }}
                                 >
                                     {tab.label}
@@ -311,7 +315,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                 />
                             </div>
                             <span
-                                className="text-[9px] font-bold uppercase tracking-widest leading-none mt-1.5"
+                                className="text-xs font-bold uppercase tracking-wide leading-none mt-1.5"
                                 style={{ 
                                     color: tab.active ? 'var(--nav-active, var(--primary, #7c3aed))' : 'var(--nav-inactive, #64748b)',
                                     fontWeight: tab.active ? 900 : 600,

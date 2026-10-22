@@ -138,16 +138,16 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                     <Link href="/admin/cursos" className="text-emerald-600 font-bold text-xs flex items-center gap-1 hover:underline mb-2">
                         <ArrowLeft size={14} /> Volver a Cursos
                     </Link>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3 uppercase">
+                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3 ">
                         <Dribbble className="text-emerald-600 shrink-0" size={32} />
                         {course.name}
                     </h1>
-                    {course.coach && <p className="text-emerald-600 font-bold italic">Entrenador: {course.coach}</p>}
+                    {course.coach && <p className="text-emerald-600 font-bold ">Entrenador: {course.coach}</p>}
                 </div>
                 <button
                     type="button"
                     onClick={() => setIsEditOpen(true)}
-                    className="flex items-center gap-2 bg-white border border-gray-200 text-slate-800 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm self-start cursor-pointer"
+                    className="flex items-center gap-2 bg-white border border-gray-200 text-slate-800 px-5 py-3 rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-gray-50 transition-all shadow-sm self-start cursor-pointer"
                 >
                     <Edit2 size={16} />
                     Editar Curso
@@ -157,38 +157,38 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
             {/* Stats Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
                 <div className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Estado</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Estado</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${course.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
                         {course.status === 'active' ? 'Activo' : 'Inactivo'}
                     </span>
                 </div>
                 <div className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Cupos</p>
-                    <p className={`text-2xl font-black ${isFull ? 'text-red-500' : 'text-gray-900'}`}>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Cupos</p>
+                    <p className={`text-2xl font-bold ${isFull ? 'text-red-500' : 'text-gray-900'}`}>
                         {approvedCount} <span className="text-sm text-gray-400">/ {course.capacity}</span>
                     </p>
                 </div>
                 <div className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pendientes</p>
-                    <p className={`text-2xl font-black ${pendingCount > 0 ? 'text-amber-500' : 'text-gray-900'}`}>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Pendientes</p>
+                    <p className={`text-2xl font-bold ${pendingCount > 0 ? 'text-amber-500' : 'text-gray-900'}`}>
                         {pendingCount}
                     </p>
                 </div>
                 <div className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Precio</p>
-                    <p className="text-2xl font-black text-emerald-600">${Number(course.price || 0).toLocaleString()}</p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Precio</p>
+                    <p className="text-2xl font-bold text-emerald-600">${Number(course.price || 0).toLocaleString()}</p>
                 </div>
             </div>
 
             {/* Schedules */}
             {course.schedules?.length > 0 && (
                 <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm text-left">
-                    <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4 flex items-center gap-2">
                         <Calendar size={14} className="text-emerald-500" /> Horarios Semanales
                     </h3>
                     <div className="flex flex-wrap gap-2">
                         {course.schedules.map((s: any) => (
-                            <div key={s.id} className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2 rounded-xl text-sm font-black">
+                            <div key={s.id} className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2 rounded-xl text-sm font-bold">
                                 {DAYS[s.day_of_week]} · {s.start_time} – {s.end_time}
                             </div>
                         ))}
@@ -207,12 +207,12 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                             setFilterStatus(tab === 'inscripciones' ? 'pending' : 'approved'); 
                             window.history.replaceState(null, '', `?tab=${tab}`);
                         }}
-                        className={`px-6 py-3 font-black text-sm uppercase tracking-widest border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === tab ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                        className={`px-6 py-3 font-bold text-sm uppercase tracking-wide border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === tab ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                     >
                         {tab === 'inscripciones' ? (
                             <span className="flex items-center gap-2">
                                 Inscripciones
-                                {pendingCount > 0 && <span className="bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full">{pendingCount}</span>}
+                                {pendingCount > 0 && <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingCount}</span>}
                             </span>
                         ) : tab === 'alumnos' ? 'Alumnos' : 'Clases'}
                     </button>
@@ -238,7 +238,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                     key={s}
                                     type="button"
                                     onClick={() => setFilterStatus(s)}
-                                    className={`px-4 py-1.5 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer ${filterStatus === s ? 'ring-2 ring-offset-1 ring-current ' + cfg.color : 'bg-white ' + cfg.color}`}
+                                    className={`px-4 py-1.5 rounded-xl border text-xs font-bold uppercase tracking-wide transition-all cursor-pointer ${filterStatus === s ? 'ring-2 ring-offset-1 ring-current ' + cfg.color : 'bg-white ' + cfg.color}`}
                                 >
                                     {cfg.label}
                                 </button>
@@ -247,9 +247,9 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                     </div>
 
                     {enrollments.length === 0 ? (
-                        <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-gray-100 p-16 text-center">
+                        <div className="bg-white rounded-2xl border-2 border-dashed border-gray-100 p-16 text-center">
                             <Users size={40} className="text-gray-200 mx-auto mb-4" />
-                            <p className="font-black text-gray-400 uppercase">Sin inscripciones en este estado</p>
+                            <p className="font-bold text-gray-400 uppercase">Sin inscripciones en este estado</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -266,19 +266,19 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                 const guardianEmail = enrollment.guardian_email || enrollment.student?.email;
 
                                 return (
-                                    <div key={enrollment.id} className={`bg-white rounded-[2rem] border shadow-sm ${isPending ? 'border-amber-200' : 'border-gray-100'}`}>
+                                    <div key={enrollment.id} className={`bg-white rounded-2xl border shadow-sm ${isPending ? 'border-amber-200' : 'border-gray-100'}`}>
                                         <div className="p-5 flex flex-col md:flex-row md:items-center gap-4">
-                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 ${isPending ? 'bg-amber-100 text-amber-600' : enrollment.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0 ${isPending ? 'bg-amber-100 text-amber-600' : enrollment.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
                                                 {studentName.charAt(0).toUpperCase()}
                                             </div>
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <p className="font-black text-gray-900 uppercase text-sm">{studentName}</p>
+                                                    <p className="font-bold text-gray-900 uppercase text-sm">{studentName}</p>
                                                     {studentAge && (
-                                                        <span className="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full">{studentAge} años</span>
+                                                        <span className="bg-gray-100 text-gray-500 text-xs font-bold px-2 py-0.5 rounded-full">{studentAge} años</span>
                                                     )}
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-black uppercase ${cfg.color}`}>
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-bold uppercase ${cfg.color}`}>
                                                         <StatusIcon size={10} />
                                                         {cfg.label}
                                                     </span>
@@ -288,19 +288,19 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                                 )}
                                                 <div className="flex flex-wrap gap-3 mt-1">
                                                     {guardianPhone && (
-                                                        <a href={`tel:${guardianPhone}`} className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:underline">
+                                                        <a href={`tel:${guardianPhone}`} className="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:underline">
                                                             <Phone size={11} /> {guardianPhone}
                                                         </a>
                                                     )}
                                                     {guardianEmail && (
-                                                        <a href={`mailto:${guardianEmail}`} className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:underline">
+                                                        <a href={`mailto:${guardianEmail}`} className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline">
                                                             <Mail size={11} /> {guardianEmail}
                                                         </a>
                                                     )}
                                                 </div>
                                             </div>
 
-                                            <p className="text-[10px] text-gray-400 font-bold whitespace-nowrap">
+                                            <p className="text-xs text-gray-400 font-bold whitespace-nowrap">
                                                 {new Date(enrollment.enrollment_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </p>
 
@@ -310,7 +310,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                                         type="button"
                                                         onClick={() => handleAction(enrollment.id, 'approved')}
                                                         disabled={actionLoading !== null}
-                                                        className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-emerald-100 cursor-pointer"
+                                                        className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-md shadow-emerald-100 cursor-pointer"
                                                     >
                                                         {actionLoading === enrollment.id + 'approved' ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />}
                                                         Aprobar
@@ -319,7 +319,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                                         type="button"
                                                         onClick={() => handleAction(enrollment.id, 'rejected')}
                                                         disabled={actionLoading !== null}
-                                                        className="flex items-center gap-1.5 bg-white hover:bg-red-50 disabled:opacity-50 text-red-500 border border-red-200 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
+                                                        className="flex items-center gap-1.5 bg-white hover:bg-red-50 disabled:opacity-50 text-red-500 border border-red-200 px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wide transition-all cursor-pointer"
                                                     >
                                                         {actionLoading === enrollment.id + 'rejected' ? <Loader2 size={13} className="animate-spin" /> : <UserX size={13} />}
                                                         Rechazar
@@ -332,7 +332,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                             <div className="px-5 pb-4">
                                                 <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 flex items-start gap-2">
                                                     <FileText size={13} className="text-slate-400 mt-0.5 shrink-0" />
-                                                    <p className="text-xs font-medium text-slate-600 italic">"{enrollment.comments}"</p>
+                                                    <p className="text-xs font-medium text-slate-600 ">"{enrollment.comments}"</p>
                                                 </div>
                                             </div>
                                         )}
@@ -348,20 +348,20 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
             {activeTab === 'alumnos' && (
                 <div className="space-y-3 text-left">
                     {enrollments.length === 0 ? (
-                        <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-gray-100 p-16 text-center">
+                        <div className="bg-white rounded-2xl border-2 border-dashed border-gray-100 p-16 text-center">
                             <Users size={40} className="text-gray-200 mx-auto mb-4" />
-                            <p className="font-black text-gray-400 uppercase">Sin alumnos aprobados</p>
+                            <p className="font-bold text-gray-400 uppercase">Sin alumnos aprobados</p>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                             <table className="w-full text-left">
                                 <thead>
                                     <tr className="bg-gray-50/50">
-                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Alumno</th>
-                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Edad</th>
-                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Representante</th>
-                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Contacto</th>
-                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Inscrito el</th>
+                                        <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wide">Alumno</th>
+                                        <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wide">Edad</th>
+                                        <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wide">Representante</th>
+                                        <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wide">Contacto</th>
+                                        <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wide">Inscrito el</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
@@ -374,22 +374,22 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
 
                                         return (
                                             <tr key={e.id} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="p-5 font-black text-gray-900 uppercase text-sm">{sName}</td>
+                                                <td className="p-5 font-bold text-gray-900 uppercase text-sm">{sName}</td>
                                                 <td className="p-5 text-sm font-bold text-gray-500">{sAge ? `${sAge} años` : '—'}</td>
                                                 <td className="p-5 text-sm font-bold text-gray-500">{gName || '—'}</td>
                                                 <td className="p-5 space-y-1">
                                                     {gPhone && (
-                                                        <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500">
+                                                        <div className="flex items-center gap-1 text-xs font-bold text-gray-500">
                                                             <Phone size={11} className="text-emerald-500" /> {gPhone}
                                                         </div>
                                                     )}
                                                     {gEmail && (
-                                                        <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500">
+                                                        <div className="flex items-center gap-1 text-xs font-bold text-gray-500">
                                                             <Mail size={11} className="text-blue-500" /> {gEmail}
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="p-5 text-[11px] font-bold text-gray-400">
+                                                <td className="p-5 text-xs font-bold text-gray-400">
                                                     {new Date(e.enrollment_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                 </td>
                                             </tr>

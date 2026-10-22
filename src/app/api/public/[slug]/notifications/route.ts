@@ -46,11 +46,16 @@ export async function GET(
 ) {
     try {
         const { slug } = await params;
-        const user = await getAuthenticatedUser(req, slug);
-        if (!user) {
-            return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+        const negocio = await prisma.negocio.findUnique({
+            where: { slug },
+            select: { id: true, tipoNegocio: true }
+        });
+
+        if (!negocio) {
+            return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
         }
 
+        const user = await getAuthenticatedUser(req, slug);
         const { searchParams } = new URL(req.url);
         const categoria = searchParams.get("categoria") || undefined;
         const search = searchParams.get("search") || undefined;
@@ -58,21 +63,25 @@ export async function GET(
         const limit = parseInt(searchParams.get("limit") || "15", 10);
 
         const data = await NotificationService.getNotifications({
-            negocioId: user.negocioId || '',
-            userId: user.id,
+            negocioId: negocio.id,
+            userId: user?.id || null,
             categoria,
             search,
             page,
             limit
         });
 
-        const unreadCount = await NotificationService.getUnreadCount(user.id, user.negocioId || '');
+        const unreadCount = user?.id 
+            ? await NotificationService.getUnreadCount(user.id, negocio.id)
+            : await NotificationService.getUnreadCount('', negocio.id);
 
         return NextResponse.json({
             ...data,
-            unreadCount
+            unreadCount,
+            isAuthenticated: !!user
         });
     } catch (error: any) {
+        console.error('[API public notifications GET error]:', error);
         return NextResponse.json({ error: "Internal Error", details: error.message }, { status: 500 });
     }
 }
@@ -86,11 +95,15 @@ export async function PATCH(
 ) {
     try {
         const { slug } = await params;
-        const user = await getAuthenticatedUser(req, slug);
-        if (!user) {
-            return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+        const negocio = await prisma.negocio.findUnique({
+            where: { slug },
+            select: { id: true }
+        });
+        if (!negocio) {
+            return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
         }
 
+        const user = await getAuthenticatedUser(req, slug);
         const body = await req.json();
         const { id, markAll, trackClick } = body;
 
@@ -102,7 +115,9 @@ export async function PATCH(
 
         // 2. Marcar todas como leídas
         if (markAll) {
-            await NotificationService.markAllAsRead(user.id, user.negocioId || '');
+            if (user?.id) {
+                await NotificationService.markAllAsRead(user.id, negocio.id);
+            }
             return NextResponse.json({ success: true });
         }
 
@@ -111,19 +126,7 @@ export async function PATCH(
             return NextResponse.json({ error: "Falta el ID de la notificación" }, { status: 400 });
         }
 
-        // Validar propiedad de la notificación
-        const notif = await prisma.notification.findUnique({
-            where: { id },
-            select: { userId: true }
-        });
-
-        if (!notif || notif.userId !== user.id) {
-            return NextResponse.json({ error: "No encontrado" }, { status: 404 });
-        }
-
         await NotificationService.markAsRead(id);
-        
-        // Registrar vista al marcar como leída
         await NotificationService.trackMetric(id, 'vistas');
 
         return NextResponse.json({ success: true });
@@ -141,9 +144,12 @@ export async function DELETE(
 ) {
     try {
         const { slug } = await params;
-        const user = await getAuthenticatedUser(req, slug);
-        if (!user) {
-            return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+        const negocio = await prisma.negocio.findUnique({
+            where: { slug },
+            select: { id: true }
+        });
+        if (!negocio) {
+            return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
         }
 
         const { searchParams } = new URL(req.url);
@@ -153,19 +159,7 @@ export async function DELETE(
             return NextResponse.json({ error: "Falta el ID de la notificación" }, { status: 400 });
         }
 
-        // Validar propiedad de la notificación
-        const notif = await prisma.notification.findUnique({
-            where: { id },
-            select: { userId: true }
-        });
-
-        if (!notif || notif.userId !== user.id) {
-            return NextResponse.json({ error: "No encontrado" }, { status: 404 });
-        }
-
-        // Archivamos la notificación en lugar de eliminarla físicamente ( UX premium y retención de datos )
         await NotificationService.archiveNotification(id);
-
         return NextResponse.json({ success: true });
     } catch (error: any) {
         return NextResponse.json({ error: "Internal Error", details: error.message }, { status: 500 });

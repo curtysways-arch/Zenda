@@ -208,13 +208,13 @@ export default function ImageUploader({
                 <ImageIcon size={16} />
               </div>
               <div className="text-left min-w-0">
-                <p className="text-xs font-black text-slate-800 line-clamp-1">{label}</p>
-                <p className="text-[10px] text-slate-400 font-medium line-clamp-1">
+                <p className="text-xs font-bold text-slate-800 line-clamp-1">{label}</p>
+                <p className="text-xs text-slate-400 font-medium line-clamp-1">
                   JPG, PNG, WEBP · Clic o arrastra aquí
                 </p>
               </div>
             </div>
-            <span className="text-[10px] font-black text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2.5 py-1 rounded-lg shrink-0 transition-colors">
+            <span className="text-xs font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2.5 py-1 rounded-lg shrink-0 transition-colors">
               Subir foto
             </span>
           </div>

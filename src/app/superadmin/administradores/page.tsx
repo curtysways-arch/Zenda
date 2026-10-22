@@ -45,11 +45,11 @@ export default async function AdministradoresPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Usuario</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Rol</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Asignado a</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Registro</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Acciones</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wide">Usuario</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wide">Rol</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wide">Asignado a</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wide">Registro</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wide text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -73,7 +73,7 @@ export default async function AdministradoresPage() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             {usuario.role === 'SUPERADMIN' ? (
-                                                <span className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100 italic">
+                                                <span className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100 ">
                                                     <ShieldCheck size={14} className="text-indigo-600" />
                                                     Super Admin
                                                 </span>
@@ -89,7 +89,7 @@ export default async function AdministradoresPage() {
                                         {usuario.Negocio ? (
                                             <div className="text-sm">
                                                 <div className="font-semibold text-slate-700">{usuario.Negocio.nombre}</div>
-                                                <div className="text-[10px] text-slate-400 font-mono">ID: {usuario.Negocio.id}</div>
+                                                <div className="text-xs text-slate-400 font-mono">ID: {usuario.Negocio.id}</div>
                                             </div>
                                         ) : (
                                             <span className="text-xs font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-md">Acceso Global</span>

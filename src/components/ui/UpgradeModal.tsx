@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, UploadCloud, CreditCard, Landmark, CheckCircle2, Loader2, MessageCircle, ChevronDown } from 'lucide-react';
+import { X, UploadCloud, CreditCard, Landmark, CheckCircle2, Loader2, MessageCircle, ChevronDown, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface UpgradeModalProps {
@@ -12,6 +12,7 @@ interface UpgradeModalProps {
     planPrice: number;
     primaryColor?: string;
     isRenewal?: boolean;
+    businessId?: string;
 }
 
 interface DbAccount {
@@ -22,13 +23,14 @@ interface DbAccount {
     logo: string | null;
 }
 
-export default function UpgradeModal({ isOpen, onClose, planId, planName, planPrice, primaryColor = '#1dc95c', isRenewal = false }: UpgradeModalProps) {
+export default function UpgradeModal({ isOpen, onClose, planId, planName, planPrice, primaryColor = '#1dc95c', isRenewal = false, businessId }: UpgradeModalProps) {
     const router = useRouter();
     const [metodo, setMetodo] = useState<'TRANSFERENCIA' | 'DEUNA' | ''>('');
     const [referencia, setReferencia] = useState('');
     const [comprobanteBase64, setComprobanteBase64] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     
     // Cuentas dinámicas de la base de datos
     const [dbAccounts, setDbAccounts] = useState<DbAccount[]>([]);
@@ -37,6 +39,7 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
 
     useEffect(() => {
         if (isOpen) {
+            setErrorMessage('');
             const fetchPublicAccounts = async () => {
                 setLoadingAccounts(true);
                 try {
@@ -64,9 +67,38 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setErrorMessage('');
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setComprobanteBase64(reader.result as string);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 1200;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, width, height);
+                        setComprobanteBase64(canvas.toDataURL('image/jpeg', 0.82));
+                    } else {
+                        setComprobanteBase64(event.target?.result as string);
+                    }
+                };
+                img.onerror = () => {
+                    setComprobanteBase64(event.target?.result as string);
+                };
+                img.src = event.target?.result as string;
             };
             reader.readAsDataURL(file);
         }
@@ -74,6 +106,18 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrorMessage('');
+
+        if (!metodo) {
+            setErrorMessage('Por favor selecciona un método de pago.');
+            return;
+        }
+
+        if (!comprobanteBase64 && !referencia) {
+            setErrorMessage('Por favor adjunta el comprobante o ingresa el número de referencia.');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -82,22 +126,32 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     planId,
+                    businessId,
                     metodoPago: metodo,
-                    referencia,
+                    referencia: referencia ? referencia.trim() : undefined,
                     comprobanteUrl: comprobanteBase64,
                     monto: planPrice
                 })
             });
 
-            if (res.ok) {
+            const data = await res.json().catch(() => null);
+
+            if (res.ok && data?.success) {
                 setSuccess(true);
                 setTimeout(() => {
                     onClose();
                     router.refresh();
-                }, 3000);
+                }, 2500);
+            } else {
+                const msg = data?.error || 'No se pudo enviar la solicitud. Por favor intenta de nuevo.';
+                setErrorMessage(msg);
+                alert(msg);
             }
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            console.error('Error al enviar solicitud:', error);
+            const msg = error?.message || 'Error de conexión con el servidor.';
+            setErrorMessage(msg);
+            alert(msg);
         } finally {
             setLoading(false);
         }
@@ -105,14 +159,14 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden relative border border-slate-100 flex flex-col max-h-[90vh]">
+            <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative border border-slate-100 flex flex-col max-h-[90vh]">
                 
                 <div className="p-6 md:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                     <div>
-                        <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-900 italic">
+                        <h2 className="text-2xl font-bold tracking-tight text-slate-900 ">
                         {isRenewal ? 'Renovar Plan' : 'Mejorar Plan'}
                     </h2>
-                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide mt-1">
                         {isRenewal ? `Renovar ${planName} — 1 mes más` : `Activar ${planName} - $${planPrice}/mes`}
                     </p>
                     </div>
@@ -126,7 +180,7 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                         <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4">
                             <CheckCircle2 size={48} />
                         </div>
-                        <h3 className="text-3xl font-black uppercase tracking-tighter italic">¡Solicitud Enviada!</h3>
+                        <h3 className="text-3xl font-bold tracking-tight ">¡Solicitud Enviada!</h3>
                         <p className="text-slate-500 font-medium">Estamos verificando tu pago. Tu plan se activará pronto.</p>
                     </div>
                 ) : (
@@ -134,7 +188,7 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Opciones de Pago */}
                             <div className="space-y-6">
-                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">1. Selecciona el método</h3>
+                                <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">1. Selecciona el método</h3>
                                 
                                 <div className="space-y-3">
                                     <button 
@@ -146,7 +200,7 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                                             <Landmark size={20} />
                                         </div>
                                         <div className="text-left">
-                                            <p className="font-black text-slate-900 uppercase text-sm">Transferencia</p>
+                                            <p className="font-bold text-slate-900 uppercase text-sm">Transferencia</p>
                                             <p className="text-xs text-slate-500 font-medium">Pichincha, Guayaquil, etc.</p>
                                         </div>
                                     </button>
@@ -160,26 +214,26 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                                             <CreditCard size={20} />
                                         </div>
                                         <div className="text-left">
-                                            <p className="font-black text-slate-900 uppercase text-sm">DeUna / Pago Seguro</p>
+                                            <p className="font-bold text-slate-900 uppercase text-sm">DeUna / Pago Seguro</p>
                                             <p className="text-xs text-slate-500 font-medium">Escanea el QR</p>
                                         </div>
                                     </button>
                                 </div>
 
                                 {metodo && (
-                                    <div className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100 text-sm text-slate-700 space-y-4">
+                                    <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 text-sm text-slate-700 space-y-4">
                                         {metodo === 'TRANSFERENCIA' ? (
                                             loadingAccounts ? (
                                                 <div className="flex items-center justify-center p-6 gap-2">
                                                     <Loader2 size={16} className="animate-spin text-emerald-500" />
-                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cargando Cuentas...</span>
+                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Cargando Cuentas...</span>
                                                 </div>
                                             ) : dbAccounts.length > 0 ? (
                                                 <div className="space-y-4">
                                                     {/* Selector de cuenta si hay más de una */}
                                                     {dbAccounts.length > 1 && (
                                                         <div className="space-y-1">
-                                                            <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Selecciona el Banco</label>
+                                                            <label className="block text-xs font-bold uppercase tracking-wide text-slate-400">Selecciona el Banco</label>
                                                             <div className="relative">
                                                                 <select
                                                                     value={selectedAccountIndex}
@@ -210,18 +264,18 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                                                                         </div>
                                                                     )}
                                                                     <div>
-                                                                        <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Banco</span>
-                                                                        <span className="font-black text-slate-900 uppercase text-xs tracking-tight">{activeAcc.banco}</span>
+                                                                        <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Banco</span>
+                                                                        <span className="font-bold text-slate-900 uppercase text-xs tracking-tight">{activeAcc.banco}</span>
                                                                     </div>
                                                                 </div>
                                                                 
                                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                                                                     <div>
-                                                                        <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Nombre/Tipo</span>
+                                                                        <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-0.5">Nombre/Tipo</span>
                                                                         <span className="font-bold text-slate-700 uppercase">{activeAcc.nombreCuenta}</span>
                                                                     </div>
                                                                     <div>
-                                                                        <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Número de Cuenta</span>
+                                                                        <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-0.5">Número de Cuenta</span>
                                                                         <span className="font-mono font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-100 tracking-wide text-xs">{activeAcc.numeroCuenta}</span>
                                                                     </div>
                                                                 </div>
@@ -232,7 +286,7 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                                             ) : (
                                                 /* Fallback original si no hay cuentas registradas en base de datos */
                                                 <>
-                                                    <p><span className="font-bold text-xs uppercase text-slate-400 block tracking-widest mb-1">Banco de Depósito</span></p>
+                                                    <p><span className="font-bold text-xs uppercase text-slate-400 block tracking-wide mb-1">Banco de Depósito</span></p>
                                                     <p><span className="font-bold">Banco:</span> Banco Pichincha</p>
                                                     <p><span className="font-bold">Tipo:</span> Ahorros</p>
                                                     <p><span className="font-bold">Cuenta:</span> 2200000000</p>
@@ -248,12 +302,12 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                                                     if (deunaAccount && deunaAccount.logo) {
                                                         return (
                                                             <div className="flex flex-col items-center">
-                                                                <p className="font-bold text-xs mb-3 text-slate-800 uppercase tracking-widest">Escanea desde tu app DeUna:</p>
-                                                                <div className="size-44 bg-white border border-slate-200 rounded-[2rem] overflow-hidden flex items-center justify-center shadow-lg relative p-2">
+                                                                <p className="font-bold text-xs mb-3 text-slate-800 uppercase tracking-wide">Escanea desde tu app DeUna:</p>
+                                                                <div className="size-44 bg-white border border-slate-200 rounded-3xl overflow-hidden flex items-center justify-center shadow-lg relative p-2">
                                                                     <img src={deunaAccount.logo} alt="QR DeUna" className="w-full h-full object-contain rounded-2xl" />
                                                                 </div>
                                                                 <div className="mt-3 text-center">
-                                                                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Celular/Titular</span>
+                                                                    <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Celular/Titular</span>
                                                                     <span className="text-xs font-mono font-bold text-slate-700">{deunaAccount.numeroCuenta} - {deunaAccount.nombreCuenta}</span>
                                                                 </div>
                                                             </div>
@@ -261,9 +315,9 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                                                     }
                                                     return (
                                                         <div className="flex flex-col items-center">
-                                                            <p className="font-bold mb-3 text-xs text-slate-800 uppercase tracking-widest">Escanea desde tu app DeUna:</p>
+                                                            <p className="font-bold mb-3 text-xs text-slate-800 uppercase tracking-wide">Escanea desde tu app DeUna:</p>
                                                             <div className="w-32 h-32 bg-white border border-slate-200 rounded-2xl flex items-center justify-center shadow-sm">
-                                                                <span className="text-slate-400 text-xs font-bold uppercase">QR AQUÍ</span>
+                                                                <span className="text-slate-400 text-xs font-bold uppercase">QR aquí</span>
                                                             </div>
                                                         </div>
                                                     );
@@ -276,11 +330,11 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
 
                             {/* Formulario de Comprobante */}
                             <form onSubmit={handleSubmit} className="space-y-6">
-                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">2. Envía tu comprobante</h3>
+                                <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">2. Envía tu comprobante</h3>
                                 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-700 mb-2">Comprobante (Foto/Captura)</label>
+                                        <label className="block text-xs font-bold uppercase tracking-wide text-slate-700 mb-2">Comprobante (Foto/Captura)</label>
                                         <div className="relative">
                                             <input 
                                                 type="file" 
@@ -299,7 +353,7 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-700 mb-2">No. Referencia (Opcional)</label>
+                                        <label className="block text-xs font-bold uppercase tracking-wide text-slate-700 mb-2">No. Referencia (Opcional)</label>
                                         <input 
                                             type="text" 
                                             value={referencia}
@@ -310,10 +364,17 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                                     </div>
                                 </div>
 
+                                {errorMessage && (
+                                    <div className="p-3.5 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-bold flex items-center gap-2.5 animate-in fade-in">
+                                        <AlertCircle size={18} className="shrink-0 text-red-500" />
+                                        <span>{errorMessage}</span>
+                                    </div>
+                                )}
+
                                 <button 
                                     type="submit"
                                     disabled={loading || !metodo || !comprobanteBase64}
-                                    className="w-full flex items-center justify-center gap-2 text-white px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black active:scale-95"
+                                    className="w-full flex items-center justify-center gap-2 text-white px-8 py-4 rounded-2xl font-bold text-sm uppercase tracking-wide transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black active:scale-95 cursor-pointer"
                                     style={{ backgroundColor: 'var(--primary-color)' }}
                                 >
                                     {loading ? <Loader2 className="animate-spin" size={20} /> : 'Enviar Solicitud'}

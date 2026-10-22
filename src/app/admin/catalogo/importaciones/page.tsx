@@ -169,7 +169,7 @@ export default function CatalogoImportacionesHistorialPage() {
                                                 <span className="font-semibold text-slate-900 dark:text-white block">
                                                     {item.sourceName || 'Sin nombre'}
                                                 </span>
-                                                <span className="text-[10px] text-slate-400 uppercase font-mono">
+                                                <span className="text-xs text-slate-400 uppercase font-mono">
                                                     {item.sourceType}
                                                 </span>
                                             </td>

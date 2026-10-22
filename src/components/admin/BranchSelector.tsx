@@ -135,7 +135,7 @@ export default function BranchSelector({
 
       {isOpen && (
         <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border border-slate-200 shadow-lg py-1.5 overflow-hidden animate-in fade-in-50 zoom-in-95 duration-100">
-          <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-400">
             Sucursal de Operación
           </div>
 
@@ -173,7 +173,7 @@ export default function BranchSelector({
                     <MapPin size={13} className={isSelected ? 'text-slate-900' : 'text-slate-400'} />
                     <span className="truncate">{b.name}</span>
                     {b.isDefault && (
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 font-medium shrink-0">
+                      <span className="text-xs px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 font-medium shrink-0">
                         Matriz
                       </span>
                     )}

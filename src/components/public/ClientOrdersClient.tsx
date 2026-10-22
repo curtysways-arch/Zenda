@@ -84,14 +84,14 @@ export default function ClientOrdersClient({ negocio }: Props) {
     const [phone, setPhone] = useState<string>(() => {
         if (typeof window !== 'undefined') {
             const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
-            return localStorage.getItem(storageKey) || localStorage.getItem('user_phone') || localStorage.getItem('pinchos_client_phone') || localStorage.getItem('customer_phone') || '';
+            return localStorage.getItem(storageKey) || localStorage.getItem('user_phone') || localStorage.getItem('customer_phone') || '';
         }
         return '';
     });
     const [isVerified, setIsVerified] = useState<boolean>(() => {
         if (typeof window !== 'undefined') {
             const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
-            const saved = localStorage.getItem(storageKey) || localStorage.getItem('user_phone') || localStorage.getItem('pinchos_client_phone') || localStorage.getItem('customer_phone');
+            const saved = localStorage.getItem(storageKey) || localStorage.getItem('user_phone') || localStorage.getItem('customer_phone');
             return !!saved;
         }
         return false;
@@ -107,14 +107,41 @@ export default function ClientOrdersClient({ negocio }: Props) {
     const [otpMessage, setOtpMessage] = useState<string | null>(null);
 
     useEffect(() => {
-        const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
-        const savedPhone = phone || (typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null);
-        if (savedPhone) {
-            setPhone(savedPhone);
-            setIsVerified(true);
-            fetchOrders(savedPhone);
-        }
-    }, []);
+        const initPhoneAndOrders = async () => {
+            const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
+            
+            // 1. Intentar obtener el teléfono de la sesión de perfil activa en este negocio
+            try {
+                const profileRes = await fetch(`/api/${negocio?.slug || 'generic'}/perfil`);
+                if (profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    if (profileData?.telefono) {
+                        const activePhone = profileData.telefono;
+                        setPhone(activePhone);
+                        setIsVerified(true);
+                        if (typeof window !== 'undefined') {
+                            localStorage.setItem(storageKey, activePhone);
+                            localStorage.setItem('user_phone', activePhone);
+                        }
+                        fetchOrders(activePhone);
+                        return;
+                    }
+                }
+            } catch (e) {
+                // Silenciar error de sesión si no está autenticado
+            }
+
+            // 2. Fallback a localStorage
+            const savedPhone = phone || (typeof window !== 'undefined' ? (localStorage.getItem(storageKey) || localStorage.getItem('user_phone')) : null);
+            if (savedPhone) {
+                setPhone(savedPhone);
+                setIsVerified(true);
+                fetchOrders(savedPhone);
+            }
+        };
+
+        initPhoneAndOrders();
+    }, [negocio?.slug]);
 
     const fetchOrders = async (clientPhone: string) => {
         try {
@@ -207,22 +234,67 @@ export default function ClientOrdersClient({ negocio }: Props) {
     const isShoeCare = negocio?.tipoNegocio === 'SHOE_CARE' || negocio?.slug?.includes('lavado') || negocio?.slug?.includes('sneaker');
 
     const getOrderBadge = (status: string) => {
-        switch (status) {
-            case 'EN_PREPARACION':
+        const s = (status || '').toUpperCase();
+        switch (s) {
+            case 'SOLICITADA':
+            case 'PENDIENTE':
+            case 'PENDIENTE_RETIRO':
+                return <span className="px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-full text-xs font-bold">📄 Solicitada</span>;
+            case 'ACEPTADA':
+            case 'ACEPTADO':
+                return <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-bold">👍 Aceptada</span>;
+            case 'RETIRO':
+            case 'EN_RETIRO':
+            case 'REPARTIDOR_EN_CAMINO':
+            case 'RECOGIDO':
+            case 'RETIRADO':
+            case 'ESPERANDO_REPARTIDOR_RETIRO':
+                return <span className="px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full text-xs font-bold">🛵 En recolección</span>;
+            case 'RECIBIDO':
+            case 'RECIBIDA':
+                return <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-xs font-bold">📦 Recibido en taller</span>;
+            case 'INSPECCIONADO':
+                return <span className="px-3 py-1 bg-purple-100 text-purple-800 border border-purple-200 rounded-full text-xs font-bold">🔍 Inspeccionado</span>;
+            case 'LAVANDO':
+            case 'EN_LAVADO':
+                return <span className="px-3 py-1 bg-sky-100 text-sky-800 border border-sky-200 rounded-full text-xs font-bold">🧼 Lavando</span>;
+            case 'SECANDO':
+            case 'EN_SECADO':
+                return <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-200 rounded-full text-xs font-bold">☀️ Secando</span>;
+            case 'DETALLADO':
+            case 'DETALLANDO':
+            case 'EN_ACABADOS':
+                return <span className="px-3 py-1 bg-purple-100 text-purple-800 border border-purple-200 rounded-full text-xs font-bold">✨ Detallado</span>;
+            case 'EN_PROCESO':
+            case 'PROCESO':
             case 'PREPARACION':
-                return <span className="px-3 py-1 bg-purple-950 text-purple-300 border border-purple-800/60 rounded-full text-xs font-black">⚡ EN PROCESO</span>;
+            case 'EN_PREPARACION':
+                return <span className="px-3 py-1 bg-purple-100 text-purple-800 border border-purple-200 rounded-full text-xs font-bold">⚡ En taller</span>;
             case 'LISTO':
-                return <span className="px-3 py-1 bg-emerald-950 text-emerald-300 border border-emerald-800/60 rounded-full text-xs font-black">✨ LISTO PARA ENTREGA</span>;
+            case 'LISTO_PARA_ENTREGA':
+                return <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold">✨ Listo para entrega</span>;
             case 'EN_RUTA':
             case 'RUTA':
-                return <span className="px-3 py-1 bg-indigo-950 text-indigo-300 border border-indigo-800/60 rounded-full text-xs font-black">🛵 EN CAMINO</span>;
+            case 'EN_RUTA_ENTREGA':
+            case 'EN_CAMINO':
+            case 'ESPERANDO_CLIENTE':
+                return <span className="px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full text-xs font-bold">🛵 En camino</span>;
             case 'ENTREGADO':
-                return <span className="px-3 py-1 bg-emerald-900/50 text-emerald-300 border border-emerald-700/60 rounded-full text-xs font-black">🎉 ENTREGADO</span>;
+            case 'ENTREGADA':
+            case 'FINALIZADO':
+            case 'FINALIZADA':
+                return <span className="px-3 py-1 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full text-xs font-bold">🎉 Entregado</span>;
             case 'PAGO_EN_REVISION':
-                return <span className="px-3 py-1 bg-amber-950 text-amber-300 border border-amber-800/60 rounded-full text-xs font-black">⏳ PAGO EN REVISIÓN</span>;
+            case 'COMPROBANTE_RECIBIDO':
+            case 'COMPROBANTE_ENVIADO':
+                return <span className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold">⏳ Pago en revisión</span>;
             case 'PENDIENTE_PAGO':
+                return <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-xs font-bold">💳 Pendiente de pago</span>;
+            case 'CANCELADO':
+            case 'RECHAZADO':
+                return <span className="px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-xs font-bold">❌ Cancelado</span>;
             default:
-                return <span className="px-3 py-1 bg-purple-950/80 text-purple-200 border border-purple-800/60 rounded-full text-xs font-black">💳 PENDIENTE DE PAGO</span>;
+                return <span className="px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-full text-xs font-bold">{s}</span>;
         }
     };
 
@@ -247,7 +319,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                 </Link>
                 <div className="flex items-center gap-2">
                     <ShoppingBag className="w-5 h-5 text-slate-800" style={{ color: primaryColor }} />
-                    <span className="font-black text-sm text-slate-900">Mis Órdenes - {negocio.nombre}</span>
+                    <span className="font-bold text-sm text-slate-900">Mis Órdenes - {negocio.nombre}</span>
                 </div>
             </header>
 
@@ -262,7 +334,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                             >
                                 <Phone className="w-7 h-7" />
                             </div>
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Consulta tus Órdenes de Servicio</h2>
+                            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Consulta tus Órdenes de Servicio</h2>
                             <p className="text-xs text-slate-500 font-medium">Ingresa tu número de teléfono para enviarte un código OTP de seguridad</p>
                         </div>
 
@@ -275,7 +347,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                         {otpStep === 'input' ? (
                             <form onSubmit={handleSendOTP} className="space-y-4">
                                 <div className="text-left">
-                                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Número Celular / WhatsApp</label>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Número Celular / WhatsApp</label>
                                     <input
                                         type="tel"
                                         inputMode="numeric"
@@ -291,7 +363,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                 <button
                                     type="submit"
                                     disabled={otpLoading}
-                                    className="w-full py-4 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer"
+                                    className="w-full py-4 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Enviar Código OTP'}
@@ -300,7 +372,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                         ) : (
                             <form onSubmit={handleVerifyOTP} className="space-y-4">
                                 <div className="text-left">
-                                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Código OTP de 6 dígitos</label>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Código OTP de 6 dígitos</label>
                                     <div className="relative">
                                         <KeyRound className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                         <input
@@ -313,7 +385,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                             value={otpCode}
                                             onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
                                             placeholder="123456"
-                                            className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border-2 rounded-2xl text-slate-900 font-mono text-center text-2xl tracking-[0.4em] focus:outline-none focus:bg-white transition-colors"
+                                            className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border-2 rounded-2xl text-slate-900 font-mono text-center text-2xl tracking-wide focus:outline-none focus:bg-white transition-colors"
                                             style={{ borderColor: primaryColor }}
                                         />
                                     </div>
@@ -321,7 +393,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                 <button
                                     type="submit"
                                     disabled={otpLoading}
-                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
                                 >
                                     {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verificar e Ingresar'}
                                 </button>
@@ -340,8 +412,8 @@ export default function ClientOrdersClient({ negocio }: Props) {
                     <div className="space-y-6">
                         <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
                             <div className="text-left">
-                                <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Consultando órdenes para</span>
-                                <span className="text-sm font-black text-slate-900 font-mono">{phone}</span>
+                                <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider">Consultando órdenes para</span>
+                                <span className="text-sm font-bold text-slate-900 font-mono">{phone}</span>
                             </div>
                             <button
                                 onClick={() => {
@@ -364,11 +436,11 @@ export default function ClientOrdersClient({ negocio }: Props) {
                         ) : orders.length === 0 ? (
                             <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/80 space-y-4 shadow-xs p-6">
                                 <ShoppingBag className="w-12 h-12 mx-auto text-slate-300" />
-                                <h3 className="text-base font-black text-slate-900">No tienes órdenes registradas</h3>
+                                <h3 className="text-base font-bold text-slate-900">No tienes órdenes registradas</h3>
                                 <p className="text-xs text-slate-500 font-medium">Solicita tu primer servicio de mantenimiento y lavado.</p>
                                 <Link 
                                     href={`/${negocio.slug}`} 
-                                    className="inline-block px-6 py-3 text-white text-xs font-black rounded-2xl shadow-md transition-colors"
+                                    className="inline-block px-6 py-3 text-white text-xs font-bold rounded-2xl shadow-md transition-colors"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     Solicitar Servicio
@@ -392,14 +464,14 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                             <div className="flex items-start justify-between border-b border-slate-100 pb-3">
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-base font-black text-slate-900 group-hover:text-purple-600 transition-colors">
+                                                        <span className="text-base font-bold text-slate-900 group-hover:text-purple-600 transition-colors">
                                                             Orden #{order.numeroPedido}
                                                         </span>
                                                         <span className="text-xs font-mono font-bold text-slate-400">
                                                             {formatShortDate(order.createdAt)}
                                                         </span>
                                                     </div>
-                                                    <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                                                    <p className="text-xs font-semibold text-slate-500 mt-0.5">
                                                         {order.tipoEntrega} • {order.fechaEntrega ? new Date(order.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : 'Por definir'}
                                                     </p>
                                                 </div>
@@ -413,11 +485,36 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                                 <div className="p-3 bg-purple-50/60 border border-purple-100 rounded-2xl flex items-center gap-3">
                                                     <img src={previewFoto} alt="Resultado Final" className="w-16 h-16 object-cover rounded-xl border border-purple-200 shrink-0 shadow-xs" />
                                                     <div>
-                                                        <span className="text-[10px] font-black text-purple-900 uppercase tracking-widest block">✨ Cuidado Completado</span>
+                                                        <span className="text-xs font-bold text-purple-900 uppercase tracking-wide block">✨ Cuidado Completado</span>
                                                         <p className="text-xs font-bold text-purple-950 mt-0.5">Tus artículos han sido restaurados con éxito.</p>
                                                     </div>
                                                 </div>
                                             )}
+
+                                            {/* Badge PIN de Entrega en lista si está en camino o esperando entrega */}
+                                            {['EN_RUTA_ENTREGA', 'EN_CAMINO', 'EN_RUTA', 'ESPERANDO_CLIENTE', 'WAITING_CLIENT'].includes(order.estado) && (() => {
+                                                let pin = extra?.deliveryCode;
+                                                if (!pin && order.id) {
+                                                    let num = 0; const str = order.id + 'delivery';
+                                                    for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+                                                    pin = String(1000 + Math.abs(num));
+                                                }
+                                                return pin ? (
+                                                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="p-1 bg-emerald-600 text-white rounded-lg">
+                                                                <KeyRound className="size-3.5" />
+                                                            </span>
+                                                            <span className="text-xs font-bold text-emerald-950 uppercase tracking-wide">
+                                                                PIN de Entrega:
+                                                            </span>
+                                                        </div>
+                                                        <span className="font-mono text-base font-bold tracking-wide text-emerald-900 bg-white px-3 py-1 rounded-xl border border-emerald-300 shadow-2xs">
+                                                            {pin}
+                                                        </span>
+                                                    </div>
+                                                ) : null;
+                                            })()}
 
                                             {/* Lista de Ítems Resumida */}
                                             <div className="text-xs text-slate-600 font-medium line-clamp-2">
@@ -427,12 +524,12 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                             {/* Total & Botón de Ver Detalles */}
                                             <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
                                                 <div>
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Total a Pagar</span>
-                                                    <span className="text-base font-black text-slate-900">${order.total.toFixed(2)}</span>
+                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total a Pagar</span>
+                                                    <span className="text-base font-bold text-slate-900">${order.total.toFixed(2)}</span>
                                                 </div>
                                                 <button
                                                     type="button"
-                                                    className="px-3.5 py-2 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                                    className="px-3.5 py-2 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                                                     style={{ backgroundColor: primaryColor }}
                                                 >
                                                     <span>Ver Detalles y Proceso</span>

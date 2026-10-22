@@ -120,10 +120,10 @@ export default function PremiosPendientesPage() {
             {/* Cabecera Premium */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
                 <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-pink-500 bg-pink-50 px-3 py-1 rounded-full inline-block mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wide text-pink-500 bg-pink-50 px-3 py-1 rounded-full inline-block mb-2">
                         Fidelización & Recompensas
                     </span>
-                    <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                         PREMIOS POR ENTREGAR <Gift className="text-pink-500 animate-pulse" size={28} />
                     </h1>
                     <p className="text-xs text-slate-500 mt-1">
@@ -133,7 +133,7 @@ export default function PremiosPendientesPage() {
                 <div className="flex flex-wrap items-center gap-3">
                     <button
                         onClick={() => setShowManualModal(true)}
-                        className="px-5 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider active:scale-[0.98] transition-all flex items-center gap-2 shadow-md border-0 cursor-pointer"
+                        className="px-5 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-2xl text-xs font-bold uppercase tracking-wider active:scale-[0.98] transition-all flex items-center gap-2 shadow-md border-0 cursor-pointer"
                     >
                         <QrCode size={16} />
                         Escanear / Buscar Código
@@ -141,7 +141,7 @@ export default function PremiosPendientesPage() {
                     <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-2xl">
                         <Clock size={16} className="text-slate-400" />
                         <span className="text-xs font-bold text-slate-600">
-                            Pendientes: <strong className="text-pink-500 font-black">{deliveries.length}</strong>
+                            Pendientes: <strong className="text-pink-500 font-bold">{deliveries.length}</strong>
                         </span>
                     </div>
                 </div>
@@ -186,11 +186,11 @@ export default function PremiosPendientesPage() {
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Cargando pendientes...</p>
                 </div>
             ) : deliveries.length === 0 ? (
-                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-[2rem] p-12 text-center max-w-md mx-auto mt-6">
+                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-12 text-center max-w-md mx-auto mt-6">
                     <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400 mb-4">
                         <Gift size={28} />
                     </div>
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide">Sin entregas pendientes</h3>
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Sin entregas pendientes</h3>
                     <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                         No se encontraron premios manuales en estado pendiente. Los clientes verán sus premios actualizados una vez los entregues.
                     </p>
@@ -200,7 +200,7 @@ export default function PremiosPendientesPage() {
                     {deliveries.map((delivery) => (
                         <div 
                             key={delivery.id}
-                            className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between"
+                            className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between"
                         >
                             {/* Decoración de fondo */}
                             <div className="absolute -top-10 -right-10 size-24 rounded-full bg-slate-50/50 filter blur-xl pointer-events-none" />
@@ -208,26 +208,26 @@ export default function PremiosPendientesPage() {
                             <div>
                                 {/* Cabecera de la tarjeta */}
                                 <div className="flex justify-between items-start mb-4">
-                                    <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                        delivery.tipoOrigen === 'PUNTOS' 
-                                            ? 'bg-amber-50 text-amber-600 border border-amber-100' 
-                                            : 'bg-indigo-50 text-indigo-600 border border-indigo-100'
-                                    }`}>
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
+ delivery.tipoOrigen === 'PUNTOS' 
+ ? 'bg-amber-50 text-amber-600 border border-amber-100' 
+ : 'bg-indigo-50 text-indigo-600 border border-indigo-100'
+ }`}>
                                         {delivery.tipoOrigen === 'PUNTOS' ? 'Canje Puntos' : 'Campaña/Referido'}
                                     </span>
-                                    <div className="flex items-center gap-1 text-[11px] font-black text-pink-600 bg-pink-50/60 px-3 py-1 rounded-xl">
+                                    <div className="flex items-center gap-1 text-xs font-bold text-pink-600 bg-pink-50/60 px-3 py-1 rounded-xl">
                                         <Clipboard size={12} />
                                         <span>{delivery.claimCode}</span>
                                     </div>
                                 </div>
 
                                 {/* Título de Premio */}
-                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">
+                                <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight mb-2">
                                     {delivery.premioNombre}
                                 </h3>
 
                                 {delivery.tipoOrigen === 'PUNTOS' && (
-                                    <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider mb-4 flex items-center gap-1">
+                                    <p className="text-xs text-amber-500 font-bold uppercase tracking-wider mb-4 flex items-center gap-1">
                                         🪙 Costo: {delivery.costoPuntos} PTS
                                     </p>
                                 )}
@@ -240,7 +240,7 @@ export default function PremiosPendientesPage() {
                                     </div>
                                     <div className="flex items-center gap-2.5 text-slate-600">
                                         <Phone size={14} className="text-slate-400" />
-                                        <span className="text-[11px] font-semibold">{delivery.Usuario.phone}</span>
+                                        <span className="text-xs font-semibold">{delivery.Usuario.phone}</span>
                                     </div>
                                 </div>
                             </div>
@@ -248,7 +248,7 @@ export default function PremiosPendientesPage() {
                             {/* Botón de Entrega */}
                             <button
                                 onClick={() => setConfirmingDelivery(delivery)}
-                                className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md mt-auto"
+                                className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all shadow-md mt-auto"
                             >
                                 <Check size={14} strokeWidth={3} />
                                 Confirmar Entrega
@@ -261,7 +261,7 @@ export default function PremiosPendientesPage() {
             {/* Modal de Confirmación de Entrega */}
             {confirmingDelivery && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="relative w-full max-w-[400px] bg-white rounded-[2.5rem] p-6 shadow-2xl space-y-5 border border-slate-100 animate-in zoom-in-95 duration-300">
+                    <div className="relative w-full max-w-[400px] bg-white rounded-2xl p-6 shadow-2xl space-y-5 border border-slate-100 animate-in zoom-in-95 duration-300">
                         {/* Cerrar */}
                         <button 
                             onClick={() => setConfirmingDelivery(null)}
@@ -274,7 +274,7 @@ export default function PremiosPendientesPage() {
                             <div className="size-16 rounded-full bg-pink-50 flex items-center justify-center mx-auto text-pink-500 mb-4 animate-bounce">
                                 <Award size={32} />
                             </div>
-                            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                            <h3 className="text-lg font-bold text-slate-800 tracking-tight">
                                 Entregar Premio
                             </h3>
                             <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
@@ -284,7 +284,7 @@ export default function PremiosPendientesPage() {
 
                         {/* Input de Observaciones */}
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                 Observaciones / Notas
                             </label>
                             <textarea
@@ -300,14 +300,14 @@ export default function PremiosPendientesPage() {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setConfirmingDelivery(null)}
-                                className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-xs font-bold uppercase tracking-wide transition-all"
                                 disabled={actionLoading}
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleConfirmDelivery}
-                                className="flex-1 py-3.5 bg-pink-500 hover:bg-pink-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all shadow-md"
+                                className="flex-1 py-3.5 bg-pink-500 hover:bg-pink-600 text-white rounded-2xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 transition-all shadow-md"
                                 disabled={actionLoading}
                             >
                                 {actionLoading ? (
@@ -326,7 +326,7 @@ export default function PremiosPendientesPage() {
             {/* Modal de Búsqueda Manual / QR */}
             {showManualModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="relative w-full max-w-[400px] bg-white rounded-[2.5rem] p-6 shadow-2xl space-y-5 border border-slate-100 animate-in zoom-in-95 duration-300">
+                    <div className="relative w-full max-w-[400px] bg-white rounded-2xl p-6 shadow-2xl space-y-5 border border-slate-100 animate-in zoom-in-95 duration-300">
                         {/* Cerrar */}
                         <button 
                             onClick={() => {
@@ -343,7 +343,7 @@ export default function PremiosPendientesPage() {
                             <div className="size-16 rounded-full bg-pink-50 flex items-center justify-center mx-auto text-pink-500 mb-4">
                                 <QrCode size={32} />
                             </div>
-                            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                            <h3 className="text-lg font-bold text-slate-800 tracking-tight">
                                 Validar por Código
                             </h3>
                             <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
@@ -354,7 +354,7 @@ export default function PremiosPendientesPage() {
                         {/* Formulario de Búsqueda Manual */}
                         <form onSubmit={handleManualSearch} className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                     Código de Reclamo Manual
                                 </label>
                                 <input
@@ -376,7 +376,7 @@ export default function PremiosPendientesPage() {
                             <button
                                 type="submit"
                                 disabled={manualSearchLoading}
-                                className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all shadow-md"
+                                className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 transition-all shadow-md"
                             >
                                 {manualSearchLoading ? (
                                     <Loader2 className="animate-spin" size={14} />
@@ -386,7 +386,7 @@ export default function PremiosPendientesPage() {
                             </button>
                         </form>
                         
-                        <div className="bg-slate-50 p-4 rounded-2xl text-[10px] text-slate-400 font-medium text-center leading-relaxed">
+                        <div className="bg-slate-50 p-4 rounded-2xl text-xs text-slate-400 font-medium text-center leading-relaxed">
                             💡 Para escanear de forma inalámbrica, puedes usar la cámara de cualquier celular logueado en la administración de Citiox y el link abrirá directamente la entrega.
                         </div>
                     </div>

@@ -552,7 +552,7 @@ export default function CommunicationsHub() {
               <Megaphone className="w-6 h-6 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tight text-white uppercase italic">Communications Hub</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-white ">Communications Hub</h1>
               <p className="text-xs text-slate-500 font-medium mt-1">
                 Central de campañas, anuncios, centro de ayuda y changelogs de Citiox.
               </p>
@@ -565,7 +565,7 @@ export default function CommunicationsHub() {
           {activeTab === 'campanas' && (
             <button
               onClick={() => setShowCampaignModal(true)}
-              className="px-5 py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg shadow-indigo-500/20 flex items-center gap-2 transition-all duration-300 transform active:scale-95"
+              className="px-5 py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white rounded-2xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-500/20 flex items-center gap-2 transition-all duration-300 transform active:scale-95"
             >
               <Plus className="w-4 h-4" /> Nueva Campaña
             </button>
@@ -573,7 +573,7 @@ export default function CommunicationsHub() {
           {activeTab === 'templates' && (
             <button
               onClick={() => setShowTemplateModal(true)}
-              className="px-5 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all"
+              className="px-5 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all"
             >
               <Plus className="w-4 h-4" /> Nueva Plantilla
             </button>
@@ -581,7 +581,7 @@ export default function CommunicationsHub() {
           {activeTab === 'changelog' && (
             <button
               onClick={() => setShowChangelogModal(true)}
-              className="px-5 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all"
+              className="px-5 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all"
             >
               <Plus className="w-4 h-4" /> Nueva Versión
             </button>
@@ -589,7 +589,7 @@ export default function CommunicationsHub() {
           {activeTab === 'ayuda' && (
             <button
               onClick={() => setShowHelpModal(true)}
-              className="px-5 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all"
+              className="px-5 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all"
             >
               <Plus className="w-4 h-4" /> Nuevo Recurso
             </button>
@@ -597,7 +597,7 @@ export default function CommunicationsHub() {
           {activeTab === 'media' && (
             <button
               onClick={() => setShowMediaModal(true)}
-              className="px-5 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all"
+              className="px-5 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all"
             >
               <Plus className="w-4 h-4" /> Agregar Recurso
             </button>
@@ -650,8 +650,8 @@ export default function CommunicationsHub() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-full blur-2xl group-hover:scale-150 transition-all duration-500" />
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-none">Hoy</span>
-                      <h3 className="text-3xl font-black text-white leading-none mt-2">
+                      <span className="text-slate-400 text-xs font-bold uppercase tracking-wide leading-none">Hoy</span>
+                      <h3 className="text-3xl font-bold text-white leading-none mt-2">
                         {dashboardData.stats.mensajesHoy}
                       </h3>
                       <p className="text-xs text-slate-500 font-semibold mt-3">Mensajes despachados</p>
@@ -666,8 +666,8 @@ export default function CommunicationsHub() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:scale-150 transition-all duration-500" />
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-none">Entregado</span>
-                      <h3 className="text-3xl font-black text-emerald-400 leading-none mt-2">
+                      <span className="text-slate-400 text-xs font-bold uppercase tracking-wide leading-none">Entregado</span>
+                      <h3 className="text-3xl font-bold text-emerald-400 leading-none mt-2">
                         {dashboardData.stats.pushEntregados}
                       </h3>
                       <p className="text-xs text-slate-500 font-semibold mt-3">
@@ -684,8 +684,8 @@ export default function CommunicationsHub() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:scale-150 transition-all duration-500" />
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-none">Alcancé</span>
-                      <h3 className="text-3xl font-black text-white leading-none mt-2">
+                      <span className="text-slate-400 text-xs font-bold uppercase tracking-wide leading-none">Alcancé</span>
+                      <h3 className="text-3xl font-bold text-white leading-none mt-2">
                         {dashboardData.stats.negociosAlcanzados}
                       </h3>
                       <p className="text-xs text-slate-500 font-semibold mt-3">Negocios e Importados</p>
@@ -700,8 +700,8 @@ export default function CommunicationsHub() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full blur-2xl group-hover:scale-150 transition-all duration-500" />
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-none">Interacción</span>
-                      <h3 className="text-3xl font-black text-violet-400 leading-none mt-2">
+                      <span className="text-slate-400 text-xs font-bold uppercase tracking-wide leading-none">Interacción</span>
+                      <h3 className="text-3xl font-bold text-violet-400 leading-none mt-2">
                         {dashboardData.stats.ctr.toFixed(1)}%
                       </h3>
                       <p className="text-xs text-slate-500 font-semibold mt-3">Click-Through Rate (CTR)</p>
@@ -715,23 +715,23 @@ export default function CommunicationsHub() {
 
               {/* Conversion Funnel */}
               <div className="bg-slate-900/40 border border-slate-800/60 rounded-3xl p-8">
-                <h3 className="text-lg font-black text-white uppercase italic tracking-wider mb-6">Embudo de Conversión Global</h3>
+                <h3 className="text-lg font-bold text-white tracking-wider mb-6">Embudo de Conversión Global</h3>
                 
                 <div className="flex flex-col lg:flex-row items-center justify-around gap-6 py-6">
                   {/* Enviados */}
                   <div className="flex flex-col items-center text-center p-4 bg-slate-950/40 border border-slate-900 rounded-2xl w-44">
-                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Enviado</span>
-                    <h4 className="text-2xl font-black text-sky-400 mt-2">{dashboardData.stats.pushEnviados || dashboardData.stats.mensajesHoy || 0}</h4>
-                    <span className="text-[10px] text-slate-600 mt-1">100% Base</span>
+                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">Enviado</span>
+                    <h4 className="text-2xl font-bold text-sky-400 mt-2">{dashboardData.stats.pushEnviados || dashboardData.stats.mensajesHoy || 0}</h4>
+                    <span className="text-xs text-slate-600 mt-1">100% Base</span>
                   </div>
 
                   <ChevronRight className="hidden lg:block w-8 h-8 text-slate-800" />
 
                   {/* Entregados */}
                   <div className="flex flex-col items-center text-center p-4 bg-slate-950/40 border border-slate-900 rounded-2xl w-44">
-                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Entregado</span>
-                    <h4 className="text-2xl font-black text-teal-400 mt-2">{dashboardData.stats.pushEntregados || 0}</h4>
-                    <span className="text-[10px] text-slate-600 mt-1">
+                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">Entregado</span>
+                    <h4 className="text-2xl font-bold text-teal-400 mt-2">{dashboardData.stats.pushEntregados || 0}</h4>
+                    <span className="text-xs text-slate-600 mt-1">
                       {dashboardData.stats.pushEnviados ? ((dashboardData.stats.pushEntregados / dashboardData.stats.pushEnviados) * 100).toFixed(0) : 0}% ratio
                     </span>
                   </div>
@@ -740,9 +740,9 @@ export default function CommunicationsHub() {
 
                   {/* Abiertos */}
                   <div className="flex flex-col items-center text-center p-4 bg-slate-950/40 border border-slate-900 rounded-2xl w-44">
-                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Abierto</span>
-                    <h4 className="text-2xl font-black text-indigo-400 mt-2">{Math.round(dashboardData.stats.pushEntregados * 0.9) || 0}</h4>
-                    <span className="text-[10px] text-slate-600 mt-1">
+                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">Abierto</span>
+                    <h4 className="text-2xl font-bold text-indigo-400 mt-2">{Math.round(dashboardData.stats.pushEntregados * 0.9) || 0}</h4>
+                    <span className="text-xs text-slate-600 mt-1">
                       {dashboardData.stats.pushEnviados ? ((Math.round(dashboardData.stats.pushEntregados * 0.9) / dashboardData.stats.pushEnviados) * 100).toFixed(0) : 0}% ratio
                     </span>
                   </div>
@@ -751,9 +751,9 @@ export default function CommunicationsHub() {
 
                   {/* Clics */}
                   <div className="flex flex-col items-center text-center p-4 bg-slate-950/40 border border-slate-900 rounded-2xl w-44">
-                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Clic</span>
-                    <h4 className="text-2xl font-black text-violet-400 mt-2">{dashboardData.stats.clicks}</h4>
-                    <span className="text-[10px] text-slate-600 mt-1">
+                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">Clic</span>
+                    <h4 className="text-2xl font-bold text-violet-400 mt-2">{dashboardData.stats.clicks}</h4>
+                    <span className="text-xs text-slate-600 mt-1">
                       {dashboardData.stats.ctr.toFixed(1)}% CTR
                     </span>
                   </div>
@@ -762,9 +762,9 @@ export default function CommunicationsHub() {
 
                   {/* Conversiones */}
                   <div className="flex flex-col items-center text-center p-4 bg-indigo-950/20 border border-indigo-500/20 rounded-2xl w-44">
-                    <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest">Conversión</span>
-                    <h4 className="text-2xl font-black text-emerald-400 mt-2">{dashboardData.stats.conversiones}</h4>
-                    <span className="text-[10px] text-emerald-500/70 mt-1">Meta Alcanzada</span>
+                    <span className="text-xs text-indigo-400 font-bold uppercase tracking-wide">Conversión</span>
+                    <h4 className="text-2xl font-bold text-emerald-400 mt-2">{dashboardData.stats.conversiones}</h4>
+                    <span className="text-xs text-emerald-500/70 mt-1">Meta Alcanzada</span>
                   </div>
                 </div>
               </div>
@@ -773,21 +773,21 @@ export default function CommunicationsHub() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* SVG Line Chart (Evolución semanal) */}
                 <div className="bg-slate-900/50 border border-slate-800/80 rounded-3xl p-6">
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider mb-6">Volumen de despachos (Últimos 7 días)</h3>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-6">Volumen de despachos (Últimos 7 días)</h3>
                   <div className="h-64 flex items-end justify-between px-4 pb-2 border-b border-slate-800">
                     {dashboardData.evolGrafico.map((bar: any, index: number) => {
                       const maxVal = Math.max(...dashboardData.evolGrafico.map((b: any) => b.valor), 10);
                       const heightPercent = (bar.valor / maxVal) * 80 + 10;
                       return (
                         <div key={index} className="flex flex-col items-center gap-2 w-full group">
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950 text-slate-300 text-[9px] px-1.5 py-0.5 rounded-md font-semibold">
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950 text-slate-300 text-xs px-1.5 py-0.5 rounded-md font-semibold">
                             {bar.valor}
                           </span>
                           <div 
                             style={{ height: `${heightPercent}%` }} 
                             className="w-8 bg-gradient-to-t from-indigo-600 to-sky-400 rounded-t-lg group-hover:from-indigo-500 group-hover:to-sky-300 transition-all duration-300 cursor-pointer"
                           />
-                          <span className="text-[9px] text-slate-500 font-black uppercase mt-1">
+                          <span className="text-xs text-slate-500 font-bold uppercase mt-1">
                             {bar.fecha}
                           </span>
                         </div>
@@ -798,7 +798,7 @@ export default function CommunicationsHub() {
 
                 {/* Canal stats */}
                 <div className="bg-slate-900/50 border border-slate-800/80 rounded-3xl p-6">
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider mb-6">Envíos por Canal</h3>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-6">Envíos por Canal</h3>
                   <div className="space-y-4">
                     {dashboardData.canalStats.map((canal: any, index: number) => {
                       const maxVal = Math.max(...dashboardData.canalStats.map((c: any) => c.value), 1);
@@ -846,7 +846,7 @@ export default function CommunicationsHub() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-850 text-slate-400 text-[10px] font-black uppercase tracking-widest bg-slate-900/30">
+                      <tr className="border-b border-slate-850 text-slate-400 text-xs font-bold uppercase tracking-wide bg-slate-900/30">
                         <th className="px-6 py-4">Campaña</th>
                         <th className="px-6 py-4">Tipo</th>
                         <th className="px-6 py-4">Estado</th>
@@ -878,8 +878,8 @@ export default function CommunicationsHub() {
                                   {comm.icono === 'Megaphone' ? <Megaphone className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
                                 </div>
                                 <div>
-                                  <h4 className="text-xs font-black text-white">{comm.titulo}</h4>
-                                  <p className="text-[10px] text-slate-500 mt-0.5">{comm.subtitulo || 'Sin subtítulo'}</p>
+                                  <h4 className="text-xs font-bold text-white">{comm.titulo}</h4>
+                                  <p className="text-xs text-slate-500 mt-0.5">{comm.subtitulo || 'Sin subtítulo'}</p>
                                 </div>
                               </div>
                             </td>
@@ -887,12 +887,12 @@ export default function CommunicationsHub() {
                               {comm.tipo}
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                                comm.estado === 'ENVIADO' ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/20' :
-                                comm.estado === 'PROGRAMADO' ? 'bg-amber-950/40 text-amber-400 border-amber-500/20' :
-                                comm.estado === 'ENVIANDO' ? 'bg-sky-950/40 text-sky-400 border-sky-500/20 animate-pulse' :
-                                'bg-slate-950/50 text-slate-400 border-slate-800'
-                              }`}>
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
+ comm.estado === 'ENVIADO' ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/20' :
+ comm.estado === 'PROGRAMADO' ? 'bg-amber-950/40 text-amber-400 border-amber-500/20' :
+ comm.estado === 'ENVIANDO' ? 'bg-sky-950/40 text-sky-400 border-sky-500/20 animate-pulse' :
+ 'bg-slate-950/50 text-slate-400 border-slate-800'
+ }`}>
                                 {comm.estado}
                               </span>
                             </td>
@@ -909,7 +909,7 @@ export default function CommunicationsHub() {
                                 ))}
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-[10px] text-slate-500 font-semibold">
+                            <td className="px-6 py-4 text-xs text-slate-500 font-semibold">
                               {comm.sentAt ? new Date(comm.sentAt).toLocaleString() : (comm.scheduledFor ? `Prog: ${new Date(comm.scheduledFor).toLocaleString()}` : 'N/A')}
                             </td>
                             <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
@@ -956,7 +956,7 @@ export default function CommunicationsHub() {
               {selectedCampaign && (
                 <div className="fixed inset-y-0 right-0 w-full md:w-96 bg-slate-900 border-l border-slate-800 p-8 shadow-2xl z-50 overflow-y-auto animate-slideLeft custom-scrollbar">
                   <div className="flex justify-between items-center border-b border-slate-800 pb-6 mb-6">
-                    <h3 className="font-black text-white uppercase italic tracking-wider">Detalle de Campaña</h3>
+                    <h3 className="font-bold text-white uppercase tracking-wider">Detalle de Campaña</h3>
                     <button onClick={() => setSelectedCampaign(null)} className="p-2 hover:bg-slate-800 rounded-xl text-slate-400">
                       <X className="w-5 h-5" />
                     </button>
@@ -964,35 +964,35 @@ export default function CommunicationsHub() {
 
                   <div className="space-y-6">
                     <div>
-                      <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Título</span>
-                      <h4 className="text-sm font-black text-white mt-1">{selectedCampaign.titulo}</h4>
+                      <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">Título</span>
+                      <h4 className="text-sm font-bold text-white mt-1">{selectedCampaign.titulo}</h4>
                       {selectedCampaign.subtitulo && <p className="text-xs text-slate-400 mt-1">{selectedCampaign.subtitulo}</p>}
                     </div>
 
                     <div className="p-4 bg-slate-950 rounded-2xl border border-slate-850">
-                      <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest block mb-2">Mensaje</span>
+                      <span className="text-xs text-slate-500 font-bold uppercase tracking-wide block mb-2">Mensaje</span>
                       <div className="text-xs leading-relaxed text-slate-300 whitespace-pre-wrap">{selectedCampaign.contenido}</div>
                     </div>
 
                     {selectedCampaign.analiticas && (
                       <div className="space-y-3">
-                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Analíticas de Conversión</span>
+                        <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">Analíticas de Conversión</span>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
-                            <span className="text-[9px] text-slate-500 font-bold block">Despachados</span>
-                            <span className="text-lg font-black text-white">{selectedCampaign.analiticas.enviados}</span>
+                            <span className="text-xs text-slate-500 font-bold block">Despachados</span>
+                            <span className="text-lg font-bold text-white">{selectedCampaign.analiticas.enviados}</span>
                           </div>
                           <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
-                            <span className="text-[9px] text-emerald-500/70 font-bold block">Entregados</span>
-                            <span className="text-lg font-black text-emerald-400">{selectedCampaign.analiticas.entregados}</span>
+                            <span className="text-xs text-emerald-500/70 font-bold block">Entregados</span>
+                            <span className="text-lg font-bold text-emerald-400">{selectedCampaign.analiticas.entregados}</span>
                           </div>
                           <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
-                            <span className="text-[9px] text-indigo-400 font-bold block">Clics</span>
-                            <span className="text-lg font-black text-indigo-400">{selectedCampaign.analiticas.clicks}</span>
+                            <span className="text-xs text-indigo-400 font-bold block">Clics</span>
+                            <span className="text-lg font-bold text-indigo-400">{selectedCampaign.analiticas.clicks}</span>
                           </div>
                           <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
-                            <span className="text-[9px] text-violet-400 font-bold block">Conversión</span>
-                            <span className="text-lg font-black text-violet-400">{selectedCampaign.analiticas.conversiones}</span>
+                            <span className="text-xs text-violet-400 font-bold block">Conversión</span>
+                            <span className="text-lg font-bold text-violet-400">{selectedCampaign.analiticas.conversiones}</span>
                           </div>
                         </div>
                       </div>
@@ -1001,7 +1001,7 @@ export default function CommunicationsHub() {
                     <div className="border-t border-slate-800 pt-6">
                       <button
                         onClick={() => handleDeleteCampaign(selectedCampaign.id)}
-                        className="w-full py-3.5 bg-rose-950/20 hover:bg-rose-900 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                        className="w-full py-3.5 bg-rose-950/20 hover:bg-rose-900 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
                       >
                         Eliminar Campaña Permaneciendo
                       </button>
@@ -1030,20 +1030,20 @@ export default function CommunicationsHub() {
                         >
                           <FileText className="w-5 h-5" />
                         </div>
-                        <span className="px-2 py-0.5 bg-slate-950 rounded-md text-[8px] font-black uppercase tracking-widest text-slate-500 border border-slate-900">
+                        <span className="px-2 py-0.5 bg-slate-950 rounded-md text-xs font-bold uppercase tracking-wide text-slate-500 border border-slate-900">
                           {tpl.tipo}
                         </span>
                       </div>
-                      <h4 className="font-black text-white text-sm">{tpl.nombre}</h4>
+                      <h4 className="font-bold text-white text-sm">{tpl.nombre}</h4>
                       <p className="text-xs text-slate-500 mt-1 font-semibold">{tpl.descripcion || 'Sin descripción'}</p>
                       <hr className="border-slate-850 my-4" />
                       <h5 className="text-xs font-bold text-slate-300">{tpl.titulo}</h5>
-                      <p className="text-[11px] text-slate-400 mt-2 line-clamp-3">{tpl.contenido}</p>
+                      <p className="text-xs text-slate-400 mt-2 line-clamp-3">{tpl.contenido}</p>
                     </div>
                     <div className="mt-6 flex gap-2">
                       <button
                         onClick={() => handleDuplicateTemplate(tpl)}
-                        className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg shadow-indigo-500/10 transition-all"
+                        className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-500/10 transition-all"
                       >
                         Usar plantilla
                       </button>
@@ -1068,12 +1068,12 @@ export default function CommunicationsHub() {
                     <div className="bg-slate-900/40 border border-slate-850/80 rounded-3xl p-6">
                       <div className="flex flex-col md:flex-row justify-between md:items-center gap-2 mb-4">
                         <div className="flex items-center gap-3">
-                          <span className="px-3 py-1 bg-indigo-600/15 border border-indigo-500/20 text-indigo-400 rounded-xl text-xs font-black">
+                          <span className="px-3 py-1 bg-indigo-600/15 border border-indigo-500/20 text-indigo-400 rounded-xl text-xs font-bold">
                             {item.version}
                           </span>
-                          <h4 className="font-black text-white text-base leading-none">{item.titulo}</h4>
+                          <h4 className="font-bold text-white text-base leading-none">{item.titulo}</h4>
                         </div>
-                        <span className="text-[10px] text-slate-500 font-semibold">{new Date(item.fecha).toLocaleDateString()}</span>
+                        <span className="text-xs text-slate-500 font-semibold">{new Date(item.fecha).toLocaleDateString()}</span>
                       </div>
                       {item.descripcion && <p className="text-xs text-slate-400 mb-4">{item.descripcion}</p>}
                       <ul className="space-y-2">
@@ -1102,14 +1102,14 @@ export default function CommunicationsHub() {
                   <div key={item.id} className="bg-slate-900/50 border border-slate-800/80 rounded-3xl p-6 flex flex-col justify-between hover:border-slate-700/80 transition-all">
                     <div>
                       <div className="flex justify-between items-start mb-4">
-                        <span className="px-2.5 py-1 bg-slate-950 border border-slate-900 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400">
+                        <span className="px-2.5 py-1 bg-slate-950 border border-slate-900 rounded-xl text-xs font-bold uppercase tracking-wide text-slate-400">
                           {item.categoria}
                         </span>
-                        <span className="px-2 py-0.5 bg-indigo-600/15 text-indigo-400 border border-indigo-500/20 rounded-md text-[8px] font-black uppercase">
+                        <span className="px-2 py-0.5 bg-indigo-600/15 text-indigo-400 border border-indigo-500/20 rounded-md text-xs font-bold uppercase">
                           {item.tipo}
                         </span>
                       </div>
-                      <h4 className="font-black text-white text-sm">{item.titulo}</h4>
+                      <h4 className="font-bold text-white text-sm">{item.titulo}</h4>
                       {item.descripcion && <p className="text-xs text-slate-500 mt-1 font-semibold">{item.descripcion}</p>}
                       <hr className="border-slate-850 my-4" />
                       <div className="text-xs text-slate-400 leading-relaxed line-clamp-4 whitespace-pre-wrap">{item.contenido}</div>
@@ -1120,7 +1120,7 @@ export default function CommunicationsHub() {
                           href={item.urlRecurso}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sky-400 hover:text-sky-300 text-[10px] font-black uppercase tracking-wider"
+                          className="inline-flex items-center gap-1.5 text-sky-400 hover:text-sky-300 text-xs font-bold uppercase tracking-wider"
                         >
                           <FileDown className="w-3.5 h-3.5" /> Descargar/Ver Recurso
                         </a>
@@ -1149,19 +1149,19 @@ export default function CommunicationsHub() {
                         ) : (
                           <FolderOpen className="w-8 h-8 text-slate-700" />
                         )}
-                        <span className="absolute bottom-2 right-2 px-2 py-0.5 bg-slate-900/90 text-[8px] font-black text-slate-400 rounded-md">
+                        <span className="absolute bottom-2 right-2 px-2 py-0.5 bg-slate-900/90 text-xs font-bold text-slate-400 rounded-md">
                           {item.tipo}
                         </span>
                       </div>
                       <h4 className="font-bold text-white text-xs truncate" title={item.nombre}>{item.nombre}</h4>
-                      <p className="text-[10px] text-slate-500 truncate mt-0.5">{item.url}</p>
+                      <p className="text-xs text-slate-500 truncate mt-0.5">{item.url}</p>
                     </div>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(item.url);
                         triggerToast('Enlace copiado al portapapeles');
                       }}
-                      className="w-full mt-4 py-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-850 text-slate-300 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5"
+                      className="w-full mt-4 py-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-850 text-slate-300 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5"
                     >
                       <Copy className="w-3.5 h-3.5" /> Copiar Enlace
                     </button>
@@ -1178,7 +1178,7 @@ export default function CommunicationsHub() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6 z-50 overflow-y-auto">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-5xl overflow-hidden shadow-2xl animate-scaleUp max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-center p-6 border-b border-slate-800">
-              <h3 className="font-black text-white uppercase italic tracking-wider flex items-center gap-2">
+              <h3 className="font-bold text-white uppercase tracking-wider flex items-center gap-2">
                 <Plus className="w-5 h-5 text-indigo-400 animate-pulse" /> Crear Campaña de Comunicación
               </h3>
               <button onClick={() => setShowCampaignModal(false)} className="p-2 hover:bg-slate-800 rounded-xl text-slate-400">
@@ -1190,10 +1190,10 @@ export default function CommunicationsHub() {
               {/* Form Inputs (Left side) */}
               <div className="space-y-6">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Diseño y Acento</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Diseño y Acento</label>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-[9px] text-slate-500 font-bold block mb-1">Color Campaña</span>
+                      <span className="text-xs text-slate-500 font-bold block mb-1">Color Campaña</span>
                       <input
                         type="color"
                         value={campaignForm.color}
@@ -1202,7 +1202,7 @@ export default function CommunicationsHub() {
                       />
                     </div>
                     <div>
-                      <span className="text-[9px] text-slate-500 font-bold block mb-1">Icono</span>
+                      <span className="text-xs text-slate-500 font-bold block mb-1">Icono</span>
                       <select
                         value={campaignForm.icono}
                         onChange={(e) => setCampaignForm(prev => ({ ...prev, icono: e.target.value }))}
@@ -1218,7 +1218,7 @@ export default function CommunicationsHub() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Título de la Comunicación</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Título de la Comunicación</label>
                   <input
                     type="text"
                     required
@@ -1230,7 +1230,7 @@ export default function CommunicationsHub() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Subtítulo (Opcional)</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Subtítulo (Opcional)</label>
                   <input
                     type="text"
                     value={campaignForm.subtitulo}
@@ -1241,7 +1241,7 @@ export default function CommunicationsHub() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Contenido principal (Soporta Markdown o HTML)</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Contenido principal (Soporta Markdown o HTML)</label>
                   <textarea
                     required
                     value={campaignForm.contenido}
@@ -1253,7 +1253,7 @@ export default function CommunicationsHub() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Imagen URL (Opcional)</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Imagen URL (Opcional)</label>
                   <input
                     type="text"
                     value={campaignForm.imagenUrl}
@@ -1264,7 +1264,7 @@ export default function CommunicationsHub() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Enlace de Redirección (Opcional)</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Enlace de Redirección (Opcional)</label>
                   <input
                     type="text"
                     value={campaignForm.videoUrl}
@@ -1276,10 +1276,10 @@ export default function CommunicationsHub() {
 
                 {/* Segmentación inteligente */}
                 <div className="p-4 bg-slate-950 rounded-2xl border border-slate-850">
-                  <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest block mb-4">Segmentación Inteligente</span>
+                  <span className="text-xs text-indigo-400 font-bold uppercase tracking-wide block mb-4">Segmentación Inteligente</span>
                   <div className="space-y-4">
                     <div>
-                      <span className="text-[9px] text-slate-500 font-bold block mb-1">Destinatarios Objetivo</span>
+                      <span className="text-xs text-slate-500 font-bold block mb-1">Destinatarios Objetivo</span>
                       <select
                         value={campaignForm.destinatarios.type}
                         onChange={(e) => setCampaignForm(prev => ({
@@ -1301,7 +1301,7 @@ export default function CommunicationsHub() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <span className="text-[9px] text-slate-500 font-bold block mb-1">Ciudad</span>
+                        <span className="text-xs text-slate-500 font-bold block mb-1">Ciudad</span>
                         <input
                           type="text"
                           value={campaignForm.destinatarios.ciudad}
@@ -1314,7 +1314,7 @@ export default function CommunicationsHub() {
                         />
                       </div>
                       <div>
-                        <span className="text-[9px] text-slate-500 font-bold block mb-1">País</span>
+                        <span className="text-xs text-slate-500 font-bold block mb-1">País</span>
                         <input
                           type="text"
                           value={campaignForm.destinatarios.pais}
@@ -1332,7 +1332,7 @@ export default function CommunicationsHub() {
 
                 {/* Canales y Entrega */}
                 <div className="p-4 bg-slate-950 rounded-2xl border border-slate-850">
-                  <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest block mb-4">Canales de Entrega</span>
+                  <span className="text-xs text-indigo-400 font-bold uppercase tracking-wide block mb-4">Canales de Entrega</span>
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { id: 'APP', label: 'Centro Notif.', icon: Megaphone },
@@ -1358,7 +1358,7 @@ export default function CommunicationsHub() {
                           }`}
                         >
                           <c.icon className="w-4 h-4" />
-                          <span className="text-[9px] font-black uppercase">{c.label}</span>
+                          <span className="text-xs font-bold uppercase">{c.label}</span>
                         </button>
                       );
                     })}
@@ -1367,10 +1367,10 @@ export default function CommunicationsHub() {
 
                 {/* Programación */}
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Programación & Estado Inicial</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Programación & Estado Inicial</label>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-[9px] text-slate-500 font-bold block mb-1">Estado de Campaña</span>
+                      <span className="text-xs text-slate-500 font-bold block mb-1">Estado de Campaña</span>
                       <select
                         value={campaignForm.estado}
                         onChange={(e) => setCampaignForm(prev => ({ ...prev, estado: e.target.value }))}
@@ -1383,7 +1383,7 @@ export default function CommunicationsHub() {
                     </div>
                     {campaignForm.estado === 'PROGRAMADO' && (
                       <div>
-                        <span className="text-[9px] text-slate-500 font-bold block mb-1">Fecha Programada</span>
+                        <span className="text-xs text-slate-500 font-bold block mb-1">Fecha Programada</span>
                         <input
                           type="datetime-local"
                           required
@@ -1400,18 +1400,18 @@ export default function CommunicationsHub() {
               {/* Previsualizador en Vivo (Right side) */}
               <div className="flex flex-col h-full bg-slate-950/40 border border-slate-850 rounded-3xl p-6">
                 <div className="flex justify-between items-center border-b border-slate-850 pb-4 mb-4">
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Previsualizador en Vivo</span>
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wide">Previsualizador en Vivo</span>
                   <div className="flex bg-slate-950 border border-slate-850 rounded-xl p-0.5">
                     {(['APP', 'WHATSAPP', 'EMAIL'] as const).map(p => (
                       <button
                         key={p}
                         type="button"
                         onClick={() => setPreviewChannel(p)}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${
-                          previewChannel === p
-                            ? 'bg-indigo-600 text-white shadow'
-                            : 'text-slate-500 hover:text-slate-300'
-                        }`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+ previewChannel === p
+ ? 'bg-indigo-600 text-white shadow'
+ : 'text-slate-500 hover:text-slate-300'
+ }`}
                       >
                         {p}
                       </button>
@@ -1425,7 +1425,7 @@ export default function CommunicationsHub() {
                     <div className="w-64 bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-2xl space-y-4">
                       <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
                         <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
-                        <span className="text-[8px] font-bold text-slate-500">Notificación Push / App</span>
+                        <span className="text-xs font-bold text-slate-500">Notificación Push / App</span>
                       </div>
                       <div className="flex gap-3">
                         <div 
@@ -1435,9 +1435,9 @@ export default function CommunicationsHub() {
                           <Megaphone className="w-5 h-5" />
                         </div>
                         <div className="space-y-1 overflow-hidden">
-                          <h4 className="text-xs font-black text-white truncate">{campaignForm.titulo || 'Título de Campaña'}</h4>
-                          {campaignForm.subtitulo && <p className="text-[10px] text-slate-400 truncate">{campaignForm.subtitulo}</p>}
-                          <p className="text-[9px] text-slate-500 line-clamp-3 mt-1 leading-normal">{campaignForm.contenido || 'Contenido del mensaje...'}</p>
+                          <h4 className="text-xs font-bold text-white truncate">{campaignForm.titulo || 'Título de Campaña'}</h4>
+                          {campaignForm.subtitulo && <p className="text-xs text-slate-400 truncate">{campaignForm.subtitulo}</p>}
+                          <p className="text-xs text-slate-500 line-clamp-3 mt-1 leading-normal">{campaignForm.contenido || 'Contenido del mensaje...'}</p>
                         </div>
                       </div>
                       {campaignForm.imagenUrl && (
@@ -1455,14 +1455,14 @@ export default function CommunicationsHub() {
                         <h4 className="text-xs font-bold leading-normal">
                           {campaignForm.titulo || 'Título de Campaña'}
                         </h4>
-                        {campaignForm.subtitulo && <p className="text-[10px] italic text-slate-300 mt-0.5">{campaignForm.subtitulo}</p>}
-                        <p className="text-[10px] text-slate-100 mt-2 leading-relaxed whitespace-pre-wrap">{campaignForm.contenido || 'Mensaje...'}</p>
+                        {campaignForm.subtitulo && <p className="text-xs text-slate-300 mt-0.5">{campaignForm.subtitulo}</p>}
+                        <p className="text-xs text-slate-100 mt-2 leading-relaxed whitespace-pre-wrap">{campaignForm.contenido || 'Mensaje...'}</p>
                         {campaignForm.imagenUrl && (
                           <div className="h-28 bg-[#0b141a] rounded-xl overflow-hidden mt-3 border border-slate-850">
                             <img src={campaignForm.imagenUrl} alt="WA Preview" className="w-full h-full object-cover" />
                           </div>
                         )}
-                        <span className="text-[8px] text-slate-400 text-right block mt-2 font-semibold">12:31 PM</span>
+                        <span className="text-xs text-slate-400 text-right block mt-2 font-semibold">12:31 PM</span>
                       </div>
                     </div>
                   )}
@@ -1474,10 +1474,10 @@ export default function CommunicationsHub() {
                         <span className="w-3 h-3 bg-red-400 rounded-full" />
                         <span className="w-3 h-3 bg-yellow-400 rounded-full" />
                         <span className="w-3 h-3 bg-green-400 rounded-full" />
-                        <span className="text-[9px] font-bold text-slate-400 ml-2">Email Newsletter Preview</span>
+                        <span className="text-xs font-bold text-slate-400 ml-2">Email Newsletter Preview</span>
                       </div>
                       <div style={{ borderColor: campaignForm.color }} className="border-t-4 pt-4">
-                        <h2 style={{ color: campaignForm.color }} className="text-base font-black tracking-tight">{campaignForm.titulo || 'Título del Boletín'}</h2>
+                        <h2 style={{ color: campaignForm.color }} className="text-base font-bold tracking-tight">{campaignForm.titulo || 'Título del Boletín'}</h2>
                         {campaignForm.subtitulo && <p className="text-xs text-slate-500 mt-1 font-semibold">{campaignForm.subtitulo}</p>}
                         <hr className="border-slate-100 my-4" />
                         <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{campaignForm.contenido || 'Contenido del correo electrónico...'}</div>
@@ -1500,7 +1500,7 @@ export default function CommunicationsHub() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-indigo-500/10 flex items-center gap-1.5 transition-all"
+                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-500/10 flex items-center gap-1.5 transition-all"
                   >
                     {submitting ? 'Procesando...' : 'Crear Campaña'}
                   </button>
@@ -1516,7 +1516,7 @@ export default function CommunicationsHub() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-fadeIn">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6">
             <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
-              <h4 className="font-black text-white uppercase italic tracking-wider">Enviar Vista Previa</h4>
+              <h4 className="font-bold text-white uppercase tracking-wider">Enviar Vista Previa</h4>
               <button onClick={() => setShowPreviewModal(false)} className="p-2 hover:bg-slate-800 rounded-xl text-slate-400">
                 <X className="w-5 h-5" />
               </button>
@@ -1524,7 +1524,7 @@ export default function CommunicationsHub() {
 
             <form onSubmit={handleTestSend} className="space-y-4">
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Canal de Prueba</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Canal de Prueba</label>
                 <select
                   value={testSendForm.canal}
                   onChange={(e) => setTestSendForm(prev => ({ ...prev, canal: e.target.value }))}
@@ -1537,7 +1537,7 @@ export default function CommunicationsHub() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Destinatario de Prueba</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Destinatario de Prueba</label>
                 <input
                   type="text"
                   required
@@ -1551,7 +1551,7 @@ export default function CommunicationsHub() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all mt-4"
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all mt-4"
               >
                 {submitting ? 'Enviando...' : 'Enviar Mensaje de Prueba'}
               </button>
@@ -1565,7 +1565,7 @@ export default function CommunicationsHub() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6 z-50">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl p-6">
             <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
-              <h4 className="font-black text-white uppercase italic tracking-wider">Crear Plantilla de Comunicación</h4>
+              <h4 className="font-bold text-white uppercase tracking-wider">Crear Plantilla de Comunicación</h4>
               <button onClick={() => setShowTemplateModal(false)} className="p-2 hover:bg-slate-800 rounded-xl text-slate-400">
                 <X className="w-5 h-5" />
               </button>
@@ -1573,7 +1573,7 @@ export default function CommunicationsHub() {
 
             <form onSubmit={handleCreateTemplate} className="space-y-4">
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Nombre de la Plantilla</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Nombre de la Plantilla</label>
                 <input
                   type="text"
                   required
@@ -1585,7 +1585,7 @@ export default function CommunicationsHub() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Descripción Corta</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Descripción Corta</label>
                 <input
                   type="text"
                   value={templateForm.descripcion}
@@ -1597,7 +1597,7 @@ export default function CommunicationsHub() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Título del Mensaje</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Título del Mensaje</label>
                   <input
                     type="text"
                     required
@@ -1608,7 +1608,7 @@ export default function CommunicationsHub() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Tipo de Contenido</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Tipo de Contenido</label>
                   <select
                     value={templateForm.tipo}
                     onChange={(e) => setTemplateForm(prev => ({ ...prev, tipo: e.target.value }))}
@@ -1623,7 +1623,7 @@ export default function CommunicationsHub() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">
                   Contenido (Soporta variables {"{{nombre}}"}, {"{{negocio}}"})
                 </label>
                 <textarea
@@ -1639,7 +1639,7 @@ export default function CommunicationsHub() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all mt-4"
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all mt-4"
               >
                 {submitting ? 'Guardando...' : 'Crear Plantilla'}
               </button>
@@ -1653,7 +1653,7 @@ export default function CommunicationsHub() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6 z-50">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6">
             <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
-              <h4 className="font-black text-white uppercase italic tracking-wider">Publicar Novedades (Changelog)</h4>
+              <h4 className="font-bold text-white uppercase tracking-wider">Publicar Novedades (Changelog)</h4>
               <button onClick={() => setShowChangelogModal(false)} className="p-2 hover:bg-slate-800 rounded-xl text-slate-400">
                 <X className="w-5 h-5" />
               </button>
@@ -1662,7 +1662,7 @@ export default function CommunicationsHub() {
             <form onSubmit={handleCreateChangelog} className="space-y-4">
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-1">
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Versión</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Versión</label>
                   <input
                     type="text"
                     required
@@ -1673,7 +1673,7 @@ export default function CommunicationsHub() {
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Título de la Versión</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Título de la Versión</label>
                   <input
                     type="text"
                     required
@@ -1686,7 +1686,7 @@ export default function CommunicationsHub() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Descripción General (Opcional)</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Descripción General (Opcional)</label>
                 <input
                   type="text"
                   value={changelogForm.descripcion}
@@ -1697,7 +1697,7 @@ export default function CommunicationsHub() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Cambios realizados</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Cambios realizados</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -1740,7 +1740,7 @@ export default function CommunicationsHub() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all mt-4"
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all mt-4"
               >
                 {submitting ? 'Publicando...' : 'Publicar Versión'}
               </button>
@@ -1754,7 +1754,7 @@ export default function CommunicationsHub() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6 z-50">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6">
             <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
-              <h4 className="font-black text-white uppercase italic tracking-wider">Crear Recurso en Centro de Ayuda</h4>
+              <h4 className="font-bold text-white uppercase tracking-wider">Crear Recurso en Centro de Ayuda</h4>
               <button onClick={() => setShowHelpModal(false)} className="p-2 hover:bg-slate-800 rounded-xl text-slate-400">
                 <X className="w-5 h-5" />
               </button>
@@ -1762,7 +1762,7 @@ export default function CommunicationsHub() {
 
             <form onSubmit={handleCreateHelp} className="space-y-4">
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Título</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Título</label>
                 <input
                   type="text"
                   required
@@ -1775,7 +1775,7 @@ export default function CommunicationsHub() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Tipo de Recurso</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Tipo de Recurso</label>
                   <select
                     value={helpForm.tipo}
                     onChange={(e) => setHelpForm(prev => ({ ...prev, tipo: e.target.value }))}
@@ -1789,7 +1789,7 @@ export default function CommunicationsHub() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Categoría</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Categoría</label>
                   <select
                     value={helpForm.categoria}
                     onChange={(e) => setHelpForm(prev => ({ ...prev, categoria: e.target.value }))}
@@ -1805,7 +1805,7 @@ export default function CommunicationsHub() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Enlace Externo (Opcional)</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Enlace Externo (Opcional)</label>
                 <input
                   type="text"
                   value={helpForm.urlRecurso}
@@ -1816,7 +1816,7 @@ export default function CommunicationsHub() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Contenido / Guía paso a paso</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Contenido / Guía paso a paso</label>
                 <textarea
                   required
                   value={helpForm.contenido}
@@ -1830,7 +1830,7 @@ export default function CommunicationsHub() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all mt-4"
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all mt-4"
               >
                 {submitting ? 'Guardando...' : 'Crear Recurso'}
               </button>
@@ -1844,7 +1844,7 @@ export default function CommunicationsHub() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6 z-50">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6">
             <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
-              <h4 className="font-black text-white uppercase italic tracking-wider">Agregar Recurso Multimedia</h4>
+              <h4 className="font-bold text-white uppercase tracking-wider">Agregar Recurso Multimedia</h4>
               <button onClick={() => setShowMediaModal(false)} className="p-2 hover:bg-slate-800 rounded-xl text-slate-400">
                 <X className="w-5 h-5" />
               </button>
@@ -1852,7 +1852,7 @@ export default function CommunicationsHub() {
 
             <form onSubmit={handleCreateMedia} className="space-y-4">
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Nombre del Archivo</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Nombre del Archivo</label>
                 <input
                   type="text"
                   required
@@ -1864,7 +1864,7 @@ export default function CommunicationsHub() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">URL del Recurso</label>
+                <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">URL del Recurso</label>
                 <input
                   type="text"
                   required
@@ -1877,7 +1877,7 @@ export default function CommunicationsHub() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Tipo</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Tipo</label>
                   <select
                     value={mediaForm.tipo}
                     onChange={(e) => setMediaForm(prev => ({ ...prev, tipo: e.target.value }))}
@@ -1892,7 +1892,7 @@ export default function CommunicationsHub() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Tamaño Bytes (Opcional)</label>
+                  <label className="text-xs text-slate-400 font-bold uppercase tracking-wide block mb-2">Tamaño Bytes (Opcional)</label>
                   <input
                     type="number"
                     value={mediaForm.sizeBytes || ''}
@@ -1906,7 +1906,7 @@ export default function CommunicationsHub() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all mt-4"
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all mt-4"
               >
                 {submitting ? 'Añadiendo...' : 'Añadir a la Biblioteca'}
               </button>

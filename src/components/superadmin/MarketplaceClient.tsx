@@ -347,7 +347,7 @@ function TemplateFormModal({
                                 {form.tags.length > 0 && (
                                     <div className="flex flex-wrap gap-1.5 mt-2">
                                         {form.tags.map((tag, i) => (
-                                            <span key={i} className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-[11px] font-semibold">
+                                            <span key={i} className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-semibold">
                                                 #{tag}
                                                 <button onClick={() => setForm(prev => ({ ...prev, tags: prev.tags.filter((_, ti) => ti !== i) }))}>
                                                     <X size={10} />
@@ -374,7 +374,7 @@ function TemplateFormModal({
                                         />
                                         <div>
                                             <p className="text-xs font-bold text-slate-800 dark:text-white">{opt.label}</p>
-                                            <p className="text-[10px] text-slate-400">{opt.desc}</p>
+                                            <p className="text-xs text-slate-400">{opt.desc}</p>
                                         </div>
                                     </label>
                                 ))}
@@ -396,7 +396,7 @@ function TemplateFormModal({
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{m.nombre}</p>
-                                            <p className="text-[10px] text-slate-400 truncate">{m.triggerEvent} · {m.difficulty || 'MEDIUM'} · {m.xp || 0} XP</p>
+                                            <p className="text-xs text-slate-400 truncate">{m.triggerEvent} · {m.difficulty || 'MEDIUM'} · {m.xp || 0} XP</p>
                                         </div>
                                         <button onClick={() => removeMission(idx)} className="text-red-400 hover:text-red-600 transition-colors p-1">
                                             <Trash2 size={14} />
@@ -489,8 +489,8 @@ function TemplateFormModal({
                                     {coupons.map((cp, idx) => (
                                         <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-750">
                                             <div>
-                                                <p className="text-xs font-black text-pink-600 dark:text-pink-400">{cp.codigo}</p>
-                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+                                                <p className="text-xs font-bold text-pink-600 dark:text-pink-400">{cp.codigo}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
                                                     {cp.tipo === 'PORCENTAJE' ? `${cp.valor}%` : `$${cp.valor}`} · {cp.descripcion}
                                                 </p>
                                             </div>
@@ -500,12 +500,12 @@ function TemplateFormModal({
                                         </div>
                                     ))}
                                     {coupons.length === 0 && (
-                                        <p className="text-[11px] text-slate-400 text-center py-6">No hay cupones configurados.</p>
+                                        <p className="text-xs text-slate-400 text-center py-6">No hay cupones configurados.</p>
                                     )}
                                 </div>
 
                                 <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 space-y-3">
-                                    <p className="text-[11px] font-bold text-slate-700 dark:text-slate-350">+ Nuevo Cupón</p>
+                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-350">+ Nuevo Cupón</p>
                                     <div className="grid grid-cols-2 gap-2">
                                         <input
                                             className="border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs dark:bg-slate-800 dark:text-white"
@@ -557,7 +557,7 @@ function TemplateFormModal({
                                         <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-750">
                                             <div>
                                                 <p className="text-xs font-bold text-slate-800 dark:text-white">{rw.nombre}</p>
-                                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
                                                     🏆 {rw.costoPuntos} pts · {rw.tipo} · Entrega {rw.deliveryType}
                                                 </p>
                                             </div>
@@ -567,12 +567,12 @@ function TemplateFormModal({
                                         </div>
                                     ))}
                                     {rewards.length === 0 && (
-                                        <p className="text-[11px] text-slate-400 text-center py-6">No hay premios configurados.</p>
+                                        <p className="text-xs text-slate-400 text-center py-6">No hay premios configurados.</p>
                                     )}
                                 </div>
 
                                 <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 space-y-3">
-                                    <p className="text-[11px] font-bold text-slate-700 dark:text-slate-350">+ Nuevo Premio</p>
+                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-350">+ Nuevo Premio</p>
                                     <div className="grid grid-cols-2 gap-2">
                                         <input
                                             className="border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs dark:bg-slate-800 dark:text-white"
@@ -637,7 +637,7 @@ function TemplateFormModal({
                     <button
                         onClick={handleSave}
                         disabled={saving || !form.nombre || !form.descripcion}
-                        className="flex-1 py-3 rounded-2xl text-sm font-black text-white disabled:opacity-50 transition-all hover:shadow-lg"
+                        className="flex-1 py-3 rounded-2xl text-sm font-bold text-white disabled:opacity-50 transition-all hover:shadow-lg"
                         style={{ background: form.color || '#ec4899' }}
                     >
                         {saving ? '⏳ Guardando...' : isEditing ? '✓ Actualizar Plantilla' : '✓ Crear Plantilla'}
@@ -713,9 +713,9 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
                             <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-pink-500/30">
                                 <Package size={16} className="text-white" />
                             </div>
-                            <span className="text-xs font-black uppercase tracking-widest text-pink-500">Citiox Enterprise</span>
+                            <span className="text-xs font-bold uppercase tracking-wide text-pink-500">Citiox Enterprise</span>
                         </div>
-                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                        <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                             Marketplace de Plantillas
                         </h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
@@ -724,7 +724,7 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
                     </div>
                     <button
                         onClick={() => { setEditingTemplate(null); setShowModal(true); }}
-                        className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-black text-white shadow-lg transition-all hover:scale-105 hover:shadow-pink-500/30"
+                        className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold text-white shadow-lg transition-all hover:scale-105 hover:shadow-pink-500/30"
                         style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}
                     >
                         <Plus size={16} />
@@ -746,8 +746,8 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
                                     <stat.icon size={17} style={{ color: stat.color }} />
                                 </div>
                                 <div>
-                                    <p className="text-xl font-black text-slate-900 dark:text-white">{stat.value}</p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
+                                    <p className="text-xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
                                 </div>
                             </div>
                         </div>
@@ -812,21 +812,21 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
                                         </div>
                                         <div>
                                             <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">{tpl.nombre}</h3>
-                                            <p className="text-[10px] text-slate-400 font-semibold">v{tpl.versionSemantica} · {tpl.autor}</p>
+                                            <p className="text-xs text-slate-400 font-semibold">v{tpl.versionSemantica} · {tpl.autor}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end gap-1">
                                         {tpl.featured && (
-                                            <span className="text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200">🔥 Featured</span>
+                                            <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200">🔥 Featured</span>
                                         )}
                                         {tpl.esPredeterminada && (
-                                            <span className="text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100">⭐ Defecto</span>
+                                            <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100">⭐ Defecto</span>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Description */}
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-4 line-clamp-2">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-4 line-clamp-2">
                                     {tpl.descripcion}
                                 </p>
 
@@ -834,18 +834,18 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
                                 {tpl.categorias?.length > 0 && (
                                     <div className="flex flex-wrap gap-1 mb-4">
                                         {tpl.categorias.slice(0, 3).map((cat, i) => (
-                                            <span key={i} className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300">
+                                            <span key={i} className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300">
                                                 {cat}
                                             </span>
                                         ))}
                                         {tpl.categorias.length > 3 && (
-                                            <span className="text-[8px] font-bold text-slate-400">+{tpl.categorias.length - 3}</span>
+                                            <span className="text-xs font-bold text-slate-400">+{tpl.categorias.length - 3}</span>
                                         )}
                                     </div>
                                 )}
 
                                 {/* Stats */}
-                                <div className="flex items-center gap-4 text-[10px] text-slate-400 font-semibold mb-5">
+                                <div className="flex items-center gap-4 text-xs text-slate-400 font-semibold mb-5">
                                     <span className="flex items-center gap-1"><Download size={10} /> {tpl.installCount || 0}</span>
                                     <span className="flex items-center gap-1"><Star size={10} /> {tpl.rating || 5.0}</span>
                                     <span className="flex items-center gap-1"><Layers size={10} /> {tpl.Missions?.length || 0} misiones</span>
@@ -858,13 +858,13 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
                                 <div className="flex items-center gap-2 border-t border-slate-100 dark:border-slate-700 pt-4">
                                     <button
                                         onClick={() => setViewTemplate(tpl)}
-                                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                                     >
                                         <Eye size={12} /> Ver
                                     </button>
                                     <button
                                         onClick={() => { setEditingTemplate(tpl); setShowModal(true); }}
-                                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                                     >
                                         <Edit3 size={12} /> Editar
                                     </button>
@@ -872,7 +872,7 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
                                     <button
                                         onClick={() => handleDelete(tpl.id)}
                                         disabled={deletingId === tpl.id}
-                                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
                                     >
                                         <Trash2 size={12} />
                                         {deletingId === tpl.id ? '...' : 'Eliminar'}
@@ -884,7 +884,7 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
 
                     {filtered.length === 0 && (
                         <div className="col-span-full text-center py-20">
-                            <p className="text-5xl mb-4">🏪</p>
+                            <p className="text-3xl mb-4">🏪</p>
                             <p className="text-slate-500 font-semibold">No hay plantillas que coincidan con tu búsqueda.</p>
                             <button
                                 onClick={() => { setSearch(''); setActiveCategory('ALL'); }}
@@ -927,9 +927,9 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
                                             </div>
                                             <div className="flex-1">
                                                 <p className="text-xs font-bold text-slate-800 dark:text-white">{m.nombre}</p>
-                                                <p className="text-[10px] text-slate-400">{m.triggerEvent} · {m.difficulty} · Meta: {m.cantidadMeta}</p>
+                                                <p className="text-xs text-slate-400">{m.triggerEvent} · {m.difficulty} · Meta: {m.cantidadMeta}</p>
                                             </div>
-                                            <span className="text-[10px] font-bold text-purple-600">{m.xp} XP</span>
+                                            <span className="text-xs font-bold text-purple-600">{m.xp} XP</span>
                                         </div>
                                     ))}
                                 </div>
@@ -946,8 +946,8 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
                                                     <Ticket size={12} className="text-pink-600" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-black text-pink-600 dark:text-pink-400 truncate">{c.codigo}</p>
-                                                    <p className="text-[10px] text-slate-400 truncate">
+                                                    <p className="text-xs font-bold text-pink-600 dark:text-pink-400 truncate">{c.codigo}</p>
+                                                    <p className="text-xs text-slate-400 truncate">
                                                         {c.tipo === 'PORCENTAJE' ? `${c.valor}%` : `$${c.valor}`} · {c.descripcion}
                                                     </p>
                                                 </div>
@@ -969,7 +969,7 @@ export default function MarketplaceClient({ initialTemplates }: { initialTemplat
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{r.nombre}</p>
-                                                    <p className="text-[10px] text-slate-400 truncate">
+                                                    <p className="text-xs text-slate-400 truncate">
                                                         🏆 {r.costoPuntos} pts · {r.tipo} · {r.deliveryType}
                                                     </p>
                                                 </div>

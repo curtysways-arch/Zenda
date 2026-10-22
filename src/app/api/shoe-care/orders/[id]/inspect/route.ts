@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireOrderAccess } from '@/lib/laundry/orderAccess';
 import { ServiceEngine } from '@/core/services/ServiceEngine';
 import prisma from '@/lib/prisma';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
@@ -20,6 +21,8 @@ function normalizePhone(phone: string): string {
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    const access = await requireOrderAccess(id);
+    if (!access.ok) return access.response;
     const body = await req.json();
 
     const {

@@ -105,7 +105,7 @@ export default function TemplateMarketplaceGrid({
               {/* Badge Superior */}
               {tpl.badge && (
                 <div className="absolute top-4 right-4">
-                  <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm flex items-center gap-1">
+                  <span className="text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm flex items-center gap-1">
                     <Star className="size-3 text-amber-400 fill-amber-400" />
                     {tpl.badge}
                   </span>
@@ -119,10 +119,10 @@ export default function TemplateMarketplaceGrid({
                     {getTemplateIcon(tpl.icon)}
                   </div>
                   <div>
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white leading-snug">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
                       {tpl.name}
                     </h3>
-                    <span className="text-[10px] font-mono text-slate-400 uppercase">
+                    <span className="text-xs font-mono text-slate-400 uppercase">
                       v{tpl.templateVersion}
                     </span>
                   </div>
@@ -135,7 +135,7 @@ export default function TemplateMarketplaceGrid({
 
                 {/* Lista Visual de Lo Que Incluye */}
                 <div className="space-y-2 border-t border-slate-100 dark:border-slate-800/80 pt-4">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                     Incluye de serie:
                   </span>
                   <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
@@ -169,11 +169,11 @@ export default function TemplateMarketplaceGrid({
               <button
                 onClick={() => handleInstall(tpl)}
                 disabled={isInstalling || isCurrent}
-                className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 shadow-lg ${
-                  isCurrent
-                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700'
-                    : 'bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white shadow-emerald-500/20'
-                }`}
+                className={`w-full py-3.5 px-4 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 shadow-lg ${
+ isCurrent
+ ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700'
+ : 'bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white shadow-emerald-500/20'
+ }`}
               >
                 {isInstalling ? (
                   <>

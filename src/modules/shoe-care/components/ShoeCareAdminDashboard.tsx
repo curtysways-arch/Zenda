@@ -279,7 +279,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
             <Footprints size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-white uppercase italic tracking-tight">
+            <h1 className="text-3xl font-bold text-white tracking-tight">
               Shoe Care Operations Dashboard
             </h1>
             <p className="text-xs text-slate-400 font-medium">
@@ -291,7 +291,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowNewLocalModal(true)}
-            className="px-6 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer flex items-center gap-2"
+            className="px-6 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer flex items-center gap-2"
           >
             <Plus size={18} strokeWidth={3} />
             Nueva Orden en Local
@@ -313,10 +313,10 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
           return (
             <div key={idx} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-2">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="text-[10px] font-black uppercase tracking-wider">{kpi.label}</span>
+                <span className="text-xs font-bold uppercase tracking-wider">{kpi.label}</span>
                 <Icon size={18} />
               </div>
-              <span className={`text-2xl font-black ${kpi.color}`}>{kpi.val}</span>
+              <span className={`text-2xl font-bold ${kpi.color}`}>{kpi.val}</span>
             </div>
           );
         })}
@@ -325,10 +325,10 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/40 p-4 rounded-2xl border border-slate-800">
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
-          <span className="text-[10px] font-black uppercase text-slate-400 px-2">Estado:</span>
+          <span className="text-xs font-bold uppercase text-slate-400 px-2">Estado:</span>
           <button
             onClick={() => setFilterStatus('TODOS')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${filterStatus === 'TODOS' ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-950 text-slate-400'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${filterStatus === 'TODOS' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-950 text-slate-400'}`}
           >
             Todos ({ordenes.length})
           </button>
@@ -336,7 +336,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
             <button
               key={st.id}
               onClick={() => setFilterStatus(st.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${filterStatus === st.id ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-950 text-slate-400'}`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${filterStatus === st.id ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-950 text-slate-400'}`}
             >
               {st.label}
             </button>
@@ -363,7 +363,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
       ) : filteredOrders.length === 0 ? (
         <div className="text-center py-20 bg-slate-900/40 rounded-3xl border border-slate-800 space-y-3">
           <Footprints size={40} className="mx-auto text-slate-600" />
-          <h3 className="text-lg font-black text-white uppercase">No hay órdenes registradas</h3>
+          <h3 className="text-lg font-bold text-white ">No hay órdenes registradas</h3>
           <p className="text-xs text-slate-400">Usa el botón "+ Nueva Orden en Local" o simula una solicitud desde la Landing.</p>
         </div>
       ) : (
@@ -377,10 +377,10 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                 <div className="space-y-4">
                   {/* Top order info */}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                    <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
                       #{ord.numeroPedido}
                     </span>
-                    <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border ${stObj.color}`}>
+                    <span className={`text-xs font-bold uppercase px-3 py-1 rounded-full border ${stObj.color}`}>
                       {stObj.label}
                     </span>
                   </div>
@@ -388,10 +388,10 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                   {/* Client Info */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-base font-black text-white">{ord.nombreCliente}</h3>
+                      <h3 className="text-base font-bold text-white">{ord.nombreCliente}</h3>
                       <button 
                         onClick={() => openClientHistory(ord.telefonoCliente)}
-                        className="text-[10px] font-bold text-emerald-400 hover:underline flex items-center gap-1"
+                        className="text-xs font-bold text-emerald-400 hover:underline flex items-center gap-1"
                       >
                         <History size={12} /> Historial
                       </button>
@@ -401,7 +401,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                     </p>
                     {ord.direccionCliente && (
                       <div className="pt-1 space-y-1">
-                        <p className="text-[11px] text-slate-300 flex items-center gap-1">
+                        <p className="text-xs text-slate-300 flex items-center gap-1">
                           <MapPin size={12} className="text-emerald-400 shrink-0" /> {ord.direccionCliente}
                         </p>
                         {ord.latitud && ord.longitud && (
@@ -409,7 +409,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                             href={`https://www.google.com/maps?q=${ord.latitud},${ord.longitud}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 hover:bg-emerald-500/20"
+                            className="inline-flex items-center gap-1 text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 hover:bg-emerald-500/20"
                           >
                             📍 Ver en Mapa GPS ({ord.latitud.toFixed(4)}, {ord.longitud.toFixed(4)})
                           </a>
@@ -436,7 +436,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                     )}
                     <div className="flex justify-between pt-1 border-t border-slate-800">
                       <span className="text-slate-400">Monto Total:</span>
-                      <span className="font-black text-emerald-400 text-sm">${ord.total?.toFixed(2)}</span>
+                      <span className="font-bold text-emerald-400 text-sm">${ord.total?.toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -444,7 +444,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                   {(extra.fotosRecepcion?.length > 0 || extra.fotosEntrega?.length > 0) && (
                     <div className="flex items-center gap-2 pt-1">
                       <ImageIcon size={14} className="text-slate-400" />
-                      <span className="text-[11px] text-slate-400 font-bold">
+                      <span className="text-xs text-slate-400 font-bold">
                         {(extra.fotosRecepcion?.length || 0) + (extra.fotosEntrega?.length || 0)} fotografía(s) adjunta(s)
                       </span>
                     </div>
@@ -456,7 +456,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                   {ord.estado === 'PENDIENTE_RETIRO' && (
                     <button
                       onClick={() => handleUpdateStatus(ord.id, 'RETIRADO')}
-                      className="w-full py-3 bg-purple-500 hover:bg-purple-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Truck size={16} /> Confirmar Retirado
                     </button>
@@ -476,7 +476,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                           notasInspeccion: ''
                         });
                       }}
-                      className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Search size={16} /> Realizar Inspección & Cotizar
                     </button>
@@ -485,7 +485,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                   {ord.estado === 'INSPECCIONADO' && (
                     <button
                       onClick={() => handleUpdateStatus(ord.id, 'EN_LAVADO')}
-                      className="w-full py-3 bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       <RefreshCw size={16} /> Pasar a En Lavado
                     </button>
@@ -494,7 +494,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                   {ord.estado === 'EN_LAVADO' && (
                     <button
                       onClick={() => handleUpdateStatus(ord.id, 'EN_SECADO')}
-                      className="w-full py-3 bg-violet-500 hover:bg-violet-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-violet-500 hover:bg-violet-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Wind size={16} /> Pasar a En Secado
                     </button>
@@ -503,7 +503,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                   {ord.estado === 'EN_SECADO' && (
                     <button
                       onClick={() => handleUpdateStatus(ord.id, 'EN_ACABADOS')}
-                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Sparkles size={16} /> Pasar a En Acabados
                     </button>
@@ -512,7 +512,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                   {ord.estado === 'EN_ACABADOS' && (
                     <button
                       onClick={() => handleUpdateStatus(ord.id, 'LISTO_PARA_ENTREGA')}
-                      className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       <CheckCircle2 size={16} /> Marcar Listo para Entrega
                     </button>
@@ -523,7 +523,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                       {ord.tipoEntrega === 'DOMICILIO' && (
                         <button
                           onClick={() => handleUpdateStatus(ord.id, 'EN_RUTA')}
-                          className="w-1/2 py-3 bg-amber-500 text-slate-950 font-black text-[11px] uppercase tracking-wider rounded-xl cursor-pointer"
+                          className="w-1/2 py-3 bg-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer"
                         >
                           En Despacho
                         </button>
@@ -533,7 +533,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                           setShowPayModal(ord);
                           setPayForm({ metodoPago: 'EFECTIVO', monto: ord.total });
                         }}
-                        className={`${ord.tipoEntrega === 'DOMICILIO' ? 'w-1/2' : 'w-full'} py-3 bg-emerald-500 text-slate-950 font-black text-[11px] uppercase tracking-wider rounded-xl cursor-pointer`}
+                        className={`${ord.tipoEntrega === 'DOMICILIO' ? 'w-1/2' : 'w-full'} py-3 bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer`}
                       >
                         Cobrar & Entregar
                       </button>
@@ -546,14 +546,14 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                         setShowPayModal(ord);
                         setPayForm({ metodoPago: 'EFECTIVO', monto: ord.total });
                       }}
-                      className="w-full py-3 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       <CreditCard size={16} /> Confirmar Pago & Entrega
                     </button>
                   )}
 
                   {ord.estado === 'ENTREGADO' && (
-                    <div className="text-center py-2 bg-slate-950 text-slate-400 text-[11px] font-bold rounded-xl border border-slate-800">
+                    <div className="text-center py-2 bg-slate-950 text-slate-400 text-xs font-bold rounded-xl border border-slate-800">
                       ✓ Orden Completada & Cerrada
                     </div>
                   )}
@@ -569,7 +569,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-lg w-full space-y-6 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-black text-white uppercase italic flex items-center gap-2">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Plus className="text-emerald-400" size={20} />
                 Nueva Orden en Local (Flujo 1)
               </h2>
@@ -581,9 +581,9 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
             <form onSubmit={handleCreateLocalOrder} className="space-y-4">
               {clientesList && clientesList.length > 0 && (
                 <div className="space-y-1 bg-emerald-950/40 p-3 rounded-2xl border border-emerald-800/40">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
                     <span>👤 Cargar Cliente Registrado</span>
-                    <span className="text-[9px] text-slate-400 font-normal">({clientesList.length} disponibles)</span>
+                    <span className="text-xs text-slate-400 font-normal">({clientesList.length} disponibles)</span>
                   </label>
                   <select
                     onChange={(e) => {
@@ -609,7 +609,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
               )}
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Nombre del Cliente *</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Nombre del Cliente *</label>
                 <input 
                   type="text"
                   required
@@ -622,7 +622,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Teléfono WhatsApp *</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Teléfono WhatsApp *</label>
                   <div className="flex gap-1.5">
                     <select
                       value={localCountryCode}
@@ -645,7 +645,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Cantidad de Pares *</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Cantidad de Pares *</label>
                   <select
                     value={localForm.cantidadPares}
                     onChange={e => setLocalForm({ ...localForm, cantidadPares: e.target.value })}
@@ -660,7 +660,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Notas de Recepción</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Notas de Recepción</label>
                 <textarea 
                   rows={2}
                   placeholder="Detalles sobre el calzado, raspones previos o pedidos..."
@@ -672,7 +672,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
 
               {/* Multiple Photo Input */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Fotografías de Recepción</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Fotografías de Recepción</label>
                 <div className="flex gap-2">
                   <input 
                     type="url"
@@ -689,7 +689,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                         setTempPhotoUrl('');
                       }
                     }}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-black text-xs rounded-xl"
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl"
                   >
                     + Adjuntar
                   </button>
@@ -697,7 +697,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                 {localForm.fotosRecepcion.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-2">
                     {localForm.fotosRecepcion.map((url, idx) => (
-                      <span key={idx} className="text-[10px] font-mono bg-slate-950 px-2 py-1 rounded text-emerald-400 border border-slate-800">
+                      <span key={idx} className="text-xs font-mono bg-slate-950 px-2 py-1 rounded text-emerald-400 border border-slate-800">
                         Foto #{idx + 1}
                       </span>
                     ))}
@@ -709,14 +709,14 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                 <button
                   type="button"
                   onClick={() => setShowNewLocalModal(false)}
-                  className="w-1/3 py-3 bg-slate-800 text-white font-black text-xs uppercase rounded-xl"
+                  className="w-1/3 py-3 bg-slate-800 text-white font-bold text-xs uppercase rounded-xl"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-2/3 py-3 bg-emerald-500 text-slate-950 font-black text-xs uppercase rounded-xl flex items-center justify-center gap-2"
+                  className="w-2/3 py-3 bg-emerald-500 text-slate-950 font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-2"
                 >
                   {submitting && <Loader2 className="animate-spin" size={16} />}
                   Crear Orden (RECIBIDO)
@@ -737,7 +737,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
 
             <form onSubmit={handleSaveInspection} className="space-y-4">
               <div>
-                <h2 className="text-xl font-black text-white uppercase italic flex items-center gap-2">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <Search className="text-emerald-400" size={22} />
                   Inspección de Calzado #{showInspectModal.numeroPedido}
                 </h2>
@@ -746,7 +746,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
 
               {/* Dirt level selector */}
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 block mb-2">Nivel de Suciedad *</label>
+                <label className="text-xs font-bold uppercase text-slate-400 block mb-2">Nivel de Suciedad *</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: 'POCO', name: 'Poco ($4)', price: 4.00 },
@@ -759,10 +759,10 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                       type="button"
                       onClick={() => setInspectForm({ ...inspectForm, nivelSuciedad: opt.id, precioBase: opt.price })}
                       className={`p-3 rounded-xl border font-bold text-xs transition-all ${
-                        inspectForm.nivelSuciedad === opt.id 
-                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-black' 
-                          : 'bg-slate-950 border-slate-800 text-slate-400'
-                      }`}
+ inspectForm.nivelSuciedad === opt.id 
+ ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold' 
+ : 'bg-slate-950 border-slate-800 text-slate-400'
+ }`}
                     >
                       {opt.name}
                     </button>
@@ -772,7 +772,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
 
               {/* Additional Addons */}
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 block mb-2">Servicios Adicionales</label>
+                <label className="text-xs font-bold uppercase text-slate-400 block mb-2">Servicios Adicionales</label>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
                     { nombre: 'Impermeabilización', precio: 2.00 },
@@ -805,7 +805,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
 
               {/* Estimated Delivery Date */}
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Fecha y Hora Estimada de Entrega</label>
+                <label className="text-xs font-bold uppercase text-slate-400 block mb-1">Fecha y Hora Estimada de Entrega</label>
                 <input 
                   type="text"
                   placeholder="Ej: Martes a las 5:00 PM"
@@ -817,7 +817,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
 
               {/* Breakdown Preview */}
               <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-2 text-xs">
-                <span className="font-black uppercase text-[10px] text-slate-400 block">Desglose de Cotización:</span>
+                <span className="font-bold uppercase text-xs text-slate-400 block">Desglose de Cotización:</span>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Precio Base ({inspectForm.nivelSuciedad}):</span>
                   <span className="font-bold text-white">${inspectForm.precioBase.toFixed(2)}</span>
@@ -841,8 +841,8 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                   </div>
                 )}
                 <div className="flex justify-between pt-2 border-t border-slate-800">
-                  <span className="font-black text-white uppercase">TOTAL DEFINITIVO:</span>
-                  <span className="font-black text-emerald-400 text-base">
+                  <span className="font-bold text-white uppercase">Total definitivo:</span>
+                  <span className="font-bold text-emerald-400 text-base">
                     ${(
                       inspectForm.precioBase + 
                       inspectForm.serviciosAdicionales.reduce((a, b) => a + b.precio, 0) + 
@@ -856,7 +856,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 {submitting && <Loader2 className="animate-spin" size={16} />}
                 Confirmar Cotización & Notificar WhatsApp
@@ -876,7 +876,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
 
             <form onSubmit={handleSavePayment} className="space-y-4">
               <div>
-                <h2 className="text-xl font-black text-white uppercase italic flex items-center gap-2">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <CreditCard className="text-emerald-400" size={22} />
                   Cobrar & Finalizar Orden #{showPayModal.numeroPedido}
                 </h2>
@@ -884,12 +884,12 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
               </div>
 
               <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-center space-y-1">
-                <span className="text-[10px] font-black uppercase text-slate-400">Total a Cobrar:</span>
-                <div className="text-3xl font-black text-emerald-400">${showPayModal.total?.toFixed(2)}</div>
+                <span className="text-xs font-bold uppercase text-slate-400">Total a Cobrar:</span>
+                <div className="text-3xl font-bold text-emerald-400">${showPayModal.total?.toFixed(2)}</div>
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 block mb-2">Método de Pago</label>
+                <label className="text-xs font-bold uppercase text-slate-400 block mb-2">Método de Pago</label>
                 <div className="grid grid-cols-2 gap-2">
                   {['EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'MERCADO_PAGO'].map(m => (
                     <button
@@ -897,8 +897,8 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                       type="button"
                       onClick={() => setPayForm({ ...payForm, metodoPago: m })}
                       className={`p-3 rounded-xl border text-xs font-bold transition-all ${
-                        payForm.metodoPago === m ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-black' : 'bg-slate-950 border-slate-800 text-slate-400'
-                      }`}
+ payForm.metodoPago === m ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold' : 'bg-slate-950 border-slate-800 text-slate-400'
+ }`}
                     >
                       {m.replace('_', ' ')}
                     </button>
@@ -909,7 +909,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 {submitting && <Loader2 className="animate-spin" size={16} />}
                 Registrar Pago & Cerrar Orden
@@ -928,7 +928,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
             </button>
 
             <div>
-              <h2 className="text-xl font-black text-white uppercase italic flex items-center gap-2">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <History className="text-emerald-400" size={22} />
                 Historial del Cliente ({showHistoryModal.phone})
               </h2>
@@ -944,22 +944,22 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                 {/* Client metrics */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-center">
-                    <span className="text-[9px] text-slate-400 uppercase font-black block">Órdenes Totales</span>
-                    <span className="text-xl font-black text-white">{clientHistoryData.metrics.totalOrders}</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Órdenes Totales</span>
+                    <span className="text-xl font-bold text-white">{clientHistoryData.metrics.totalOrders}</span>
                   </div>
                   <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-center">
-                    <span className="text-[9px] text-slate-400 uppercase font-black block">Completadas</span>
-                    <span className="text-xl font-black text-emerald-400">{clientHistoryData.metrics.completedOrders}</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Completadas</span>
+                    <span className="text-xl font-bold text-emerald-400">{clientHistoryData.metrics.completedOrders}</span>
                   </div>
                   <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-center">
-                    <span className="text-[9px] text-slate-400 uppercase font-black block">Monto Invertido</span>
-                    <span className="text-xl font-black text-purple-400">${clientHistoryData.metrics.totalSpent.toFixed(2)}</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Monto Invertido</span>
+                    <span className="text-xl font-bold text-purple-400">${clientHistoryData.metrics.totalSpent.toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* Orders Timeline */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Historial de Órdenes</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Historial de Órdenes</h4>
                   {clientHistoryData.ordenes.map((o: any) => (
                     <div key={o.id} className="p-4 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
                       <div>
@@ -967,7 +967,7 @@ export default function ShoeCareAdminDashboard({ negocio }: ShoeCareAdminProps) 
                         <span className="text-slate-400 ml-2">{new Date(o.createdAt).toLocaleDateString()}</span>
                         <p className="text-slate-300 font-bold mt-0.5">{o.tipoEntrega} — ${o.total.toFixed(2)}</p>
                       </div>
-                      <span className="px-2.5 py-1 rounded bg-slate-900 text-slate-300 font-mono text-[10px] border border-slate-800">
+                      <span className="px-2.5 py-1 rounded bg-slate-900 text-slate-300 font-mono text-xs border border-slate-800">
                         {o.estado}
                       </span>
                     </div>

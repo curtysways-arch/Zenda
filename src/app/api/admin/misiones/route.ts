@@ -58,6 +58,7 @@ export async function GET(request: Request) {
         const businessMissions = await prisma.businessMission.findMany({
             where: {
                 negocioId,
+                status: { not: 'ENDED' },
                 MissionDefinition: {
                     status: 'PUBLISHED'
                 }
@@ -186,7 +187,7 @@ export async function GET(request: Request) {
                         const match = catalog.nombre.match(/(\d+)\s*Diamante/i);
                         diamondAmount = match ? parseInt(match[1]) : 0;
                     }
-                    recompensas.push(`+${diamondAmount} Diamantes`);
+                    recompensas.push(`+${diamondAmount} puntos`);
                 } else if (catalog.tipo === 'COUPON') {
                     recompensas.push(`Cupón: ${catalog.nombre}`);
                 } else {
@@ -259,7 +260,46 @@ export async function GET(request: Request) {
             });
         });
 
-        const campaigns = Array.from(groupedMap.values());
+        // 3b. Misiones propias del negocio (creadas por el dueño o por la activación rápida del club).
+        // Antes se creaban pero no aparecían en esta lista ni para los clientes.
+        const localQuests = await prisma.quest.findMany({
+            where: { negocioId },
+            include: { Campaign: { select: { id: true, nombre: true, descripcion: true, activa: true } } },
+            orderBy: { createdAt: 'asc' }
+        });
+        const localMap = new Map<string, any>();
+        localQuests.forEach(q => {
+            if (!localMap.has(q.campaignId)) {
+                localMap.set(q.campaignId, {
+                    id: q.campaignId,
+                    nombre: q.Campaign?.nombre || 'Mis misiones',
+                    descripcion: q.Campaign?.descripcion || 'Misiones creadas por tu negocio.',
+                    activa: q.Campaign?.activa ?? true,
+                    origen: 'NEGOCIO',
+                    Quests: []
+                });
+            }
+            localMap.get(q.campaignId).Quests.push({
+                id: q.id,
+                nombre: q.nombre,
+                descripcion: q.descripcion,
+                icono: q.icono,
+                color: q.color,
+                visible: q.visible,
+                repetible: q.repetible,
+                limiteUsuario: q.limiteUsuario,
+                triggerEvent: q.triggerEvent,
+                rawTriggerEvent: q.triggerEvent,
+                cantidadMeta: q.cantidadMeta,
+                validacionTipo: q.validacionTipo,
+                condicionesExtra: q.condicionesExtra ? JSON.stringify(q.condicionesExtra) : null,
+                acciones: typeof q.acciones === 'string' ? q.acciones : JSON.stringify(q.acciones),
+                activa: q.activa,
+                origen: 'NEGOCIO'
+            });
+        });
+
+        const campaigns = [...Array.from(localMap.values()), ...Array.from(groupedMap.values()).map(c => ({ ...c, origen: 'CITIOX' }))];
 
         // 4. Calcular estadísticas basadas en BusinessMissionProgress
         const bmIds = businessMissions.map(bm => bm.id);
@@ -285,9 +325,23 @@ export async function GET(request: Request) {
             }
         });
 
-        const totalParticipantes = await prisma.businessMissionProgress.count({
+        let totalParticipantes = await prisma.businessMissionProgress.count({
             where: { businessMissionId: { in: bmIds } }
         });
+
+        const localIds = localQuests.map(q => q.id);
+        if (localIds.length > 0) {
+            const localStats = await prisma.questProgress.groupBy({
+                by: ['estado'],
+                where: { questId: { in: localIds } },
+                _count: { id: true }
+            });
+            localStats.forEach(stat => {
+                if (stat.estado === 'EN_PROGRESO' || stat.estado === 'PENDIENTE_APROBACION') enProgreso += stat._count.id;
+                else if (stat.estado === 'COMPLETADA' || stat.estado === 'RECLAMADA') completadas += stat._count.id;
+            });
+            totalParticipantes += await prisma.questProgress.count({ where: { questId: { in: localIds } } });
+        }
 
         return NextResponse.json({
             success: true,
@@ -304,7 +358,7 @@ export async function GET(request: Request) {
                 totalParticipantes,
                 enProgreso,
                 completadas,
-                roiEstimado: completadas > 0 ? 32.5 : 0.0,
+                roiEstimado: 0,
                 reservasGeneradas: completadas
             }
         });
@@ -648,10 +702,12 @@ export async function DELETE(request: Request) {
                 where: { id: questId, negocioId }
             });
             if (bm) {
-                await prisma.businessMission.delete({
-                    where: { id: questId }
+                // Las misiones de Citiox se archivan (no se borran) para que no se reinstalen solas.
+                await prisma.businessMission.update({
+                    where: { id: questId },
+                    data: { status: 'ENDED' }
                 });
-                return NextResponse.json({ success: true, message: 'Misión eliminada con éxito' });
+                return NextResponse.json({ success: true, message: 'Misión quitada de tu club' });
             }
 
             // Borrar Misión

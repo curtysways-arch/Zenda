@@ -98,7 +98,7 @@ export class EntitlementsService {
         ACCESS: true,
         ATTENDANCE: true,
         PAYMENTS: true,
-        PROMOTIONS: true,
+        PROMOTIONS: false,
         LOYALTY: true,
         REPORTS: true,
         CUSTOMERS: true,
@@ -128,7 +128,7 @@ export class EntitlementsService {
         DELIVERY: true,
         DISPATCH: true,
         KITCHEN: true,
-        PROMOTIONS: true,
+        PROMOTIONS: false,
         LOYALTY: true,
         TABLES: false,
         APPOINTMENTS: false,
@@ -148,7 +148,7 @@ export class EntitlementsService {
         DISPATCH: true,
         TABLES: true,
         KITCHEN: true,
-        PROMOTIONS: true,
+        PROMOTIONS: false,
         LOYALTY: false,
         APPOINTMENTS: false,
         SERVICES: false,
@@ -162,7 +162,7 @@ export class EntitlementsService {
         COURTS: true,
         APPOINTMENTS: true,
         PAYMENTS: true,
-        PROMOTIONS: true,
+        PROMOTIONS: false,
         PRODUCTS: false,
         CATEGORIES: false,
         ORDERS: false,
@@ -181,11 +181,13 @@ export class EntitlementsService {
       return {
         SERVICES: true,
         APPOINTMENTS: !isLaundryOrShoe,
-        ORDERS: isLaundryOrShoe,
+        ORDERS: false,
+        SHOE_CARE: isLaundryOrShoe,
+        SERVICE_ORDERS: isLaundryOrShoe,
         DISPATCH: isLaundryOrShoe,
         DELIVERY: isLaundryOrShoe,
         PAYMENTS: true,
-        PROMOTIONS: true,
+        PROMOTIONS: false,
         PRODUCTS: false,
         CATEGORIES: false,
         POS: false,
@@ -205,7 +207,7 @@ export class EntitlementsService {
       DELIVERY: true,
       DISPATCH: true,
       PAYMENTS: true,
-      PROMOTIONS: true,
+      PROMOTIONS: false,
       TABLES: false,
       KITCHEN: false,
       APPOINTMENTS: false,
@@ -344,6 +346,21 @@ export class EntitlementsService {
       capabilities.communications = true;
     }
 
+    // Regla Canónica de Promociones: Exclusivo de Plan Crecimiento ($19.99) o superior, o Add-on ADDON_PROMOTIONS
+    const planPrice = Number(plan?.price ?? 0);
+    const planIsFree = Boolean(plan?.isFree || planPrice < 19 || context.isExpired);
+    const hasPromotionsAddon = (suscripcion?.subscriptionAddons || []).some(
+      (sa: any) => sa.addon?.code === 'ADDON_PROMOTIONS' || sa.addon?.targetKey === 'PROMOTIONS' || sa.addonId === 'ADDON_PROMOTIONS'
+    );
+
+    if (planIsFree && !hasPromotionsAddon) {
+      capabilities.PROMOTIONS = false;
+      capabilities.promotions = false;
+    } else if (planPrice >= 19 || hasPromotionsAddon) {
+      capabilities.PROMOTIONS = true;
+      capabilities.promotions = true;
+    }
+
     // Blindaje estricto por vertical de negocio: Spa / Servicios nunca debe recibir canchas deportivas
     const tipoUpper = (negocio.tipoNegocio || '').toUpperCase();
     const slugUpper = (negocio.slug || '').toUpperCase();
@@ -383,6 +400,32 @@ export class EntitlementsService {
       capabilities.courts = false;
       capabilities.SERVICES = true;
       capabilities.services = true;
+
+      const isLaundryOrShoe = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA' || tipoUpper === 'ORDENES-SERVICIO' ||
+        slugUpper.includes('LAVADO') || slugUpper.includes('WASH') || slugUpper.includes('SHOE') || slugUpper.includes('BUBBLE') ||
+        nameUpper.includes('LAVADO') || nameUpper.includes('WASH') || nameUpper.includes('BUBBLE') || nameUpper.includes('LAVANDERIA');
+
+      if (isLaundryOrShoe) {
+        const hasProductsAddon = (suscripcion?.subscriptionAddons || []).some(
+          (sa: any) => sa.addon?.code === 'ADDON_ECOMMERCE' || sa.addon?.targetKey === 'ECOMMERCE' || sa.addon?.targetKey === 'PRODUCTS' || sa.addon?.targetKey === 'ORDERS'
+        ) || Boolean(legacyCaps.orders || legacyCaps.catalog || legacyCaps.products || legacyCaps.ecommerce);
+
+        if (!hasProductsAddon) {
+          capabilities.ORDERS = false;
+          capabilities.orders = false;
+          capabilities.PRODUCTS = false;
+          capabilities.products = false;
+          capabilities.catalog = false;
+          capabilities.INVENTORY = false;
+          capabilities.inventory = false;
+          capabilities.POS = false;
+          capabilities.pos = false;
+        }
+        capabilities.SHOE_CARE = true;
+        capabilities.shoe_care = true;
+        capabilities.SERVICE_ORDERS = true;
+        capabilities.service_orders = true;
+      }
     }
 
     const isDentalBiz = tipoUpper === 'ODONTOLOGIA' || tipoUpper === 'DENTAL' ||
@@ -437,11 +480,16 @@ export class EntitlementsService {
     }
 
     // 4. Límites base del plan y resolución de PlanLimit
+    const isPlanUnlimited = Boolean(
+      plan?.slug?.toLowerCase().includes('pro') || 
+      plan?.name?.toLowerCase().includes('pro') || 
+      (plan as any)?.code?.toLowerCase().includes('pro')
+    );
     const baseLimits: Record<string, number> = {
-      branches: plan?.max_locations ?? 1,
-      professionals: plan?.maxStaff ?? 5,
-      appointmentsMonthly: plan?.maxAppointmentsMonthly ?? plan?.max_reservations_per_month ?? 500,
-      products: plan?.max_fields ?? 1000
+      branches: isPlanUnlimited ? 999999 : (plan?.max_locations ?? 1),
+      professionals: isPlanUnlimited ? 999999 : (plan?.maxStaff ?? 5),
+      appointmentsMonthly: isPlanUnlimited ? 999999 : (plan?.maxAppointmentsMonthly ?? plan?.max_reservations_per_month ?? 500),
+      products: isPlanUnlimited ? 999999 : (plan?.max_fields ?? 1000)
     };
 
     if (plan?.planLimits && plan.planLimits.length > 0) {
@@ -556,6 +604,17 @@ export class EntitlementsService {
           }
         }
       }
+    }
+
+    // C. Paquete "Venta de productos" (E-commerce): cualquier negocio que lo active —también un spa,
+    //    barbería o consultorio— puede vender productos online y enviarlos a domicilio con sus propios
+    //    repartidores. Se aplica igual venga del add-on en BD, del customFeatures legacy o de la config.
+    if (capabilities.ECOMMERCE || capabilities.ecommerce || legacyCaps.ecommerce === true) {
+      for (const key of ['ECOMMERCE', 'ORDERS', 'PRODUCTS', 'POS', 'INVENTORY', 'DELIVERY', 'DISPATCH']) {
+        capabilities[key] = true;
+        capabilities[key.toLowerCase()] = true;
+      }
+      capabilities.catalog = true;
     }
 
     // Calibrar límites efectivos universales (Plan Base + Bonos de Addons)

@@ -1,11 +1,10 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
 
         if (!session) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });

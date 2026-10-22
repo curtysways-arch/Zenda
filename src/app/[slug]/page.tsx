@@ -26,6 +26,21 @@ import { resolveLandingContent } from '@/lib/landingContentResolver';
 import UniversalHeroCarousel from '@/components/public/UniversalHeroCarousel';
 import type { Metadata } from 'next';
 
+/** Convierte Decimal → number y Date → ISO para pasar datos de Prisma a Client Components. */
+function toPlain<T>(value: T): T {
+    const walk = (v: any): any => {
+        if (v === null || typeof v !== 'object') return v;
+        if (v instanceof Date) return v.toISOString();
+        if (typeof v.toNumber === 'function' && typeof v.isFinite === 'function') return v.toNumber();
+        if (Array.isArray(v)) return v.map(walk);
+        const out: any = {};
+        for (const k of Object.keys(v)) out[k] = walk(v[k]);
+        return out;
+    };
+    return walk(value);
+}
+
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -193,6 +208,7 @@ export default async function PublicNegocioPage({
     const targetProductId = typeof resolvedSearchParams?.producto === 'string'
         ? resolvedSearchParams.producto
         : (typeof resolvedSearchParams?.p === 'string' ? resolvedSearchParams.p : null);
+    const viewParam = typeof resolvedSearchParams?.view === 'string' ? resolvedSearchParams.view.toLowerCase() : '';
 
     const negocio = await getNegocioBySlug(slug);
 
@@ -210,33 +226,88 @@ export default async function PublicNegocioPage({
         } catch (_) {}
     }
 
-    const restConfig = (negocio.configuracion as any) || {};
+    const { 
+        normalizeBusinessConfig, 
+        isLaundryOrShoeCareBusiness, 
+        isDentalBusiness, 
+        isGymBusiness, 
+        isRestaurantBusiness, 
+        isStoreBusiness 
+    } = await import('@/lib/businessTypeHelper');
+
+    const restConfig = normalizeBusinessConfig(negocio.configuracion);
     const blueprintId = restConfig.blueprintId;
 
-    const { isDentalBusiness } = await import('@/modules/dental/utils/dentalHelper');
     if (isDentalBusiness(negocio)) {
         let dentalServices: any[] = [];
         let dentalStaff: any[] = [];
         let dentalResults: any[] = [];
+        let dentalPages: any[] = [];
+        let dentalPromotions: any[] = [];
         try {
-            const [srvs, stf, res] = await Promise.all([
+            const now = new Date();
+            const [srvs, stf, res, pgs, prms] = await Promise.all([
                 prisma.service.findMany({
                     where: { negocioId: negocio.id, estaActivo: true },
+                    include: { Staff: { where: { active: true } }, Imagen: true, imageMedia: true },
                     orderBy: { nombre: 'asc' }
                 }),
                 prisma.staff.findMany({
                     where: { businessId: negocio.id, active: true },
+                    include: { Service: true, imageMedia: true },
                     orderBy: { name: 'asc' }
                 }),
                 prisma.resultado.findMany({
                     where: { businessId: negocio.id },
                     orderBy: { id: 'desc' }
+                }),
+                prisma.page.findMany({
+                    where: { businessId: negocio.id, status: { in: ['published', 'PUBLISHED'] } },
+                    orderBy: { orden: 'asc' }
+                }),
+                (prisma as any).promotion.findMany({
+                    where: { businessId: negocio.id },
+                    include: {
+                        PromotionToService: {
+                            include: { Service: true }
+                        },
+                        imageMedia: true
+                    },
+                    orderBy: { createdAt: 'desc' }
                 })
             ]);
             dentalServices = srvs;
             dentalStaff = stf;
             dentalResults = res;
+            dentalPages = pgs;
+            dentalPromotions = (prms || []).filter((p: any) => {
+                const isActiva = p.estado === 'activa' || p.estado === 'ACTIVA';
+                const notExpired = !p.fechaFin || new Date(p.fechaFin) >= now;
+                return isActiva && notExpired;
+            });
         } catch (_) {}
+
+        // Diseño elegido en la tienda de diseños (o vista previa con ?diseno=esmalte).
+        const { readLandingState: readDentalState, getLandingDesign: getDentalDesign } = await import('@/lib/landingDesigns');
+        const dentalState = readDentalState(negocio.configuracion);
+        const dentalPreviewParam = typeof resolvedSearchParams?.diseno === 'string' ? resolvedSearchParams.diseno : null;
+        const dentalPreview = dentalPreviewParam ? getDentalDesign(dentalPreviewParam) : undefined;
+        const dentalDesignId = dentalPreview && dentalPreview.familias.includes('dental') ? dentalPreview.id : dentalState.activo;
+
+        if (dentalDesignId === 'esmalte') {
+            const { default: DentalEsmalteLanding } = await import('@/components/public/landings/DentalEsmalteLanding');
+            return (
+                <DentalEsmalteLanding
+                    negocio={negocio}
+                    services={dentalServices}
+                    staff={dentalStaff}
+                    results={dentalResults}
+                    pages={dentalPages || []}
+                    promotions={dentalPromotions}
+                    previewOf={dentalPreview && dentalPreview.id !== dentalState.activo ? dentalPreview.id : null}
+                />
+            );
+        }
 
         const { default: DentalLanding } = await import('@/modules/dental/components/DentalLanding');
         return (
@@ -245,24 +316,13 @@ export default async function PublicNegocioPage({
                 services={dentalServices}
                 staff={dentalStaff}
                 results={dentalResults}
+                pages={dentalPages || []}
+                promotions={dentalPromotions}
             />
         );
     }
 
-    const isRestaurantModule = 
-        blueprintId === 'RESTAURANT' ||
-        negocio.tipoNegocio === 'RESTAURANTE' ||
-        negocio.tipoNegocio === 'GASTRONOMIA' ||
-        negocio.tipoNegocio === 'RESTAURANT' ||
-        restConfig.tipoNegocio === 'RESTAURANTE' ||
-        restConfig.tipoNegocio === 'GASTRONOMIA' ||
-        restConfig.tipoNegocio === 'RESTAURANT' ||
-        slug.includes('parrilla') ||
-        slug.includes('restaurant') ||
-        slug.includes('gastro') ||
-        slug.includes('burger') ||
-        slug.includes('pizza') ||
-        slug.includes('taco');
+    const isRestaurantModule = isRestaurantBusiness(negocio);
 
     if (isRestaurantModule) {
         let initialProducts: any[] = [];
@@ -275,8 +335,9 @@ export default async function PublicNegocioPage({
                 (prisma as any).categoriaProducto.findMany({ where: { negocioId: negocio.id, activo: true }, orderBy: { orden: 'asc' } }),
                 resolveLandingContent(negocio.id)
             ]);
-            initialProducts = prods;
-            initialCategories = cats;
+            // Prisma devuelve Decimal (stock, precios…): los Client Components solo aceptan objetos planos.
+            initialProducts = toPlain(prods);
+            initialCategories = toPlain(cats);
             initialHeroContent = landingContent;
         } catch (_) {}
 
@@ -291,19 +352,7 @@ export default async function PublicNegocioPage({
         );
     }
 
-    const isGymModule =
-        blueprintId === 'GYM' ||
-        blueprintId === 'GIMNASIO' ||
-        blueprintId === 'FITNESS' ||
-        negocio.tipoNegocio === 'GIMNASIO' ||
-        negocio.tipoNegocio === 'GYM' ||
-        negocio.tipoNegocio === 'FITNESS' ||
-        restConfig.tipoNegocio === 'GIMNASIO' ||
-        restConfig.tipoNegocio === 'GYM' ||
-        restConfig.tipoNegocio === 'FITNESS' ||
-        slug.includes('gym') ||
-        slug.includes('fitness') ||
-        slug.includes('vortex');
+    const isGymModule = isGymBusiness(negocio);
 
     let membershipPlans: any[] = [];
     let gymAreas: any[] = [];
@@ -348,14 +397,9 @@ export default async function PublicNegocioPage({
         }
     }
 
-    const isStoreModule =
-        blueprintId === 'STORE' ||
-        negocio.tipoNegocio === 'TIENDA' ||
-        negocio.tipoNegocio === 'STORE' ||
-        negocio.tipoNegocio === 'ECOMMERCE' ||
-        restConfig.tipoNegocio === 'TIENDA' ||
-        restConfig.tipoNegocio === 'STORE' ||
-        restConfig.tipoNegocio === 'ECOMMERCE';
+    const isShoeCareModule = isLaundryOrShoeCareBusiness(negocio);
+
+    const isStoreModule = isStoreBusiness(negocio, viewParam);
 
     if (isStoreModule && !ModuleResolver.isPinchosModule(slug)) {
         let initialProducts: any[] = [];
@@ -425,8 +469,8 @@ export default async function PublicNegocioPage({
                         orderBy: { orden: 'asc' }
                     })
                 ]);
-                initialProducts = prods;
-                initialCategories = cats;
+                initialProducts = toPlain(prods);
+                initialCategories = toPlain(cats);
             } catch (_) {
                 // Non-critical — client will fetch via useEffect
             }
@@ -436,8 +480,6 @@ export default async function PublicNegocioPage({
         return <ProductsStoreClient negocio={negocio} />;
     }
 
-    let isShoeCareModule = negocio.tipoNegocio === 'SHOE_CARE' || (negocio.configuracion as any)?.tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
-
     if (isShoeCareModule) {
         let realReviews: any[] = [];
         let paginas: any[] = [];
@@ -445,7 +487,7 @@ export default async function PublicNegocioPage({
         // Consulta de páginas con Prisma ORM directo
         try {
             const dbPages = await prisma.page.findMany({
-                where: { businessId: negocio.id, status: 'published' },
+                where: { businessId: negocio.id },
                 orderBy: { updatedAt: 'desc' }
             });
             paginas = dbPages.map((p: any) => ({
@@ -490,8 +532,17 @@ export default async function PublicNegocioPage({
             })).filter(r => r.comment && r.comment.trim() !== '');
         } catch (_) {}
 
-        const { default: ShoeCareLanding } = await import('@/modules/shoe-care/components/ShoeCareLanding');
-        return <ShoeCareLanding negocio={negocio} reviews={realReviews} paginasPersonalizadas={paginas} />;
+        const initialShoeCareView = (viewParam === 'tienda' || viewParam === 'store' || viewParam === 'productos' || viewParam === 'catalogo') ? 'tienda' : 'landing';
+        if (initialShoeCareView === 'tienda') {
+            const { default: ShoeCareLanding } = await import('@/modules/shoe-care/components/ShoeCareLanding');
+            return <ShoeCareLanding negocio={negocio} reviews={realReviews} paginasPersonalizadas={paginas} initialView="tienda" />;
+        }
+        let hasStore = false;
+        try {
+            hasStore = (await (prisma as any).producto.count({ where: { negocioId: negocio.id, activo: true } })) > 0;
+        } catch (_) {}
+        const { default: LaundryLanding } = await import('@/modules/shoe-care/components/LaundryLanding');
+        return <LaundryLanding negocio={toPlain(negocio)} reviews={realReviews} hasStore={hasStore} />;
     }
 
     if (negocio.tipoNegocio === 'SPORTS_COURTS' || (negocio.configuracion as any)?.tipoNegocio === 'SPORTS_COURTS' || slug.includes('canchas')) {
@@ -834,12 +885,19 @@ export default async function PublicNegocioPage({
         console.error("[DEBUG] Error checking courses module:", e);
     }
 
-    // Consultar productos activos del negocio (para mostrar boutique en Spas/Servicios con venta de productos)
-    const rawProductosActivos = await (prisma as any).producto.findMany({
-        where: { negocioId: negocio.id, activo: true },
-        include: { categoria: true, variantes: true },
-        orderBy: { orden: 'asc' }
-    });
+    // Boutique en Spas/Servicios: solo si el negocio activó la venta de productos (add-on o tipo con pedidos).
+    // Sin ella, los clientes no pueden comprar, así que no mostramos productos con carrito.
+    const { getCommerceAccess } = await import('@/lib/business/commerceAccess');
+    const commerceAccess = await getCommerceAccess(negocio as any);
+    (negocio as any).commerceAccess = commerceAccess;
+    if (!commerceAccess.orders) initialSelectedProduct = null;
+    const rawProductosActivos = commerceAccess.orders
+        ? await (prisma as any).producto.findMany({
+            where: { negocioId: negocio.id, activo: true },
+            include: { categoria: true, variantes: true },
+            orderBy: { orden: 'asc' }
+        })
+        : [];
 
     const canchasConDisponibilidad = (negocio.canchas || []);
     const filteredCanchas = query ? canchasConDisponibilidad.filter((c: any) => c.nombre.toLowerCase().includes(query)) : canchasConDisponibilidad;
@@ -1141,6 +1199,52 @@ export default async function PublicNegocioPage({
         );
     }
 
+    // ── Diseño de página elegido por el negocio (tienda de diseños) ──
+    // ?diseno=<id> permite ver la vista previa de otro diseño sin activarlo.
+    const { readLandingState, getLandingDesign } = await import('@/lib/landingDesigns');
+    const landingState = readLandingState(negocio.configuracion);
+    const previewParam = typeof resolvedSearchParams?.diseno === 'string' ? resolvedSearchParams.diseno : null;
+    const previewDesign = previewParam ? getLandingDesign(previewParam) : undefined;
+    const activeDesignId = previewDesign ? previewDesign.id : landingState.activo;
+
+    if (!isGymModule && activeDesignId === 'esencia') {
+        const { default: SpaEsenciaLanding } = await import('@/components/public/landings/SpaEsenciaLanding');
+        return (
+            <SpaEsenciaLanding
+                negocio={negocio}
+                slug={slug}
+                services={filteredCanchas}
+                heroImages={displayImages}
+                isOpen={isCurrentlyOpen}
+                promedio={promedioOpiniones}
+                totalOpiniones={totalOpiniones}
+                totalClientes={totalClientes}
+                reviews={reviews}
+                resultados={resultadosDestacados}
+                ubicaciones={resolvedUbicaciones}
+                promociones={promocionesActivas}
+                productos={
+                    initialSelectedProduct && !rawProductosActivos.some((p: any) => p.id === initialSelectedProduct.id)
+                        ? [initialSelectedProduct, ...rawProductosActivos]
+                        : rawProductosActivos
+                }
+                cursos={cursosActivos}
+                coursesEnabled={coursesModuleEnabled}
+                paginas={paginasPersonalizadas}
+                nextAppointment={nextAppointment}
+                initialUnreadCount={initialUnreadCount}
+                clientName={clientName}
+                referrerName={referrerName}
+                referralCode={referralCode}
+                initialSelectedProduct={initialSelectedProduct}
+                previewOf={previewDesign && previewDesign.id !== landingState.activo ? previewDesign.id : null}
+                primaryColor={primaryHex}
+                tertiaryColor={tertiaryColor}
+                textColor={textColor}
+            />
+        );
+    }
+
     return (
         <main className="min-h-screen font-sans pb-32 md:pb-12 relative overflow-x-hidden" style={{ backgroundColor: neutralColor }}>
             {/* Cabecera Flotante (Solo Móvil) */}
@@ -1149,24 +1253,26 @@ export default async function PublicNegocioPage({
                     {negocio.logoUrl ? (
                         <img src={negocio.logoUrl} alt={negocio.nombre} className="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-100/50" />
                     ) : (
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white font-black text-lg shadow-sm border border-slate-100/50">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm border border-slate-100/50" style={{ backgroundColor: primaryColor }}>
                             {negocio.nombre.substring(0, 1)}
                         </div>
                     )}
                     <div className="flex flex-col">
-                        <span className="font-black text-base uppercase tracking-wider leading-none text-slate-900">
+                        <span className="font-bold text-base leading-tight text-slate-900">
                             {negocio.nombre}
                         </span>
-                        <div className="flex items-center gap-1 mt-1">
-                            <div className="flex gap-0.5">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                    <Star key={i} size={8} className={i < Math.round(promedioOpiniones) ? "text-amber-400" : "text-slate-200"} fill="currentColor" />
-                                ))}
+                        {totalOpiniones > 0 && (
+                            <div className="flex items-center gap-1 mt-1">
+                                <div className="flex gap-0.5">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                        <Star key={i} size={10} className={i < Math.round(promedioOpiniones) ? "text-amber-400" : "text-slate-200"} fill="currentColor" />
+                                    ))}
+                                </div>
+                                <span className="text-xs text-slate-500 leading-none">
+                                    {promedioOpiniones.toFixed(1)} ({totalOpiniones > 999 ? `${(totalOpiniones / 1000).toFixed(1)}k` : totalOpiniones})
+                                </span>
                             </div>
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                                {promedioOpiniones.toFixed(1)} ({totalOpiniones === 0 ? '0' : totalOpiniones > 999 ? `${(totalOpiniones / 1000).toFixed(1)}k` : totalOpiniones})
-                            </span>
-                        </div>
+                        )}
                     </div>
                 </Link>
 
@@ -1197,37 +1303,57 @@ export default async function PublicNegocioPage({
                 />
             </section>
 
-            {/* 3. TARJETAS DE CONFIANZA (INTERACTIVAS) */}
-            <section className="px-6 mb-6">
-                <div className="grid grid-cols-4 gap-2 bg-white rounded-3xl p-3 border border-slate-100/50 shadow-sm">
-                    {/* Calificación */}
-                    <button id="btn-opiniones" className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
-                        <Star size={16} fill="currentColor" style={{ color: primaryColor }} />
-                        <span className="text-[11px] font-black text-slate-800 mt-1">{promedioOpiniones.toFixed(1)}/5</span>
-                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Opiniones</span>
-                    </button>
-                    {/* Clientes / Socios */}
-                    <button id="btn-fidelizacion" className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
-                        <Users size={16} style={{ color: primaryColor }} />
-                        <span className="text-[11px] font-black text-slate-800 mt-1">
-                            {totalClientes === 0 ? '0' : totalClientes > 999 ? `${(totalClientes / 1000).toFixed(1)}k` : totalClientes}
-                        </span>
-                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{isGymModule ? 'Socios' : 'Felices'}</span>
-                    </button>
-                    {/* Servicios / Planes */}
-                    <a href={isGymModule ? "#planes" : "#servicios-seccion"} className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none no-underline">
-                        <Sparkles size={16} style={{ color: primaryColor }} />
-                        <span className="text-[11px] font-black text-slate-800 mt-1">{isGymModule ? `${membershipPlans.length}+` : `${filteredCanchas.length}+`}</span>
-                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{isGymModule ? 'Planes' : 'Servicios'}</span>
-                    </a>
-                    {/* Ubicación */}
-                    <a href="#ubicacion" className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none no-underline">
-                        <MapPin size={16} style={{ color: primaryColor }} />
-                        <span className="text-[11px] font-black text-slate-800 mt-1 truncate max-w-[64px]">{negocio.ciudad || 'Quito'}</span>
-                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Ubicación</span>
-                    </a>
-                </div>
-            </section>
+            {/* 3. TARJETAS DE CONFIANZA — solo se muestran los datos que existen (nada de "0 opiniones") */}
+            {(() => {
+                const compact = (n: number) => n > 999 ? `${(n / 1000).toFixed(1)}k` : String(n);
+                const itemsCount = isGymModule ? membershipPlans.length : filteredCanchas.length;
+                const cards: { key: string; node: any }[] = [];
+                if (totalOpiniones > 0) {
+                    cards.push({ key: 'op', node: (
+                        <button id="btn-opiniones" className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
+                            <Star size={16} fill="currentColor" style={{ color: primaryColor }} />
+                            <span className="text-sm font-bold text-slate-800 mt-1">{promedioOpiniones.toFixed(1)}</span>
+                            <span className="text-xs text-slate-500 mt-0.5">{compact(totalOpiniones)} {totalOpiniones === 1 ? 'opinión' : 'opiniones'}</span>
+                        </button>
+                    ) });
+                }
+                if (totalClientes > 0) {
+                    cards.push({ key: 'cl', node: (
+                        <button id="btn-fidelizacion" className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
+                            <Users size={16} style={{ color: primaryColor }} />
+                            <span className="text-sm font-bold text-slate-800 mt-1">{compact(totalClientes)}</span>
+                            <span className="text-xs text-slate-500 mt-0.5">{isGymModule ? 'Socios' : 'Clientes'}</span>
+                        </button>
+                    ) });
+                }
+                if (itemsCount > 0) {
+                    cards.push({ key: 'sv', node: (
+                        <a href={isGymModule ? "#planes" : "#servicios-seccion"} className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none no-underline">
+                            <Sparkles size={16} style={{ color: primaryColor }} />
+                            <span className="text-sm font-bold text-slate-800 mt-1">{itemsCount}</span>
+                            <span className="text-xs text-slate-500 mt-0.5">{isGymModule ? 'Planes' : 'Servicios'}</span>
+                        </a>
+                    ) });
+                }
+                if (negocio.ciudad) {
+                    cards.push({ key: 'ub', node: (
+                        <a href="#ubicacion" className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none no-underline">
+                            <MapPin size={16} style={{ color: primaryColor }} />
+                            <span className="text-sm font-bold text-slate-800 mt-1 truncate max-w-[80px]">{negocio.ciudad}</span>
+                            <span className="text-xs text-slate-500 mt-0.5">Ubicación</span>
+                        </a>
+                    ) });
+                }
+                if (cards.length === 0) return null;
+                const cols = ['', 'grid-cols-1', 'grid-cols-2', 'grid-cols-3', 'grid-cols-4'][cards.length];
+                return (
+                    <section className="px-6 mb-6">
+                        <div className={`grid ${cols} divide-x divide-slate-100 bg-white rounded-3xl py-3 border border-slate-100 shadow-sm`}>
+                            {cards.map(c => <div key={c.key} className="px-1">{c.node}</div>)}
+                        </div>
+                    </section>
+                );
+            })()}
 
             {/* BANNER ACCESO SOCIO GYM */}
             {isGymModule && (
@@ -1237,20 +1363,20 @@ export default async function PublicNegocioPage({
                         className="group relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-850 to-slate-950 p-4 border border-slate-800 shadow-xl flex items-center justify-between transition-all active:scale-[0.98] hover:border-emerald-500/40"
                     >
                         <div className="flex items-center gap-3.5">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black shrink-0 border border-emerald-500/20 group-hover:scale-105 transition-transform">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold shrink-0 border border-emerald-500/20 group-hover:scale-105 transition-transform">
                                 <QrCode className="w-6 h-6" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+                                    <span className="text-xs font-bold uppercase tracking-wide text-emerald-400">
                                         Portal del Socio
                                     </span>
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                                 </div>
-                                <h3 className="font-black text-sm text-white mt-0.5">
+                                <h3 className="font-bold text-sm text-white mt-0.5">
                                     ¿Ya eres socio? Entra a Mi Gym
                                 </h3>
-                                <p className="text-[11px] text-slate-400">
+                                <p className="text-xs text-slate-400">
                                     Credencial QR, asistencias y rutinas
                                 </p>
                             </div>
@@ -1280,8 +1406,8 @@ export default async function PublicNegocioPage({
                         <section id="conoce-el-gym" className="mb-8 px-4 sm:px-6">
                             <div className="flex items-center justify-between mb-4">
                                 <div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest block mb-1" style={{ color: primaryColor }}>INSTALACIONES</span>
-                                    <h3 className="text-2xl font-black leading-none text-slate-900">Conoce el Gimnasio</h3>
+                                    <span className="text-xs font-bold uppercase tracking-wide block mb-1" style={{ color: primaryColor }}>Instalaciones</span>
+                                    <h3 className="text-2xl font-bold leading-none text-slate-900">Conoce el Gimnasio</h3>
                                 </div>
                             </div>
                             {gymAreas.length > 0 && (
@@ -1299,8 +1425,8 @@ export default async function PublicNegocioPage({
                                             </div>
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                                             <div className="absolute bottom-0 left-0 right-0 p-3.5">
-                                                <p className="text-xs sm:text-sm font-black text-white uppercase tracking-wide leading-tight">{area.name}</p>
-                                                {area.description && <p className="text-[10px] text-white/80 mt-1 line-clamp-2 leading-tight">{area.description}</p>}
+                                                <p className="text-xs sm:text-sm font-bold text-white uppercase tracking-wide leading-tight">{area.name}</p>
+                                                {area.description && <p className="text-xs text-white/80 mt-1 line-clamp-2 leading-tight">{area.description}</p>}
                                             </div>
                                         </div>
                                     ))}
@@ -1361,6 +1487,7 @@ export default async function PublicNegocioPage({
                             slug={slug}
                             primaryColor={primaryColor}
                             textColor={textColor}
+                            tipoNegocio={negocio.tipoNegocio}
                         />
                     </section>
                 </>
@@ -1385,11 +1512,11 @@ export default async function PublicNegocioPage({
                 <section id="resultados" className="px-6 mb-6">
                     <div className="flex justify-between items-end mb-4">
                         <div>
-                            <h3 className="text-2xl font-black leading-none text-slate-900">Resultados Reales</h3>
+                            <h3 className="text-2xl font-bold leading-none text-slate-900">Resultados Reales</h3>
                         </div>
                         <Link 
                             href={`/${slug}/portafolio`}
-                            className="text-[10px] font-black uppercase tracking-widest" 
+                            className="text-xs font-bold uppercase tracking-wide" 
                             style={{ color: primaryColor }}
                         >
                             Ver todos
@@ -1404,7 +1531,7 @@ export default async function PublicNegocioPage({
                                 <Link 
                                     key={item.id} 
                                     href={`/${slug}/portafolio#trabajo-${item.id}`}
-                                    className="group relative aspect-[4/3] w-[180px] sm:w-[220px] rounded-[2rem] overflow-hidden shrink-0 bg-slate-50 border border-slate-100 shadow-sm flex hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                                    className="group relative aspect-[4/3] w-[180px] sm:w-[220px] rounded-3xl overflow-hidden shrink-0 bg-slate-50 border border-slate-100 shadow-sm flex hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                                 >
                                     {/* Si es transformación (Antes/Después), los mostramos lado a lado */}
                                     {!isGallery ? (
@@ -1422,7 +1549,7 @@ export default async function PublicNegocioPage({
                                     
                                     {/* Badge del título centrado abajo */}
                                     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-md border border-slate-100/50 max-w-[90%] truncate">
-                                        <span className="text-[10px] font-black text-slate-800 tracking-wide uppercase leading-none block text-center">
+                                        <span className="text-xs font-bold text-slate-800 tracking-wide uppercase leading-none block text-center">
                                              {item.title}
                                         </span>
                                     </div>
@@ -1453,8 +1580,8 @@ export default async function PublicNegocioPage({
                 <section id="opiniones" className="px-6 mb-6">
                     <div className="flex justify-between items-end mb-4">
                         <div>
-                            <span className="text-[10px] font-black uppercase tracking-widest mb-1 block" style={{ color: primaryColor }}>TESTIMONIOS</span>
-                            <h3 className="text-2xl font-black leading-none text-slate-900">Opiniones</h3>
+                            <span className="text-xs font-bold uppercase tracking-wide mb-1 block" style={{ color: primaryColor }}>Testimonios</span>
+                            <h3 className="text-2xl font-bold leading-none text-slate-900">Opiniones</h3>
                         </div>
                     </div>
                     <ReviewsCarousel 
@@ -1470,8 +1597,8 @@ export default async function PublicNegocioPage({
                 <section id="paginas" className="px-6 mb-6">
                     <div className="flex justify-between items-end mb-4">
                         <div>
-                            <span className="text-[10px] font-black uppercase tracking-widest mb-2 block" style={{ color: primaryColor }}>DESCUBRE MÁS</span>
-                            <h3 className="text-2xl font-black leading-none text-slate-900">Contenido Exclusivo</h3>
+                            <span className="text-xs font-bold uppercase tracking-wide mb-2 block" style={{ color: primaryColor }}>Descubre más</span>
+                            <h3 className="text-2xl font-bold leading-none text-slate-900">Contenido Exclusivo</h3>
                         </div>
                     </div>
                     
@@ -1480,7 +1607,7 @@ export default async function PublicNegocioPage({
                             <Link 
                                 href={`/${slug}/pagina/${page.slug}`} 
                                 key={page.id}
-                                className="group relative w-full bg-white border border-slate-100/50 rounded-[2.5rem] overflow-hidden shadow-sm transition-all duration-500"
+                                className="group relative w-full bg-white border border-slate-100/50 rounded-3xl overflow-hidden shadow-sm transition-all duration-500"
                             >
                                 <div className="flex flex-col md:flex-row">
                                     <div className="md:w-2/5 aspect-[16/10] md:aspect-square relative overflow-hidden">
@@ -1497,10 +1624,10 @@ export default async function PublicNegocioPage({
                                             <ArrowUpRight size={20} />
                                         </div>
  
-                                        <span className="text-[8px] font-black uppercase tracking-widest mb-2 block" style={{ color: primaryColor }}>
+                                        <span className="text-xs font-bold uppercase tracking-wide mb-2 block" style={{ color: primaryColor }}>
                                             {isGymModule ? 'Instalaciones & Más' : 'Especial'}
                                         </span>
-                                        <h4 className="text-xl font-black leading-tight mb-2 transition-colors text-slate-900">
+                                        <h4 className="text-xl font-bold leading-tight mb-2 transition-colors text-slate-900">
                                             {page.title}
                                         </h4>
                                         <p className="text-xs font-semibold text-slate-400 leading-relaxed mb-4 max-w-md line-clamp-2">
@@ -1509,7 +1636,7 @@ export default async function PublicNegocioPage({
                                         
                                         <div className="flex items-center gap-3">
                                             <div className="h-px w-6 opacity-30" style={{ backgroundColor: primaryColor }} />
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-700">
+                                            <span className="text-xs font-bold uppercase tracking-wide text-slate-700">
                                                 Leer artículo
                                             </span>
                                         </div>
@@ -1529,14 +1656,14 @@ export default async function PublicNegocioPage({
                             <MapPin size={20} className="stroke-[2.5]" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-black tracking-tight text-slate-800 uppercase leading-none">Ubicación</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Encuéntranos fácilmente</p>
+                            <h3 className="text-lg font-bold tracking-tight text-slate-800 leading-none">Ubicación</h3>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Encuéntranos fácilmente</p>
                         </div>
                     </div>
                     
                     <div className="space-y-8">
                         {resolvedUbicaciones.map((sede: any) => (
-                            <div key={sede.id} className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-100/70 shadow-sm flex flex-col">
+                            <div key={sede.id} className="bg-white rounded-3xl overflow-hidden border border-slate-100/70 shadow-sm flex flex-col">
                                 
                                 {/* Contenedor del Mapa con Botones e Imagen de Fachada */}
                                 <div className="relative w-full h-[240px] bg-slate-50 overflow-hidden">
@@ -1554,7 +1681,7 @@ export default async function PublicNegocioPage({
                                         href={sede.navUrl} 
                                         target="_blank" 
                                         rel="noopener noreferrer" 
-                                        className="absolute bottom-4 right-4 bg-white/95 hover:bg-white text-slate-800 border border-slate-100 rounded-full px-4 py-2 text-[9px] font-black uppercase tracking-widest shadow-md flex items-center gap-1.5 active:scale-95 transition-all z-10"
+                                        className="absolute bottom-4 right-4 bg-white/95 hover:bg-white text-slate-800 border border-slate-100 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide shadow-md flex items-center gap-1.5 active:scale-95 transition-all z-10"
                                     >
                                         <Maximize size={10} className="stroke-[3]" />
                                         Ver mapa
@@ -1591,15 +1718,15 @@ export default async function PublicNegocioPage({
                                                     <MapPin size={20} className="stroke-[2.5]" />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <h4 className="font-black text-slate-800 uppercase text-sm tracking-tight">{sede.nombre}</h4>
-                                                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed max-w-sm">
+                                                    <h4 className="font-bold text-slate-800 uppercase text-sm tracking-tight">{sede.nombre}</h4>
+                                                    <p className="text-xs text-slate-400 font-semibold leading-relaxed max-w-sm">
                                                         {sede.direccion}
                                                     </p>
                                                     <a 
                                                         href={sede.navUrl} 
                                                         target="_blank" 
                                                         rel="noopener noreferrer" 
-                                                        className="inline-flex items-center gap-1 text-[10px] font-black text-pink-500 hover:text-pink-600 uppercase tracking-wider pt-1.5 transition-colors"
+                                                        className="inline-flex items-center gap-1 text-xs font-bold text-pink-500 hover:text-pink-600 uppercase tracking-wider pt-1.5 transition-colors"
                                                     >
                                                         Cómo llegar <span className="text-xs">→</span>
                                                     </a>
@@ -1612,17 +1739,17 @@ export default async function PublicNegocioPage({
                                                     <Clock size={20} className="stroke-[2.5]" />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horario</h5>
-                                                    <p className="text-xs font-black text-slate-800 leading-tight">
+                                                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Horario</h5>
+                                                    <p className="text-xs font-bold text-slate-800 leading-tight">
                                                         {sede.horario ? (
                                                             sede.horario.split(/(\d+:\d+\s*(?:AM|PM|am|pm))/).map((txt: string, idx: number) => {
                                                                 const isTime = /\d+:\d+\s*(?:AM|PM|am|pm)/.test(txt);
-                                                                return isTime ? <span key={idx} className="block text-[10px] text-slate-400 font-semibold mt-0.5">{txt}</span> : <span key={idx}>{txt}</span>;
+                                                                return isTime ? <span key={idx} className="block text-xs text-slate-400 font-semibold mt-0.5">{txt}</span> : <span key={idx}>{txt}</span>;
                                                             })
                                                         ) : (
                                                             <>
                                                                 Lun - Dom
-                                                                <span className="block text-[10px] text-slate-400 font-semibold mt-0.5">8:00 AM - 11:00 PM</span>
+                                                                <span className="block text-xs text-slate-400 font-semibold mt-0.5">8:00 AM - 11:00 PM</span>
                                                             </>
                                                         )}
                                                     </p>
@@ -1635,15 +1762,15 @@ export default async function PublicNegocioPage({
                                                     <Phone size={20} className="stroke-[2.5]" />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono</h5>
+                                                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Teléfono</h5>
                                                     <a 
                                                         href={whatsappUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="inline-flex items-center text-xs font-black text-slate-800 hover:text-pink-500 leading-tight transition-colors"
+                                                        className="inline-flex items-center text-xs font-bold text-slate-800 hover:text-pink-500 leading-tight transition-colors"
                                                     >
                                                         {sede.telefono || "099 123 4567"}
-                                                        <span className="text-[8px] text-emerald-600 font-black bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 ml-2 uppercase tracking-wider">WhatsApp</span>
+                                                        <span className="text-xs text-emerald-600 font-bold bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 ml-2 uppercase tracking-wider">WhatsApp</span>
                                                     </a>
                                                 </div>
                                             </div>
@@ -1660,7 +1787,7 @@ export default async function PublicNegocioPage({
                                                 <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
                                                     <Car size={14} className="stroke-[2.5]" />
                                                 </div>
-                                                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">Parqueadero Disponible</span>
+                                                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Parqueadero Disponible</span>
                                             </div>
                                         )}
 
@@ -1670,7 +1797,7 @@ export default async function PublicNegocioPage({
                                                 <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
                                                     <Bus size={14} className="stroke-[2.5]" />
                                                 </div>
-                                                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">Transporte Cercano</span>
+                                                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Transporte Cercano</span>
                                             </div>
                                         )}
 
@@ -1680,7 +1807,7 @@ export default async function PublicNegocioPage({
                                                 <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
                                                     <ShieldCheck size={14} className="stroke-[2.5]" />
                                                 </div>
-                                                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">Zona Segura</span>
+                                                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Zona Segura</span>
                                             </div>
                                         )}
 
@@ -1690,7 +1817,7 @@ export default async function PublicNegocioPage({
                                                 <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
                                                     <Accessibility size={14} className="stroke-[2.5]" />
                                                 </div>
-                                                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">Acceso Fácil</span>
+                                                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Acceso Fácil</span>
                                             </div>
                                         )}
                                     </div>
@@ -1715,7 +1842,7 @@ export default async function PublicNegocioPage({
                             id="modal-foto-img" 
                             src="" 
                             alt="Foto ampliada del local" 
-                            className="max-w-full max-h-[85vh] rounded-[2rem] object-contain shadow-2xl border-[4px] border-white animate-in zoom-in-95 duration-200"
+                            className="max-w-full max-h-[85vh] rounded-3xl object-contain shadow-2xl border-[4px] border-white animate-in zoom-in-95 duration-200"
                         />
                     </div>
 
@@ -1883,7 +2010,7 @@ export default async function PublicNegocioPage({
             />
 
             {/* Dialog de Opiniones - Diseño Premium */}
-            <dialog id="modal-opiniones" className="m-auto rounded-[2rem] p-0 max-w-md w-[92%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none bg-white overflow-hidden">
+            <dialog id="modal-opiniones" className="m-auto rounded-3xl p-0 max-w-md w-[92%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none bg-white overflow-hidden">
                 <div className="flex flex-col max-h-[88vh] w-full overflow-hidden">
                     {/* Header */}
                 <div className="px-5 pt-5 pb-4 border-b border-slate-100 shrink-0">
@@ -1893,8 +2020,8 @@ export default async function PublicNegocioPage({
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: primaryColor }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="m9 10 2 2 4-4"/></svg>
                             </div>
                             <div>
-                                <h4 className="font-black text-slate-900 text-[15px] leading-none">Opiniones de clientes</h4>
-                                <p className="text-[10px] font-medium text-slate-400 mt-0.5">Lo que dicen nuestros clientes sobre nosotros</p>
+                                <h4 className="font-bold text-slate-900 text-[15px] leading-none">Opiniones de clientes</h4>
+                                <p className="text-xs font-medium text-slate-400 mt-0.5">Lo que dicen nuestros clientes sobre nosotros</p>
                             </div>
                         </div>
                         <button id="btn-close-opiniones" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold active:scale-95 transition-transform border-0 cursor-pointer text-sm">×</button>
@@ -1905,7 +2032,7 @@ export default async function PublicNegocioPage({
                 <div className="mx-5 mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 shrink-0">
                     <div className="flex items-center gap-4">
                         <div className="flex flex-col shrink-0">
-                            <span className="text-5xl font-black leading-none" style={{ color: primaryColor }}>
+                            <span className="text-5xl font-bold leading-none" style={{ color: primaryColor }}>
                                 {allReviews.length > 0 ? (allReviews.reduce((acc: number, r: any) => acc + r.stars, 0) / allReviews.length).toFixed(1) : '5.0'}
                             </span>
                             <div className="flex gap-0.5 mt-1.5">
@@ -1913,7 +2040,7 @@ export default async function PublicNegocioPage({
                                     <span key={i} className="text-amber-400 text-[14px]">&#9733;</span>
                                 ))}
                             </div>
-                            <span className="text-[9px] font-bold text-slate-400 mt-1">
+                            <span className="text-xs font-bold text-slate-400 mt-1">
                                 Basado en {allReviews.length} {allReviews.length === 1 ? 'opinión' : 'opiniones'}
                             </span>
                         </div>
@@ -1923,12 +2050,12 @@ export default async function PublicNegocioPage({
                                 const pct = allReviews.length > 0 ? (count / allReviews.length) * 100 : (star === 5 ? 100 : 0);
                                 return (
                                     <div key={star} className="flex items-center gap-1.5">
-                                        <span className="text-[9px] font-bold text-slate-500 w-2">{star}</span>
-                                        <span className="text-amber-400 text-[9px]">&#9733;</span>
+                                        <span className="text-xs font-bold text-slate-500 w-2">{star}</span>
+                                        <span className="text-amber-400 text-xs">&#9733;</span>
                                         <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                                             <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: primaryColor }} />
                                         </div>
-                                        <span className="text-[9px] font-bold text-slate-400 w-5 text-right">{count}</span>
+                                        <span className="text-xs font-bold text-slate-400 w-5 text-right">{count}</span>
                                     </div>
                                 );
                             })}
@@ -1964,33 +2091,33 @@ export default async function PublicNegocioPage({
                                 <div key={r.id || idx} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-2">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-[13px] font-black" style={{ backgroundColor: primaryColor }}>
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold" style={{ backgroundColor: primaryColor }}>
                                                 {inicial}
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="text-[12px] font-black text-slate-900">{nombreCorto}</span>
-                                                    <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                                    <span className="text-xs font-bold text-slate-900">{nombreCorto}</span>
+                                                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                                                         <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
                                                         Cliente verificado
                                                     </span>
                                                 </div>
                                                 <div className="flex gap-0.5 mt-0.5">
                                                     {Array.from({ length: 5 }).map((_: any, i: number) => (
-                                                        <span key={i} className={`text-[11px] ${i < r.stars ? 'text-amber-400' : 'text-slate-200'}`}>&#9733;</span>
+                                                        <span key={i} className={`text-xs ${i < r.stars ? 'text-amber-400' : 'text-slate-200'}`}>&#9733;</span>
                                                     ))}
                                                 </div>
                                             </div>
                                         </div>
-                                        <span className="text-[9px] font-semibold text-slate-400 shrink-0">{fecha}</span>
+                                        <span className="text-xs font-semibold text-slate-400 shrink-0">{fecha}</span>
                                     </div>
-                                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
                                         {r.comment && r.comment.trim() !== '' ? r.comment : 'Calificación de 5 estrellas por excelente servicio en el negocio.'}
                                     </p>
                                     {r.appointment?.servicio && (
                                         <div className="flex items-center gap-1">
                                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
-                                            <span className="text-[9px] font-semibold text-slate-400">{r.appointment.servicio}</span>
+                                            <span className="text-xs font-semibold text-slate-400">{r.appointment.servicio}</span>
                                         </div>
                                     )}
                                 </div>
@@ -2002,16 +2129,16 @@ export default async function PublicNegocioPage({
                 {/* Footer */}
                 <div className="px-5 pb-4 pt-2 border-t border-slate-100 shrink-0 flex items-center justify-center gap-1.5">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: primaryColor }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-                    <span className="text-[9px] font-bold text-slate-400">Opiniones verificadas y reales de nuestros clientes</span>
+                    <span className="text-xs font-bold text-slate-400">Opiniones verificadas y reales de nuestros clientes</span>
                 </div>
                 </div>
             </dialog>
 
             {/* Dialog de Fidelización */}
-            <dialog id="modal-fidelizacion" className="m-auto rounded-[2rem] p-6 max-w-md w-[90%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none text-slate-800 bg-white">
+            <dialog id="modal-fidelizacion" className="m-auto rounded-3xl p-6 max-w-md w-[90%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none text-slate-800 bg-white">
                 <div className="space-y-5">
                     <div className="flex justify-between items-center">
-                        <h4 className="font-black text-slate-900 text-base uppercase tracking-tight flex items-center gap-1.5">
+                        <h4 className="font-bold text-slate-900 text-base uppercase tracking-tight flex items-center gap-1.5">
                             👑 Club de Fidelización
                         </h4>
                         <button id="btn-close-fidelizacion" className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 font-bold active:scale-95 transition-transform border-0 cursor-pointer">✕</button>
@@ -2020,19 +2147,19 @@ export default async function PublicNegocioPage({
                         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-xl font-bold" style={{ color: primaryColor, backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 95%)`, borderColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, borderStyle: 'solid', borderWidth: '1px' }}>
                             👑
                         </div>
-                        <h5 className="font-black text-slate-900 uppercase tracking-wide text-xs">¡Acumula puntos y gana!</h5>
-                        <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                        <h5 className="font-bold text-slate-900 uppercase tracking-wide text-xs">¡Acumula puntos y gana!</h5>
+                        <p className="text-xs text-slate-500 leading-relaxed font-medium">
                             Por cada cita completada con nosotros acumulas puntos automáticamente. Canjea tus puntos acumulados por masajes, tratamientos faciales o servicios gratis.
                         </p>
                     </div>
                     <div className="grid grid-cols-3 gap-1.5 pt-2">
-                        <button id="btn-close-fidelizacion-footer" className="py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[8px] font-black uppercase tracking-widest text-slate-500 active:scale-95 transition-transform border-0 cursor-pointer">
+                        <button id="btn-close-fidelizacion-footer" className="py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 active:scale-95 transition-transform border-0 cursor-pointer">
                             Cerrar
                         </button>
-                        <a href={`/${slug}/misiones/premios`} className="py-3 rounded-2xl text-[8px] font-black uppercase tracking-widest text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
+                        <a href={`/${slug}/misiones/premios`} className="py-3 rounded-2xl text-xs font-bold uppercase tracking-wide text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
                             Premios
                         </a>
-                        <a href={`/${slug}/misiones`} className="py-3 rounded-2xl text-[8px] font-black uppercase tracking-widest text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
+                        <a href={`/${slug}/misiones`} className="py-3 rounded-2xl text-xs font-bold uppercase tracking-wide text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
                             Misiones
                         </a>
                     </div>

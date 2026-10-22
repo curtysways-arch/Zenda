@@ -62,7 +62,7 @@ export default function AdminCommentsPage() {
                         <ArrowLeft size={24} />
                     </Link>
                     <div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Comentarios</h1>
+                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Comentarios</h1>
                         <p className="text-slate-500 text-sm font-medium">Modera las interacciones de tu portafolio.</p>
                     </div>
                 </div>
@@ -73,16 +73,16 @@ export default function AdminCommentsPage() {
                     <Loader2 className="w-16 h-16 animate-spin text-emerald-500" />
                 </div>
             ) : (
-                <div className="bg-white rounded-[3rem] border border-slate-100 shadow-xl overflow-hidden">
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="bg-slate-50 border-b border-slate-100">
-                                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Usuario</th>
-                                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Comentario</th>
-                                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Publicación</th>
-                                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Estado</th>
-                                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Acciones</th>
+                                    <th className="px-8 py-6 text-xs font-bold uppercase tracking-wide text-slate-400">Usuario</th>
+                                    <th className="px-8 py-6 text-xs font-bold uppercase tracking-wide text-slate-400">Comentario</th>
+                                    <th className="px-8 py-6 text-xs font-bold uppercase tracking-wide text-slate-400">Publicación</th>
+                                    <th className="px-8 py-6 text-xs font-bold uppercase tracking-wide text-slate-400">Estado</th>
+                                    <th className="px-8 py-6 text-xs font-bold uppercase tracking-wide text-slate-400 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -94,25 +94,25 @@ export default function AdminCommentsPage() {
                                                     {c.userAvatar ? <img src={c.userAvatar} className="w-full h-full object-cover" /> : <User size={20} />}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-black text-slate-900">{c.userName}</span>
-                                                    <span className="text-[10px] font-bold text-slate-400">{format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}</span>
+                                                    <span className="text-sm font-bold text-slate-900">{c.userName}</span>
+                                                    <span className="text-xs font-bold text-slate-400">{format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <p className="text-xs font-medium text-slate-600 max-w-xs leading-relaxed italic">"{c.content}"</p>
+                                            <p className="text-xs font-medium text-slate-600 max-w-xs leading-relaxed ">"{c.content}"</p>
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-3">
                                                 <img src={c.post_image} className="size-10 rounded-lg object-cover border border-slate-100" />
-                                                <span className="text-[10px] font-black text-slate-400 uppercase truncate max-w-[100px]">{c.post_title}</span>
+                                                <span className="text-xs font-bold text-slate-400 uppercase truncate max-w-[100px]">{c.post_title}</span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
                                             {c.approved ? (
-                                                <span className="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-[8px] font-black uppercase tracking-widest">Aprobado</span>
+                                                <span className="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold uppercase tracking-wide">Aprobado</span>
                                             ) : (
-                                                <span className="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-[8px] font-black uppercase tracking-widest">Pendiente</span>
+                                                <span className="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-xs font-bold uppercase tracking-wide">Pendiente</span>
                                             )}
                                         </td>
                                         <td className="px-8 py-6 text-right">
@@ -147,7 +147,7 @@ export default function AdminCommentsPage() {
                                 ))}
                                 {comments.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-8 py-20 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">
+                                        <td colSpan={5} className="px-8 py-20 text-center text-slate-400 font-bold uppercase tracking-wide text-xs">
                                             No hay comentarios para moderar.
                                         </td>
                                     </tr>

@@ -26,6 +26,7 @@ import {
     Scissors,
     UserCircle,
     AlertTriangle,
+    Plus,
     Trophy,
     Activity
 } from 'lucide-react';
@@ -34,6 +35,8 @@ import { clsx } from 'clsx';
 import MobileAgenda from '@/components/admin/mobile/MobileAgenda';
 import { useConfirm } from '@/components/admin/ConfirmContext';
 import { AgendaSyncService } from '@/lib/services/AgendaSyncService';
+import { isDentalBusiness } from '@/lib/businessTypeHelper';
+import DentalAgenda from '@/modules/dental/components/admin/agenda/DentalAgenda';
 
 function playNotificationSound() {
     try {
@@ -358,7 +361,7 @@ function CitasAdminPageContent() {
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-40">
             <Loader2 className="w-16 h-16 animate-spin" style={{ color: 'var(--primary-color)' }} />
-            <p className="mt-8 text-slate-400 font-black uppercase tracking-[0.5em] text-[10px] italic">Accediendo a la base...</p>
+            <p className="mt-8 text-slate-400 font-bold uppercase tracking-wide text-xs ">Accediendo a la base...</p>
         </div>
     );
 
@@ -379,67 +382,71 @@ function CitasAdminPageContent() {
             </div>
 
             {/* VISTA ESCRITORIO */}
-            <div className="hidden md:block space-y-10 md:space-y-16 animate-in fade-in duration-700">
-                <div className="relative">
-                    <div className="relative z-10 flex flex-col xl:flex-row xl:items-end justify-between gap-10">
-                        <div className="space-y-4">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 border rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', borderColor: 'color-mix(in srgb, var(--primary-color), transparent 80%)' }}>
-                                <Zap size={12} className="animate-pulse" style={{ color: 'var(--primary-color)' }} />
-                                <span className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--primary-color)' }}>
-                                    {isCanchas ? 'Control de Canchas' : 'Caja Operativa'}
-                                </span>
-                            </div>
-                            <h1 className="text-5xl md:text-8xl font-black text-slate-900 tracking-tighter uppercase italic leading-[0.8]">
-                                Central <br /> <span style={{ color: 'var(--primary-color)' }}>{isCanchas ? 'de Turnos' : 'Inbox'}</span>
+            <div className="hidden md:block space-y-6 max-w-7xl">
+                <header className="space-y-5">
+                    <div className="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
+                                {isCanchas ? 'Reservas de canchas' : 'Agenda'}
                             </h1>
+                            <p className="text-slate-600 mt-1">
+                                {isCanchas ? 'Todos los turnos de tus canchas en un solo lugar.' : 'Confirma, atiende y cobra tus citas.'}
+                            </p>
                         </div>
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                            <div className="relative group">
-                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 transition-all" style={{ color: 'var(--primary-color)' }} size={20} />
-                                <input 
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
                                     type="text"
-                                    placeholder={isCanchas ? "JUGADOR, TELÉFONO O ID..." : "CLIENTE, TELÉFONO O ID..."}
+                                    placeholder={isCanchas ? 'Buscar jugador o teléfono' : 'Buscar cliente o teléfono'}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="bg-white border border-slate-200 text-slate-900 text-base py-5 pl-14 pr-8 w-full sm:w-96 rounded-3xl focus:outline-none transition-all shadow-sm placeholder:text-slate-300 italic font-black uppercase"
-                                    style={{ borderColor: 'var(--primary-color)' }}
+                                    className="bg-white border border-slate-200 text-slate-900 text-sm py-2.5 pl-10 pr-4 w-64 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-200 placeholder:text-slate-400"
                                 />
                             </div>
-                            <div className="flex flex-wrap bg-white p-1.5 rounded-3xl border border-slate-200 shadow-xl gap-1">
-                                {[
-                                    { id: 'active', label: isCanchas ? 'Turnos Activos' : 'Pendientes y Confirmadas' },
-                                    ...(unmanagedCount > 0 ? [{ id: 'unmanaged', label: `⚠️ Sin Gestionar (${unmanagedCount})`, isAlert: true }] : []),
-                                    { id: 'pending', label: 'Solo Pendientes' },
-                                    { id: 'confirmed', label: 'Solo Confirmadas' },
-                                    { id: 'completed', label: 'Finalizadas' },
-                                    { id: 'cancelled', label: 'Canceladas' },
-                                    { id: 'all', label: 'Ver Todo' }
-                                ].map((opt: any) => (
-                                    <button key={opt.id} onClick={() => setFilterStatus(opt.id)}
-                                        className={clsx("px-4 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all",
-                                            filterStatus === opt.id 
-                                                ? (opt.isAlert ? "bg-amber-600 text-white shadow-xl shadow-amber-500/20" : "bg-slate-900 text-white shadow-xl shadow-slate-200") 
-                                                : (opt.isAlert ? "text-amber-800 bg-amber-100/70 hover:bg-amber-200/70 font-black" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"))}>
-                                        {opt.label}
-                                    </button>
-                                ))}
-                            </div>
+                            <button
+                                onClick={() => router.push('/admin/citas/nueva')}
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white hover:brightness-110 shrink-0"
+                                style={{ backgroundColor: 'var(--primary-color)' }}
+                            >
+                                <Plus size={16} />
+                                {isCanchas ? 'Nueva reserva' : 'Nueva cita'}
+                            </button>
                         </div>
                     </div>
-                </div>
+                    <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Filtrar citas">
+                        {[
+                            { id: 'active', label: 'Próximas' },
+                            ...(unmanagedCount > 0 ? [{ id: 'unmanaged', label: `Sin gestionar (${unmanagedCount})`, isAlert: true }] : []),
+                            { id: 'pending', label: 'Por confirmar' },
+                            { id: 'confirmed', label: 'Confirmadas' },
+                            { id: 'completed', label: 'Finalizadas' },
+                            { id: 'cancelled', label: 'Canceladas' },
+                            { id: 'all', label: 'Todas' }
+                        ].map((opt: any) => (
+                            <button key={opt.id} role="tab" aria-selected={filterStatus === opt.id} onClick={() => setFilterStatus(opt.id)}
+                                className={clsx("px-3.5 py-2 rounded-full text-sm font-medium whitespace-nowrap border transition-colors",
+                                    filterStatus === opt.id
+                                        ? (opt.isAlert ? "bg-amber-600 border-amber-600 text-white" : "bg-slate-900 border-slate-900 text-white")
+                                        : (opt.isAlert ? "bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"))}>
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </header>
 
                 {/* Banner de alerta para reservas vencidas sin gestionar */}
                 {unmanagedCount > 0 && (
                     <div 
                         onClick={() => setFilterStatus('unmanaged')}
-                        className="bg-amber-50 border-2 border-amber-300/80 p-5 rounded-[2.5rem] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-amber-100/60 transition-all shadow-sm group"
+                        className="bg-amber-50 border-2 border-amber-300/80 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-amber-100/60 transition-all shadow-sm group"
                     >
                         <div className="flex items-center gap-4">
                             <div className="size-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
                                 <AlertTriangle size={22} />
                             </div>
                             <div>
-                                <h4 className="text-sm font-black text-amber-950 uppercase tracking-tight">
+                                <h4 className="text-sm font-bold text-amber-950 uppercase tracking-tight">
                                     ⚠️ {unmanagedCount} {unmanagedCount === 1 ? 'reserva sin gestionar' : 'reservas sin gestionar'}
                                 </h4>
                                 <p className="text-xs text-amber-800 font-medium">
@@ -447,32 +454,32 @@ function CitasAdminPageContent() {
                                 </p>
                             </div>
                         </div>
-                        <span className="px-4 py-2 bg-amber-600 group-hover:bg-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shrink-0">
+                        <span className="px-4 py-2 bg-amber-600 group-hover:bg-amber-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shrink-0">
                             Resolver Pendientes ({unmanagedCount})
                         </span>
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-                    <StatCard label="Ingresos Hoy" value={`$${ingresosHoy}`} icon={TrendingUp} color="emerald" trend={citasHoy.length > 0 ? `${citasHoy.length} ${isCanchas ? 'turnos hoy' : 'citas hoy'}` : (isCanchas ? "Sin turnos hoy" : "Sin citas hoy")} />
-                    <StatCard label={isCanchas ? "Total en Turnos" : "Total en Agenda"} value={`$${totalAgenda}`} icon={Zap} color="blue" trend="Venta bruta lista" />
-                    <StatCard label="Aprobadas" value={citas.filter(r => (r.estado === 'confirmed' || r.estado === 'approved') && !isUnmanagedReserva(r)).length} icon={Check} color="emerald" trend="Agendadas" />
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                    <StatCard label="Cobrado hoy" value={`$${ingresosHoy}`} icon={TrendingUp} color="emerald" trend={citasHoy.length > 0 ? `${citasHoy.length} ${isCanchas ? 'turnos hoy' : 'citas hoy'}` : (isCanchas ? "Sin turnos hoy" : "Sin citas hoy")} />
+                    <StatCard label={isCanchas ? "Total en Turnos" : "Total en Agenda"} value={`$${totalAgenda}`} icon={Zap} color="blue" trend="Valor de las citas activas" />
+                    <StatCard label="Confirmadas" value={citas.filter(r => (r.estado === 'confirmed' || r.estado === 'approved') && !isUnmanagedReserva(r)).length} icon={Check} color="emerald" trend="Listas para atender" />
                     <StatCard label="Pendientes" value={citas.filter(r => r.estado === 'pending' && !isUnmanagedReserva(r)).length} icon={Clock} color="amber" trend="Por confirmar" />
                 </div>
 
-                <div className="flex items-center justify-between mx-4">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 italic">
-                            {filteredCitas.length} {isCanchas ? 'Turnos de cancha en agenda' : 'Servicios en agenda'}
+                        
+                        <span className="text-sm font-medium text-slate-500">
+                            {filteredCitas.length} {isCanchas ? (filteredCitas.length === 1 ? 'turno' : 'turnos') : (filteredCitas.length === 1 ? 'cita' : 'citas')}
                         </span>
                     </div>
                     <div className="flex bg-white p-1.5 rounded-2xl border border-slate-200 gap-1 shadow-sm">
-                        <button onClick={() => setViewMode('table')} className={clsx("p-3 rounded-xl transition-all", viewMode === 'table' ? "text-white shadow-lg" : "text-slate-300 hover:text-slate-600 hover:bg-slate-50")} style={viewMode === 'table' ? { backgroundColor: 'var(--primary-color)' } : {}}>
-                            <List size={22} strokeWidth={3} />
+                        <button onClick={() => setViewMode('table')} className={clsx("p-2 rounded-lg transition-all", viewMode === 'table' ? "text-white shadow-lg" : "text-slate-300 hover:text-slate-600 hover:bg-slate-50")} style={viewMode === 'table' ? { backgroundColor: 'var(--primary-color)' } : {}}>
+                            <List size={18} />
                         </button>
-                        <button onClick={() => setViewMode('cards')} className={clsx("p-3 rounded-xl transition-all", viewMode === 'cards' ? "text-white shadow-lg" : "text-slate-300 hover:text-slate-600 hover:bg-slate-50")} style={viewMode === 'cards' ? { backgroundColor: 'var(--primary-color)' } : {}}>
-                            <LayoutGrid size={22} strokeWidth={3} />
+                        <button onClick={() => setViewMode('cards')} className={clsx("p-2 rounded-lg transition-all", viewMode === 'cards' ? "text-white shadow-lg" : "text-slate-300 hover:text-slate-600 hover:bg-slate-50")} style={viewMode === 'cards' ? { backgroundColor: 'var(--primary-color)' } : {}}>
+                            <LayoutGrid size={18} />
                         </button>
                     </div>
                 </div>
@@ -480,16 +487,16 @@ function CitasAdminPageContent() {
                 {filteredCitas.length > 0 ? (
                     <div className="relative group/view overflow-x-hidden min-h-[400px]">
                         {viewMode === 'table' && (
-                            <div className="animate-in fade-in slide-in-from-left-4 duration-500 bg-white rounded-[3rem] border border-slate-200 shadow-xl overflow-hidden">
+                            <div className="animate-in fade-in slide-in-from-left-4 duration-500 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse min-w-[900px]">
                                         <thead>
                                             <tr className="bg-slate-50 border-b border-slate-100">
-                                                <th className="px-10 py-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 italic">Identidad</th>
-                                                <th className="px-10 py-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 italic">Bloque</th>
-                                                <th className="px-10 py-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 italic">Monto</th>
-                                                <th className="px-10 py-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 italic">Status</th>
-                                                <th className="px-10 py-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 italic text-right">Ver</th>
+                                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-slate-400 ">Cliente</th>
+                                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-slate-400 ">Servicio y hora</th>
+                                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-slate-400 ">Monto</th>
+                                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-slate-400 ">Estado</th>
+                                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-slate-400 text-right"></th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
@@ -504,29 +511,29 @@ function CitasAdminPageContent() {
                                                             isHighlighted && "bg-cyan-50/50 border-y border-cyan-300 animate-pulse"
                                                         )}
                                                     >
-                                                    <td className="px-10 py-10">
+                                                    <td className="px-6 py-4">
                                                         <div className="flex flex-col gap-1">
                                                             <div className="flex items-center gap-5">
-                                                                <div className="w-14 h-14 bg-slate-100 border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 font-black text-lg group-hover/row:text-white transition-all transform group-hover/row:rotate-6" style={ { '--tw-bg-opacity': '1' } as any }>
+                                                                <div className="w-14 h-14 bg-slate-100 border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 font-bold text-lg group-hover/row:text-white transition-all transform group-hover/row:rotate-6" style={ { '--tw-bg-opacity': '1' } as any }>
                                                                     <style jsx>{`
                                                                         .group\/row:hover .w-14 { background-color: var(--primary-color); }
                                                                     `}</style>
                                                                     {reserva.cliente.nombre.charAt(0)}
                                                                 </div>
                                                                 <div className="space-y-1">
-                                                                    <span className="block font-black text-slate-800 text-lg uppercase italic transition-colors leading-none truncate max-w-[180px]" style={ { color: 'inherit' } as any }>
+                                                                    <span className="block font-bold text-slate-800 text-lg transition-colors leading-none truncate max-w-[180px]" style={ { color: 'inherit' } as any }>
                                                                         <style jsx>{`
                                                                             .group\/row:hover .text-slate-800 { color: var(--primary-color); }
                                                                         `}</style>
                                                                         {reserva.cliente.nombre}
                                                                     </span>
-                                                                    <span className="block text-slate-400 text-[9px] font-black uppercase tracking-widest leading-none">{reserva.cliente.telefono}</span>
+                                                                    <span className="block text-slate-400 text-xs font-bold uppercase tracking-wide leading-none">{reserva.cliente.telefono}</span>
                                                                 </div>
                                                             </div>
                                                             <ServiceInfo reserva={reserva} isCanchas={isCanchas} />
                                                         </div>
                                                     </td>
-                                                    <td className="px-10 py-10">
+                                                    <td className="px-6 py-4">
                                                         <div className="space-y-2">
                                                             <div className="flex items-center gap-3">
                                                                 {isCanchas ? (
@@ -534,7 +541,7 @@ function CitasAdminPageContent() {
                                                                 ) : (
                                                                     <Scissors size={14} style={{ color: 'var(--primary-color)' }} />
                                                                 )}
-                                                                <span className="text-xs font-black text-slate-700 italic uppercase">
+                                                                <span className="text-xs font-bold text-slate-700 uppercase">
                                                                     {reserva.service?.nombre || reserva.nombreServicio}
                                                                 </span>
                                                             </div>
@@ -543,12 +550,12 @@ function CitasAdminPageContent() {
                                                                 if (!pack) return null;
                                                                 return (
                                                                     <div className="space-y-1 bg-indigo-50/70 p-2 rounded-xl border border-indigo-150 max-w-[260px]">
-                                                                        <span className="text-[8px] font-black uppercase tracking-wider text-indigo-700 block">
+                                                                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 block">
                                                                             📦 {pack.titulo}
                                                                         </span>
                                                                         <div className="flex flex-wrap gap-1">
                                                                             {pack.servicios.map((s: string, idx: number) => (
-                                                                                <span key={idx} className="text-[8px] font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-indigo-100 shadow-xs">
+                                                                                <span key={idx} className="text-xs font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-indigo-100 shadow-xs">
                                                                                     ✓ {s}
                                                                                 </span>
                                                                             ))}
@@ -557,24 +564,24 @@ function CitasAdminPageContent() {
                                                                 );
                                                             })()}
                                                             <div className="flex flex-col gap-1">
-                                                                <span className="text-[10px] font-black uppercase tracking-tighter italic" style={{ color: 'var(--primary-color)' }}>
+                                                                <span className="text-xs font-bold uppercase tracking-tight " style={{ color: 'var(--primary-color)' }}>
                                                                     {reserva.horaInicio} - {reserva.horaFin}
                                                                 </span>
-                                                                <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest italic group-hover/row:text-slate-900 transition-colors">
+                                                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wide group-hover/row:text-slate-900 transition-colors">
                                                                     {format(new Date(reserva.fecha), 'EEE d MMM', { locale: es })}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-10 py-10">
-                                                        <span className="text-2xl font-black text-slate-900 tracking-tighter italic">${reserva.total}</span>
+                                                    <td className="px-6 py-4">
+                                                        <span className="text-2xl font-bold text-slate-900 tracking-tight ">${reserva.total}</span>
                                                     </td>
-                                                    <td className="px-10 py-10">
+                                                    <td className="px-6 py-4">
                                                         {(() => {
                                                             const unmanaged = isUnmanagedReserva(reserva);
                                                             if (unmanaged) {
                                                                 return (
-                                                                    <span className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] border border-amber-300 bg-amber-100 text-amber-900 animate-pulse shadow-sm">
+                                                                    <span className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border border-amber-300 bg-amber-100 text-amber-900 animate-pulse shadow-sm">
                                                                         ⚠️ Sin gestionar
                                                                     </span>
                                                                 );
@@ -618,13 +625,13 @@ function CitasAdminPageContent() {
                                                             }
                                                             
                                                             return (
-                                                                <span className={clsx("px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] border transition-all", classes)} style={styles}>
+                                                                <span className={clsx("px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide border transition-all", classes)} style={styles}>
                                                                     {label}
                                                                 </span>
                                                             );
                                                         })()}
                                                     </td>
-                                                    <td className="px-10 py-10 text-right">
+                                                    <td className="px-6 py-4 text-right">
                                                         <ChevronRight size={24} className="text-slate-200 group-hover/row:text-slate-900 transition-all inline-block" />
                                                     </td>
                                                     </tr>
@@ -645,14 +652,14 @@ function CitasAdminPageContent() {
                                             key={reserva.id} 
                                             onClick={() => router.push(`/admin/citas/${reserva.id}`)}
                                             className={clsx(
-                                                "bg-white border p-8 rounded-[3rem] space-y-8 hover:border-slate-400 transition-all group/card cursor-pointer relative overflow-hidden shadow-sm hover:shadow-2xl",
+                                                "bg-white border p-8 rounded-2xl space-y-8 hover:border-slate-400 transition-all group/card cursor-pointer relative overflow-hidden shadow-sm hover:shadow-2xl",
                                                 isHighlighted ? "border-cyan-400 ring-2 ring-cyan-200/50 animate-pulse" : "border-slate-200"
                                             )}
                                         >
                                         <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[60px] -mr-16 -mt-16" style={{ backgroundColor: 'var(--primary-color)', opacity: 0.05 }} />
                                         <div className="flex items-center justify-between relative z-10">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-[1.5rem] flex items-center justify-center text-slate-400 font-black text-xl group-hover/card:text-white transition-all border border-white/5"
+                                                <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-bold text-xl group-hover/card:text-white transition-all border border-white/5"
                                                      style={ { '--tw-bg-opacity': '1' } as any }>
                                                     <style jsx>{`
                                                         .group\/card:hover .w-16 { background-color: var(--primary-color); }
@@ -660,14 +667,14 @@ function CitasAdminPageContent() {
                                                     {reserva.cliente.nombre.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-xl font-black text-slate-900 italic tracking-tighter leading-none uppercase truncate max-w-[140px]">{reserva.cliente.nombre}</h3>
-                                                    <p className="text-[10px] font-black uppercase tracking-widest mt-2 italic" style={{ color: 'var(--primary-color)' }}>{reserva.cliente.telefono}</p>
+                                                    <h3 className="text-xl font-bold text-slate-900 tracking-tight leading-none truncate max-w-[140px]">{reserva.cliente.nombre}</h3>
+                                                    <p className="text-xs font-bold uppercase tracking-wide mt-2 " style={{ color: 'var(--primary-color)' }}>{reserva.cliente.telefono}</p>
                                                     <ServiceInfo reserva={reserva} isCanchas={isCanchas} />
                                                 </div>
                                             </div>
                                             <ChevronRight size={24} className="text-slate-200 group-hover/card:text-slate-900 group-hover/card:translate-x-2 transition-all" />
                                         </div>
-                                        <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 space-y-6">
+                                        <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 space-y-6">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     {isCanchas ? (
@@ -675,21 +682,21 @@ function CitasAdminPageContent() {
                                                     ) : (
                                                         <Scissors size={16} style={{ color: 'var(--primary-color)' }} />
                                                     )}
-                                                    <span className="text-xs font-black text-slate-700 italic uppercase">{reserva.service?.nombre || reserva.nombreServicio}</span>
+                                                    <span className="text-xs font-bold text-slate-700 uppercase">{reserva.service?.nombre || reserva.nombreServicio}</span>
                                                 </div>
-                                                <span className="text-[10px] font-black text-slate-400 italic uppercase">{format(new Date(reserva.fecha), 'd MMM', { locale: es })}</span>
+                                                <span className="text-xs font-bold text-slate-400 uppercase">{format(new Date(reserva.fecha), 'd MMM', { locale: es })}</span>
                                             </div>
                                             {(() => {
                                                 const pack = parsePackInfo(reserva);
                                                 if (!pack) return null;
                                                 return (
                                                     <div className="space-y-1 bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-150">
-                                                        <span className="text-[8px] font-black uppercase tracking-wider text-indigo-700 block">
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 block">
                                                             📦 {pack.titulo}
                                                         </span>
                                                         <div className="flex flex-wrap gap-1">
                                                             {pack.servicios.map((s: string, idx: number) => (
-                                                                <span key={idx} className="text-[8px] font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-indigo-100 shadow-xs">
+                                                                <span key={idx} className="text-xs font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-indigo-100 shadow-xs">
                                                                     ✓ {s}
                                                                 </span>
                                                             ))}
@@ -700,11 +707,11 @@ function CitasAdminPageContent() {
                                             <div className="flex items-end justify-between">
                                                 <div className="flex items-center gap-2 px-5 py-2.5 bg-white shadow-sm border border-slate-100 rounded-2xl">
                                                     <Clock size={16} style={{ color: 'var(--primary-color)' }} />
-                                                    <span className="text-sm font-black text-slate-800 italic uppercase">{reserva.horaInicio} - {reserva.horaFin}</span>
+                                                    <span className="text-sm font-bold text-slate-800 uppercase">{reserva.horaInicio} - {reserva.horaFin}</span>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Costo</p>
-                                                    <p className="text-4xl font-black text-slate-900 tracking-tighter italic leading-none uppercase">${reserva.total}</p>
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Costo</p>
+                                                    <p className="text-4xl font-bold text-slate-900 tracking-tight leading-none ">${reserva.total}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -713,7 +720,7 @@ function CitasAdminPageContent() {
                                                 const unmanaged = isUnmanagedReserva(reserva);
                                                 if (unmanaged) {
                                                     return (
-                                                        <div className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] border border-amber-300 bg-amber-100 text-amber-900 animate-pulse shadow-sm">
+                                                        <div className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border border-amber-300 bg-amber-100 text-amber-900 animate-pulse shadow-sm">
                                                             ⚠️ Sin gestionar
                                                         </div>
                                                     );
@@ -757,14 +764,14 @@ function CitasAdminPageContent() {
                                                 }
                                                 
                                                 return (
-                                                    <div className={clsx("px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border", classes)} style={styles}>
+                                                    <div className={clsx("px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide border", classes)} style={styles}>
                                                         {label}
                                                     </div>
                                                 );
                                             })()}
                                             <div className="text-right">
-                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 italic leading-none">Status Caja</p>
-                                                <p className={clsx("text-[10px] font-black uppercase italic leading-none")} style={reserva.pagoEstado === 'PAGADO' ? { color: 'var(--primary-color)' } : { color: '#d97706' }}>{reserva.pagoEstado || 'PENDIENTE'}</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1 leading-none">Status Caja</p>
+                                                <p className={clsx("text-xs font-bold uppercase leading-none")} style={reserva.pagoEstado === 'PAGADO' ? { color: 'var(--primary-color)' } : { color: '#d97706' }}>{reserva.pagoEstado || 'PENDIENTE'}</p>
                                             </div>
                                         </div>
                                         </div>
@@ -774,10 +781,10 @@ function CitasAdminPageContent() {
                         )}
                     </div>
                 ) : (
-                    <div className="relative py-40 bg-white border border-slate-200 border-dashed rounded-[4rem] flex flex-col items-center justify-center text-center px-10 shadow-sm">
+                    <div className="relative py-40 bg-white border border-slate-200 border-dashed rounded-2xl flex flex-col items-center justify-center text-center px-10 shadow-sm">
                         <SearchX size={48} strokeWidth={1} className="text-slate-200 mb-8" />
-                        <h3 className="text-2xl font-black text-slate-300 uppercase italic tracking-widest">Sin resultados</h3>
-                        <p className="mt-4 text-slate-400 text-[10px] font-black uppercase tracking-widest italic max-w-xs leading-relaxed">No hay reservas que coincidan con los filtros actuales.</p>
+                        <h3 className="text-2xl font-bold text-slate-300 tracking-wide">Sin resultados</h3>
+                        <p className="mt-4 text-slate-400 text-xs font-bold uppercase tracking-wide max-w-xs leading-relaxed">No hay reservas que coincidan con los filtros actuales.</p>
                     </div>
                 )}
             </div>
@@ -792,10 +799,10 @@ function CitasAdminPageContent() {
                         <div className="absolute inset-0 size-24 rounded-full border-4 border-dashed border-emerald-400/10 animate-spin [animation-direction:reverse] [animation-duration:3s]" />
                         
                         <div className="mt-8 space-y-2 text-center">
-                            <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter animate-pulse">
+                            <h3 className="text-2xl font-bold text-white tracking-tight animate-pulse">
                                 Actualizando Agenda
                             </h3>
-                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] leading-none animate-pulse">
+                            <p className="text-xs font-bold text-emerald-400 uppercase tracking-wide leading-none animate-pulse">
                                 Por favor espera un momento...
                             </p>
                         </div>
@@ -805,13 +812,13 @@ function CitasAdminPageContent() {
 
             {/* TOAST DE NUEVA RESERVA REACTIVO */}
             {toastMessage && (
-                <div className="fixed bottom-10 right-10 z-[1000] max-w-sm bg-slate-900 border border-slate-800 text-white p-6 rounded-[2rem] shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom-6 fade-in duration-500">
+                <div className="fixed bottom-10 right-10 z-[1000] max-w-sm bg-slate-900 border border-slate-800 text-white p-6 rounded-2xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom-6 fade-in duration-500">
                     <div className="size-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0">
                         <Sparkles size={20} className="animate-pulse" />
                     </div>
                     <div className="flex-1 text-left min-w-0">
-                        <p className="text-[10px] font-black uppercase text-cyan-400 tracking-widest leading-none mb-1">Nueva Reserva</p>
-                        <p className="text-xs font-black uppercase tracking-tight text-slate-100 truncate">{toastMessage}</p>
+                        <p className="text-xs font-bold uppercase text-cyan-400 tracking-wide leading-none mb-1">Nueva Reserva</p>
+                        <p className="text-xs font-bold uppercase tracking-tight text-slate-100 truncate">{toastMessage}</p>
                     </div>
                     <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-white transition-colors p-1">
                         <X size={16} />
@@ -823,31 +830,20 @@ function CitasAdminPageContent() {
 }
 
 function StatCard({ label, value, icon: Icon, color, trend }: any) {
+    const tone = color === 'emerald' ? 'bg-emerald-50 text-emerald-600'
+        : color === 'blue' ? 'bg-blue-50 text-blue-600'
+        : color === 'amber' ? 'bg-amber-50 text-amber-600'
+        : 'bg-rose-50 text-rose-600';
     return (
-        <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 group relative overflow-hidden transition-all hover:border-emerald-500/20 shadow-sm hover:shadow-xl">
-            <div className={`absolute -top-12 -right-12 w-32 h-32 bg-${color}-500/5 rounded-full blur-[50px] pointer-events-none group-hover:bg-${color}-500/10 transition-all`} />
-            <div className="relative z-10 flex items-center justify-between">
-                <div className="space-y-4">
-                    <div className={clsx(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center border transition-all group-hover:scale-110",
-                        color === 'emerald' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                        color === 'blue' ? "bg-blue-50 text-blue-600 border-blue-100" :
-                        color === 'amber' ? "bg-amber-50 text-amber-600 border-amber-100" :
-                        "bg-rose-50 text-rose-600 border-rose-100"
-                    )}>
-                        <Icon size={24} strokeWidth={2.5} />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">{label}</p>
-                        <h4 className="text-3xl font-black text-slate-900 italic tracking-tighter uppercase">{value}</h4>
-                    </div>
-                    {trend && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 rounded-full w-fit border border-slate-100">
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{trend}</span>
-                        </div>
-                    )}
-                </div>
+        <div className="bg-white border border-slate-200 rounded-2xl p-5">
+            <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-600">{label}</p>
+                <span className={clsx('size-8 rounded-lg flex items-center justify-center', tone)}>
+                    <Icon size={18} />
+                </span>
             </div>
+            <p className="text-3xl font-bold text-slate-900 tracking-tight mt-3">{value}</p>
+            {trend && <p className="text-xs text-slate-500 mt-1">{trend}</p>}
         </div>
     );
 }
@@ -858,7 +854,7 @@ function ServiceInfo({ reserva, isCanchas }: { reserva: any; isCanchas?: boolean
         return (
             <div className="mt-3 flex items-center gap-1.5 animate-in zoom-in-95 duration-500">
                 <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 italic">
+                <span className="text-xs font-bold uppercase tracking-wide text-emerald-600 ">
                     {reserva.service?.nombre || 'Cancha Deportiva'}
                 </span>
             </div>
@@ -868,19 +864,19 @@ function ServiceInfo({ reserva, isCanchas }: { reserva: any; isCanchas?: boolean
         <div className="mt-4 space-y-1.5 animate-in zoom-in-95 duration-500">
             <div className="flex items-center gap-2">
                 <UserCircle size={14} className="text-emerald-500 shrink-0" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 italic">
+                <span className="text-xs font-bold uppercase tracking-wide text-emerald-500 ">
                     {reserva.staff?.nombre || reserva.staff?.name || 'Cualquier profesional'}
                 </span>
             </div>
             {packInfo && (
                 <div className="mt-1 space-y-1">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
                         📦 {packInfo.titulo}
                     </span>
                     {packInfo.servicios.length > 0 && (
                         <div className="flex flex-wrap gap-1 max-w-[220px]">
                             {packInfo.servicios.map((s: string, idx: number) => (
-                                <span key={idx} className="text-[8px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 shadow-xs">
+                                <span key={idx} className="text-xs font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 shadow-xs">
                                     ✓ {s}
                                 </span>
                             ))}
@@ -897,10 +893,40 @@ export default function CitasAdminPage() {
         <Suspense fallback={
             <div className="flex flex-col items-center justify-center py-20 bg-slate-50 min-h-screen">
                 <Loader2 className="animate-spin mb-4" size={32} style={{ color: 'var(--primary-color)' }} />
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando Agenda...</p>
+                <p className="text-gray-400 font-bold uppercase tracking-wide text-xs">Cargando Agenda...</p>
             </div>
         }>
-            <CitasAdminPageContent />
+            <CitasGate />
         </Suspense>
     );
+}
+
+/**
+ * Las clínicas dentales ven la agenda por doctor y por hora (DentalAgenda).
+ * Con ?vista=lista (o para los demás tipos de negocio) se muestra la lista clásica.
+ */
+function CitasGate() {
+    const searchParams = useSearchParams();
+    const forceList = searchParams?.get('vista') === 'lista';
+    const [kind, setKind] = useState<'loading' | 'dental' | 'general'>(forceList ? 'general' : 'loading');
+
+    useEffect(() => {
+        if (forceList) { setKind('general'); return; }
+        let alive = true;
+        fetch('/api/negocio')
+            .then((r) => (r.ok ? r.json() : null))
+            .then((n) => { if (alive) setKind(n && isDentalBusiness(n) ? 'dental' : 'general'); })
+            .catch(() => { if (alive) setKind('general'); });
+        return () => { alive = false; };
+    }, [forceList]);
+
+    if (kind === 'loading') {
+        return (
+            <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 className="animate-spin mb-4" size={32} style={{ color: 'var(--primary-color)' }} />
+            </div>
+        );
+    }
+    if (kind === 'dental') return <DentalAgenda />;
+    return <CitasAdminPageContent />;
 }

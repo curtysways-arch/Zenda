@@ -114,7 +114,7 @@ export default function UserActions({ usuario }: UserActionsProps) {
 
                         {/* Avatar */}
                         <div className="flex justify-center mb-6">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-indigo-500/20">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-indigo-500/20">
                                 {nombre ? nombre.charAt(0).toUpperCase() : '?'}
                             </div>
                         </div>

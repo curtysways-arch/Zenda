@@ -171,13 +171,13 @@ export default function MetodosPagoAdminPage() {
       {/* Header Admin */}
       <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 text-left">
         <div>
-          <span className="text-[10px] font-black text-purple-600 uppercase tracking-widest block">Configuración Comercial</span>
-          <h1 className="text-2xl font-black text-slate-900">Métodos de Pago & Transferencias</h1>
+          <span className="text-xs font-bold text-purple-600 uppercase tracking-wide block">Configuración Comercial</span>
+          <h1 className="text-2xl font-bold text-slate-900">Métodos de Pago & Transferencias</h1>
           <p className="text-xs font-semibold text-slate-500 mt-1">
             Configura las políticas de cobro y las cuentas bancarias donde tus clientes enviarán los pagos de sus pedidos.
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-purple-50 text-purple-900 px-4 py-2.5 rounded-2xl border border-purple-200 text-xs font-black shrink-0">
+        <div className="flex items-center gap-2 bg-purple-50 text-purple-900 px-4 py-2.5 rounded-2xl border border-purple-200 text-xs font-bold shrink-0">
           <ShieldCheck className="size-5 text-purple-600" />
           <span>Verificación de Comprobante</span>
         </div>
@@ -202,11 +202,11 @@ export default function MetodosPagoAdminPage() {
           {/* Card de Reglas de Cobro en Landing */}
           <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="size-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-black">
+              <div className="size-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
                 <CreditCard className="size-6 text-amber-600" />
               </div>
               <div>
-                <h2 className="text-base font-black text-slate-900">Políticas y Reglas de Cobro en Landing</h2>
+                <h2 className="text-base font-bold text-slate-900">Políticas y Reglas de Cobro en Landing</h2>
                 <p className="text-xs text-slate-500 font-medium">Define cómo deben abonar los clientes al realizar un pedido desde la App Web / Landing.</p>
               </div>
             </div>
@@ -215,8 +215,8 @@ export default function MetodosPagoAdminPage() {
               {/* Toggle Solo Pago Previo */}
               <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <span className="text-xs font-black text-slate-900 block">🔒 Exigir Pago Previo Obligatorio</span>
-                  <p className="text-[11px] text-slate-500 font-semibold leading-relaxed">
+                  <span className="text-xs font-bold text-slate-900 block">🔒 Exigir Pago Previo Obligatorio</span>
+                  <p className="text-xs text-slate-500 font-semibold leading-relaxed">
                     El cliente <strong>debe subir el comprobante de transferencia</strong> para registrar el pedido. El modal de pago <strong>no se puede cerrar</strong> hasta completar el pago.
                   </p>
                 </div>
@@ -234,8 +234,8 @@ export default function MetodosPagoAdminPage() {
               {/* Toggle Permitir Contraentrega */}
               <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <span className="text-xs font-black text-slate-900 block">💵 Permitir Pago Contraentrega (Al Entregar)</span>
-                  <p className="text-[11px] text-slate-500 font-semibold leading-relaxed">
+                  <span className="text-xs font-bold text-slate-900 block">💵 Permitir Pago Contraentrega (Al Entregar)</span>
+                  <p className="text-xs text-slate-500 font-semibold leading-relaxed">
                     Permite que tus clientes elijan pagar al momento de recibir o retirar sus productos.
                   </p>
                 </div>
@@ -254,7 +254,7 @@ export default function MetodosPagoAdminPage() {
             {/* Opciones de Métodos Contraentrega si está habilitado */}
             {permiteContraentrega && (
               <div className="p-5 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-3">
-                <span className="text-xs font-black text-emerald-950 uppercase tracking-wider block">Métodos Aceptados en Contraentrega:</span>
+                <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider block">Métodos Aceptados en Contraentrega:</span>
                 <div className="flex items-center gap-6 flex-wrap">
                   <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
                     <input
@@ -294,11 +294,11 @@ export default function MetodosPagoAdminPage() {
           <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 flex-wrap gap-4">
               <div className="flex items-center gap-3">
-                <div className="size-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-black">
+                <div className="size-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
                   <Building2 className="size-6" />
                 </div>
                 <div>
-                  <h2 className="text-base font-black text-slate-900">Cuentas Bancarias para Transferencias ({cuentas.length})</h2>
+                  <h2 className="text-base font-bold text-slate-900">Cuentas Bancarias para Transferencias ({cuentas.length})</h2>
                   <p className="text-xs text-slate-500 font-medium">Agrega una o más cuentas bancarias para que tus clientes elijan a cuál transferir.</p>
                 </div>
               </div>
@@ -307,7 +307,7 @@ export default function MetodosPagoAdminPage() {
                 <button
                   type="button"
                   onClick={handleAddCuenta}
-                  className="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 font-black rounded-xl text-xs flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+                  className="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 font-bold rounded-xl text-xs flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
                 >
                   <Plus className="size-4" />
                   <span>Añadir Otra Cuenta</span>
@@ -330,7 +330,7 @@ export default function MetodosPagoAdminPage() {
               {cuentas.map((cuenta, index) => (
                 <div key={cuenta.id} className="p-5 sm:p-6 bg-slate-50/80 border border-slate-200 rounded-3xl space-y-4 relative">
                   <div className="flex items-center justify-between border-b border-slate-200/70 pb-3">
-                    <span className="text-xs font-black text-purple-900 uppercase tracking-wider flex items-center gap-2">
+                    <span className="text-xs font-bold text-purple-900 uppercase tracking-wider flex items-center gap-2">
                       <Wallet className="size-4 text-purple-600" />
                       <span>Cuenta #{index + 1} {cuenta.banco ? `- ${cuenta.banco}` : ''}</span>
                     </span>
@@ -349,7 +349,7 @@ export default function MetodosPagoAdminPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1.5">Institución Bancaria / Entidad</label>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Institución Bancaria / Entidad</label>
                       <input
                         type="text"
                         required
@@ -361,7 +361,7 @@ export default function MetodosPagoAdminPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1.5">Titular de la Cuenta</label>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Titular de la Cuenta</label>
                       <input
                         type="text"
                         required
@@ -373,7 +373,7 @@ export default function MetodosPagoAdminPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1.5">Tipo de Cuenta</label>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Tipo de Cuenta</label>
                       <select
                         value={cuenta.tipoCuenta}
                         onChange={(e) => handleUpdateCuenta(cuenta.id, 'tipoCuenta', e.target.value)}
@@ -385,7 +385,7 @@ export default function MetodosPagoAdminPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1.5">Número de Cuenta</label>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Número de Cuenta</label>
                       <input
                         type="text"
                         required
@@ -397,7 +397,7 @@ export default function MetodosPagoAdminPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1.5">RUC / Identificación del Titular</label>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">RUC / Identificación del Titular</label>
                       <input
                         type="text"
                         required
@@ -409,7 +409,7 @@ export default function MetodosPagoAdminPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1.5">Instrucciones Específicas</label>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Instrucciones Específicas</label>
                       <input
                         type="text"
                         value={cuenta.instructions}
@@ -427,7 +427,7 @@ export default function MetodosPagoAdminPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="px-8 py-3.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-purple-600/20 flex items-center gap-2 transition-all cursor-pointer"
+                className="px-8 py-3.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg shadow-purple-600/20 flex items-center gap-2 transition-all cursor-pointer"
               >
                 {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
                 <span>Guardar Cambios</span>

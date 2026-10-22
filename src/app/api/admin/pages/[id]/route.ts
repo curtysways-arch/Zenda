@@ -1,13 +1,12 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
 import slugify from 'slugify';
 import DOMPurify from 'isomorphic-dompurify';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
 
         const { id: rawId } = await params;
@@ -32,12 +31,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
 
         const { id: rawId } = await params;
         const id = rawId.trim();
-        const { title, contentHtml, status, featuredImage, buttonText, buttonUrl, imageMediaId } = await req.json();
+        const { title, contentHtml, status, featuredImage, buttonText, buttonUrl, imageMediaId, posicion, orden } = await req.json();
 
         const cleanHtml = DOMPurify.sanitize(contentHtml);
         let slug = slugify(title, { lower: true, strict: true });
@@ -61,6 +60,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
                 buttonText: buttonText || null,
                 buttonUrl: buttonUrl || null,
                 status: status || 'draft',
+                ...(posicion !== undefined ? { posicion } : {}),
+                ...(orden !== undefined ? { orden: Number(orden) || 1 } : {}),
                 updatedAt: new Date()
             }
         });
@@ -78,7 +79,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
 
         const { id: rawId } = await params;

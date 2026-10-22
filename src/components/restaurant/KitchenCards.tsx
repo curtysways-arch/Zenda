@@ -56,11 +56,11 @@ export default function KitchenCards({ producto, onEdit }: KitchenCardsProps) {
           return (
             <span
               key={ch.key}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${
-                ch.active
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                  : 'bg-slate-950 text-slate-600 border-slate-800 line-through opacity-60'
-              }`}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold border ${
+ ch.active
+ ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+ : 'bg-slate-950 text-slate-600 border-slate-800 line-through opacity-60'
+ }`}
             >
               <Icon className="w-3 h-3" />
               <span>{ch.label}</span>

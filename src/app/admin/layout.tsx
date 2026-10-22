@@ -7,7 +7,7 @@ import { ConfirmProvider } from '@/components/admin/ConfirmContext';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { checkSubscriptionStatus } from "@/lib/subscriptions";
+import { checkSubscriptionStatus, subscriptionEnforced } from "@/lib/subscriptions";
 import { subscriptionService } from "@/lib/services/subscriptionService";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -66,7 +66,7 @@ export default async function AdminLayout({
     }
 
     let primaryColor = '#0ea5e9';
-    let status = { active: true, reason: null };
+    let status: any = { active: true, reason: null };
     let negocio: any = null;
 
     if (negocioId) {
@@ -94,7 +94,15 @@ export default async function AdminLayout({
     const isExpired = status.reason === 'EXPIRED';
     const isNoPlan = status.reason === 'NO_PLAN';
     const isSuspended = status.reason === 'SUSPENDED';
-    const isDemo = (session.user as any).isDemo === true;
+    const isDemo = (session.user as any).isDemo === true || status.isDemo === true;
+    const enforce = subscriptionEnforced() && !isDemo && !isSuperAdmin && !isDelegated;
+    const info = status.info || {};
+    const fmt = (d?: Date | string | null) => d ? new Date(d).toLocaleDateString('es-EC', { day: 'numeric', month: 'long' }) : '';
+
+    // Pasada la gracia sin pagar: el panel queda limitado a "Mi plan" (no se borra nada)
+    if (enforce && (isExpired || isSuspended) && currentPath && !currentPath.startsWith('/admin/plan')) {
+        redirect('/admin/plan?bloqueado=1');
+    }
 
     if (!status.active && !isExpired && !isNoPlan && !isSuspended && !isDemo && !isSuperAdmin) {
         redirect('/admin/vencido');
@@ -103,6 +111,9 @@ export default async function AdminLayout({
     return (
         <ConfirmProvider primaryColor={primaryColor}>
             <BranchWarehouseProvider>
+                {/* Escala compacta del panel: todo el admin (rem) se ve ~12% más pequeño en computadora */}
+                <style>{`html{font-size:15px}@media (min-width:768px){html{font-size:14px}}`}</style>
+
                 {/* Notificador emergente y alarma de nuevos pedidos online */}
                 <GlobalOrderNotifier primaryColor={primaryColor} />
 
@@ -113,6 +124,7 @@ export default async function AdminLayout({
                         primaryColor={primaryColor} 
                         initialBusinessName={negocio?.nombre} 
                         initialSlug={negocio?.slug}
+                        initialBusiness={negocio}
                     />
 
                     {/* ── ÁREA PRINCIPAL CON DESPLAZAMIENTO PARA SIDEBAR Y BANNERS ── */}
@@ -138,24 +150,41 @@ export default async function AdminLayout({
                                     />
                                 )}
                                 {isDemo && !isDelegated && (
-                                    <div className="bg-amber-500 text-white px-6 py-2 flex items-center justify-between shadow-lg">
-                                        <p className="text-[9px] font-black uppercase tracking-widest italic">MODO DEMO</p>
-                                        <Link href="/register" className="bg-white text-amber-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Crear mi Spa</Link>
+                                    <div className="bg-amber-500 text-white px-4 md:px-6 py-1.5 flex items-center justify-between gap-3">
+                                        <p className="text-xs font-semibold">Estás viendo una demo</p>
+                                        <Link href="/register" className="bg-white text-amber-700 px-2.5 py-1 rounded-md text-xs font-semibold shrink-0">Crear mi negocio</Link>
                                     </div>
                                 )}
-                                {(isExpired || isSuspended) && !isDemo && !isSuperAdmin && process.env.NODE_ENV === 'production' && (
-                                    <div className="bg-rose-600 text-white px-6 py-2 flex items-center justify-between shadow-lg">
-                                        <p className="text-[9px] font-black uppercase tracking-widest italic">
-                                            {isSuspended ? 'Negocio Suspendido' : 'Periodo Terminado'}
+                                {enforce && (isExpired || isSuspended) && (
+                                    <div className="bg-rose-600 text-white px-4 md:px-6 py-2 flex items-center justify-between gap-3">
+                                        <p className="text-sm font-semibold">
+                                            {isSuspended
+                                                ? 'Tu negocio está suspendido por Citiox. Escríbenos para revisarlo.'
+                                                : 'Tu página está pausada: no recibe reservas ni pedidos. Activa tu plan y todo vuelve al instante, sin perder nada.'}
                                         </p>
-                                        <Link href="/admin/plan" className="bg-white text-rose-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Activar Plan</Link>
+                                    </div>
+                                )}
+                                {enforce && status.phase === 'GRACE' && (
+                                    <div className="bg-amber-500 text-white px-4 md:px-6 py-2 flex items-center justify-between gap-3">
+                                        <p className="text-sm font-semibold">
+                                            Tu {info.isTrial ? 'prueba gratis' : 'plan'} terminó. Tienes hasta el {fmt(info.graceEndsAt)} para activarlo; después tu página dejará de recibir reservas y pedidos.
+                                        </p>
+                                        <Link href="/admin/plan" className="bg-white text-amber-700 px-3 py-1.5 rounded-lg text-sm font-semibold shrink-0">Activar plan</Link>
+                                    </div>
+                                )}
+                                {enforce && status.phase === 'TRIAL' && typeof info.daysLeft === 'number' && info.daysLeft <= 7 && (
+                                    <div className="bg-sky-600 text-white px-4 md:px-6 py-1.5 flex items-center justify-between gap-3">
+                                        <p className="text-sm font-medium">
+                                            {info.daysLeft <= 0 ? 'Tu prueba gratis termina hoy.' : `Te quedan ${info.daysLeft} ${info.daysLeft === 1 ? 'día' : 'días'} de prueba gratis (hasta el ${fmt(info.endsAt)}).`}
+                                        </p>
+                                        <Link href="/admin/plan" className="bg-white text-sky-700 px-3 py-1 rounded-lg text-sm font-semibold shrink-0">Ver planes</Link>
                                     </div>
                                 )}
                             </div>
 
                             {/* Contenido scrollable */}
                             <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-slate-50/30">
-                                <div className="p-5 md:p-8 pb-40 md:pb-10 w-full max-w-none">
+                                <div className="p-4 md:p-6 pb-36 md:pb-8 w-full max-w-none">
                                     {children}
                                 </div>
                             </main>

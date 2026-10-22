@@ -103,7 +103,7 @@ export default function TiposNegocioSuperAdminPage() {
               <Briefcase size={28} />
             </div>
             <div>
-              <h1 className="text-3xl font-black uppercase tracking-tight text-white italic">
+              <h1 className="text-3xl font-bold tracking-tight text-white ">
                 Business Types Manager
               </h1>
               <p className="text-xs text-slate-400 font-medium">
@@ -115,7 +115,7 @@ export default function TiposNegocioSuperAdminPage() {
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-3 px-6 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
+          className="flex items-center gap-3 px-6 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
         >
           <Plus size={18} strokeWidth={3} />
           Nuevo Business Type
@@ -126,7 +126,7 @@ export default function TiposNegocioSuperAdminPage() {
       <div className="p-5 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex items-center gap-4 text-xs font-bold text-indigo-300">
         <ShieldCheck size={24} className="text-indigo-400 shrink-0" />
         <div>
-          <span className="font-black text-white uppercase tracking-wider block">Gobernanza Arquitectónica (Core Congelado):</span>
+          <span className="font-bold text-white uppercase tracking-wider block">Gobernanza Arquitectónica (Core Congelado):</span>
           Los Business Types no modifican los Core Engines (<code className="text-emerald-400 font-mono">BookingEngine</code>, <code className="text-emerald-400 font-mono">OrderEngine</code>, <code className="text-emerald-400 font-mono">ServiceEngine</code>). El motor de ejecución se deduce dinámicamente según las capabilities activadas.
         </div>
       </div>
@@ -153,18 +153,18 @@ export default function TiposNegocioSuperAdminPage() {
                 <div className="space-y-4 relative z-10">
                   <div className="flex items-center justify-between">
                     <div 
-                      className="p-4 rounded-2xl border text-white font-black flex items-center justify-center"
+                      className="p-4 rounded-2xl border text-white font-bold flex items-center justify-center"
                       style={{ backgroundColor: `${type.color}20`, borderColor: `${type.color}40`, color: type.color }}
                     >
                       <IconComponent size={26} />
                     </div>
-                    <span className="text-[10px] font-mono font-black uppercase px-3 py-1 bg-slate-800 text-slate-300 rounded-full border border-slate-700">
+                    <span className="text-xs font-mono font-bold uppercase px-3 py-1 bg-slate-800 text-slate-300 rounded-full border border-slate-700">
                       {type.slug}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-black text-white group-hover:text-emerald-400 transition-colors">
+                    <h3 className="text-xl font-bold text-white group-hover:text-emerald-400 transition-colors">
                       {type.name}
                     </h3>
                     <p className="text-xs text-slate-400 mt-1 line-clamp-2">
@@ -174,10 +174,10 @@ export default function TiposNegocioSuperAdminPage() {
 
                   {/* Capabilities List Badges */}
                   <div className="space-y-2 pt-2">
-                    <span className="text-[9px] uppercase tracking-widest text-slate-400 font-black block">Capabilities Activas:</span>
+                    <span className="text-xs uppercase tracking-wide text-slate-400 font-bold block">Capabilities Activas:</span>
                     <div className="flex flex-wrap gap-1.5">
                       {type.capabilities?.map((c: any) => (
-                        <span key={c.capability} className="text-[10px] font-bold px-2.5 py-1 bg-slate-800/80 text-emerald-400 border border-emerald-500/20 rounded-lg">
+                        <span key={c.capability} className="text-xs font-bold px-2.5 py-1 bg-slate-800/80 text-emerald-400 border border-emerald-500/20 rounded-lg">
                           ⚡ {c.capability}
                         </span>
                       ))}
@@ -187,16 +187,16 @@ export default function TiposNegocioSuperAdminPage() {
                   {/* Stats Counter */}
                   <div className="grid grid-cols-3 gap-2 pt-2 text-center border-t border-slate-800/60">
                     <div className="p-2 bg-slate-950/50 rounded-xl">
-                      <span className="text-[9px] text-slate-400 font-bold block uppercase">Estados</span>
-                      <span className="text-sm font-black text-white">{type.states?.length || 0}</span>
+                      <span className="text-xs text-slate-400 font-bold block uppercase">Estados</span>
+                      <span className="text-sm font-bold text-white">{type.states?.length || 0}</span>
                     </div>
                     <div className="p-2 bg-slate-950/50 rounded-xl">
-                      <span className="text-[9px] text-slate-400 font-bold block uppercase">Perfiles</span>
-                      <span className="text-sm font-black text-white">{type.profiles?.length || 0}</span>
+                      <span className="text-xs text-slate-400 font-bold block uppercase">Perfiles</span>
+                      <span className="text-sm font-bold text-white">{type.profiles?.length || 0}</span>
                     </div>
                     <div className="p-2 bg-slate-950/50 rounded-xl">
-                      <span className="text-[9px] text-slate-400 font-bold block uppercase">Comercios</span>
-                      <span className="text-sm font-black text-emerald-400">{type._count?.negocios || 0}</span>
+                      <span className="text-xs text-slate-400 font-bold block uppercase">Comercios</span>
+                      <span className="text-sm font-bold text-emerald-400">{type._count?.negocios || 0}</span>
                     </div>
                   </div>
                 </div>
@@ -204,7 +204,7 @@ export default function TiposNegocioSuperAdminPage() {
                 <div className="pt-2 relative z-10">
                   <Link
                     href={`/superadmin/tipos-negocio/${type.id}`}
-                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer group/btn"
+                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer group/btn"
                   >
                     Configurar Flujos & Módulo
                     <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
@@ -221,7 +221,7 @@ export default function TiposNegocioSuperAdminPage() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-lg w-full space-y-6 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-black text-white uppercase italic flex items-center gap-2">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Plus className="text-emerald-400" size={20} />
                 Nuevo Business Type
               </h2>
@@ -232,7 +232,7 @@ export default function TiposNegocioSuperAdminPage() {
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Nombre</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Nombre</label>
                 <input 
                   type="text"
                   required
@@ -244,7 +244,7 @@ export default function TiposNegocioSuperAdminPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Slug Identifier</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Slug Identifier</label>
                 <input 
                   type="text"
                   required
@@ -256,7 +256,7 @@ export default function TiposNegocioSuperAdminPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Descripción</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Descripción</label>
                 <textarea 
                   rows={2}
                   placeholder="Breve explicación de la vertical de negocio..."
@@ -268,7 +268,7 @@ export default function TiposNegocioSuperAdminPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Tipo de Recurso</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Tipo de Recurso</label>
                   <select
                     value={newForm.resourceType}
                     onChange={(e) => setNewForm({ ...newForm, resourceType: e.target.value })}
@@ -283,7 +283,7 @@ export default function TiposNegocioSuperAdminPage() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Color Principal</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Color Principal</label>
                   <input 
                     type="color"
                     value={newForm.color}
@@ -297,14 +297,14 @@ export default function TiposNegocioSuperAdminPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="w-1/2 py-3 bg-slate-800 hover:bg-slate-700 text-white font-black text-xs uppercase tracking-wider rounded-xl"
+                  className="w-1/2 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="w-1/2 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2"
+                  className="w-1/2 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2"
                 >
                   {creating && <Loader2 className="animate-spin" size={16} />}
                   Crear Módulo

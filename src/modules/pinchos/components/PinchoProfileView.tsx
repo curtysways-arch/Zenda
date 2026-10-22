@@ -191,8 +191,8 @@ export default function PinchoProfileView({
                         <ChevronLeft className="size-5 text-slate-700" />
                     </button>
                     <div>
-                        <h1 className="text-base font-black text-slate-900 leading-tight">Mi Perfil</h1>
-                        <p className="text-[10px] text-slate-400 font-medium">Gestiona tu cuenta y preferencias</p>
+                        <h1 className="text-base font-bold text-slate-900 leading-tight">Mi Perfil</h1>
+                        <p className="text-xs text-slate-400 font-medium">Gestiona tu cuenta y preferencias</p>
                     </div>
                 </div>
             </header>
@@ -202,27 +202,27 @@ export default function PinchoProfileView({
                 {step === 'phone' && (
                     <section className="flex flex-col items-center text-center space-y-6 pt-4">
                         <div className="space-y-1">
-                            <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none text-slate-900">
+                            <h2 className="text-5xl font-bold tracking-tight leading-none text-slate-900">
                                 HOLA,
                             </h2>
-                            <p className="font-black italic tracking-widest text-[11px] uppercase text-slate-500">
+                            <p className="font-bold tracking-wide text-xs uppercase text-slate-500">
                                 IDENTIFÍCATE PARA VER TU PERFIL
                             </p>
                         </div>
 
-                        <div className="w-full bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-2xl border border-slate-100 text-left">
+                        <div className="w-full bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 text-left">
                             <div className="flex items-center gap-3 mb-6 justify-center">
                                 <div className="size-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shadow-xs">
                                     <Sparkles className="size-5" />
                                 </div>
-                                <span className="text-[11px] font-black uppercase tracking-[0.2em] italic text-orange-600">
+                                <span className="text-xs font-bold uppercase tracking-wide text-orange-600">
                                     VERIFICACIÓN SEGURA
                                 </span>
                             </div>
 
                             <form onSubmit={handleSendOtp} className="space-y-5">
                                 <div className="space-y-1.5">
-                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-2">
+                                    <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 ml-2">
                                         NÚMERO MÓVIL (WHATSAPP)
                                     </label>
                                     <PhoneInput
@@ -233,7 +233,7 @@ export default function PinchoProfileView({
                                 </div>
 
                                 {error && (
-                                    <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2.5 border border-rose-200/80">
+                                    <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2.5 border border-rose-200/80">
                                         <AlertCircle className="size-4 shrink-0" />
                                         <span>{error}</span>
                                     </div>
@@ -242,9 +242,9 @@ export default function PinchoProfileView({
                                 <button
                                     type="submit"
                                     disabled={loading || phone.replace(/\D/g, '').length < 7}
-                                    className="w-full h-15 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 hover:from-orange-700 hover:to-orange-600 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-orange-600/25 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
+                                    className="w-full h-15 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 hover:from-orange-700 hover:to-orange-600 text-white font-bold uppercase tracking-wide rounded-2xl shadow-xl shadow-orange-600/25 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
                                 >
-                                    <span>CONTINUAR</span>
+                                    <span>Continuar</span>
                                     <ArrowRight className="size-5" />
                                 </button>
                             </form>
@@ -261,7 +261,7 @@ export default function PinchoProfileView({
                                     <Key className="size-8 stroke-[2.5]" />
                                 </div>
                                 <div className="space-y-1">
-                                    <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">
+                                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
                                         CÓDIGO OTP
                                     </h2>
                                     <p className="text-slate-500 text-xs font-medium">
@@ -272,7 +272,7 @@ export default function PinchoProfileView({
 
                             <form onSubmit={handleVerifyOtp} className="space-y-6">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
                                         Ingresa el Código de 6 dígitos
                                     </label>
                                     <input
@@ -285,12 +285,12 @@ export default function PinchoProfileView({
                                         value={otpCode}
                                         onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                                         placeholder="123456"
-                                        className="w-full text-center text-2xl font-mono font-black tracking-[0.4em] text-slate-900 bg-white border-2 border-orange-500 rounded-2xl p-4 shadow-md focus:outline-none"
+                                        className="w-full text-center text-2xl font-mono font-bold tracking-wide text-slate-900 bg-white border-2 border-orange-500 rounded-2xl p-4 shadow-md focus:outline-none"
                                     />
                                 </div>
 
                                 {error && (
-                                    <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2 border border-rose-200/80">
+                                    <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-rose-200/80">
                                         <AlertCircle className="size-4 shrink-0" />
                                         <span>{error}</span>
                                     </div>
@@ -300,9 +300,9 @@ export default function PinchoProfileView({
                                     <button
                                         type="submit"
                                         disabled={loading || otpCode.length !== 6}
-                                        className="w-full h-14 bg-orange-600 hover:bg-orange-700 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-orange-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                                        className="w-full h-14 bg-orange-600 hover:bg-orange-700 text-white font-bold uppercase tracking-wide rounded-2xl shadow-xl shadow-orange-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                                     >
-                                        <span>VERIFICAR CÓDIGO</span>
+                                        <span>Verificar código</span>
                                         <ArrowRight className="size-5" />
                                     </button>
 
@@ -324,22 +324,22 @@ export default function PinchoProfileView({
                     <div className="space-y-5 animate-in fade-in duration-500">
                         {/* Profile Header Card */}
                         <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex items-center gap-4">
-                            <div className="size-16 rounded-2xl bg-orange-600 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-orange-600/30 shrink-0">
+                            <div className="size-16 rounded-2xl bg-orange-600 text-white font-bold text-2xl flex items-center justify-center shadow-lg shadow-orange-600/30 shrink-0">
                                 {name ? name.substring(0, 2).toUpperCase() : 'CL'}
                             </div>
                             <div className="space-y-1 overflow-hidden">
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-widest rounded-md">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wide rounded-md">
                                     <ShieldCheck className="size-3 text-emerald-600" />
                                     <span>Cliente Verificado</span>
                                 </span>
-                                <h2 className="text-xl font-black text-slate-900 truncate">{name || 'Cliente'}</h2>
+                                <h2 className="text-xl font-bold text-slate-900 truncate">{name || 'Cliente'}</h2>
                                 <p className="text-xs text-slate-500 font-mono font-bold">{phone}</p>
                             </div>
                         </div>
 
                         {/* Quick Actions Card */}
                         <div className="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm space-y-3">
-                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2">Acciones Rápidas</h3>
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide px-2">Acciones Rápidas</h3>
                             
                             <button
                                 type="button"
@@ -347,12 +347,12 @@ export default function PinchoProfileView({
                                 className="w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200/60 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer group"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="size-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black">
+                                    <div className="size-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-bold">
                                         <PackageCheck className="size-5" />
                                     </div>
                                     <div>
-                                        <span className="text-xs font-black text-slate-900 block">Mis Pedidos e Historial</span>
-                                        <span className="text-[11px] text-slate-500 font-medium">Revisa tus compras anteriores y rastrea tu pedido</span>
+                                        <span className="text-xs font-bold text-slate-900 block">Mis Pedidos e Historial</span>
+                                        <span className="text-xs text-slate-500 font-medium">Revisa tus compras anteriores y rastrea tu pedido</span>
                                     </div>
                                 </div>
                                 <ArrowRight className="size-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
@@ -364,12 +364,12 @@ export default function PinchoProfileView({
                                 className="w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200/60 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer group"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="size-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-black">
+                                    <div className="size-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
                                         <ShoppingBag className="size-5" />
                                     </div>
                                     <div>
-                                        <span className="text-xs font-black text-slate-900 block">Ir a la Tienda</span>
-                                        <span className="text-[11px] text-slate-500 font-medium">Explora los pinchos frescos y combos</span>
+                                        <span className="text-xs font-bold text-slate-900 block">Ir a la Tienda</span>
+                                        <span className="text-xs text-slate-500 font-medium">Explora los pinchos frescos y combos</span>
                                     </div>
                                 </div>
                                 <ArrowRight className="size-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
@@ -381,10 +381,10 @@ export default function PinchoProfileView({
                             <button
                                 type="button"
                                 onClick={handleLogout}
-                                className="w-full py-4 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 font-black rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-xs"
+                                className="w-full py-4 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 font-bold rounded-2xl text-xs uppercase tracking-wide flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-xs"
                             >
                                 <LogOut className="size-4" />
-                                <span>CERRAR SESIÓN</span>
+                                <span>Cerrar sesión</span>
                             </button>
                         </div>
                     </div>

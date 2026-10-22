@@ -614,42 +614,42 @@ export default function CatalogoImportarPage() {
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
                                 <span className="text-xs text-slate-500 block">Total Filas</span>
-                                <span className="text-2xl font-black text-slate-900 dark:text-white mt-1 block">
+                                <span className="text-2xl font-bold text-slate-900 dark:text-white mt-1 block">
                                     {previewResult.stats.totalRows}
                                 </span>
                             </div>
 
                             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
                                 <span className="text-xs text-emerald-600 font-semibold block">Productos Nuevos</span>
-                                <span className="text-2xl font-black text-emerald-600 mt-1 block">
+                                <span className="text-2xl font-bold text-emerald-600 mt-1 block">
                                     +{previewResult.stats.newProductsCount}
                                 </span>
                             </div>
 
                             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
                                 <span className="text-xs text-blue-600 font-semibold block">A Actualizar</span>
-                                <span className="text-2xl font-black text-blue-600 mt-1 block">
+                                <span className="text-2xl font-bold text-blue-600 mt-1 block">
                                     {previewResult.stats.updateProductsCount}
                                 </span>
                             </div>
 
                             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
                                 <span className="text-xs text-amber-600 font-semibold block">Nuevas Categorías</span>
-                                <span className="text-2xl font-black text-amber-600 mt-1 block">
+                                <span className="text-2xl font-bold text-amber-600 mt-1 block">
                                     {previewResult.stats.categoriesToCreate.length}
                                 </span>
                             </div>
 
                             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
                                 <span className="text-xs text-rose-600 font-semibold block">Errores</span>
-                                <span className="text-2xl font-black text-rose-600 mt-1 block">
+                                <span className="text-2xl font-bold text-rose-600 mt-1 block">
                                     {previewResult.stats.errorRowsCount}
                                 </span>
                             </div>
 
                             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
                                 <span className="text-xs text-slate-500 block">Cupos Plan Restantes</span>
-                                <span className="text-2xl font-black text-slate-700 dark:text-slate-300 mt-1 block">
+                                <span className="text-2xl font-bold text-slate-700 dark:text-slate-300 mt-1 block">
                                     {previewResult.stats.allowedNewProducts}
                                 </span>
                             </div>
@@ -868,21 +868,21 @@ export default function CatalogoImportarPage() {
                         <div className="grid grid-cols-3 gap-3 text-left">
                             <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60">
                                 <span className="text-xs text-emerald-700 dark:text-emerald-300 font-semibold block">Creados Nuevos</span>
-                                <span className="text-2xl font-black text-emerald-700 dark:text-emerald-200 mt-1 block">
+                                <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-200 mt-1 block">
                                     +{executionResult.createdCount}
                                 </span>
                             </div>
 
                             <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60">
                                 <span className="text-xs text-blue-700 dark:text-blue-300 font-semibold block">Actualizados</span>
-                                <span className="text-2xl font-black text-blue-700 dark:text-blue-200 mt-1 block">
+                                <span className="text-2xl font-bold text-blue-700 dark:text-blue-200 mt-1 block">
                                     {executionResult.updatedCount}
                                 </span>
                             </div>
 
                             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                                 <span className="text-xs text-slate-500 font-semibold block">Categorías Nuevas</span>
-                                <span className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1 block">
+                                <span className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1 block">
                                     {executionResult.createdCategoriesCount || 0}
                                 </span>
                             </div>

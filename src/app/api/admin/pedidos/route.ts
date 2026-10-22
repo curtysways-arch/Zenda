@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import prisma from '@/lib/prisma';
+import {
+    toDecimal,
+    decimalAdd,
+    decimalSub,
+    decimalMul,
+    roundQty,
+    roundMoney,
+    toVisualNumber
+} from '@/lib/math/decimal';
 
 export async function GET(req: Request) {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -48,7 +56,7 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -102,47 +110,61 @@ export async function PUT(req: Request) {
                     pedidoId: id,
                     productoId: i.productoId || i.id,
                     nombreProducto: i.nombreProducto || i.nombre,
-                    precioUnitario: parseFloat(i.precioUnitario || i.precio || 0),
-                    cantidad: parseInt(i.cantidad || 1, 10)
+                    precioUnitario: roundMoney(i.precioUnitario || i.precio || 0).toNumber(),
+                    cantidad: roundQty(i.cantidad || 1).toNumber()
                 }))
             });
 
             const updatedAllItems = await (prisma as any).pedidoItem.findMany({ where: { pedidoId: id } });
-            const newSubtotal = updatedAllItems.reduce((sum: number, item: any) => sum + (item.precioUnitario * item.cantidad), 0);
+            const newSubtotalDec = updatedAllItems.reduce(
+                (sum: any, item: any) => decimalAdd(sum, decimalMul(item.precioUnitario || 0, item.cantidad || 1)),
+                toDecimal(0)
+            );
+            const newSubtotal = roundMoney(newSubtotalDec).toNumber();
             updateData.subtotal = newSubtotal;
-            const newTotal = newSubtotal + (pedido.costoEnvio || 0) + (currentExtra.packagingCost || 0) - (currentExtra.discountAmount || 0);
+
+            const extraDelivery = toDecimal(pedido.costoEnvio || 0);
+            const extraPackaging = toDecimal(currentExtra.packagingCost || 0);
+            const extraDiscount = toDecimal(currentExtra.discountAmount || 0);
+            const newTotalDec = decimalSub(decimalAdd(decimalAdd(newSubtotalDec, extraDelivery), extraPackaging), extraDiscount);
+            const newTotal = roundMoney(newTotalDec.isNegative() ? toDecimal(0) : newTotalDec).toNumber();
             updateData.total = newTotal;
 
             if (previousPaidAmount > 0) {
                 currentExtra.montoPagadoAcumulado = previousPaidAmount;
-                currentExtra.saldoPendiente = Math.round(Math.max(0, newTotal - previousPaidAmount) * 100) / 100;
+                const saldoDec = roundMoney(decimalSub(newTotalDec, previousPaidAmount));
+                currentExtra.saldoPendiente = saldoDec.isNegative() ? 0 : saldoDec.toNumber();
                 currentExtra.paymentStatus = currentExtra.saldoPendiente > 0 ? 'PARCIALMENTE_PAGADO' : 'PAGADO';
             }
 
             // Si existen cuentas divididas, asignar la adición a una subcuenta pendiente o crear una nueva subcuenta adicional
             if (currentExtra.splitAccounts && Array.isArray(currentExtra.splitAccounts)) {
-                const addedSubtotal = body.newItems.reduce((s: number, i: any) => s + (parseFloat(i.precioUnitario || 0) * parseInt(i.cantidad || 1, 10)), 0);
+                const addedSubtotalDec = body.newItems.reduce(
+                    (s: any, i: any) => decimalAdd(s, decimalMul(i.precioUnitario || 0, i.cantidad || 1)),
+                    toDecimal(0)
+                );
+                const addedSubtotal = roundMoney(addedSubtotalDec).toNumber();
                 const unpaidAccount = currentExtra.splitAccounts.find((sa: any) => sa.estado === 'PENDIENTE');
 
                 if (unpaidAccount) {
                     unpaidAccount.items.push(...body.newItems.map((i: any) => ({
                         productoId: i.productoId || i.id,
                         nombreProducto: i.nombreProducto || i.nombre,
-                        cantidad: parseInt(i.cantidad || 1, 10),
-                        precioUnitario: parseFloat(i.precioUnitario || 0)
+                        cantidad: roundQty(i.cantidad || 1).toNumber(),
+                        precioUnitario: roundMoney(i.precioUnitario || 0).toNumber()
                     })));
-                    unpaidAccount.total = Math.round((unpaidAccount.total + addedSubtotal) * 100) / 100;
+                    unpaidAccount.total = roundMoney(decimalAdd(unpaidAccount.total || 0, addedSubtotalDec)).toNumber();
                 } else {
                     const nextIdx = currentExtra.splitAccounts.length + 1;
                     currentExtra.splitAccounts.push({
                         id: `split_${Date.now()}`,
                         name: `Cuenta ${nextIdx} (Adición)`,
-                        total: Math.round(addedSubtotal * 100) / 100,
+                        total: addedSubtotal,
                         items: body.newItems.map((i: any) => ({
                             productoId: i.productoId || i.id,
                             nombreProducto: i.nombreProducto || i.nombre,
-                            cantidad: parseInt(i.cantidad || 1, 10),
-                            precioUnitario: parseFloat(i.precioUnitario || 0)
+                            cantidad: roundQty(i.cantidad || 1).toNumber(),
+                            precioUnitario: roundMoney(i.precioUnitario || 0).toNumber()
                         })),
                         estado: 'PENDIENTE'
                     });
@@ -358,24 +380,72 @@ export async function PUT(req: Request) {
             newExtraInfo.estadoDisponibilidad = updateData.estadoDisponibilidad;
         }
 
-        // Devolución idempotente de stock al cancelar/rechazar pedido
+        // Devolución idempotente de stock al cancelar/rechazar pedido mediante InventoryEngine
         const isCancelation = (estado === 'CANCELADO' || estado === 'RECHAZADO');
         const alreadyRestored = (currentExtra as any)?.stockRestored === true;
 
         if (isCancelation && !alreadyRestored && pedido.items && pedido.items.length > 0) {
             try {
+                const { InventoryEngine } = await import('@/core/inventory/InventoryEngine');
                 await prisma.$transaction(async (tx) => {
+                    let warehouse = pedido.sucursalId ? await (tx as any).warehouse.findFirst({
+                        where: { businessId: pedido.negocioId, branchId: pedido.sucursalId, active: true }
+                    }) : null;
+                    if (!warehouse) {
+                        warehouse = await (tx as any).warehouse.findFirst({
+                            where: { businessId: pedido.negocioId, isDefault: true, active: true }
+                        });
+                    }
+                    if (!warehouse) {
+                        warehouse = await (tx as any).warehouse.findFirst({
+                            where: { businessId: pedido.negocioId, active: true }
+                        });
+                    }
+
                     for (const item of pedido.items) {
-                        if (item.varianteId) {
-                            await (tx as any).productoVariante.update({
-                                where: { id: item.varianteId },
-                                data: { stock: { increment: item.cantidad } }
-                            }).catch(() => {});
-                        } else if (item.productoId) {
-                            await (tx as any).producto.update({
-                                where: { id: item.productoId },
-                                data: { stock: { increment: item.cantidad } }
-                            }).catch(() => {});
+                        if (item.productoId) {
+                            try {
+                                // Buscar movimiento de venta original para recuperar bodega y costo histórico
+                                const origMov = await (tx as any).inventoryMovement.findFirst({
+                                    where: {
+                                        businessId: pedido.negocioId,
+                                        productId: item.productoId,
+                                        sourceDocId: pedido.id,
+                                        type: 'VENTA'
+                                    },
+                                    orderBy: { createdAt: 'desc' }
+                                });
+
+                                let itemWarehouseId = origMov?.warehouseId || warehouse?.id;
+                                let itemBranchId = origMov?.branchId || pedido.sucursalId || warehouse?.branchId;
+                                let histUnitCost = origMov?.unitCost !== null && origMov?.unitCost !== undefined ? origMov.unitCost : undefined;
+
+                                if (!itemWarehouseId) {
+                                    const fbWh = await (tx as any).warehouse.findFirst({
+                                        where: { businessId: pedido.negocioId, isDefault: true, active: true, type: { notIn: ['TRANSIT', 'SCRAP_WASTE'] } }
+                                    });
+                                    itemWarehouseId = fbWh?.id;
+                                    itemBranchId = fbWh?.branchId;
+                                }
+
+                                if (itemWarehouseId) {
+                                    await InventoryEngine.recordMovement({
+                                        businessId: pedido.negocioId,
+                                        warehouseId: itemWarehouseId,
+                                        branchId: itemBranchId,
+                                        productId: item.productoId,
+                                        variantId: item.varianteId || null,
+                                        type: 'DEVOLUCION_CLIENTE',
+                                        quantity: Math.abs(Number(item.cantidad)),
+                                        unitCost: histUnitCost,
+                                        sourceDocType: 'VENTA',
+                                        sourceDocId: pedido.id,
+                                        reason: `Devolución por pedido ${estado.toLowerCase()}`
+                                    }, tx);
+                                }
+                            } catch (itemErr) {
+                                console.warn(`[STOCK_RESTORE_ITEM_ERROR] Producto ${item.productoId}:`, itemErr);
+                            }
                         }
                     }
                 });
@@ -473,45 +543,29 @@ export async function PUT(req: Request) {
             }
         }
 
-        // Emisión canónica al Motor Universal de Misiones Citiox
-        if (['ENTREGADO', 'FINALIZADO'].includes(estado)) {
+        // Club de beneficios + misiones: al entregar o finalizar el pedido (también cuando lo finaliza un pago)
+        const estadoFinal = estado || updateData.estado;
+        if (['ENTREGADO', 'FINALIZADO'].includes(estadoFinal) && !['ENTREGADO', 'FINALIZADO'].includes(pedido.estado)) {
             try {
-                let userId = (pedidoActualizado as any).clienteId;
-                if (!userId && pedidoActualizado.telefonoCliente) {
-                    const cleanPhone = pedidoActualizado.telefonoCliente.replace(/\D/g, '');
-                    const user = await prisma.usuario.findFirst({
-                        where: {
-                            OR: [
-                                { phone: pedidoActualizado.telefonoCliente },
-                                { phone: cleanPhone },
-                                { phone: `+${cleanPhone}` }
-                            ]
-                        }
-                    });
-                    if (user) userId = user.id;
-                }
-
-                if (userId) {
-                    const { publishBusinessEvent } = await import('@/lib/growth/eventBus');
-                    const totalItems = pedidoActualizado.items?.reduce((acc: number, item: any) => acc + (item.cantidad || 1), 0) || 1;
-                    
-                    publishBusinessEvent({
-                        negocioId: pedidoActualizado.negocioId,
-                        userId,
-                        eventType: 'ORDER_COMPLETED',
-                        entityId: pedidoActualizado.id,
-                        monto: pedidoActualizado.total || 0,
-                        cantidad: totalItems,
-                        metadata: {
-                            numeroPedido: pedidoActualizado.numeroPedido,
-                            tipoEntrega: pedidoActualizado.tipoEntrega,
-                            itemsCount: totalItems,
-                            subtotal: pedidoActualizado.subtotal
-                        }
-                    }).catch(bErr => console.error('[ADMIN_PEDIDOS_MISSION_EVENT_ASYNC_ERR]', bErr));
-                }
+                const { awardPurchasePoints } = await import('@/lib/loyalty/purchasePoints');
+                const totalItems = pedidoActualizado.items?.reduce((acc: number, item: any) => acc + (item.cantidad || 1), 0) || 1;
+                await awardPurchasePoints({
+                    negocioId: pedidoActualizado.negocioId,
+                    referenciaId: pedidoActualizado.id,
+                    monto: pedidoActualizado.total || 0,
+                    telefono: pedidoActualizado.telefonoCliente,
+                    nombre: pedidoActualizado.nombreCliente,
+                    eventType: 'ORDER_COMPLETED',
+                    cantidad: totalItems,
+                    metadata: {
+                        numeroPedido: pedidoActualizado.numeroPedido,
+                        tipoEntrega: pedidoActualizado.tipoEntrega,
+                        itemsCount: totalItems,
+                        subtotal: pedidoActualizado.subtotal
+                    }
+                });
             } catch (growthErr: any) {
-                console.error('[ADMIN_PEDIDOS_MISSION_EVENT_ERROR]', growthErr.message);
+                console.error('[ADMIN_PEDIDOS_CLUB_ERROR]', growthErr.message);
             }
         }
 
@@ -614,7 +668,7 @@ export async function PUT(req: Request) {
 }
 
 export async function POST(req: Request) {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -628,7 +682,7 @@ export async function POST(req: Request) {
         const { 
             nombreCliente, telefonoCliente, direccionCliente, referenciaCliente, 
             tipoEntrega, items, autoConfirm, descuentoAmount, mesaCode, kitchenNotes,
-            metodoPago, montoRecibido, vuelto, paymentStatus
+            metodoPago, montoRecibido, vuelto, paymentStatus, datosFacturacion
         } = body;
 
         if (!items || !Array.isArray(items) || items.length === 0) {
@@ -652,13 +706,13 @@ export async function POST(req: Request) {
             items: items.map((i: any) => ({
                 productId: i.productoId || i.id,
                 name: i.nombreProducto || i.nombre,
-                unitPrice: parseFloat(i.precioUnitario || i.precio || 0),
-                precioUnitario: parseFloat(i.precioUnitario || i.precio || 0),
-                quantity: parseInt(i.cantidad || i.quantity || 1, 10),
-                cantidad: parseInt(i.cantidad || i.quantity || 1, 10)
+                unitPrice: roundMoney(i.precioUnitario || i.precio || 0).toNumber(),
+                precioUnitario: roundMoney(i.precioUnitario || i.precio || 0).toNumber(),
+                quantity: roundQty(i.cantidad || i.quantity || 1).toNumber(),
+                cantidad: roundQty(i.cantidad || i.quantity || 1).toNumber()
             })),
             deliveryType: tipoEntrega || 'PICKUP_ORDER',
-            discountAmount: parseFloat(descuentoAmount || 0),
+            discountAmount: roundMoney(descuentoAmount || 0).toNumber(),
             deliveryConfig: config.deliveryConfig || { enabled: true, baseCost: 1.50, costPerKm: 0.25 },
             packagingConfig: config.packagingConfig || { enabled: true, type: 'PER_PRODUCT', amount: 0.25 }
         });
@@ -673,8 +727,8 @@ export async function POST(req: Request) {
 
             const estadoInicial = autoConfirm ? 'EN_PREPARACION' : 'WAITING_CONFIRMATION';
 
-            const numRecibido = montoRecibido !== undefined && montoRecibido !== null ? parseFloat(montoRecibido) : pricingResult.total;
-            const numVuelto = vuelto !== undefined && vuelto !== null ? parseFloat(vuelto) : Math.max(0, numRecibido - pricingResult.total);
+            const numRecibido = montoRecibido !== undefined && montoRecibido !== null ? roundMoney(montoRecibido).toNumber() : pricingResult.total;
+            const numVuelto = vuelto !== undefined && vuelto !== null ? roundMoney(vuelto).toNumber() : Math.max(0, roundMoney(decimalSub(numRecibido, pricingResult.total)).toNumber());
 
             const newOrder = await (tx as any).pedido.create({
                 data: {
@@ -701,7 +755,8 @@ export async function POST(req: Request) {
                         metodoPago: metodoPago || 'EFECTIVO',
                         montoRecibido: numRecibido,
                         vuelto: numVuelto,
-                        paymentStatus: paymentStatus || 'PAGADO'
+                        paymentStatus: paymentStatus || 'PAGADO',
+                        datosFacturacion: datosFacturacion || null
                     },
                     payment: {
                         create: {
@@ -714,8 +769,8 @@ export async function POST(req: Request) {
                         create: items.map((i: any) => ({
                             productoId: i.productoId || i.id,
                             nombreProducto: i.nombreProducto || i.nombre,
-                            precioUnitario: parseFloat(i.precioUnitario || i.precio || 0),
-                            cantidad: parseInt(i.cantidad || 1, 10)
+                            precioUnitario: roundMoney(i.precioUnitario || i.precio || 0).toNumber(),
+                            cantidad: roundQty(i.cantidad || 1).toNumber()
                         }))
                     }
                 },
@@ -724,6 +779,23 @@ export async function POST(req: Request) {
 
             return newOrder;
         });
+
+        // Sincronizar / registrar cliente con datos fiscales en Cliente
+        if (datosFacturacion && datosFacturacion.identificacion && datosFacturacion.identificacion !== '9999999999999') {
+            try {
+                const { CustomerEngine } = await import('@/core/customers/CustomerEngine');
+                await CustomerEngine.upsertCustomerTaxData(negocioId, {
+                    identificacion: datosFacturacion.identificacion,
+                    tipoIdentificacion: datosFacturacion.tipoIdentificacion,
+                    razonSocial: datosFacturacion.razonSocial || nombreCliente,
+                    telefono: datosFacturacion.telefono || telefonoCliente,
+                    email: datosFacturacion.email || null,
+                    direccion: datosFacturacion.direccion || direccionCliente
+                });
+            } catch (custErr: any) {
+                console.warn('[API_PEDIDOS_POST] Error al registrar datos de facturación en Cliente:', custErr?.message);
+            }
+        }
 
         if (autoConfirm) {
             try {

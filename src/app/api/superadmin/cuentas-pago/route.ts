@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
+function checkSuperAdmin(session: any) {
+    const user = session?.user;
+    const role = user?.role;
+    const roles = user?.roles || [];
+    return role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'ADMIN' || roles.includes('SUPERADMIN') || user?.isAdminUser;
+}
+
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || (session.user as any).role !== 'SUPERADMIN') {
+        const session = await getEffectiveAdminSession();
+        if (!session || !checkSuperAdmin(session)) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
@@ -23,8 +31,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || (session.user as any).role !== 'SUPERADMIN') {
+        const session = await getEffectiveAdminSession();
+        if (!session || !checkSuperAdmin(session)) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 

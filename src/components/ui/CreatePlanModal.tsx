@@ -48,10 +48,10 @@ export default function CreatePlanModal({ isOpen, onClose }: CreatePlanModalProp
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden relative border border-slate-100 flex flex-col max-h-[90vh]">
+      <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative border border-slate-100 flex flex-col max-h-[90vh]">
         <div className="p-6 md:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-900 italic">Crear Nuevo Plan</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 ">Crear Nuevo Plan</h2>
           </div>
           <button onClick={onClose} className="p-3 hover:bg-slate-200 rounded-full transition-colors text-slate-400 hover:text-slate-700">
             <X size={24} />
@@ -62,7 +62,7 @@ export default function CreatePlanModal({ isOpen, onClose }: CreatePlanModalProp
             <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4">
               <CheckCircle2 size={48} />
             </div>
-            <h3 className="text-3xl font-black uppercase tracking-tighter italic">¡Plan creado!</h3>
+            <h3 className="text-3xl font-bold tracking-tight ">¡Plan creado!</h3>
             <p className="text-slate-500 font-medium">El nuevo plan está disponible en el listado.</p>
           </div>
         ) : (
@@ -101,7 +101,7 @@ export default function CreatePlanModal({ isOpen, onClose }: CreatePlanModalProp
             <button
               type="submit"
               disabled={loading || !planName || !price}
-              className="w-full flex items-center justify-center gap-2 text-white px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 text-white px-8 py-4 rounded-2xl font-bold text-sm uppercase tracking-wide transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: 'var(--primary-color)' }}
             >
               {loading ? <Loader2 className="animate-spin" size={20} /> : "Crear Plan"}

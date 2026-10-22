@@ -50,19 +50,22 @@ export default function BranchWarehouseSelector({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-1.5 animate-pulse bg-slate-100 rounded-xl h-9 w-full" />
-    );
+  // Negocios con una sola sede y sin bodegas no necesitan estos selectores: se ocultan para no confundir.
+  const showBranches = branches.length > 1;
+  const showWarehouses = warehouses.length > 1; // una sola bodega (la principal) no necesita selector
+
+  if (loading || (!showBranches && !showWarehouses)) {
+    return null;
   }
 
   return (
-    <div className="flex flex-col gap-1.5 px-3 py-2 bg-slate-50 border-b border-slate-200/80">
+    <div className="flex flex-col gap-2 px-3 py-2.5 bg-slate-50 border-b border-slate-200/80">
       {/* ── SELECTOR DE SUCURSAL ── */}
+      {showBranches && (
       <div className="relative" ref={branchDropdownRef}>
-        <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5 flex items-center gap-1">
+        <div className="text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
           <Store size={10} />
-          <span>Sucursal de Operación</span>
+          <span>Sucursal</span>
         </div>
         <button
           type="button"
@@ -127,7 +130,7 @@ export default function BranchWarehouseSelector({
                     <Store size={13} className="text-slate-400 shrink-0" />
                     <span className="truncate">{b.name}</span>
                     {b.code && (
-                      <span className="text-[10px] text-slate-400 font-mono">[{b.code}]</span>
+                      <span className="text-xs text-slate-400 font-mono">[{b.code}]</span>
                     )}
                   </div>
                   {isSelected && <Check size={13} className="text-sky-600 shrink-0" />}
@@ -138,11 +141,14 @@ export default function BranchWarehouseSelector({
         )}
       </div>
 
+      )}
+
       {/* ── SELECTOR DE BODEGA FÍSICA ── */}
+      {showWarehouses && (
       <div className="relative" ref={warehouseDropdownRef}>
-        <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5 flex items-center gap-1">
+        <div className="text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
           <Warehouse size={10} />
-          <span>Bodega Física Activa</span>
+          <span>Bodega</span>
         </div>
         <button
           type="button"
@@ -173,7 +179,7 @@ export default function BranchWarehouseSelector({
         {isWarehouseOpen && !isConsolidated && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 max-h-56 overflow-y-auto">
             {warehouses.length === 0 ? (
-              <div className="px-3 py-2 text-xs text-slate-400 italic text-center">
+              <div className="px-3 py-2 text-xs text-slate-400 text-center">
                 No hay bodegas físicas configuradas para esta sucursal
               </div>
             ) : (
@@ -195,7 +201,7 @@ export default function BranchWarehouseSelector({
                       <Warehouse size={13} className="text-amber-500 shrink-0" />
                       <span className="truncate">{wh.name}</span>
                       {wh.code && (
-                        <span className="text-[10px] text-slate-400 font-mono">[{wh.code}]</span>
+                        <span className="text-xs text-slate-400 font-mono">[{wh.code}]</span>
                       )}
                     </div>
                     {isSelected && <Check size={13} className="text-amber-600 shrink-0" />}
@@ -206,6 +212,7 @@ export default function BranchWarehouseSelector({
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

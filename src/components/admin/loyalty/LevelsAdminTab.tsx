@@ -58,7 +58,7 @@ export default function LevelsAdminTab({ primaryColor }: LevelsAdminTabProps) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                 <Loader2 size={32} className="animate-spin text-indigo-500 mb-3" />
-                <p className="text-xs font-black uppercase tracking-widest">Cargando Niveles y Temporada...</p>
+                <p className="text-xs font-bold uppercase tracking-wide">Cargando Niveles y Temporada...</p>
             </div>
         );
     }
@@ -77,10 +77,10 @@ export default function LevelsAdminTab({ primaryColor }: LevelsAdminTabProps) {
             {/* COLUMNA NIVELES OFICIALES (ANCHO 2) */}
             <div className="lg:col-span-2 space-y-6">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
                         <Crown className="text-amber-500" size={18} /> Niveles de Fidelidad Oficiales
                     </h3>
-                    <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 border border-indigo-100 uppercase tracking-widest px-2.5 py-1 rounded-lg">
+                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 uppercase tracking-wide px-2.5 py-1 rounded-lg">
                         Escala Global Citiox
                     </span>
                 </div>
@@ -93,7 +93,7 @@ export default function LevelsAdminTab({ primaryColor }: LevelsAdminTabProps) {
                         return (
                             <div
                                 key={level.resourceId || idx}
-                                className="bg-white border border-slate-150 hover:border-slate-300 rounded-[2rem] p-6 shadow-sm transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-6"
+                                className="bg-white border border-slate-150 hover:border-slate-300 rounded-2xl p-6 shadow-sm transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-6"
                             >
                                 <div className="flex items-center gap-4">
                                     <div 
@@ -103,10 +103,10 @@ export default function LevelsAdminTab({ primaryColor }: LevelsAdminTabProps) {
                                         <Crown size={20} style={{ color }} />
                                     </div>
                                     <div>
-                                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                                             {d.titulo || d.nombre || `Nivel ${idx + 1}`}
                                         </h4>
-                                        <p className="text-[10px] text-slate-400 font-semibold mt-1">
+                                        <p className="text-xs text-slate-400 font-semibold mt-1">
                                             {d.descripcion || 'Sin descripción oficial.'}
                                         </p>
                                     </div>
@@ -115,20 +115,20 @@ export default function LevelsAdminTab({ primaryColor }: LevelsAdminTabProps) {
                                 <div className="flex flex-wrap items-center gap-3">
                                     {d.xpRequerida !== undefined && (
                                         <div className="px-3.5 py-1.5 bg-slate-50 border border-slate-100 rounded-xl flex flex-col items-center">
-                                            <span className="text-[8px] font-black text-slate-400 uppercase">XP Requerida</span>
-                                            <span className="text-xs font-black text-slate-800 mt-0.5">{d.xpRequerida.toLocaleString()} XP</span>
+                                            <span className="text-xs font-bold text-slate-400 uppercase">XP Requerida</span>
+                                            <span className="text-xs font-bold text-slate-800 mt-0.5">{d.xpRequerida.toLocaleString()} XP</span>
                                         </div>
                                     )}
                                     {d.diamantesRequeridos !== undefined && (
                                         <div className="px-3.5 py-1.5 bg-slate-50 border border-slate-100 rounded-xl flex flex-col items-center">
-                                            <span className="text-[8px] font-black text-slate-400 uppercase">Gemas / Diamantes</span>
-                                            <span className="text-xs font-black text-slate-800 mt-0.5">{d.diamantesRequeridos.toLocaleString()}</span>
+                                            <span className="text-xs font-bold text-slate-400 uppercase">Gemas / Diamantes</span>
+                                            <span className="text-xs font-bold text-slate-800 mt-0.5">{d.diamantesRequeridos.toLocaleString()}</span>
                                         </div>
                                     )}
                                     {d.multiplicador !== undefined && (
                                         <div className="px-3.5 py-1.5 bg-indigo-50 border border-indigo-100 rounded-xl flex flex-col items-center">
-                                            <span className="text-[8px] font-black text-indigo-400 uppercase">Multiplicador</span>
-                                            <span className="text-xs font-black text-indigo-600 mt-0.5">{d.multiplicador}x</span>
+                                            <span className="text-xs font-bold text-indigo-400 uppercase">Multiplicador</span>
+                                            <span className="text-xs font-bold text-indigo-600 mt-0.5">{d.multiplicador}x</span>
                                         </div>
                                     )}
                                 </div>
@@ -144,47 +144,47 @@ export default function LevelsAdminTab({ primaryColor }: LevelsAdminTabProps) {
 
             {/* COLUMNA TEMPORADA OFICIAL (ANCHO 1) */}
             <div className="space-y-6">
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
                     <Calendar className="text-indigo-500" size={18} /> Temporada Activa
                 </h3>
 
-                <div className="bg-slate-900 text-white rounded-[2rem] p-6 shadow-xl relative overflow-hidden flex flex-col gap-5">
+                <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col gap-5">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500 rounded-full blur-[90px] opacity-30" />
                     
                     {season ? (
                         <>
                             <div className="relative z-10 space-y-1">
-                                <span className="text-[8px] font-black text-indigo-300 bg-indigo-500/20 border border-indigo-500/30 uppercase tracking-widest px-2.5 py-0.5 rounded-md">
+                                <span className="text-xs font-bold text-indigo-300 bg-indigo-500/20 border border-indigo-500/30 uppercase tracking-wide px-2.5 py-0.5 rounded-md">
                                     Oficial Citiox
                                 </span>
-                                <h4 className="text-sm font-black uppercase tracking-wider pt-2">
+                                <h4 className="text-sm font-bold uppercase tracking-wider pt-2">
                                     {season.data?.nombre || season.data?.codigo || 'Temporada Activa'}
                                 </h4>
-                                <p className="text-slate-400 text-[10px] font-semibold leading-relaxed pt-1">
+                                <p className="text-slate-400 text-xs font-semibold leading-relaxed pt-1">
                                     {season.data?.descripcion || 'Esta temporada competitiva corre a nivel nacional. Los clientes acumulan XP por sus reservas y compiten en el Club de Fidelización.'}
                                 </p>
                             </div>
 
                             <div className="relative z-10 border-t border-white/10 pt-4 space-y-3">
                                 {season.data?.fechaInicio && (
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-wider">
+                                    <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                         <span className="text-slate-500">Fecha Inicio:</span>
                                         <span className="text-slate-200">{formatDate(season.data.fechaInicio)}</span>
                                     </div>
                                 )}
                                 {season.data?.fechaFin && (
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-wider">
+                                    <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                         <span className="text-slate-500">Fecha Término:</span>
                                         <span className="text-slate-200">{formatDate(season.data.fechaFin)}</span>
                                     </div>
                                 )}
                                 {season.data?.duracionMeses && (
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-wider">
+                                    <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                         <span className="text-slate-500">Duración:</span>
                                         <span className="text-slate-200">{season.data.duracionMeses} meses</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between text-[10px] font-black uppercase tracking-wider">
+                                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                     <span className="text-slate-500">Estado:</span>
                                     <span className="text-emerald-400">Activo</span>
                                 </div>
@@ -197,7 +197,7 @@ export default function LevelsAdminTab({ primaryColor }: LevelsAdminTabProps) {
                         </div>
                     )}
 
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-[9px] text-slate-400 font-semibold leading-relaxed relative z-10">
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-xs text-slate-400 font-semibold leading-relaxed relative z-10">
                         ℹ️ Las temporadas, niveles y sus reglas se gestionan de manera centralizada por Citiox para garantizar consistencia nacional. Si requieres ajustes por favor contacta a soporte.
                     </div>
                 </div>

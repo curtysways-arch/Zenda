@@ -248,15 +248,22 @@ async function main() {
     console.log('\n👤 Verificando usuario propietario...');
     const propietarioRol = await prisma.adminRole.findUnique({ where: { nombre: 'Propietario' } });
 
-    if (propietarioRol) {
-        const existing = await prisma.adminUser.findUnique({ where: { email: 'superadmin@cancha.com' } });
-        if (!existing) {
-            const hashedPass = await bcrypt.hash('superadmin123', 10);
+    // Solo si NO existe ningún usuario del equipo se crea el propietario inicial, con correo y
+    // contraseña tomados de variables de entorno o una contraseña aleatoria que se muestra una vez.
+    // (Antes se creaba superadmin@cancha.com con una contraseña fija escrita en el código.)
+    const teamCount = await prisma.adminUser.count();
+    if (propietarioRol && teamCount === 0) {
+        const email = (process.env.SUPERADMIN_EMAIL || '').trim().toLowerCase();
+        if (!email) {
+            console.log('   ⚠️ No hay usuarios del equipo. Define SUPERADMIN_EMAIL (y opcionalmente SUPERADMIN_PASSWORD) y vuelve a ejecutar el seed.');
+        } else {
+            const crypto = await import('crypto');
+            const plain = process.env.SUPERADMIN_PASSWORD || crypto.randomBytes(12).toString('base64url');
+            const hashedPass = await bcrypt.hash(plain, 12);
             await prisma.adminUser.create({
                 data: {
-                    nombre: 'Super',
-                    apellido: 'Admin',
-                    email: 'superadmin@cancha.com',
+                    nombre: 'Propietario',
+                    email,
                     password: hashedPass,
                     activo: true,
                     estado: 'ACTIVO',
@@ -264,10 +271,11 @@ async function main() {
                     rolId: propietarioRol.id,
                 },
             });
-            console.log('   ✓ Usuario propietario creado: superadmin@cancha.com');
-        } else {
-            console.log('   ✓ Usuario propietario ya existe');
+            console.log(`   ✓ Propietario creado: ${email}`);
+            if (!process.env.SUPERADMIN_PASSWORD) console.log(`   🔑 Contraseña temporal (cámbiala al entrar): ${plain}`);
         }
+    } else {
+        console.log('   ✓ Ya existen usuarios del equipo; no se crea ninguno.');
     }
 
     console.log('\n✅ Seed completado con éxito!');

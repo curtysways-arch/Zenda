@@ -112,7 +112,7 @@ export default function ServicesListClient({
                 >
                     <ChevronLeft size={18} strokeWidth={3} />
                 </Link>
-                <h1 className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">
+                <h1 className="text-sm font-bold uppercase tracking-wide text-slate-900">
                     Servicios
                 </h1>
                 
@@ -133,7 +133,7 @@ export default function ServicesListClient({
                     />
                     {isMounted && favorites.length > 0 && !filterOnlyFavorites && (
                         <span 
-                            className="absolute -top-1 -right-1 size-4 rounded-full text-[8px] font-black text-white flex items-center justify-center shadow-sm"
+                            className="absolute -top-1 -right-1 size-4 rounded-full text-xs font-bold text-white flex items-center justify-center shadow-sm"
                             style={{ backgroundColor: primaryColor }}
                         >
                             {favorites.length}
@@ -169,7 +169,7 @@ export default function ServicesListClient({
                             {filterOnlyFavorites ? (
                                 <button 
                                     onClick={() => setFilterOnlyFavorites(false)}
-                                    className="text-xs font-black uppercase tracking-widest transition-all active:scale-95"
+                                    className="text-xs font-bold uppercase tracking-wide transition-all active:scale-95"
                                     style={{ color: primaryColor }}
                                 >
                                     Ver todos los servicios
@@ -177,7 +177,7 @@ export default function ServicesListClient({
                             ) : (
                                 <Link 
                                     href={`/${slug}/servicios`} 
-                                    className="inline-block text-xs font-black uppercase tracking-widest" 
+                                    className="inline-block text-xs font-bold uppercase tracking-wide" 
                                     style={{ color: primaryColor }}
                                 >
                                     Ver todos los servicios
@@ -186,8 +186,6 @@ export default function ServicesListClient({
                         </div>
                     ) : (
                         displayedServices.map((service: any, index: number) => {
-                            const mockRating = (4.7 + (index * 0.1) % 0.3).toFixed(1);
-                            const mockReviews = 180 + (index * 35);
                             const tagLabel = index === 0 ? (isShoeCare ? "MÁS POPULAR" : "MÁS RESERVADO") : (index === 1 ? "POPULAR" : (index === 2 ? "NUEVO" : ""));
                             const benefitText = getServiceBenefit(service.nombre);
                             const isFavorite = favorites.includes(service.id);
@@ -219,7 +217,7 @@ export default function ServicesListClient({
                                         
                                         {/* Tag de popularidad/novedad */}
                                         {tagLabel && (
-                                            <div className="absolute top-2 left-2 text-white text-[6px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md select-none z-20" style={{ backgroundColor: primaryColor }}>
+                                            <div className="absolute top-2 left-2 text-white text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shadow-md select-none z-20" style={{ backgroundColor: primaryColor }}>
                                                 {tagLabel}
                                             </div>
                                         )}
@@ -238,7 +236,7 @@ export default function ServicesListClient({
                                         </button>
                                         
                                         {/* Duración abajo */}
-                                        <div className="absolute bottom-2 left-2 bg-black/45 backdrop-blur-[1px] text-white px-2 py-0.5 rounded-md text-[7.5px] font-black uppercase tracking-wider flex items-center gap-1 select-none">
+                                        <div className="absolute bottom-2 left-2 bg-black/45 backdrop-blur-[1px] text-white px-2 py-0.5 rounded-md text-[7.5px] font-bold uppercase tracking-wider flex items-center gap-1 select-none">
                                             <Clock size={8} />
                                             {service.duracion || 60} min
                                         </div>
@@ -247,20 +245,13 @@ export default function ServicesListClient({
                                     {/* Lado Derecho: Textos, Beneficios, Precio y Botón */}
                                     <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5 pr-1">
                                         <div className="space-y-0.5">
-                                            <h2 className="font-black text-[13px] uppercase text-slate-850 tracking-tight leading-snug truncate">
+                                            <h2 className="font-bold text-sm uppercase text-slate-850 tracking-tight leading-snug truncate">
                                                 {service.nombre}
                                             </h2>
-                                            <p className="text-[10px] text-slate-400 font-semibold line-clamp-1 leading-normal">
+                                            <p className="text-xs text-slate-400 font-semibold line-clamp-1 leading-normal">
                                                 {service.extraInfo?.descripcion || service.descripcion || (isShoeCare ? 'Servicio profesional de limpieza y cuidado de calzado.' : 'Tratamiento diseñado exclusivamente para tu bienestar.')}
                                             </p>
                                             
-                                            {/* Calificación y opiniones */}
-                                            <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 leading-none pt-0.5">
-                                                <Star size={10} className="text-pink-500" fill="currentColor" style={{ color: primaryColor }} />
-                                                <span className="text-slate-700">{mockRating}</span>
-                                                <span className="text-slate-200">|</span>
-                                                <span>({mockReviews} opiniones)</span>
-                                            </div>
                                         </div>
 
                                         {/* Caja de Beneficio Destacado */}
@@ -273,13 +264,13 @@ export default function ServicesListClient({
 
                                         {/* Precio y Botón Acción */}
                                         <div className="flex items-center justify-between gap-2 pt-0.5">
-                                            <div className="text-sm font-black" style={{ color: primaryColor }}>
+                                            <div className="text-sm font-bold" style={{ color: primaryColor }}>
                                                 ${service.precio || 15}
                                             </div>
 
                                             {/* Botón Acción (Visual, no enlace anidado) */}
                                             <div 
-                                                className="px-4 py-2 rounded-[14px] font-black text-[9px] uppercase tracking-widest text-white shadow-sm flex items-center gap-0.5"
+                                                className="px-4 py-2 rounded-[14px] font-bold text-xs uppercase tracking-wide text-white shadow-sm flex items-center gap-0.5"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 {buttonLabel}

@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Utensils, Clock, CheckCircle2, ChevronRight, Loader2, RefreshCw, ChefHat, Bike, ShoppingBag, MapPin } from 'lucide-react';
+import ModuleUpsellGate from '@/components/admin/ModuleUpsellGate';
 
 interface KDSOrder {
   id: string;
@@ -16,7 +17,7 @@ interface KDSOrder {
   createdAt: string;
 }
 
-export default function AdminCocinaPage() {
+function AdminCocinaContent() {
   const [orders, setOrders] = useState<KDSOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEnterprise, setIsEnterprise] = useState(false);
@@ -79,7 +80,7 @@ export default function AdminCocinaPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-200/80 p-5 rounded-3xl shadow-sm">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
               <ChefHat className="text-amber-500 size-8" />
               Pantalla de Cocina (KDS Comandas)
             </h1>
@@ -161,12 +162,12 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
       {/* Header Comanda */}
       <div className="space-y-2 border-b border-slate-100 pb-3">
         <div className="flex items-center justify-between">
-          <span className="font-black text-xl text-slate-900 tracking-tight">
+          <span className="font-bold text-xl text-slate-900 tracking-tight">
             #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
           </span>
-          <span className={`text-xs font-black px-2.5 py-1 rounded-xl flex items-center gap-1.5 ${
-            isUrgent ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-100 text-slate-700'
-          }`}>
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5 ${
+ isUrgent ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-100 text-slate-700'
+ }`}>
             <Clock className="size-3.5" /> {formatElapsedTime(minsAgo)}
           </span>
         </div>
@@ -174,15 +175,15 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
         <div className="flex items-center gap-1.5 flex-wrap">
           {isTableOrder ? (
             /* BADGE DESTACADO DE MESA (SIN MOSTRAR RETIRO) */
-            <span className="bg-amber-100 text-amber-950 border border-amber-300 text-[11px] font-black px-2.5 py-0.5 rounded-lg flex items-center gap-1 shadow-2xs">
+            <span className="bg-amber-100 text-amber-950 border border-amber-300 text-xs font-bold px-2.5 py-0.5 rounded-lg flex items-center gap-1 shadow-2xs">
               🍽️ {mesaLabel || 'En Mesa'}
             </span>
           ) : isDelivery ? (
-            <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg flex items-center gap-1">
+            <span className="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold uppercase px-2.5 py-0.5 rounded-lg flex items-center gap-1">
               <Bike className="size-3" /> Delivery
             </span>
           ) : (
-            <span className="bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg flex items-center gap-1">
+            <span className="bg-purple-50 text-purple-700 border border-purple-200 text-xs font-bold uppercase px-2.5 py-0.5 rounded-lg flex items-center gap-1">
               <ShoppingBag className="size-3" /> Para Llevar
             </span>
           )}
@@ -191,11 +192,11 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
         {/* BLOQUE DE RECOMENDACIÓN / NOTAS PARA COCINA */}
         {kitchenNotes && (
           <div className="mt-2 bg-amber-50 border-2 border-amber-300/90 rounded-2xl p-2.5 space-y-1 text-left">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1">
               <ChefHat className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
               📝 RECOMENDACIÓN PARA COCINA:
             </span>
-            <p className="text-xs font-black text-amber-950 bg-white/90 p-2 rounded-xl border border-amber-200 leading-snug">
+            <p className="text-xs font-bold text-amber-950 bg-white/90 p-2 rounded-xl border border-amber-200 leading-snug">
               "{kitchenNotes}"
             </p>
           </div>
@@ -204,7 +205,7 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
 
       {/* Checklist de Productos de la Comanda */}
       <div className="space-y-2 flex-1">
-        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-1">
+        <span className="text-xs font-bold uppercase text-slate-400 tracking-wider block mb-1">
           Platos a Preparar ({checkedCount}/{totalItemsCount}):
         </span>
         {order.items?.map((item: any, idx: number) => {
@@ -226,7 +227,7 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
                 </span>
                 <span><strong className="text-amber-600 text-sm">{item.cantidad}x</strong> {item.nombreProducto || item.producto?.nombre}</span>
               </div>
-              {isChecked && <span className="text-[9px] font-black uppercase text-emerald-700 bg-emerald-200/60 px-1.5 py-0.5 rounded">Listo</span>}
+              {isChecked && <span className="text-xs font-bold uppercase text-emerald-700 bg-emerald-200/60 px-1.5 py-0.5 rounded">Listo</span>}
             </button>
           );
         })}
@@ -235,15 +236,53 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
       {/* Botón de Acción Principal */}
       <button
         onClick={onAdvance}
-        className={`w-full py-3 text-white text-xs font-black uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all active:scale-95 ${
-          allChecked 
-            ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30' 
-            : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
-        }`}
+        className={`w-full py-3 text-white text-xs font-bold uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all active:scale-95 ${
+ allChecked 
+ ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30' 
+ : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
+ }`}
       >
         <CheckCircle2 className="size-4" />
-        <span>MARCAR LISTO Y DESPACHAR</span>
+        <span>Marcar listo y despachar</span>
       </button>
     </div>
+  );
+}
+
+export default function AdminCocinaPage() {
+  return (
+    <ModuleUpsellGate
+      capabilityKey="KITCHEN"
+      addonCode="ADDON_KITCHEN"
+      title="Comandas Digitales & Pantalla de Cocina (KDS)"
+      subtitle="Organiza la preparación de platos y pedidos en cocina en tiempo real, reduce tiempos de espera y coordina a mesoneros con el personal de cocina."
+      badgeText="Módulo Pro • Restaurantes"
+      icon={Utensils}
+      stats={[
+        { value: '-40%', label: 'Tiempo de Espera' },
+        { value: '0 Papel', label: 'Comandas Digitales' },
+        { value: 'En Vivo', label: 'Sincronización Mesas' },
+        { value: '100%', label: 'Control de Despacho' }
+      ]}
+      benefits={[
+        {
+          title: 'Pantalla KDS en Tiempo Real',
+          desc: 'Recibe comandas de mesas, para llevar o delivery al instante en tablets o pantallas en cocina.',
+          icon: ChefHat
+        },
+        {
+          title: 'Control de Tiempos y Alertas',
+          desc: 'Temporizadores visuales por orden con alertas de demora para evitar platos fríos o pedidos retrasados.',
+          icon: Clock
+        },
+        {
+          title: 'Despacho Ordenado por Estaciones',
+          desc: 'Avanza órdenes de Recibido a En Preparación y Listo para Servir con un solo toque.',
+          icon: CheckCircle2
+        }
+      ]}
+    >
+      <AdminCocinaContent />
+    </ModuleUpsellGate>
   );
 }

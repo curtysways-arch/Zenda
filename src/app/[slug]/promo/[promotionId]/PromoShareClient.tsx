@@ -112,8 +112,8 @@ export default function PromoShareClient({
                             <ChevronLeft size={24} strokeWidth={2.5} />
                         </Link>
                         <div className="space-y-0.5">
-                            <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.3em] leading-none">{negocio.nombre}</p>
-                            <h1 className="text-slate-900 font-black text-xl tracking-tighter uppercase leading-none truncate max-w-[180px] md:max-w-xs" style={{ color: negocio.colorTexto || '#ffffff' }}>{promotion.titulo}</h1>
+                            <p className="text-slate-400 text-xs font-bold uppercase tracking-wide leading-none">{negocio.nombre}</p>
+                            <h1 className="text-slate-900 font-bold text-xl tracking-tight leading-none truncate max-w-[180px] md:max-w-xs" style={{ color: negocio.colorTexto || '#ffffff' }}>{promotion.titulo}</h1>
                         </div>
                     </div>
                     
@@ -139,11 +139,11 @@ export default function PromoShareClient({
                             
                             <div className="absolute top-8 left-8 flex flex-col gap-3">
                                 {isExpirada ? (
-                                    <span className="bg-black/80 backdrop-blur-md text-white text-[10px] font-black px-5 py-2.5 rounded-full uppercase tracking-widest shadow-xl">
+                                    <span className="bg-black/80 backdrop-blur-md text-white text-xs font-bold px-5 py-2.5 rounded-full uppercase tracking-wide shadow-xl">
                                         Promoción Finalizada
                                     </span>
                                 ) : (
-                                    <span className="text-white text-[10px] font-black px-5 py-2.5 rounded-full uppercase tracking-widest shadow-xl flex items-center gap-2" style={{ backgroundColor: primaryColor }}>
+                                    <span className="text-white text-xs font-bold px-5 py-2.5 rounded-full uppercase tracking-wide shadow-xl flex items-center gap-2" style={{ backgroundColor: primaryColor }}>
                                         <Clock size={14} className="animate-pulse" /> Oferta por Tiempo Limitado
                                     </span>
                                 )}
@@ -157,9 +157,9 @@ export default function PromoShareClient({
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2" style={{ color: negocio.colorSubTexto || '#475569' }}>
                                     <Tag size={20} />
-                                    <span className="text-xs font-black uppercase tracking-[0.3em]">Oportunidad Única</span>
+                                    <span className="text-xs font-bold uppercase tracking-wide">Oportunidad Única</span>
                                 </div>
-                                <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-[0.9] italic uppercase" style={{ color: negocio.colorTexto || '#ffffff' }}>
+                                <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-[0.9] " style={{ color: negocio.colorTexto || '#ffffff' }}>
                                     {promotion.titulo}
                                 </h1>
                             </div>
@@ -174,22 +174,22 @@ export default function PromoShareClient({
                             {/* SERVICIO O BENEFICIO PRINCIPAL DE LA PROMOCIÓN */}
                             {isGym ? (
                                 <div className="space-y-3">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Membresía / Beneficio Incluido</p>
-                                    <div className="relative overflow-hidden p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-800 shadow-2xl flex items-center justify-between gap-4">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Membresía / Beneficio Incluido</p>
+                                    <div className="relative overflow-hidden p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-800 shadow-2xl flex items-center justify-between gap-4">
                                         <div className="flex items-start gap-4 relative z-10">
                                             <div className="p-3 bg-orange-500/10 text-orange-500 rounded-2xl border border-orange-500/20 shrink-0">
                                                 <Dumbbell size={20} className="animate-pulse" />
                                             </div>
                                             <div>
-                                                <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block mb-1">Gimnasio Oficial</span>
-                                                <h4 className="text-base font-black text-white uppercase tracking-tight leading-snug">
+                                                <span className="text-xs font-bold text-orange-400 uppercase tracking-wide block mb-1">Gimnasio Oficial</span>
+                                                <h4 className="text-base font-bold text-white uppercase tracking-tight leading-snug">
                                                     {promotion.titulo}
                                                 </h4>
-                                                <p className="text-[10px] font-bold text-slate-400 mt-1">Acceso digital inteligente + Instalaciones de alto nivel</p>
+                                                <p className="text-xs font-bold text-slate-400 mt-1">Acceso digital inteligente + Instalaciones de alto nivel</p>
                                             </div>
                                         </div>
                                         <div className="shrink-0 relative z-10 flex flex-col items-end">
-                                            <span className="px-3.5 py-1.5 bg-orange-500 text-white text-[8px] font-black uppercase rounded-lg shadow-lg tracking-widest">
+                                            <span className="px-3.5 py-1.5 bg-orange-500 text-white text-xs font-bold uppercase rounded-lg shadow-lg tracking-wide">
                                                 Activo
                                             </span>
                                         </div>
@@ -198,13 +198,13 @@ export default function PromoShareClient({
                             ) : (
                                 promotion.services && promotion.services.length > 0 && (
                                     <div className="space-y-3">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Servicio Principal a Aplicar</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Servicio Principal a Aplicar</p>
                                         <div className="space-y-3">
                                             {promotion.services.map((service: any) => (
                                                 <Link 
                                                     key={service.id} 
                                                     href={`/${slug}/servicio/${service.id}`}
-                                                    className="relative overflow-hidden p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-800 hover:border-pink-500/50 shadow-2xl flex items-center justify-between gap-4 group cursor-pointer transition-all duration-300 block hover:-translate-y-0.5 active:scale-95"
+                                                    className="relative overflow-hidden p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-800 hover:border-pink-500/50 shadow-2xl flex items-center justify-between gap-4 group cursor-pointer transition-all duration-300 block hover:-translate-y-0.5 active:scale-95"
                                                 >
                                                     {/* Brillo dinámico de fondo */}
                                                     <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full -translate-y-12 translate-x-12 blur-2xl group-hover:scale-150 transition-all duration-1000" />
@@ -214,15 +214,15 @@ export default function PromoShareClient({
                                                             <Sparkles size={20} className="animate-pulse" />
                                                         </div>
                                                         <div>
-                                                            <span className="text-[9px] font-black text-pink-400 uppercase tracking-widest block mb-1">Servicio Incluido</span>
-                                                            <h4 className="text-base font-black text-white uppercase tracking-tight leading-snug">
+                                                            <span className="text-xs font-bold text-pink-400 uppercase tracking-wide block mb-1">Servicio Incluido</span>
+                                                            <h4 className="text-base font-bold text-white uppercase tracking-tight leading-snug">
                                                                 {service.nombre}
                                                             </h4>
-                                                            <p className="text-[10px] font-bold text-slate-400 mt-1">Duración: {service.duracion || 60} minutos</p>
+                                                            <p className="text-xs font-bold text-slate-400 mt-1">Duración: {service.duracion || 60} minutos</p>
                                                         </div>
                                                     </div>
                                                     <div className="shrink-0 relative z-10 flex flex-col items-end">
-                                                        <span className="px-3.5 py-1.5 bg-pink-500 text-white text-[8px] font-black uppercase rounded-lg shadow-lg tracking-widest">
+                                                        <span className="px-3.5 py-1.5 bg-pink-500 text-white text-xs font-bold uppercase rounded-lg shadow-lg tracking-wide">
                                                             Activo
                                                         </span>
                                                     </div>
@@ -234,32 +234,32 @@ export default function PromoShareClient({
                             )}
 
                             {/* Card de Precio */}
-                            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-2xl shadow-slate-200/50 space-y-8">
+                            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-2xl shadow-slate-200/50 space-y-8">
                                 <div className="flex items-end justify-between gap-4">
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Precio de Oferta</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Precio de Oferta</p>
                                         <div className="flex items-end gap-3">
                                             {isFreeBenefit || numPromoPrice === 0 ? (
-                                                <span className="text-5xl sm:text-6xl font-black tracking-tighter italic leading-none text-emerald-600">
+                                                <span className="text-5xl sm:text-5xl font-bold tracking-tight leading-none text-emerald-600">
                                                     ¡GRATIS!
                                                 </span>
                                             ) : (
-                                                <span className="text-6xl font-black tracking-tighter italic leading-none" style={{ color: primaryColor }}>
+                                                <span className="text-5xl font-bold tracking-tight leading-none" style={{ color: primaryColor }}>
                                                     ${parseFloat(promotion.precioPromo).toFixed(0)}
                                                 </span>
                                             )}
                                             {promotion.precioAnterior && (
                                                 <div className="mb-1 flex flex-col">
-                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Normal</span>
+                                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide leading-none">Normal</span>
                                                     <span className="text-2xl font-bold text-slate-400 line-through leading-none decoration-black/40">${parseFloat(promotion.precioAnterior).toFixed(0)}</span>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Vence el</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Vence el</p>
                                         <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
-                                            <p className="text-sm font-black text-slate-900 italic">{new Date(promotion.fechaFin).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</p>
+                                            <p className="text-sm font-bold text-slate-900 ">{new Date(promotion.fechaFin).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -272,7 +272,7 @@ export default function PromoShareClient({
                                                 <Calendar size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Días Disponibles</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-none mb-1">Días Disponibles</p>
                                                 <p className="text-xs font-bold text-slate-700 uppercase">
                                                     {promotion.diasValidos ? 
                                                         promotion.diasValidos.split(',').map((d: string) => {
@@ -288,7 +288,7 @@ export default function PromoShareClient({
                                                 <Clock size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Horario Especial</p>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-none mb-1">Horario Especial</p>
                                                 <p className="text-xs font-bold text-slate-700">
                                                     {promotion.horaInicioValida && promotion.horaFinValida ? 
                                                         `${promotion.horaInicioValida} - ${promotion.horaFinValida}` 
@@ -304,7 +304,7 @@ export default function PromoShareClient({
                                     {isExpirada ? (
                                         <Link
                                             href={isGym ? `/${slug}#planes` : `/${slug}#servicios`}
-                                            className="w-full text-white font-black text-sm uppercase tracking-widest py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 group bg-slate-800 hover:bg-slate-700 text-center"
+                                            className="w-full text-white font-bold text-sm uppercase tracking-wide py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 group bg-slate-800 hover:bg-slate-700 text-center"
                                         >
                                             <Navigation2 size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                                             Promoción Finalizada — {isGym ? 'Ver Membresías' : 'Ver Servicios'}
@@ -314,7 +314,7 @@ export default function PromoShareClient({
                                             href={isGym 
                                                 ? `/${slug}?promo=${promotion.id}${meta?.membershipPlanId ? `&planId=${meta.membershipPlanId}` : ''}#planes` 
                                                 : (promotion.services && promotion.services.length > 0 ? `/${slug}/servicio/${promotion.services[0].id}?promoId=${promotion.id}` : `/${slug}#servicios`)}
-                                            className="w-full text-white font-black text-sm uppercase tracking-widest py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 group text-center"
+                                            className="w-full text-white font-bold text-sm uppercase tracking-wide py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 group text-center"
                                             style={{ backgroundColor: primaryColor }}
                                         >
                                             {isGym ? (
@@ -335,14 +335,14 @@ export default function PromoShareClient({
                                         <button
                                             onClick={handleShareWhatsApp}
                                             disabled={isSharing}
-                                            className="bg-[#25D366] hover:bg-[#1ebd5a] text-white font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#25D366]/20"
+                                            className="bg-[#25D366] hover:bg-[#1ebd5a] text-white font-bold text-xs uppercase tracking-wide py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#25D366]/20"
                                         >
                                             <Share2 size={16} />
                                             WhatsApp
                                         </button>
                                         <button
                                             onClick={handleCopy}
-                                            className="bg-white border-2 border-slate-100 hover:border-slate-300 text-slate-600 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl flex items-center justify-center gap-2 transition-all"
+                                            className="bg-white border-2 border-slate-100 hover:border-slate-300 text-slate-600 font-bold text-xs uppercase tracking-wide py-4 rounded-2xl flex items-center justify-center gap-2 transition-all"
                                         >
                                             {copied ? <><CheckCircle2 size={16} className="text-emerald-500" /> Copiado</> : <><Copy size={16} /> Link</>}
                                         </button>
@@ -351,13 +351,13 @@ export default function PromoShareClient({
                             </div>
 
                             {/* Trust Section */}
-                            <div className="bg-slate-900 p-8 rounded-[2.5rem] flex items-center gap-5 border border-white/5 shadow-2xl">
+                            <div className="bg-slate-900 p-8 rounded-3xl flex items-center gap-5 border border-white/5 shadow-2xl">
                                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-6" style={{ backgroundColor: tertiaryColor }}>
                                     <ShieldCheck size={28} className="text-white" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-xs font-black uppercase tracking-widest leading-none mb-1" style={{ color: primaryColor }}>{isGym ? 'Gimnasio Oficial' : 'Reserva Protegida'}</p>
-                                    <p className="text-[10px] font-bold text-slate-400 italic leading-snug">Promoción exclusiva gestionada a través de la plataforma oficial de {negocio.nombre}.</p>
+                                    <p className="text-xs font-bold uppercase tracking-wide leading-none mb-1" style={{ color: primaryColor }}>{isGym ? 'Gimnasio Oficial' : 'Reserva Protegida'}</p>
+                                    <p className="text-xs font-bold text-slate-400 leading-snug">Promoción exclusiva gestionada a través de la plataforma oficial de {negocio.nombre}.</p>
                                 </div>
                             </div>
 
@@ -367,11 +367,11 @@ export default function PromoShareClient({
 
                 {/* Sección descripción extendida */}
                 <div className="mt-20">
-                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-8 flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-8 flex items-center gap-3">
                         <div className="w-2 h-8 rounded-full" style={{ backgroundColor: primaryColor }} />
                         Detalles de la Promoción
                     </h2>
-                    <div className="bg-white p-10 md:p-14 rounded-[4rem] border border-slate-100 text-slate-600 font-medium text-lg leading-relaxed shadow-inner italic">
+                    <div className="bg-white p-10 md:p-14 rounded-3xl border border-slate-100 text-slate-600 font-medium text-lg leading-relaxed shadow-inner ">
                          {cleanDescription}
                          <br /><br />
                           Esta oferta es por tiempo limitado y está sujeta a los términos y condiciones de {negocio.nombre}. No acumulable con otras promociones activas.

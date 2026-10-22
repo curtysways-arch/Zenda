@@ -39,8 +39,8 @@ export default function MobileStaff({ staff, primaryColor, onNew, onEdit, onSche
             <div className="sticky top-0 z-30 bg-white border-b border-slate-100 p-6 space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">Equipo</h2>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Gestiona tus profesionales</p>
+                        <h2 className="text-2xl font-bold text-slate-900 tracking-tight ">Equipo</h2>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide ">Gestiona tus profesionales</p>
                     </div>
                     <button 
                         onClick={onNew}
@@ -59,7 +59,7 @@ export default function MobileStaff({ staff, primaryColor, onNew, onEdit, onSche
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{ paddingLeft: '3.2rem' }}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pr-4 text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 transition-all shadow-inner"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pr-4 text-xs font-bold uppercase tracking-wide focus:outline-none focus:ring-2 transition-all shadow-inner"
                     />
                 </div>
             </div>
@@ -69,7 +69,7 @@ export default function MobileStaff({ staff, primaryColor, onNew, onEdit, onSche
                 {filteredStaff.length > 0 ? filteredStaff.map((member) => (
                     <div 
                         key={member.id}
-                        className="bg-white rounded-[2.5rem] border border-slate-100 p-6 shadow-sm active:scale-[0.98] transition-all group overflow-hidden relative"
+                        className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm active:scale-[0.98] transition-all group overflow-hidden relative"
                     >
                         {/* Background Decoration */}
                         <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[50px] -mr-16 -mt-16" style={{ backgroundColor: primaryColor, opacity: 0.03 }} />
@@ -80,27 +80,27 @@ export default function MobileStaff({ staff, primaryColor, onNew, onEdit, onSche
                                 {(member.imageMedia || member.avatar) ? (
                                     <img src={getImageUrl(member.imageMedia || member.avatar, 'thumb')} alt={member.name} className="w-full h-full object-cover" />
                                 ) : (
-                                    <span className="text-2xl font-black text-slate-200">{member.name.charAt(0)}</span>
+                                    <span className="text-2xl font-bold text-slate-200">{member.name.charAt(0)}</span>
                                 )}
                             </div>
 
                             <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-black uppercase tracking-widest italic" style={{ color: primaryColor }}>{member.role || 'Profesional'}</span>
+                                    <span className="text-xs font-bold uppercase tracking-wide " style={{ color: primaryColor }}>{member.role || 'Profesional'}</span>
                                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 rounded-lg">
                                         <div className={cn("size-1.5 rounded-full", member.active ? "bg-emerald-500 animate-pulse" : "bg-slate-300")} />
-                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{member.active ? 'Activo' : 'Offline'}</span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">{member.active ? 'Activo' : 'Offline'}</span>
                                     </div>
                                 </div>
-                                <h3 className="text-xl font-black text-slate-900 uppercase italic leading-tight truncate mt-1">
+                                <h3 className="text-xl font-bold text-slate-900 leading-tight truncate mt-1">
                                     {member.name}
                                 </h3>
                                 <div className="mt-3 flex flex-wrap gap-2">
                                     {member.services.slice(0, 2).map((s: any) => (
-                                        <span key={s.id} className="text-[8px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-lg uppercase tracking-tighter italic">{s.nombre}</span>
+                                        <span key={s.id} className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg uppercase tracking-tight ">{s.nombre}</span>
                                     ))}
                                     {member.services.length > 2 && (
-                                        <span className="text-[8px] font-black text-slate-300 px-2 py-1 uppercase tracking-tighter italic">+{member.services.length - 2}</span>
+                                        <span className="text-xs font-bold text-slate-300 px-2 py-1 uppercase tracking-tight ">+{member.services.length - 2}</span>
                                     )}
                                 </div>
                             </div>
@@ -110,14 +110,14 @@ export default function MobileStaff({ staff, primaryColor, onNew, onEdit, onSche
                         <div className="mt-6 pt-6 border-t border-slate-50 flex gap-3">
                             <button 
                                 onClick={() => onSchedule(member)}
-                                className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-slate-100"
+                                className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-slate-100"
                             >
                                 <Clock size={14} />
                                 Horarios
                             </button>
                             <button 
                                 onClick={() => onEdit(member)}
-                                className="flex-1 py-4 bg-white border border-slate-200 text-slate-900 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                className="flex-1 py-4 bg-white border border-slate-200 text-slate-900 rounded-2xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 active:scale-95 transition-all"
                             >
                                 <Edit2 size={14} />
                                 Editar
@@ -135,7 +135,7 @@ export default function MobileStaff({ staff, primaryColor, onNew, onEdit, onSche
                         <div className="size-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
                             <Users size={32} />
                         </div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">No se encontraron profesionales</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide ">No se encontraron profesionales</p>
                     </div>
                 )}
             </div>

@@ -74,7 +74,8 @@ export const authOptions: AuthOptions = {
                                     adminRolNombre: adminUser.rol?.nombre || null,
                                     adminRolColor: adminUser.rol?.color || null,
                                     adminRolIcono: adminUser.rol?.icono || null,
-                                    adminRolJerarquia: adminUser.rol?.jerarquia || 999,
+                                    // Cuentas del equipo sin rol = cuenta original del dueño (anterior al sistema de roles)
+                                    adminRolJerarquia: adminUser.rol ? (adminUser.rol.jerarquia || 999) : 1,
                                     permisos,
                                     scope: adminUser.scope || 'GLOBAL',
                                     estado: adminUser.estado,
@@ -169,6 +170,31 @@ export const authOptions: AuthOptions = {
                 token.permisos = user.permisos || [];
                 token.scope = user.scope || null;
                 token.estado = user.estado || null;
+            } else if (token?.id && token.isAdminUser) {
+                // Equipo Citiox: refrescar rol y permisos cada 5 min. Si el dueño desactiva a un
+                // vendedor o le cambia el rol, el cambio aplica sin esperar a que cierre sesión.
+                const last = Number(token.teamRefreshedAt || 0);
+                if (Date.now() - last > 5 * 60 * 1000) {
+                    try {
+                        const au = await prisma.adminUser.findUnique({
+                            where: { id: token.id },
+                            include: { rol: { include: { permisos: { include: { permiso: true } } } } }
+                        });
+                        if (!au || !au.activo || ['BLOQUEADO', 'SUSPENDIDO'].includes(au.estado)) {
+                            token.isAdminUser = false;
+                            token.role = null;
+                            token.roles = [];
+                            token.permisos = [];
+                        } else {
+                            token.permisos = au.rol?.permisos.map((rp: any) => rp.permiso.codigo) || [];
+                            token.adminRolNombre = au.rol?.nombre || null;
+                            token.adminRolJerarquia = au.rol ? (au.rol.jerarquia || 999) : 1;
+                            token.scope = au.scope || 'GLOBAL';
+                            token.estado = au.estado;
+                        }
+                        token.teamRefreshedAt = Date.now();
+                    } catch { /* si falla la lectura se mantiene el token */ }
+                }
             } else if (token?.id && !token.isAdminUser) {
                 try {
                     const dbUser = await prisma.usuario.findUnique({
@@ -222,6 +248,12 @@ export const authOptions: AuthOptions = {
                 session.user.permisos = token.permisos || [];
                 session.user.scope = token.scope || null;
                 session.user.estado = token.estado || null;
+                // Se calcula ANTES del acceso delegado: al "Entrar" a un negocio la sesión cambia
+                // role/isAdminUser y el dueño de la plataforma perdía todo el menú del superadmin.
+                try {
+                    const { isPlatformOwner } = await import('@/lib/admin/teamAccessMap');
+                    session.user.platformOwner = isPlatformOwner(token);
+                } catch { session.user.platformOwner = false; }
 
                 // ── RESOLUCIÓN DE ACCESO DELEGADO SUPERADMIN (INMUTABLE) ──
                 try {

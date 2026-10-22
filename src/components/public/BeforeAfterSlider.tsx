@@ -54,7 +54,7 @@ export default function BeforeAfterSlider({
     return (
         <div 
             ref={containerRef}
-            className="relative w-full aspect-square sm:aspect-[4/3] rounded-[2rem] overflow-hidden cursor-ew-resize select-none border border-slate-100 shadow-2xl"
+            className="relative w-full aspect-square sm:aspect-[4/3] rounded-3xl overflow-hidden cursor-ew-resize select-none border border-slate-100 shadow-2xl"
             onMouseMove={handleMouseMove}
             onTouchMove={handleTouchMove}
             onMouseDown={handleMouseDown}
@@ -95,12 +95,12 @@ export default function BeforeAfterSlider({
 
             {/* Labels */}
             <div className="absolute top-4 left-4 z-30">
-                <span className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-white/10">
+                <span className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full text-xs font-bold text-white uppercase tracking-wide border border-white/10">
                     {beforeLabel}
                 </span>
             </div>
             <div className="absolute top-4 right-4 z-30 text-right">
-                <span className="px-4 py-2 bg-emerald-500/80 backdrop-blur-md rounded-full text-[10px] font-black text-white uppercase tracking-widest border border-emerald-400/20">
+                <span className="px-4 py-2 bg-emerald-500/80 backdrop-blur-md rounded-full text-xs font-bold text-white uppercase tracking-wide border border-emerald-400/20">
                     {afterLabel}
                 </span>
             </div>

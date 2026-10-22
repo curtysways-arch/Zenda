@@ -12,6 +12,7 @@ interface CoverageMapPublicProps {
 export default function CoverageMapPublic({ negocioId, onCheckLocation }: CoverageMapPublicProps) {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const polygonLayerRef = useRef<any>(null);
 
   const [cobertura, setCobertura] = useState<{
     activa: boolean;
@@ -20,14 +21,7 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
   }>({
     activa: true,
     mensaje: 'Retiramos y entregamos tus zapatos dentro de nuestra zona de cobertura.',
-    poligono: [
-      [-0.170, -78.485],
-      [-0.150, -78.470],
-      [-0.160, -78.440],
-      [-0.200, -78.450],
-      [-0.220, -78.480],
-      [-0.190, -78.500]
-    ]
+    poligono: []
   });
 
   const [userResult, setUserResult] = useState<{
@@ -49,14 +43,7 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
           setCobertura({
             activa: data.activa ?? true,
             mensaje: data.mensaje || 'Retiramos y entregamos tus zapatos dentro de nuestra zona de cobertura.',
-            poligono: Array.isArray(data.poligono) && data.poligono.length > 0 ? data.poligono : [
-              [-0.170, -78.485],
-              [-0.150, -78.470],
-              [-0.160, -78.440],
-              [-0.200, -78.450],
-              [-0.220, -78.480],
-              [-0.190, -78.500]
-            ]
+            poligono: Array.isArray(data.poligono) ? data.poligono : []
           });
         }
       } catch (err) {
@@ -103,6 +90,13 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
       }
 
       const map = mapInstanceRef.current;
+
+      // Limpiar capa de polígono previa para evitar duplicados en el mapa
+      if (polygonLayerRef.current) {
+        map.removeLayer(polygonLayerRef.current);
+        polygonLayerRef.current = null;
+      }
+
       if (currentPolygon.length > 0) {
         const polyLayer = L.polygon(currentPolygon, {
           color: '#7C3AED',
@@ -110,6 +104,8 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
           fillOpacity: 0.3,
           weight: 3
         }).addTo(map);
+
+        polygonLayerRef.current = polyLayer;
 
         try {
           const bounds = polyLayer.getBounds();
@@ -132,6 +128,10 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
     }
 
     return () => {
+      if (polygonLayerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(polygonLayerRef.current);
+        polygonLayerRef.current = null;
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -180,11 +180,11 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
     <div className="bg-white rounded-3xl border border-slate-100 shadow-xl p-6 sm:p-8 space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-black rounded-full uppercase tracking-wider">
+          <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full uppercase tracking-wider">
             Zona de Servicio
           </span>
         </div>
-        <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Nuestra Cobertura</h3>
+        <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Nuestra Cobertura</h3>
         <p className="text-slate-600 font-medium text-sm mt-1">{cobertura.mensaje}</p>
       </div>
 
@@ -193,7 +193,7 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
         <div ref={mapDivRef} className="w-full h-full relative z-0" style={{ zIndex: 0 }} />
 
         {/* Badge Flotante sobre el Mapa */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-purple-600/90 backdrop-blur-md text-white px-5 py-2 rounded-full text-xs font-black shadow-lg border border-white/20 flex items-center gap-2 pointer-events-none">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-purple-600/90 backdrop-blur-md text-white px-5 py-2 rounded-full text-xs font-bold shadow-lg border border-white/20 flex items-center gap-2 pointer-events-none">
           <MapPin size={14} className="text-purple-200" />
           <span>📍 Cobertura Activa en el Perímetro Ilustrado</span>
         </div>
@@ -212,7 +212,7 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
             <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
           )}
           <div>
-            <p className="font-black text-sm">
+            <p className="font-bold text-sm">
               {userResult.isInside
                 ? '¡Genial! Tu ubicación está dentro de nuestra cobertura'
                 : 'Ubicación fuera del perímetro habitual'}
@@ -230,7 +230,7 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
       <button
         onClick={handleVerifyMyGPS}
         disabled={verifying}
-        className="w-full py-4 bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white font-black text-sm rounded-2xl shadow-xl shadow-purple-600/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+        className="w-full py-4 bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white font-bold text-sm rounded-2xl shadow-xl shadow-purple-600/25 transition-all cursor-pointer flex items-center justify-center gap-2"
       >
         <Search size={18} />
         {verifying ? 'Verificando tu ubicación GPS...' : 'Consultar cobertura con mi ubicación'}

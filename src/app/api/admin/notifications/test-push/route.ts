@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
 let admin: any = null;
 try { admin = require('firebase-admin'); } catch {}
 import { initFirebaseAdmin } from "@/lib/notifications";
 
 async function getAdminNegocioId() {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) return null;
     return (session.user as any).negocioId;
 }

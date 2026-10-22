@@ -14,10 +14,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ business
         // Usar queryRawUnsafe para garantizar todos los resultados en SQLite
         const safeId = businessId.replace(/'/g, "''");
         const pages = await prisma.$queryRawUnsafe(
-            `SELECT id, businessId, title, slug, status, contentHtml, featuredImage, buttonText, buttonUrl, updatedAt FROM Page WHERE businessId = '${safeId}' AND status = 'published' ORDER BY updatedAt DESC`
+            `SELECT id, businessId, title, slug, status, contentHtml, featuredImage, buttonText, buttonUrl, posicion, orden, updatedAt FROM Page WHERE businessId = '${safeId}' ORDER BY orden ASC, updatedAt DESC`
         ) as any[];
 
-        return NextResponse.json(pages || []);
+        const formatted = (pages || []).map((p: any) => ({
+            ...p,
+            posicion: p.posicion || (p.slug === 'como-funciona' ? 'top' : 'bottom'),
+            orden: p.orden ?? 1
+        }));
+
+        return NextResponse.json(formatted);
     } catch (error: any) {
         console.error('[PUBLIC_PAGES_ERROR]', error?.message);
         return NextResponse.json([], { status: 200 }); // Devolver array vacío en caso de error, no 500

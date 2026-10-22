@@ -7,7 +7,7 @@ export default async function AdminPlanPage() {
     const session = await getEffectiveAdminSession();
     const negocioId = (session?.user as any)?.negocioId;
 
-    if (!negocioId) return <div className="p-8 font-black uppercase text-center text-slate-500">No autorizado</div>;
+    if (!negocioId) return <div className="p-8 font-bold uppercase text-center text-slate-500">No autorizado</div>;
 
     // Obtener datos del negocio primero para resolver su familia correspondiente
     const [data, business, whatsappConfig, discountConfig] = await Promise.all([

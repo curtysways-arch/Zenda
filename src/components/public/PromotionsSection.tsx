@@ -120,7 +120,7 @@ export default function PromotionsSection({
 
             {/* Cabecera con padding lateral de 24px */}
             <div className="flex items-center justify-between px-6">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-900 flex items-center gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-900 flex items-center gap-1.5">
                     ✨ PROMOCIONES DESTACADAS
                 </span>
             </div>
@@ -250,7 +250,7 @@ export default function PromotionsSection({
                                     {/* Badge Superior */}
                                     <div className="flex items-center">
                                         <span 
-                                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[8.5px] font-black uppercase tracking-wider shadow-sm border border-slate-200/60"
+                                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-wider shadow-sm border border-slate-200/60"
                                             style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}
                                         >
                                             <Flame size={9} className="fill-current animate-bounce" />
@@ -262,12 +262,12 @@ export default function PromotionsSection({
                                     <div className="animate-soft-pulse" style={{ '--pulse-color': `${primaryColor}40` } as any}>
                                         <div className="flex items-baseline gap-1.5">
                                             <span 
-                                                className="text-4xl sm:text-5xl font-black tracking-tighter leading-none"
+                                                className="text-4xl sm:text-5xl font-bold tracking-tight leading-none"
                                                 style={{ color: primaryColor }}
                                             >
                                                 {discountNumber}
                                             </span>
-                                            <span className="text-[8.5px] sm:text-[9.5px] font-black uppercase tracking-[0.15em] text-slate-800">
+                                            <span className="text-[8.5px] sm:text-[9.5px] font-bold uppercase tracking-wide text-slate-800">
                                                 {discountSublabel}
                                             </span>
                                         </div>
@@ -275,10 +275,10 @@ export default function PromotionsSection({
 
                                     {/* Título y descripción limpia */}
                                     <div className="space-y-1 pt-0.5">
-                                        <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug uppercase tracking-tight line-clamp-1">
+                                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug uppercase tracking-tight line-clamp-1">
                                             {promo.titulo}
                                         </h4>
-                                        <p className="text-[10px] sm:text-[11px] text-slate-600 font-semibold leading-snug line-clamp-2 bg-slate-50 border border-slate-200/60 px-2.5 py-1.5 rounded-lg mt-1">
+                                        <p className="text-xs sm:text-xs text-slate-600 font-semibold leading-snug line-clamp-2 bg-slate-50 border border-slate-200/60 px-2.5 py-1.5 rounded-lg mt-1">
                                             {cleanDescription || 'Promoción especial por tiempo limitado para nuevos miembros.'}
                                         </p>
                                     </div>
@@ -287,7 +287,7 @@ export default function PromotionsSection({
                                 {/* Precio Promocional */}
                                 {showPrices && numPromoPrice !== null && (
                                     <div className="flex items-baseline gap-2 pt-1">
-                                        <span className="text-xl sm:text-2xl font-black italic tracking-tighter" style={{ color: primaryColor }}>
+                                        <span className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: primaryColor }}>
                                             {numPromoPrice === 0 ? '¡GRATIS!' : `$${numPromoPrice.toFixed(0)}`}
                                         </span>
                                         {precioAnteriorBase > numPromoPrice && (
@@ -296,7 +296,7 @@ export default function PromotionsSection({
                                             </span>
                                         )}
                                         {numPromoPrice === 0 && precioAnteriorBase > 0 && (
-                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 tracking-wider">
+                                            <span className="text-xs font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 tracking-wider">
                                                 Ahorro 100%
                                             </span>
                                         )}
@@ -307,7 +307,7 @@ export default function PromotionsSection({
                                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
                                     <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 max-w-full">
                                         <Sparkles size={10} className="text-amber-500 shrink-0" />
-                                        <span className="text-[9.5px] sm:text-[10px] font-black text-slate-700 uppercase tracking-tight truncate max-w-[140px] sm:max-w-[200px]">
+                                        <span className="text-[9.5px] sm:text-xs font-bold text-slate-700 uppercase tracking-tight truncate max-w-[140px] sm:max-w-[200px]">
                                             {appliesToText}
                                         </span>
                                     </div>
@@ -318,7 +318,7 @@ export default function PromotionsSection({
                                                 e.stopPropagation();
                                                 setSelectedPromoServices(promo);
                                             }}
-                                            className="text-[9px] sm:text-[9.5px] font-black underline hover:opacity-80 transition-all cursor-pointer border-0 bg-transparent p-0 leading-none shrink-0"
+                                            className="text-xs sm:text-[9.5px] font-bold underline hover:opacity-80 transition-all cursor-pointer border-0 bg-transparent p-0 leading-none shrink-0"
                                             style={{ color: primaryColor }}
                                         >
                                             + Ver más
@@ -331,7 +331,7 @@ export default function PromotionsSection({
                                     {/* Vigencia */}
                                     <div className="flex items-center gap-1 text-slate-400">
                                         <Calendar size={11} className="shrink-0" />
-                                        <span className="text-[9px] sm:text-[9.5px] font-bold">
+                                        <span className="text-xs sm:text-[9.5px] font-bold">
                                             Hasta {dateStr}
                                         </span>
                                     </div>
@@ -347,7 +347,7 @@ export default function PromotionsSection({
                                                 router.push(`/${slug}/promo/${promo.id}`);
                                             }
                                         }}
-                                        className="inline-flex items-center justify-center gap-1 px-4.5 py-2.5 rounded-2xl font-black text-[9px] uppercase tracking-widest text-white shadow-md active:scale-105 hover:scale-[1.02] transition-all duration-300 border-0 cursor-pointer"
+                                        className="inline-flex items-center justify-center gap-1 px-4.5 py-2.5 rounded-2xl font-bold text-xs uppercase tracking-wide text-white shadow-md active:scale-105 hover:scale-[1.02] transition-all duration-300 border-0 cursor-pointer"
                                         style={{ 
                                             backgroundColor: primaryColor,
                                             boxShadow: `0 8px 16px ${primaryColor}25`
@@ -371,14 +371,14 @@ export default function PromotionsSection({
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
 
                                 {/* Badge Dinámico con Brillo Sutil */}
-                                <span className="absolute top-2.5 right-2.5 px-2.5 py-1 bg-white/95 text-slate-800 rounded-lg text-[7.5px] sm:text-[8px] font-black uppercase tracking-widest shadow-md border border-white/80 animate-shimmer leading-none">
+                                <span className="absolute top-2.5 right-2.5 px-2.5 py-1 bg-white/95 text-slate-800 rounded-lg text-[7.5px] sm:text-xs font-bold uppercase tracking-wide shadow-md border border-white/80 animate-shimmer leading-none">
                                     {currentTag}
                                 </span>
 
                                 {/* Badge de Ahorro Real Dinámico si corresponde */}
                                 {ahorroVal > 0 && showPrices && (
                                     <span 
-                                        className="absolute bottom-2.5 left-2.5 right-2.5 text-center py-1.5 rounded-xl text-[7.5px] sm:text-[8px] font-black uppercase tracking-wider text-white shadow-lg backdrop-blur-[2px] leading-none"
+                                        className="absolute bottom-2.5 left-2.5 right-2.5 text-center py-1.5 rounded-xl text-[7.5px] sm:text-xs font-bold uppercase tracking-wider text-white shadow-lg backdrop-blur-[2px] leading-none"
                                         style={{ 
                                             background: `linear-gradient(135deg, ${primaryColor}E0 0%, color-mix(in srgb, ${primaryColor}, #000 15%)E0 100%)`
                                         }}
@@ -423,16 +423,16 @@ export default function PromotionsSection({
             {selectedPromoServices && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setSelectedPromoServices(null)}>
                     <div 
-                        className="bg-white rounded-[2rem] border border-slate-100 w-full max-w-sm overflow-hidden shadow-2xl p-6 space-y-4 animate-scale-up"
+                        className="bg-white rounded-3xl border border-slate-100 w-full max-w-sm overflow-hidden shadow-2xl p-6 space-y-4 animate-scale-up"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
                         <div className="flex justify-between items-center border-b border-slate-50 pb-3">
                             <div>
-                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                                     Servicios Incluidos
                                 </h3>
-                                <p className="text-[10px] text-slate-400 font-bold mt-0.5 line-clamp-1">
+                                <p className="text-xs text-slate-400 font-bold mt-0.5 line-clamp-1">
                                     {selectedPromoServices.titulo}
                                 </p>
                             </div>
@@ -457,15 +457,15 @@ export default function PromotionsSection({
                                             <img src={svcImg} alt={service.nombre} className="w-full h-full object-cover" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h4 className="text-[11px] font-black text-slate-800 truncate uppercase">
+                                            <h4 className="text-xs font-bold text-slate-800 truncate uppercase">
                                                 {service.nombre}
                                             </h4>
-                                            <p className="text-[9px] text-slate-400 font-medium">
+                                            <p className="text-xs text-slate-400 font-medium">
                                                 ⏳ {service.duracion || 60} mins
                                             </p>
                                         </div>
                                         {showPrices && service.precio !== undefined && (
-                                            <span className="text-[11px] font-black text-slate-800">
+                                            <span className="text-xs font-bold text-slate-800">
                                                 ${service.precio}
                                             </span>
                                         )}
@@ -482,7 +482,7 @@ export default function PromotionsSection({
                                     setSelectedPromoServices(null);
                                     router.push(`/${slug}/promo/${id}`);
                                 }}
-                                className="w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer border-0"
+                                className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wide text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer border-0"
                                 style={{ backgroundColor: primaryColor }}
                             >
                                 Reservar promoción

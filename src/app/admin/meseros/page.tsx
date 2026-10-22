@@ -44,7 +44,7 @@ export default function AdminMeserosPage() {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black text-white italic">Consola de Meseros</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-white ">Consola de Meseros</h1>
             <p className="text-xs text-slate-400">Vista filtrada por zonas, comandas asignadas y estado de cocina</p>
           </div>
         </div>
@@ -79,9 +79,9 @@ export default function AdminMeserosPage() {
                   <div key={m.id} className="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
                     <div>
                       <h4 className="font-bold text-xs text-white">{m.name}</h4>
-                      <span className="text-[10px] text-slate-400">Capacidad: {m.capacity} pers.</span>
+                      <span className="text-xs text-slate-400">Capacidad: {m.capacity} pers.</span>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                       {m.status}
                     </span>
                   </div>
@@ -105,15 +105,15 @@ export default function AdminMeserosPage() {
                   return (
                     <div key={o.id} className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-2">
                       <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-1.5">
-                        <span className="font-black text-amber-400">#{o.numeroPedido}</span>
-                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                        <span className="font-bold text-amber-400">#{o.numeroPedido}</span>
+                        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
                           {extra.kitchenStatus || o.estado}
                         </span>
                       </div>
                       <div className="text-xs text-slate-300">
                         {o.referenciaCliente || 'Mesa'} - {o.nombreCliente}
                       </div>
-                      <div className="text-[11px] text-slate-400 space-y-0.5">
+                      <div className="text-xs text-slate-400 space-y-0.5">
                         {o.items?.map((it: any) => (
                           <div key={it.id} className="flex justify-between">
                             <span>{it.cantidad}x {it.nombreProducto}</span>

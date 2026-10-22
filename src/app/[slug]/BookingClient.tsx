@@ -76,6 +76,7 @@ export default function BookingClient({
     const [selectedBooking, setSelectedBooking] = useState<any>(null);
     const [formData, setFormData] = useState({ nombre: '', telefono: '', comentarios: '' });
     const [loading, setLoading] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     // Estado de cupón de descuento
     const [couponCode, setCouponCode] = useState('');
@@ -530,6 +531,7 @@ const resolveSlotPromotion = (
 
     const handleFinalConfirm = async () => {
         setShowValidationErrors(false);
+        setSubmitError(null);
 
         if (!formData.nombre || !formData.nombre.trim()) {
             setShowValidationErrors(true);
@@ -548,7 +550,7 @@ const resolveSlotPromotion = (
         }
 
         if (!selectedBooking || selectedServiceIds.length === 0) {
-            alert("Debe seleccionar al menos un servicio.");
+            setSubmitError("Elige al menos un servicio para continuar.");
             return;
         }
         setLoading(true);
@@ -609,12 +611,16 @@ const resolveSlotPromotion = (
 
                 router.push(`/${slug}/confirmacion/${data.id}`);
             } else {
-                // Muestra el error detallado y el código de Prisma
-                alert("Error: " + (data.details || data.error || "Problema técnico") + (data.code ? " [Código: " + data.code + "]" : ""));
+                // Mensaje claro para el cliente; el detalle técnico queda en la consola
+                console.error('Error al reservar:', data);
+                const msg = typeof data?.error === 'string' && data.error.length < 140 && !/prisma|sql|code|exception/i.test(data.error)
+                    ? data.error
+                    : 'No pudimos guardar tu reserva. Intenta con otro horario o escríbenos por WhatsApp.';
+                setSubmitError(msg);
             }
         } catch (e: any) {
             console.error("Error confirmando reserva:", e);
-            alert("Error de conexión. Verifica tu internet e inténtalo de nuevo.");
+            setSubmitError("Parece que no hay conexión. Revisa tu internet e inténtalo de nuevo.");
         } finally { setLoading(false); }
     };
 
@@ -630,19 +636,19 @@ const resolveSlotPromotion = (
         return (
             <div className="fixed inset-0 z-[700] bg-white overflow-y-auto animate-in slide-in-from-right duration-500 text-left">
                 <div className="sticky top-0 z-[710] bg-white/80 backdrop-blur-md px-6 py-5 flex items-center justify-between">
-                    <button onClick={() => setView('calendar')} className="size-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:text-gray-900 border border-gray-100"><ArrowLeft size={24} /></button>
+                    <button onClick={() => setView('calendar')} aria-label="Volver a elegir horario" className="size-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:text-gray-900 border border-gray-100"><ArrowLeft size={24} /></button>
                     <div className="px-5 py-2.5 rounded-full border shadow-sm bg-white">
-                        <span className="text-[11px] font-black italic uppercase tracking-widest leading-none block" style={{ color: primaryColor }}>Paso Final</span>
+                        <span className="text-xs font-semibold leading-none block" style={{ color: primaryColor }}>Último paso</span>
                     </div>
                 </div>
 
                 <div className="max-w-xl mx-auto px-6 pb-56 space-y-8 mt-4">
                     <div className="space-y-2">
-                        <h2 className="text-4xl font-black italic tracking-tighter text-gray-900 uppercase leading-none">CONFIRMAR<br/>CITA</h2>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Completa tus datos para finalizar.</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-gray-900 leading-tight">Confirma tu cita</h2>
+                        <p className="text-sm text-gray-500 mt-1">Revisa los detalles y deja tu nombre y teléfono.</p>
                     </div>
 
-                    <div className="bg-white rounded-[2.5rem] p-7 border border-gray-100 space-y-6 shadow-sm">
+                    <div className="bg-white rounded-3xl p-7 border border-gray-100 space-y-6 shadow-sm">
                         <div className="flex justify-between items-start border-b border-gray-50 pb-5">
                             <div className="space-y-3 flex-1">
                                 {selectedServiceIds.map((id, idx) => {
@@ -651,7 +657,7 @@ const resolveSlotPromotion = (
                                         <div key={id} className="flex items-center justify-between gap-3">
                                             <div className="flex items-center gap-2">
                                                 {idx === 0 ? <Scissors size={14} className="text-gray-400" /> : <Plus size={12} className="text-emerald-400" />}
-                                                <span className="text-sm font-black italic text-gray-800 uppercase leading-tight">{s?.nombre}</span>
+                                                <span className="text-sm font-bold text-gray-800 uppercase leading-tight">{s?.nombre}</span>
                                             </div>
                                             {showPrices && (
                                                 <span className="text-sm font-bold text-gray-600">
@@ -666,9 +672,9 @@ const resolveSlotPromotion = (
                                         </div>
                                     );
                                 })}
-                                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-dashed border-gray-100 italic">
+                                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-dashed border-gray-100 ">
                                     <Clock size={12} className="text-gray-400" />
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tiempo estimado: {totalDuracionMin} min</span>
+                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Tiempo estimado: {totalDuracionMin} min</span>
                                 </div>
                             </div>
                         </div>
@@ -688,26 +694,26 @@ const resolveSlotPromotion = (
                                             <Sparkles size={16} className="animate-pulse" />
                                         </div>
                                         <div>
-                                            <span className={`text-[9px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full border inline-block ${
-                                                selectedBooking.packPromo.isPack 
-                                                    ? 'text-indigo-700 bg-indigo-100/90 border-indigo-200' 
-                                                    : 'text-emerald-700 bg-emerald-100/90 border-emerald-200'
-                                            }`}>
+                                            <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border inline-block ${
+ selectedBooking.packPromo.isPack 
+ ? 'text-indigo-700 bg-indigo-100/90 border-indigo-200' 
+ : 'text-emerald-700 bg-emerald-100/90 border-emerald-200'
+ }`}>
                                                 {selectedBooking.packPromo.isPack ? '📦 Pack Promocional Aplicado' : '🔥 Promoción Especial Aplicada'}
                                             </span>
-                                            <h4 className="text-xs font-black text-slate-900 uppercase italic tracking-tight mt-1 leading-snug">
+                                            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight mt-1 leading-snug">
                                                 {selectedBooking.packPromo.titulo}
                                             </h4>
                                         </div>
                                     </div>
                                     {selectedBooking.packPromo.precioOriginal && (
                                         <div className="text-right shrink-0">
-                                            <span className="text-[10px] text-slate-400 line-through font-bold block">
+                                            <span className="text-xs text-slate-400 line-through font-bold block">
                                                 ${Number(selectedBooking.packPromo.precioOriginal).toFixed(2)}
                                             </span>
-                                            <span className={`text-base font-black italic ${
-                                                selectedBooking.packPromo.isPack ? 'text-indigo-600' : 'text-emerald-600'
-                                            }`}>
+                                            <span className={`text-base font-bold ${
+ selectedBooking.packPromo.isPack ? 'text-indigo-600' : 'text-emerald-600'
+ }`}>
                                                 ${Number(selectedBooking.packPromo.precioPromo).toFixed(2)}
                                             </span>
                                         </div>
@@ -715,14 +721,14 @@ const resolveSlotPromotion = (
                                 </div>
 
                                 {selectedBooking.packPromo.descripcion && (
-                                    <p className="text-[11px] text-slate-600 font-medium leading-relaxed bg-white/70 p-2.5 rounded-xl border border-slate-100">
+                                    <p className="text-xs text-slate-600 font-medium leading-relaxed bg-white/70 p-2.5 rounded-xl border border-slate-100">
                                         {selectedBooking.packPromo.descripcion}
                                     </p>
                                 )}
 
                                 {selectedBooking.packPromo.isPack && selectedBooking.packPromo.servicios && selectedBooking.packPromo.servicios.length > 0 && (
                                     <div className="space-y-1.5 pt-0.5">
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-700">
+                                        <p className="text-xs font-bold uppercase tracking-wide text-slate-700">
                                             Servicios incluidos en este Pack:
                                         </p>
                                         <div className="space-y-1.5">
@@ -740,7 +746,7 @@ const resolveSlotPromotion = (
                                                     </span>
                                                 </div>
                                                 {item.duracion && (
-                                                    <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100 shrink-0">
+                                                    <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100 shrink-0">
                                                         {item.duracion} min
                                                     </span>
                                                 )}
@@ -755,10 +761,10 @@ const resolveSlotPromotion = (
                         {/* Alerta de beneficio aplicado de Servicio Gratis (Premio) */}
                         {selectedBooking && freeServices.some((fs: any) => fs.serviceId === selectedBooking.canchaId && fs.estado === 'DISPONIBLE') && (
                             <div className="bg-emerald-50/70 border border-emerald-100 rounded-3xl p-4 text-left space-y-1">
-                                <span className="text-[10px] font-black uppercase text-emerald-700 tracking-wider flex items-center gap-1.5 leading-none">
+                                <span className="text-xs font-bold uppercase text-emerald-700 tracking-wider flex items-center gap-1.5 leading-none">
                                     🎁 Beneficio Aplicado: Servicio Gratis
                                 </span>
-                                <p className="text-[10px] text-emerald-600 font-bold leading-normal">
+                                <p className="text-xs text-emerald-600 font-bold leading-normal">
                                     Estás utilizando tu beneficio de <span className="uppercase">{allServices.find(s => s.id === selectedBooking.canchaId)?.nombre || 'Servicio'} Gratis</span>. Esta promoción personal no es acumulable con el 2x1 o tarifas públicas de oferta.
                                 </p>
                             </div>
@@ -767,14 +773,14 @@ const resolveSlotPromotion = (
                         {/* Fila del Descuento (si existe) */}
                         {selectedBooking && selectedBooking.discountPercentage > 0 && (
                             <div className="flex justify-between items-center pb-2">
-                                <span className="text-[10px] font-black uppercase text-emerald-500 tracking-wider">Descuento aplicado</span>
-                                <span className="text-xs font-black text-emerald-500">-{selectedBooking.discountPercentage}% DESCUENTO</span>
+                                <span className="text-xs font-bold uppercase text-emerald-500 tracking-wider">Descuento aplicado</span>
+                                <span className="text-xs font-bold text-emerald-500">-{selectedBooking.discountPercentage}% DESCUENTO</span>
                             </div>
                         )}
 
                         {/* Fila del Total Separada */}
                         <div className="flex justify-between items-center pt-4 border-t-2 border-gray-50">
-                            <span className="text-xs font-black uppercase text-gray-400 tracking-wider">
+                            <span className="text-xs font-bold uppercase text-gray-400 tracking-wider">
                                 {selectedBooking?.tipoPromo === '2x1' ? 'Total a pagar (Promo 2x1)' : (selectedBooking?.tipoPromo === '3x1' ? 'Total a pagar (Promo 3x1)' : 'Total a pagar')}
                             </span>
                             {showPrices && (
@@ -784,22 +790,22 @@ const resolveSlotPromotion = (
                                             ${((selectedBooking?.precio || 0) * (selectedBooking?.tipoPromo === '2x1' ? 2 : 3)).toFixed(2)}
                                         </span>
                                     )}
-                                    <span className="text-2xl font-black text-gray-900 tracking-tighter">${selectedBooking?.precio.toFixed(2)}</span>
+                                    <span className="text-2xl font-bold text-gray-900 tracking-tight">${selectedBooking?.precio.toFixed(2)}</span>
                                 </div>
                             )}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1 text-left">
-                                <span className="text-[9px] font-black uppercase text-gray-400">Fecha</span>
-                                <span className="text-xs font-black italic text-gray-900 uppercase">{selectedBooking && format(selectedBooking.date, "EEEE d MMM", { locale: es })}</span>
+                                <span className="text-xs font-bold uppercase text-gray-400">Fecha</span>
+                                <span className="text-xs font-bold text-gray-900 uppercase">{selectedBooking && format(selectedBooking.date, "EEEE d MMM", { locale: es })}</span>
                             </div>
                             <div className="flex flex-col gap-1 text-right">
-                                <span className="text-[9px] font-black uppercase text-gray-400">Horario de Inicio</span>
-                                <span className="text-xs font-black italic text-gray-900 uppercase">{selectedBooking?.hour} HS</span>
+                                <span className="text-xs font-bold uppercase text-gray-400">Horario de Inicio</span>
+                                <span className="text-xs font-bold text-gray-900 uppercase">{selectedBooking?.hour} HS</span>
                             </div>
                             {selectedBooking?.staffName && (
                                 <div className="col-span-2 pt-2 flex items-center justify-between">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase">Especialista: <span className="text-gray-900 italic ml-1">{selectedBooking.staffName}</span></span>
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Especialista: <span className="text-gray-900 ml-1">{selectedBooking.staffName}</span></span>
                                     {(selectedMember?.imageMedia || selectedMember?.avatar) && <img src={(selectedMember.imageMedia as any)?.url ?? selectedMember.avatar} className="size-8 rounded-full border border-gray-100 object-cover" />}
                                 </div>
                             )}
@@ -808,13 +814,13 @@ const resolveSlotPromotion = (
 
                     <div className="flex items-center gap-3 px-2">
                          <div className="size-2 rounded-full" style={{ backgroundColor: primaryColor }} />
-                         <h3 className="text-[14px] font-black italic uppercase tracking-[0.2em]" style={{ color: primaryColor }}>Información de Contacto</h3>
+                         <h3 className="text-[14px] font-bold uppercase tracking-wide" style={{ color: primaryColor }}>Información de Contacto</h3>
                     </div>
 
-                    <div className="rounded-[2.5rem] p-8 space-y-6 border border-gray-100/50" style={{ backgroundColor: `${primaryColor}15` }}>
+                    <div className="rounded-3xl p-8 space-y-6 border border-gray-100/50" style={{ backgroundColor: `${primaryColor}15` }}>
                         
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Nombre Completo</label>
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-4">Nombre Completo</label>
                             <div className={`rounded-2xl overflow-hidden border bg-white shadow-sm h-16 transition-all ${
                                 showValidationErrors && (!formData.nombre || !formData.nombre.trim()) ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-100'
                             }`}>
@@ -824,14 +830,14 @@ const resolveSlotPromotion = (
                                     value={formData.nombre}
                                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                                     placeholder="Escribe aquí..."
-                                    className="w-full h-full bg-transparent px-6 font-black text-slate-900 placeholder:text-gray-300 outline-none transition-all"
+                                    className="w-full h-full bg-transparent px-6 font-bold text-slate-900 placeholder:text-gray-300 outline-none transition-all"
                                     style={{ color: '#030712', '--tw-ring-color': `color-mix(in srgb, ${primaryColor}, transparent 95%)` } as any} 
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Celular de Contacto</label>
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-4">Celular de Contacto</label>
                             <div className={`rounded-2xl overflow-hidden border bg-white shadow-sm min-h-20 transition-all ${
                                 showValidationErrors && (!formData.telefono || !formData.telefono.trim()) ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-100'
                             }`}>
@@ -846,10 +852,10 @@ const resolveSlotPromotion = (
 
                         {/* ===== SECCIÓN DE CUPONES DEL CLIENTE / CATÁLOGO ===== */}
                         {selectedBooking && selectedBooking.precio === 0 ? (
-                            <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-5 flex items-start gap-3">
+                            <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 flex items-start gap-3">
                                 <span className="text-lg">🎟️</span>
                                 <div className="text-left">
-                                    <p className="text-[10px] font-black text-slate-800 uppercase tracking-wider">Cupones no requeridos</p>
+                                    <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">Cupones no requeridos</p>
                                     <p className="text-[9.5px] text-slate-400 font-bold mt-0.5">Esta cita ya es gratuita, no es necesario aplicar cupones de descuento.</p>
                                 </div>
                             </div>
@@ -857,12 +863,12 @@ const resolveSlotPromotion = (
                             <>
                                 {clientCoupons.length > 0 && (
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">🎟️ Tus Cupones Disponibles</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-4">🎟️ Tus Cupones Disponibles</label>
                                         <div className="rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-sm h-14 relative flex items-center px-4">
                                             <select
                                                 value={isCustomCouponCode ? "custom" : (couponStatus === 'valid' || couponStatus === 'checking' ? couponCode : "")}
                                                 onChange={(e) => handleSelectClientCoupon(e.target.value)}
-                                                className="w-full h-full bg-transparent font-black text-slate-800 text-xs uppercase tracking-wider outline-none cursor-pointer"
+                                                className="w-full h-full bg-transparent font-bold text-slate-800 text-xs uppercase tracking-wider outline-none cursor-pointer"
                                                 style={{ color: '#1e293b' }}
                                             >
                                                 <option value="">Selecciona uno de tus cupones...</option>
@@ -875,19 +881,19 @@ const resolveSlotPromotion = (
                                             </select>
                                         </div>
                                         {clientCoupons.length > 0 && !isCustomCouponCode && couponStatus === 'valid' && couponData && (
-                                            <p className="text-[10px] font-black text-green-600 ml-4 mt-2">
+                                            <p className="text-xs font-bold text-green-600 ml-4 mt-2">
                                                 ✅ {couponData.tipo === 'PORCENTAJE' ? `${couponData.valor}% DESCUENTO aplicado` : `$${couponData.valor} DESCUENTO aplicado`} — Ahorras ${couponData.descuento.toFixed(2)}
                                             </p>
                                         )}
                                         {clientCoupons.length > 0 && !isCustomCouponCode && couponStatus === 'invalid' && (
-                                            <p className="text-[10px] font-black text-red-500 ml-4 mt-2">❌ {couponError}</p>
+                                            <p className="text-xs font-bold text-red-500 ml-4 mt-2">❌ {couponError}</p>
                                         )}
                                     </div>
                                 )}
 
                                 {(clientCoupons.length === 0 || isCustomCouponCode) && (
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">🎟️ Escribe tu Cupón</label>
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-4">🎟️ Escribe tu Cupón</label>
                                         <div className={`rounded-2xl overflow-hidden border bg-white shadow-sm flex h-14 transition-all ${
                                             couponStatus === 'valid' ? 'border-green-400' :
                                             couponStatus === 'invalid' ? 'border-red-300' :
@@ -898,25 +904,25 @@ const resolveSlotPromotion = (
                                                 onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponStatus('idle'); setCouponData(null); }}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleValidateCoupon()}
                                                 placeholder="Código de cupón..."
-                                                className="flex-1 h-full bg-transparent px-5 font-black text-slate-900 placeholder:text-gray-300 outline-none uppercase tracking-widest text-[13px]"
+                                                className="flex-1 h-full bg-transparent px-5 font-bold text-slate-900 placeholder:text-gray-300 outline-none uppercase tracking-wide text-sm"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => handleValidateCoupon()}
                                                 disabled={!couponCode.trim() || couponStatus === 'checking'}
-                                                className="px-4 text-[10px] font-black uppercase tracking-widest text-white rounded-r-2xl disabled:opacity-40 border-0 cursor-pointer transition-all"
+                                                className="px-4 text-xs font-bold uppercase tracking-wide text-white rounded-r-2xl disabled:opacity-40 border-0 cursor-pointer transition-all"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 {couponStatus === 'checking' ? '...' : 'Aplicar'}
                                             </button>
                                         </div>
                                         {couponStatus === 'valid' && couponData && (
-                                            <p className="text-[10px] font-black text-green-600 ml-4">
+                                            <p className="text-xs font-bold text-green-600 ml-4">
                                                 ✅ {couponData.tipo === 'PORCENTAJE' ? `${couponData.valor}% DESCUENTO aplicado` : `$${couponData.valor} DESCUENTO aplicado`} — Ahorras ${couponData.descuento.toFixed(2)}
                                             </p>
                                         )}
                                         {couponStatus === 'invalid' && (
-                                            <p className="text-[10px] font-black text-red-500 ml-4">❌ {couponError}</p>
+                                            <p className="text-xs font-bold text-red-500 ml-4">❌ {couponError}</p>
                                         )}
                                     </div>
                                 )}
@@ -927,7 +933,7 @@ const resolveSlotPromotion = (
                         {/* ===== SECCIÓN DE CASHBACK ===== */}
                         {userCashback > 0 && (
                             <div className="space-y-2 text-left">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">💵 Pagar con Saldo Cashback</label>
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-4">💵 Pagar con Saldo Cashback</label>
                                 <div 
                                     onClick={() => setApplyCashback(!applyCashback)}
                                     className={`rounded-2xl p-4 border transition-all cursor-pointer flex items-center justify-between shadow-sm ${
@@ -941,8 +947,8 @@ const resolveSlotPromotion = (
                                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
                                         </div>
                                         <div className="text-left">
-                                            <p className="font-black text-slate-800 text-[13px] leading-none">Aplicar saldo disponible</p>
-                                            <p className="text-[9px] text-slate-400 font-semibold mt-1">
+                                            <p className="font-bold text-slate-800 text-sm leading-none">Aplicar saldo disponible</p>
+                                            <p className="text-xs text-slate-400 font-semibold mt-1">
                                                 Tienes <strong className="text-emerald-600">${userCashback.toFixed(2)}</strong> de cashback acumulado.
                                             </p>
                                         </div>
@@ -955,7 +961,7 @@ const resolveSlotPromotion = (
                                     </div>
                                 </div>
                                 {applyCashback && (
-                                    <p className="text-[10px] font-black text-emerald-600 ml-4 mt-2">
+                                    <p className="text-xs font-bold text-emerald-600 ml-4 mt-2">
                                         ✅ Descuento de <strong>${Math.min(userCashback, selectedBooking ? (couponData ? couponData.totalConDescuento : selectedBooking.precio) : 0).toFixed(2)}</strong> aplicado a tu cita.
                                     </p>
                                 )}
@@ -963,14 +969,14 @@ const resolveSlotPromotion = (
                         )}
 
                         <div className="space-y-2 text-left">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Notas adicionales</label>
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-4">Notas adicionales</label>
                             <div className="rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-sm">
                                 <textarea
                                     value={formData.comentarios}
                                     rows={3}
                                     onChange={(e) => setFormData({ ...formData, comentarios: e.target.value })}
                                     placeholder="¿Algún detalle para tu turno?"
-                                    className="w-full bg-transparent p-6 font-black text-slate-900 placeholder:text-gray-300 outline-none resize-none transition-all"
+                                    className="w-full bg-transparent p-6 font-bold text-slate-900 placeholder:text-gray-300 outline-none resize-none transition-all"
                                     style={{ color: '#030712', '--tw-ring-color': `color-mix(in srgb, ${primaryColor}, transparent 95%)` } as any} 
                                 />
                             </div>
@@ -978,23 +984,23 @@ const resolveSlotPromotion = (
                     </div>
 
                     <div className="fixed bottom-2 left-2 right-2 z-[720] max-w-lg mx-auto">
-                        <div className="bg-white rounded-[3rem] p-5 shadow-[0_25px_60px_rgba(0,0,0,0.18)] border border-gray-100 flex flex-col gap-6">
+                        <div className="bg-white rounded-3xl p-5 shadow-[0_25px_60px_rgba(0,0,0,0.18)] border border-gray-100 flex flex-col gap-6">
                             <div className="flex justify-between items-end px-5 text-left">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase mb-1.5">{selectedServiceIds.length > 1 ? 'Servicios' : 'Tu Turno'}</span>
+                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1.5">{selectedServiceIds.length > 1 ? 'Servicios' : 'Tu Turno'}</span>
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-4xl font-black text-gray-900 tracking-tighter leading-none">{selectedBooking?.hour}</span>
-                                            <span className="text-[10px] text-gray-400 font-bold uppercase mt-2">HS</span>
+                                            <span className="text-4xl font-bold text-gray-900 tracking-tight leading-none">{selectedBooking?.hour}</span>
+                                            <span className="text-xs text-gray-400 font-bold uppercase mt-2">HS</span>
                                         </div>
-                                        <span className="text-[10px] font-black uppercase italic mt-1" style={{ color: primaryColor }}>
+                                        <span className="text-xs font-bold uppercase mt-1" style={{ color: primaryColor }}>
                                             {selectedBooking && format(selectedBooking.date, "EEE d 'de' MMM", { locale: es })}
                                         </span>
                                     </div>
                                 </div>
                                 {showPrices && (
                                     <div className="text-right flex flex-col">
-                                        <span className="text-[10px] font-black text-gray-400 uppercase mb-1.5">Total a Pagar</span>
+                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1.5">Total a Pagar</span>
                                         {(() => {
                                             const basePrecio = selectedBooking?.precio || 0;
                                             const totalConDescuento = couponStatus === 'valid' && couponData ? couponData.totalConDescuento : basePrecio;
@@ -1004,19 +1010,19 @@ const resolveSlotPromotion = (
                                             return (
                                                 <div className="flex flex-col items-end">
                                                     {(totalConDescuento < basePrecio || cashbackDescuento > 0) && (
-                                                        <span className="text-[12px] font-black text-gray-400 line-through leading-none">
+                                                        <span className="text-xs font-bold text-gray-400 line-through leading-none">
                                                             ${basePrecio.toFixed(2)}
                                                         </span>
                                                     )}
                                                     {precioFinal === 0 ? (
-                                                        <span className="text-4xl font-black text-emerald-500 tracking-tighter leading-none">GRATIS</span>
+                                                        <span className="text-4xl font-bold text-emerald-500 tracking-tight leading-none">Gratis</span>
                                                     ) : (
-                                                        <span className="text-4xl font-black tracking-tighter leading-none" style={{ color: primaryColor }}>
+                                                        <span className="text-4xl font-bold tracking-tight leading-none" style={{ color: primaryColor }}>
                                                             ${precioFinal.toFixed(2)}
                                                         </span>
                                                     )}
                                                     {cashbackDescuento > 0 && (
-                                                        <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider mt-1">
+                                                        <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider mt-1">
                                                             Cashback: -${cashbackDescuento.toFixed(2)}
                                                         </span>
                                                     )}
@@ -1026,14 +1032,19 @@ const resolveSlotPromotion = (
                                     </div>
                                 )}
                             </div>
+                            {submitError && (
+                                <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                                    {submitError}
+                                </div>
+                            )}
                             <button 
                                 type="button"
-                                onClick={(e) => { e.preventDefault(); console.log("Clicked confirm"); handleFinalConfirm(); }} 
+                                onClick={(e) => { e.preventDefault(); handleFinalConfirm(); }} 
                                 disabled={loading} 
-                                className="w-full h-18 text-white rounded-[2rem] font-black text-[14px] tracking-[0.2em] transition-all flex items-center justify-center gap-4 uppercase disabled:opacity-50 disabled:cursor-not-allowed" 
+                                className="w-full h-14 text-white rounded-2xl font-semibold text-base transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]" 
                                 style={{ backgroundColor: primaryColor }}
                             >
-                                {loading ? <Loader2 className="animate-spin" /> : <><span>CONFIRMAR Y AGENDAR</span><Check size={20} strokeWidth={4} /></>}
+                                {loading ? <Loader2 className="animate-spin" /> : <><span>Confirmar reserva</span><Check size={20} strokeWidth={3} /></>}
                             </button>
                         </div>
                     </div>
@@ -1049,10 +1060,10 @@ const resolveSlotPromotion = (
                             <div className="absolute inset-0 size-24 rounded-full border-4 border-dashed animate-spin [animation-direction:reverse] [animation-duration:3s]" style={{ borderColor: `${primaryColor}10` }} />
                             
                             <div className="mt-8 space-y-3 text-center">
-                                <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter animate-pulse">
+                                <h3 className="text-2xl font-bold text-white tracking-tight animate-pulse">
                                     Reservando tu Turno
                                 </h3>
-                                <p className="text-[10px] font-black uppercase tracking-[0.3em] leading-none animate-pulse" style={{ color: primaryColor }}>
+                                <p className="text-xs font-bold uppercase tracking-wide leading-none animate-pulse" style={{ color: primaryColor }}>
                                     Generando cita y notificaciones...
                                 </p>
                             </div>
@@ -1081,14 +1092,14 @@ const resolveSlotPromotion = (
                 <div className="space-y-5 px-2">
                     <div className="flex items-center gap-2 px-1">
                         <Sparkles size={12} style={{ color: primaryColor }} /> 
-                        <h3 className="text-[11px] font-black tracking-widest text-gray-900 uppercase italic">1. Servicios</h3>
+                        <h3 className="text-xs font-bold tracking-wide text-gray-900 uppercase ">1. Servicios</h3>
                     </div>
                     
                     <div className="space-y-3">
                         {allServices.filter(s => isSelected(s.id)).map((service: any) => {
                             const esGratis = freeServices.some((fs: any) => fs.serviceId === service.id && fs.estado === 'DISPONIBLE');
                             return (
-                                <div key={service.id} className="flex items-center justify-between p-5 rounded-[2rem] border border-gray-100 bg-white shadow-sm ring-1 ring-gray-100 animate-in zoom-in-95 duration-300">
+                                <div key={service.id} className="flex items-center justify-between p-5 rounded-3xl border border-gray-100 bg-white shadow-sm ring-1 ring-gray-100 animate-in zoom-in-95 duration-300">
                                     <div className="flex items-center gap-4">
                                         <button 
                                             onClick={() => toggleService(service.id)}
@@ -1099,14 +1110,14 @@ const resolveSlotPromotion = (
                                         </button>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <p className="text-base font-black text-gray-900 leading-none">{service.nombre}</p>
+                                                <p className="text-base font-bold text-gray-900 leading-none">{service.nombre}</p>
                                                 {esGratis && (
-                                                    <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-emerald-550 text-white rounded-md shadow-sm">
+                                                    <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 bg-emerald-550 text-white rounded-md shadow-sm">
                                                         🎁 Gratis
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">{service.duracion} min</p>
+                                            <p className="text-xs font-bold text-gray-400 mt-1 uppercase">{service.duracion} min</p>
                                         </div>
                                     </div>
                                     {showPrices && (() => {
@@ -1118,13 +1129,13 @@ const resolveSlotPromotion = (
                                         );
                                         if (promo.source === 'free_service' || promo.price === 0) {
                                             return (
-                                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 uppercase tracking-widest font-mono shrink-0">
+                                                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 uppercase tracking-wide font-mono shrink-0">
                                                     GRATIS
                                                 </span>
                                             );
                                         }
                                         return (
-                                            <span className="text-xl font-black text-gray-900">
+                                            <span className="text-xl font-bold text-gray-900">
                                                 ${promo.price.toFixed(2)}
                                             </span>
                                         );
@@ -1137,13 +1148,13 @@ const resolveSlotPromotion = (
                     {/* Recomendados para añadir */}
                     {otherServices.filter(s => !isSelected(s.id)).length > 0 && (
                         <div className="mt-4 pt-4 border-t border-gray-100/50">
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 ml-2">¿Complementas tu experiencia?</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4 ml-2">¿Complementas tu experiencia?</p>
                             <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar px-1">
                                 {otherServices.filter(s => !isSelected(s.id)).map((s: any) => (
                                     <button
                                         key={s.id}
                                         onClick={() => toggleService(s.id)}
-                                        className="flex-shrink-0 w-36 aspect-[4/3] p-4 rounded-[2rem] border border-gray-100 bg-white hover:border-primary/30 transition-all flex flex-col justify-between text-left group shadow-sm"
+                                        className="flex-shrink-0 w-36 aspect-[4/3] p-4 rounded-3xl border border-gray-100 bg-white hover:border-primary/30 transition-all flex flex-col justify-between text-left group shadow-sm"
                                     >
                                         <div className="flex justify-between items-start">
                                             <div className="size-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:shadow-sm transition-all"
@@ -1152,17 +1163,17 @@ const resolveSlotPromotion = (
                                              </div>
                                             {showPrices && (
                                                 freeServices.some((fs: any) => fs.serviceId === s.id && fs.estado === 'DISPONIBLE') ? (
-                                                    <span className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-emerald-500 text-white rounded-md">
+                                                    <span className="text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 bg-emerald-500 text-white rounded-md">
                                                         🎁 Gratis
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[11px] font-black text-gray-900">${s.precio}</span>
+                                                    <span className="text-xs font-bold text-gray-900">${s.precio}</span>
                                                 )
                                             )}
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black leading-tight uppercase text-gray-900 line-clamp-2">{s.nombre}</p>
-                                            <p className="text-[8px] font-bold text-gray-400 uppercase mt-1">{s.duracion} min</p>
+                                            <p className="text-xs font-bold leading-tight uppercase text-gray-900 line-clamp-2">{s.nombre}</p>
+                                            <p className="text-xs font-bold text-gray-400 uppercase mt-1">{s.duracion} min</p>
                                         </div>
                                     </button>
                                 ))}
@@ -1174,26 +1185,26 @@ const resolveSlotPromotion = (
 
             {/* TARJETA DETALLE PACK PROMOCIONAL O DE LA PROMO */}
             {activePackInfo && (
-                <div className={`mx-2 rounded-[2rem] p-5 sm:p-6 shadow-sm space-y-4 animate-in fade-in duration-300 border-2 ${
-                    activePackInfo.tipoPromo === '2x1'
-                        ? 'bg-gradient-to-br from-amber-50/95 via-orange-50/85 to-yellow-50/95 border-amber-200/90'
-                        : activePackInfo.tipoPromo === '3x1'
-                        ? 'bg-gradient-to-br from-rose-50/95 via-orange-50/85 to-amber-50/95 border-rose-200/90'
-                        : activePackInfo.isPack 
-                        ? 'bg-gradient-to-br from-indigo-50/95 via-sky-50/85 to-blue-50/95 border-indigo-200/90' 
-                        : 'bg-gradient-to-br from-emerald-50/95 via-teal-50/85 to-sky-50/95 border-emerald-200/90'
-                }`}>
+                <div className={`mx-2 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 animate-in fade-in duration-300 border-2 ${
+ activePackInfo.tipoPromo === '2x1'
+ ? 'bg-gradient-to-br from-amber-50/95 via-orange-50/85 to-yellow-50/95 border-amber-200/90'
+ : activePackInfo.tipoPromo === '3x1'
+ ? 'bg-gradient-to-br from-rose-50/95 via-orange-50/85 to-amber-50/95 border-rose-200/90'
+ : activePackInfo.isPack 
+ ? 'bg-gradient-to-br from-indigo-50/95 via-sky-50/85 to-blue-50/95 border-indigo-200/90' 
+ : 'bg-gradient-to-br from-emerald-50/95 via-teal-50/85 to-sky-50/95 border-emerald-200/90'
+ }`}>
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div className="space-y-1.5 flex-1">
-                            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-xs ${
-                                activePackInfo.tipoPromo === '2x1'
-                                    ? 'bg-amber-600'
-                                    : activePackInfo.tipoPromo === '3x1'
-                                    ? 'bg-rose-600'
-                                    : activePackInfo.isPack 
-                                    ? 'bg-indigo-600' 
-                                    : 'bg-emerald-600'
-                            }`}>
+                            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-xs ${
+ activePackInfo.tipoPromo === '2x1'
+ ? 'bg-amber-600'
+ : activePackInfo.tipoPromo === '3x1'
+ ? 'bg-rose-600'
+ : activePackInfo.isPack 
+ ? 'bg-indigo-600' 
+ : 'bg-emerald-600'
+ }`}>
                                 <Sparkles size={12} className="animate-pulse text-amber-300" />
                                 <span>{
                                     activePackInfo.tipoPromo === '2x1'
@@ -1205,7 +1216,7 @@ const resolveSlotPromotion = (
                                         : '🔥 Promoción Especial con Descuento'
                                 }</span>
                             </div>
-                            <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug uppercase">
+                            <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug ">
                                 {activePackInfo.titulo}
                             </h3>
                             {activePackInfo.descripcion && (
@@ -1226,14 +1237,14 @@ const resolveSlotPromotion = (
                                             Antes ${Number(activePackInfo.precioOriginal).toFixed(2)}
                                         </span>
                                     )}
-                                    <div className={`text-2xl font-black tracking-tight leading-tight ${
-                                        activePackInfo.isPack ? 'text-indigo-600' : 'text-emerald-600'
-                                    }`}>
+                                    <div className={`text-2xl font-bold tracking-tight leading-tight ${
+ activePackInfo.isPack ? 'text-indigo-600' : 'text-emerald-600'
+ }`}>
                                         ${Number(activePackInfo.precioPromo ?? activePackInfo.precioOriginal).toFixed(2)}
                                     </div>
                                 </div>
                                 {activePackInfo.precioOriginal && activePackInfo.precioPromo && activePackInfo.precioOriginal > activePackInfo.precioPromo && (
-                                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100/90 px-2.5 py-0.5 rounded-full border border-emerald-200/80 mt-1 inline-block">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/90 px-2.5 py-0.5 rounded-full border border-emerald-200/80 mt-1 inline-block">
                                         Ahorras ${(Number(activePackInfo.precioOriginal) - Number(activePackInfo.precioPromo)).toFixed(2)}
                                         {activePackInfo.porcentajeDescuento ? ` (${activePackInfo.porcentajeDescuento}% OFF)` : ''}
                                     </span>
@@ -1245,7 +1256,7 @@ const resolveSlotPromotion = (
                     {/* Lista de tratamientos o servicios que incluye el pack (solo si es pack o tiene múltiples servicios) */}
                     {activePackInfo.isPack && activePackInfo.servicios && activePackInfo.servicios.length > 0 && (
                         <div className="space-y-2 pt-2 border-t border-indigo-100/80">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-900/90 flex items-center gap-1.5">
+                            <p className="text-xs font-bold uppercase tracking-wide text-indigo-900/90 flex items-center gap-1.5">
                                 <span>Tratamientos incluidos en esta sesión:</span>
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1266,7 +1277,7 @@ const resolveSlotPromotion = (
                                             </span>
                                         </div>
                                         {item.duracion && (
-                                            <span className="text-[10px] font-bold text-slate-400 shrink-0 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                                            <span className="text-xs font-bold text-slate-400 shrink-0 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
                                                 {item.duracion} min
                                             </span>
                                         )}
@@ -1277,11 +1288,11 @@ const resolveSlotPromotion = (
                     )}
 
                     {/* Garantía / Compromiso Clínico */}
-                    <div className={`flex items-center gap-2 text-[10px] font-bold px-3.5 py-2 rounded-xl border ${
-                        activePackInfo.isPack 
-                            ? 'text-indigo-800 bg-indigo-100/60 border-indigo-200/50' 
-                            : 'text-emerald-800 bg-emerald-100/60 border-emerald-200/50'
-                    }`}>
+                    <div className={`flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-xl border ${
+ activePackInfo.isPack 
+ ? 'text-indigo-800 bg-indigo-100/60 border-indigo-200/50' 
+ : 'text-emerald-800 bg-emerald-100/60 border-emerald-200/50'
+ }`}>
                         <Check size={12} className={activePackInfo.isPack ? 'text-indigo-600 shrink-0' : 'text-emerald-600 shrink-0'} strokeWidth={2.5} />
                         <span>Sin costos ocultos · Diagnóstico integral y atención por especialistas odontológicos certificados.</span>
                     </div>
@@ -1300,7 +1311,7 @@ const resolveSlotPromotion = (
                                 <User size={15} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h3 className="text-base sm:text-lg font-black tracking-wide !text-slate-900 uppercase leading-tight" style={{ color: '#0f172a' }}>
+                                <h3 className="text-base sm:text-lg font-bold tracking-wide !text-slate-900 leading-tight" style={{ color: '#0f172a' }}>
                                     2. ESPECIALISTA
                                 </h3>
                                 <p className="text-xs sm:text-sm font-semibold text-slate-500 leading-tight">
@@ -1311,7 +1322,7 @@ const resolveSlotPromotion = (
                             </div>
                         </div>
                         {availableStaff.length > 1 && (
-                            <span className="text-[10px] font-black uppercase text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100">
+                            <span className="text-xs font-bold uppercase text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100">
                                 {availableStaff.length} disponibles
                             </span>
                         )}
@@ -1346,7 +1357,7 @@ const resolveSlotPromotion = (
                                             <img src={avatarSrc} alt={member.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <div 
-                                                className="w-full h-full flex items-center justify-center text-sm font-black text-white"
+                                                className="w-full h-full flex items-center justify-center text-sm font-bold text-white"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 {member.name.charAt(0)}
@@ -1356,13 +1367,13 @@ const resolveSlotPromotion = (
 
                                     {/* Datos del Doctor */}
                                     <div className="flex-1 min-w-0 pr-4">
-                                        <p className="text-sm font-black text-slate-900 leading-snug truncate">
+                                        <p className="text-sm font-bold text-slate-900 leading-snug truncate">
                                             {member.name}
                                         </p>
-                                        <p className="text-[11px] font-bold text-slate-500 line-clamp-1 mt-0.5" style={{ color: isSelected ? primaryColor : undefined }}>
+                                        <p className="text-xs font-bold text-slate-500 line-clamp-1 mt-0.5" style={{ color: isSelected ? primaryColor : undefined }}>
                                             {member.role || 'Especialista'}
                                         </p>
-                                        <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-semibold mt-1">
+                                        <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold mt-1">
                                             <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                             <span>Disponible para agendar</span>
                                         </div>
@@ -1389,7 +1400,7 @@ const resolveSlotPromotion = (
                             <button
                                 type="button"
                                 onClick={() => setShowExtraServices(!showExtraServices)}
-                                className="text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1 cursor-pointer"
                             >
                                 <span>{showExtraServices ? '− Ocultar otros servicios' : '+ ¿Deseas añadir otro tratamiento?'}</span>
                             </button>
@@ -1412,7 +1423,7 @@ const resolveSlotPromotion = (
                     >
                         <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100 flex items-center gap-2">
                             <User size={12} className="text-gray-400" />
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Selecciona un profesional</span>
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Selecciona un profesional</span>
                         </div>
                     </div>
                 )}
@@ -1427,7 +1438,7 @@ const resolveSlotPromotion = (
                             <Clock size={15} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="text-base sm:text-lg font-black tracking-wide !text-slate-900 uppercase leading-tight" style={{ color: '#0f172a' }}>3. HORARIO</h3>
+                            <h3 className="text-base sm:text-lg font-bold tracking-wide !text-slate-900 leading-tight" style={{ color: '#0f172a' }}>3. Horario</h3>
                             <p className="text-xs sm:text-sm font-semibold text-slate-500 leading-tight">Selecciona la fecha y el horario que prefieras</p>
                         </div>
                     </div>
@@ -1467,13 +1478,13 @@ const resolveSlotPromotion = (
                 <div className="bg-white rounded-full p-2.5 sm:p-3 shadow-[0_15px_40px_rgba(0,0,0,0.12)] border border-slate-150 flex items-center justify-between">
                     <div className="flex flex-col pl-4 sm:pl-5">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">TOTAL</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-none">Total</span>
                             {activePackInfo && (
-                                <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${
-                                    activePackInfo.isPack 
-                                        ? 'bg-indigo-100 text-indigo-700 border-indigo-200' 
-                                        : 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                                }`}>
+                                <span className={`text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${
+ activePackInfo.isPack 
+ ? 'bg-indigo-100 text-indigo-700 border-indigo-200' 
+ : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+ }`}>
                                     {activePackInfo.isPack ? '📦 PACK' : '🔥 PROMO'}
                                 </span>
                             )}
@@ -1484,7 +1495,7 @@ const resolveSlotPromotion = (
                                     ${Number(activePackInfo.precioOriginal).toFixed(2)}
                                 </span>
                             )}
-                            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
+                            <div className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-none">
                                 ${(selectedBooking ? selectedBooking.precio : (activePackInfo?.precioPromo ?? totalPrecioInitial)).toFixed(2)}
                             </div>
                         </div>
@@ -1517,7 +1528,7 @@ const resolveSlotPromotion = (
                                 window.scrollTo(0,0);
                             } 
                         }} 
-                        className="flex-1 py-3.5 sm:py-4 px-6 rounded-full font-black text-xs sm:text-sm tracking-wider uppercase text-white flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all cursor-pointer" 
+                        className="flex-1 py-3.5 sm:py-4 px-6 rounded-full font-bold text-xs sm:text-sm tracking-wider uppercase text-white flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all cursor-pointer" 
                         style={{ backgroundColor: primaryColor }}
                     >
                         <span>{selectedBooking ? 'CONFIRMAR CITA' : 'ELEGIR HORA'}</span>

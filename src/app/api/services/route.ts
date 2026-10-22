@@ -41,7 +41,9 @@ export async function GET(req: Request) {
                 tipo: extra.tipo || null,
                 imagenes: s.Imagen || [],
                 imageMedia: s.imageMedia || null,
-                ubicacionId: s.ubicacionId || null
+                ubicacionId: s.ubicacionId || null,
+                itemsIncluidos: extra.itemsIncluidos || extra.queIncluye || [],
+                tiempoEntrega: extra.tiempoEntrega || ''
             };
         });
 

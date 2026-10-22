@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getTeamContext, visibleBusinessIds } from "@/lib/admin/teamGuard";
 import {
     CreditCard,
     Calendar,
@@ -17,11 +18,21 @@ import SuscripcionActions from "@/components/superadmin/SuscripcionActions";
 
 export default async function SuscripcionesPage() {
     // Obtenemos todos los negocios para asegurar que ninguno quede fuera de la lista
+    const ctx = await getTeamContext();
+    const ids = ctx ? await visibleBusinessIds(ctx) : [];
     const [negocios, planes] = await Promise.all([
         (prisma.negocio as any).findMany({
+            where: ids === null ? undefined : { id: { in: ids } },
             include: {
                 Suscripcion: {
-                    include: { Plan: true }
+                    include: {
+                        Plan: true,
+                        pricingOverrides: {
+                            where: { status: 'ACTIVE' },
+                            orderBy: { createdAt: 'desc' },
+                            take: 1
+                        }
+                    }
                 },
                 Payment: {
                     take: 1,
@@ -43,6 +54,7 @@ export default async function SuscripcionesPage() {
     const suscripcionesDisplay = negocios.map((negocio: any) => {
         const sub = negocio.Suscripcion;
         const ultimoPago = negocio.Payment?.[0];
+        const activeOverride = sub?.pricingOverrides?.[0] || null;
 
         return {
             id: sub?.id || `temp-${negocio.id}`,
@@ -58,6 +70,15 @@ export default async function SuscripcionesPage() {
             isFounder: sub?.isFounder || false,
             founderPosition: sub?.founderPosition || null,
             lockedPrice: sub?.lockedPrice || null,
+            // Precio negociado activo (si existe)
+            pricingOverride: activeOverride ? {
+                id: activeOverride.id,
+                amount: activeOverride.amount,
+                currency: activeOverride.currency,
+                type: activeOverride.type,
+                totalCycles: activeOverride.totalCycles,
+                currentCycle: activeOverride.currentCycle,
+            } : null,
             ultimoPago: ultimoPago ? {
                 monto: ultimoPago.monto,
                 fecha: ultimoPago.fecha_pago,
@@ -65,6 +86,7 @@ export default async function SuscripcionesPage() {
             } : null,
             isPlaceholder: !sub
         };
+
     });
 
     const serializedSubs = JSON.parse(JSON.stringify(suscripcionesDisplay));
@@ -113,17 +135,17 @@ export default async function SuscripcionesPage() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Negocio</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan & Costo</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vencimiento</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Último Pago</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                                <th className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wide">Negocio</th>
+                                <th className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wide">Plan & Costo</th>
+                                <th className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wide">Vencimiento</th>
+                                <th className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wide">Último Pago</th>
+                                <th className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wide text-center">Estado</th>
+                                <th className="px-8 py-5 text-xs font-bold text-slate-400 uppercase tracking-wide text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -141,63 +163,87 @@ export default async function SuscripcionesPage() {
                                                 >
                                                     {sub.negocio?.nombre}
                                                 </Link>
-                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">ID: {sub.negocioId}</div>
+                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">ID: {sub.negocioId}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-8 py-5">
                                         <div className="flex flex-col gap-1.5">
                                             <div className="flex items-center gap-1.5 flex-wrap">
-                                                <div className="inline-flex items-center gap-1.5 p-1.5 px-3 bg-slate-900 text-white rounded-xl text-[10px] font-black tracking-widest w-fit uppercase">
+                                                <div className="inline-flex items-center gap-1.5 p-1.5 px-3 bg-slate-900 text-white rounded-xl text-xs font-bold tracking-wide w-fit uppercase">
                                                     <Zap size={12} className="text-amber-400 fill-amber-400" />
                                                     {sub.plan?.name || 'S/N'}
                                                 </div>
                                                 {sub.isFounder && (
-                                                    <div className="inline-flex items-center gap-1 p-1 px-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-955 rounded-xl text-[9px] font-black tracking-widest uppercase shadow-sm">
+                                                    <div className="inline-flex items-center gap-1 p-1 px-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-955 rounded-xl text-xs font-bold tracking-wide uppercase shadow-sm">
                                                         <Trophy size={10} className="fill-slate-950 animate-pulse" />
                                                         Fundador #{sub.founderPosition}
                                                     </div>
                                                 )}
+                                                {sub.pricingOverride && (
+                                                    <div className="inline-flex items-center gap-1 p-1 px-2.5 bg-orange-500/10 border border-orange-500/30 text-orange-600 rounded-xl text-xs font-bold tracking-wide uppercase">
+                                                        💰 Negociado
+                                                        {sub.pricingOverride.type === 'TEMPORARY' && sub.pricingOverride.totalCycles && (
+                                                            <span className="ml-0.5 text-orange-400">
+                                                                {sub.pricingOverride.currentCycle}/{sub.pricingOverride.totalCycles}c
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="text-sm font-black text-slate-600 ml-1 tracking-tight flex items-center gap-1.5">
-                                                <span>${sub.lockedPrice !== null ? sub.lockedPrice : (sub.plan?.price || 0)}</span>
-                                                <span className="text-[10px] text-slate-400 font-bold">/mes</span>
-                                                {sub.lockedPrice !== null && (
-                                                    <span className="text-[9px] px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md font-bold uppercase tracking-wider">
-                                                        Congelado
-                                                    </span>
+                                            <div className="text-sm font-bold text-slate-600 ml-1 tracking-tight flex items-center gap-1.5">
+                                                {sub.pricingOverride ? (
+                                                    <>
+                                                        <span className="text-orange-600">${sub.pricingOverride.amount}</span>
+                                                        <span className="text-xs text-slate-400 font-bold">/mes</span>
+                                                        <span className="text-xs px-1.5 py-0.5 bg-orange-50 text-orange-500 rounded-md font-bold uppercase tracking-wider">
+                                                            Negociado
+                                                        </span>
+                                                        <span className="text-xs text-slate-400 line-through">${sub.plan?.price || 0}</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span>${sub.lockedPrice !== null ? sub.lockedPrice : (sub.plan?.price || 0)}</span>
+                                                        <span className="text-xs text-slate-400 font-bold">/mes</span>
+                                                        {sub.lockedPrice !== null && (
+                                                            <span className="text-xs px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md font-bold uppercase tracking-wider">
+                                                                Congelado
+                                                            </span>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
                                     </td>
+
                                     <td className="px-8 py-5">
                                         <div className="flex items-center gap-3">
                                             <div className={`p-2 rounded-xl ${new Date(sub.fechaFin) < new Date() ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
                                                 <CalendarCheck2 size={18} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className={`text-sm font-black tracking-tight ${new Date(sub.fechaFin) < new Date() ? 'text-rose-600' : 'text-slate-900'}`}>
+                                                <span className={`text-sm font-bold tracking-tight ${new Date(sub.fechaFin) < new Date() ? 'text-rose-600' : 'text-slate-900'}`}>
                                                     {sub.fechaFin ? new Date(sub.fechaFin).toLocaleDateString() : 'Sin fecha'}
                                                 </span>
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Expiración</span>
+                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-tight">Expiración</span>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-8 py-5">
                                         {sub.ultimoPago ? (
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-black text-emerald-600">${sub.ultimoPago.monto}</span>
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                                <span className="text-sm font-bold text-emerald-600">${sub.ultimoPago.monto}</span>
+                                                <span className="text-xs font-bold text-slate-400 uppercase">
                                                     {new Date(sub.ultimoPago.fecha).toLocaleDateString()}
                                                 </span>
                                             </div>
                                         ) : (
-                                            <span className="text-[10px] font-bold text-slate-300 uppercase italic">Sin pagos</span>
+                                            <span className="text-xs font-bold text-slate-300 uppercase ">Sin pagos</span>
                                         )}
                                     </td>
                                     <td className="px-8 py-5">
                                         <div className="flex justify-center">
-                                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black border ${getStatusBadge(sub.estado, sub.fechaFin)} uppercase tracking-widest shadow-sm`}>
+                                            <span className={`px-4 py-1.5 rounded-full text-xs font-bold border ${getStatusBadge(sub.estado, sub.fechaFin)} uppercase tracking-wide shadow-sm`}>
                                                 {getStatusLabel(sub.estado, sub.fechaFin)}
                                             </span>
                                         </div>
@@ -212,10 +258,10 @@ export default async function SuscripcionesPage() {
                                 <tr>
                                     <td colSpan={5} className="px-8 py-24 text-center">
                                         <div className="flex flex-col items-center">
-                                            <div className="p-6 bg-slate-50 text-slate-200 rounded-[2.5rem] mb-6">
+                                            <div className="p-6 bg-slate-50 text-slate-200 rounded-2xl mb-6">
                                                 <CreditCard size={64} />
                                             </div>
-                                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">No hay negocios registrados</h3>
+                                            <h3 className="text-2xl font-bold text-slate-900 tracking-tight">No hay negocios registrados</h3>
                                             <p className="text-slate-400 max-w-sm mx-auto mt-2 font-medium">
                                                 Parece que aún no has creado negocios en la plataforma para gestionar sus suscripciones.
                                             </p>
@@ -229,24 +275,24 @@ export default async function SuscripcionesPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2.5rem] p-8 text-white shadow-xl shadow-indigo-600/20 flex items-start gap-6">
+                <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl p-8 text-white shadow-xl shadow-indigo-600/20 flex items-start gap-6">
                     <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
                         <AlertTriangle size={32} />
                     </div>
                     <div>
-                        <h4 className="font-black text-xl tracking-tight mb-2 uppercase">Control de Suspensión</h4>
+                        <h4 className="font-bold text-xl tracking-tight mb-2 ">Control de Suspensión</h4>
                         <p className="text-indigo-100/90 font-bold text-sm leading-relaxed tracking-tight">
                             El sistema valida los accesos en tiempo real. Si la fecha de vencimiento es superada, el administrador del complejo será bloqueado automáticamente hasta que se renueve su plan.
                         </p>
                     </div>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 flex items-start gap-6 shadow-sm">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 flex items-start gap-6 shadow-sm">
                     <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
                         <History size={32} />
                     </div>
                     <div>
-                        <h4 className="font-black text-xl text-slate-900 tracking-tight mb-2 uppercase text-base">Renovación Manual</h4>
+                        <h4 className="font-bold text-xl text-slate-900 tracking-tight mb-2 text-base">Renovación Manual</h4>
                         <p className="text-slate-500 font-bold text-sm leading-relaxed tracking-tight">
                             Usa el botón "+1 Mes" para activar rápidamente un negocio después de confirmar su pago por transferencia o efectivo. La activación es inmediata.
                         </p>

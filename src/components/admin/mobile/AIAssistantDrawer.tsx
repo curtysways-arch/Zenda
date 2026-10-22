@@ -168,7 +168,7 @@ export default function AIAssistantDrawer({
             />
 
             {/* Drawer */}
-            <div className="relative z-10 bg-white rounded-t-[2.5rem] flex flex-col animate-in slide-in-from-bottom-4 duration-300 max-h-[88vh]"
+            <div className="relative z-10 bg-white rounded-t-2xl flex flex-col animate-in slide-in-from-bottom-4 duration-300 max-h-[88vh]"
                 style={{ boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}>
 
                 {/* Header */}
@@ -181,12 +181,12 @@ export default function AIAssistantDrawer({
                             <Sparkles size={20} className="animate-pulse" />
                         </div>
                         <div>
-                            <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Citiox AI</h3>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Asistente de Agenda</p>
+                            <h3 className="font-bold text-slate-900 text-sm uppercase tracking-tight">Citiox AI</h3>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Asistente de Agenda</p>
                         </div>
                         <span className="ml-1 flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-100 rounded-full">
                             <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">En línea</span>
+                            <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide">En línea</span>
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -215,8 +215,8 @@ export default function AIAssistantDrawer({
                             { label: 'Finalizadas', value: stats.finalizadas, color: '#64748b' },
                         ].map(s => (
                             <div key={s.label} className="flex flex-col items-center shrink-0 px-3 py-1 first:pl-0">
-                                <span className="text-sm font-black" style={{ color: s.color }}>{s.value}</span>
-                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">{s.label}</span>
+                                <span className="text-sm font-bold" style={{ color: s.color }}>{s.value}</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">{s.label}</span>
                             </div>
                         ))}
                     </div>
@@ -239,11 +239,11 @@ export default function AIAssistantDrawer({
 
                             {/* Burbuja */}
                             <div
-                                className={`max-w-[78%] px-4 py-3 rounded-[1.4rem] text-[11px] font-medium leading-relaxed ${
-                                    msg.role === 'user'
-                                        ? 'text-white rounded-tr-sm'
-                                        : 'bg-slate-50 border border-slate-100 text-slate-700 rounded-tl-sm'
-                                }`}
+                                className={`max-w-[78%] px-4 py-3 rounded-2xl text-xs font-medium leading-relaxed ${
+ msg.role === 'user'
+ ? 'text-white rounded-tr-sm'
+ : 'bg-slate-50 border border-slate-100 text-slate-700 rounded-tl-sm'
+ }`}
                                 style={msg.role === 'user' ? { background: `linear-gradient(135deg, ${primaryColor}, #ec4899)` } : {}}
                             >
                                 {msg.loading ? (
@@ -264,7 +264,7 @@ export default function AIAssistantDrawer({
                 {/* Preguntas sugeridas (solo si no hay conversación aún) */}
                 {messages.length <= 1 && (
                     <div className="px-5 pb-2 shrink-0">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Preguntas rápidas</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2 px-1">Preguntas rápidas</p>
                         <div className="flex flex-col gap-1.5">
                             {SUGGESTED_QUESTIONS.slice(0, 3).map(q => (
                                 <button
@@ -272,7 +272,7 @@ export default function AIAssistantDrawer({
                                     onClick={() => sendMessage(q)}
                                     className="flex items-center justify-between gap-2 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-2xl text-left transition-colors group"
                                 >
-                                    <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-800">{q}</span>
+                                    <span className="text-xs font-bold text-slate-600 group-hover:text-slate-800">{q}</span>
                                     <ChevronRight size={12} className="text-slate-300 group-hover:text-slate-500 shrink-0" />
                                 </button>
                             ))}
@@ -291,7 +291,7 @@ export default function AIAssistantDrawer({
                             onChange={e => setInput(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
                             placeholder="Escribe tu pregunta..."
-                            className="flex-1 bg-transparent text-[11px] font-medium text-slate-800 placeholder:text-slate-400 outline-none"
+                            className="flex-1 bg-transparent text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none"
                             disabled={loading}
                         />
                         <button
@@ -306,7 +306,7 @@ export default function AIAssistantDrawer({
                             }
                         </button>
                     </div>
-                    <p className="text-center text-[8px] text-slate-300 font-bold uppercase tracking-widest mt-2">
+                    <p className="text-center text-xs text-slate-300 font-bold uppercase tracking-wide mt-2">
                         Impulsado por Gemini AI
                     </p>
                 </div>

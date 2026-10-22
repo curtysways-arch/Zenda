@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
+
+export const dynamic = 'force-dynamic';
 
 async function isSuperAdmin() {
-    const session = await getServerSession(authOptions);
-    return (session?.user as any)?.role === 'SUPER_ADMIN';
+    const session = await getEffectiveAdminSession();
+    const user = session?.user as any;
+    const role = user?.role;
+    const roles = user?.roles || [];
+    return role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'ADMIN' || roles.includes('SUPERADMIN') || roles.includes('SUPER_ADMIN') || user?.isAdminUser;
 }
 
 export async function GET() {
@@ -17,14 +21,14 @@ export async function GET() {
         const solicitudes = await (prisma.suscripcion as any).findMany({
             where: { pagoPendiente: true },
             include: {
-                negocio: {
+                Negocio: {
                     select: {
                         id: true,
                         nombre: true,
                         slug: true,
                     }
                 },
-                plan: true,
+                Plan: true,
             },
             orderBy: { updatedAt: 'desc' }
         });
@@ -40,6 +44,8 @@ export async function GET() {
                 }
                 return {
                     ...sol,
+                    negocio: sol.Negocio || (sol as any).negocio,
+                    plan: sol.Plan || (sol as any).plan,
                     planSolicitado,
                 };
             })

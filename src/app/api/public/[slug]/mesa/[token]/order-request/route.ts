@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import {
+  toDecimal,
+  decimalAdd,
+  decimalMul,
+  roundQty,
+  roundMoney
+} from '@/lib/math/decimal';
 
 export const dynamic = 'force-dynamic';
 
@@ -99,15 +106,15 @@ export async function POST(
       }, { status: 403 });
     }
 
-    // 6. Reconstrucción y validación de precios Server-Side desde la BD
-    let calculatedSubtotal = 0;
+    // 6. Reconstrucción y validación de precios Server-Side desde la BD con precisión Decimal
+    let calculatedSubtotalDec = toDecimal(0);
     const validatedSnapshotItems = [];
 
     for (const rawItem of items) {
       const prodId = rawItem.productoId || rawItem.id || rawItem.product?.id;
-      const qty = Math.max(1, parseInt(rawItem.cantidad || rawItem.quantity || 1, 10));
+      const qty = roundQty(rawItem.cantidad || rawItem.quantity || 1);
 
-      if (!prodId) continue;
+      if (!prodId || qty.lte(0)) continue;
 
       const dbProduct = await (prisma as any).producto.findFirst({
         where: { id: prodId, negocioId: negocio.id }
@@ -115,20 +122,20 @@ export async function POST(
 
       if (!dbProduct) continue;
 
-      let unitPrice = Number(dbProduct.precio || 0);
+      let unitPriceDec = toDecimal(dbProduct.precio || 0);
       let varianteNombre = null;
       let varianteId = rawItem.varianteId || rawItem.product?.varianteId || null;
 
       if (varianteId && dbProduct.variantes && Array.isArray(dbProduct.variantes)) {
         const vMatch = dbProduct.variantes.find((v: any) => v.id === varianteId);
         if (vMatch) {
-          unitPrice = Number(vMatch.precio || unitPrice);
+          unitPriceDec = toDecimal(vMatch.precio || unitPriceDec);
           varianteNombre = vMatch.nombre || null;
         }
       }
 
-      const itemSubtotal = unitPrice * qty;
-      calculatedSubtotal += itemSubtotal;
+      const itemSubtotalDec = roundMoney(decimalMul(unitPriceDec, qty));
+      calculatedSubtotalDec = decimalAdd(calculatedSubtotalDec, itemSubtotalDec);
 
       validatedSnapshotItems.push({
         productoId: dbProduct.id,
@@ -136,9 +143,9 @@ export async function POST(
         varianteId,
         varianteNombre,
         sku: dbProduct.sku || null,
-        cantidad: qty,
-        precioUnitario: unitPrice,
-        subtotal: itemSubtotal
+        cantidad: qty.toNumber(),
+        precioUnitario: roundMoney(unitPriceDec).toNumber(),
+        subtotal: itemSubtotalDec.toNumber()
       });
     }
 
@@ -146,6 +153,7 @@ export async function POST(
       return NextResponse.json({ error: 'Ningún producto del carrito se encuentra disponible.' }, { status: 400 });
     }
 
+    const calculatedSubtotal = roundMoney(calculatedSubtotalDec).toNumber();
     const calculatedTotal = calculatedSubtotal; // Sin costo de envío en mesa
 
     // 7. Crear la Solicitud de Pedido en estado PENDING_ADMIN_CONFIRMATION

@@ -418,7 +418,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         <ArrowLeft size={16} />
                     </button>
                     <div>
-                        <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
+                        <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <PlusCircle style={{ color: primaryColor }} size={22} />
                             Crear Nuevo Cupón
                         </h1>
@@ -428,10 +428,10 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     </div>
                 </div>
 
-                <form onSubmit={handleCreateCoupon} className="max-w-3xl bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6">
+                <form onSubmit={handleCreateCoupon} className="max-w-3xl bg-white border border-slate-100 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Código del Cupón (Ej: ZENDA20)</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Código del Cupón (Ej: ZENDA20)</label>
                             <input
                                 type="text"
                                 value={couponCode}
@@ -442,7 +442,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         </div>
 
                         <div>
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Descuento</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Tipo de Descuento</label>
                             <select
                                 value={couponType}
                                 onChange={(e) => setCouponType(e.target.value)}
@@ -453,7 +453,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor *</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Valor *</label>
                             <input
                                 type="number"
                                 required
@@ -466,7 +466,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Descripción</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Descripción</label>
                             <input
                                 type="text"
                                 value={couponDesc}
@@ -477,7 +477,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         </div>
 
                         <div>
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Límite Máximo de Usos</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Límite Máximo de Usos</label>
                             <input
                                 type="number"
                                 value={couponMaxUses}
@@ -487,7 +487,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             />
                         </div>
                         <div>
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Fecha Límite (Expiración)</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Fecha Límite (Expiración)</label>
                             <input
                                 type="date"
                                 value={couponFin}
@@ -501,14 +501,14 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         <button
                             type="button"
                             onClick={() => setActiveView('list')}
-                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-transform active:scale-95 cursor-pointer"
+                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wide rounded-2xl transition-transform active:scale-95 cursor-pointer"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={actionLoading === 'coupon'}
-                            className="flex items-center gap-2 px-6 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                            className="flex items-center gap-2 px-6 py-4 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -539,7 +539,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         <ArrowLeft size={16} />
                     </button>
                     <div>
-                        <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
+                        <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <Trophy style={{ color: primaryColor }} size={22} />
                             Ajustar Puntos
                         </h1>
@@ -549,17 +549,17 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     </div>
                 </div>
 
-                <form onSubmit={handleAdjustPoints} className="max-w-3xl bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6">
+                <form onSubmit={handleAdjustPoints} className="max-w-3xl bg-white border border-slate-100 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Seleccionar Cliente *</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Seleccionar Cliente *</label>
                             <select
                                 required
                                 value={pointsUserId}
                                 onChange={(e) => setPointsUserId(e.target.value)}
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
                             >
-                                <option value="">-- SELECCIONE CLIENTE --</option>
+                                <option value="">-- Seleccione cliente --</option>
                                 {usersList.map((u) => (
                                     <option key={u.id} value={u.id}>{u.nombre || 'Sin nombre'} ({u.phone || 'Sin teléfono'})</option>
                                 ))}
@@ -567,7 +567,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         </div>
 
                         <div>
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Cantidad de Puntos *</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Cantidad de Puntos *</label>
                             <input
                                 type="number"
                                 required
@@ -576,10 +576,10 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                 placeholder="Ej: 100 o -50"
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
                             />
-                            <span className="text-[8px] text-slate-400 font-semibold block mt-1">Usa números negativos para deducir saldo</span>
+                            <span className="text-xs text-slate-400 font-semibold block mt-1">Usa números negativos para deducir saldo</span>
                         </div>
                         <div>
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Concepto de Ajuste</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Concepto de Ajuste</label>
                             <select
                                 value={pointsConcept}
                                 onChange={(e) => setPointsConcept(e.target.value)}
@@ -592,7 +592,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Notas internas</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Notas internas</label>
                             <input
                                 type="text"
                                 value={pointsNotes}
@@ -607,14 +607,14 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         <button
                             type="button"
                             onClick={() => setActiveView('list')}
-                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-transform active:scale-95 cursor-pointer"
+                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wide rounded-2xl transition-transform active:scale-95 cursor-pointer"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={actionLoading === 'points'}
-                            className="flex items-center gap-2 px-6 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                            className="flex items-center gap-2 px-6 py-4 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -645,7 +645,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         <ArrowLeft size={16} />
                     </button>
                     <div>
-                        <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
+                        <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <Settings style={{ color: primaryColor }} size={22} />
                             Nueva Regla de Automatización
                         </h1>
@@ -655,10 +655,10 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     </div>
                 </div>
 
-                <form onSubmit={handleCreateAutomation} className="max-w-3xl bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6">
+                <form onSubmit={handleCreateAutomation} className="max-w-3xl bg-white border border-slate-100 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre de la Regla *</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Nombre de la Regla *</label>
                             <input
                                 type="text"
                                 required
@@ -670,7 +670,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Disparador (Trigger) *</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Disparador (Trigger) *</label>
                             <select
                                 value={autoTrigger}
                                 onChange={(e) => setAutoTrigger(e.target.value)}
@@ -683,18 +683,18 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Acción 1: Mensaje WhatsApp (Opcional)</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Acción 1: Mensaje WhatsApp (Opcional)</label>
                             <textarea
                                 value={autoMsg}
                                 onChange={(e) => setAutoMsg(e.target.value)}
                                 placeholder="Ej: ¡Hola {{nombre}}! Feliz cumpleaños te desea el equipo. Te obsequiamos un 15% DTO en tu próxima cita."
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none min-h-[100px]"
                             />
-                            <span className="text-[8px] text-slate-400 font-semibold block mt-1">Usa {"{{nombre}}"} para personalizar el mensaje</span>
+                            <span className="text-xs text-slate-400 font-semibold block mt-1">Usa {"{{nombre}}"} para personalizar el mensaje</span>
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Acción 2: Regalar Puntos de Bono (Opcional)</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Acción 2: Regalar Puntos de Bono (Opcional)</label>
                             <input
                                 type="number"
                                 value={autoPoints}
@@ -709,14 +709,14 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         <button
                             type="button"
                             onClick={() => setActiveView('list')}
-                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-transform active:scale-95 cursor-pointer"
+                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wide rounded-2xl transition-transform active:scale-95 cursor-pointer"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={actionLoading === 'auto'}
-                            className="flex items-center gap-2 px-6 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                            className="flex items-center gap-2 px-6 py-4 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -747,7 +747,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         <ArrowLeft size={16} />
                     </button>
                     <div>
-                        <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
+                        <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <Coins style={{ color: primaryColor }} size={22} />
                             Crear Premio de Catálogo
                         </h1>
@@ -757,10 +757,10 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     </div>
                 </div>
 
-                <form onSubmit={handleCreateLoyaltyReward} className="max-w-3xl bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6">
+                <form onSubmit={handleCreateLoyaltyReward} className="max-w-3xl bg-white border border-slate-100 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre del Premio *</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Nombre del Premio *</label>
                             <input
                                 type="text"
                                 required
@@ -772,7 +772,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Costo en Puntos *</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Costo en Puntos *</label>
                             <input
                                 type="number"
                                 required
@@ -785,7 +785,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Premio</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Tipo de Premio</label>
                             <select
                                 value={rewardType}
                                 onChange={(e) => {
@@ -808,7 +808,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
 
                         {rewardType === 'SERVICIO_GRATIS' && (
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Asociar Servicio *</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Asociar Servicio *</label>
                                 <select
                                     required
                                     value={rewardServiceId}
@@ -827,7 +827,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
 
                         {rewardType === 'CUPON' && (
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Asociar Cupón del Catálogo</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Asociar Cupón del Catálogo</label>
                                 <select
                                     value={rewardValue}
                                     onChange={(e) => setRewardValue(e.target.value)}
@@ -845,7 +845,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
 
                         {['PRODUCTO', 'REGALO', 'PERSONALIZADO'].includes(rewardType) && (
                             <div className="md:col-span-2">
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">URL de la Imagen del Premio Físico (Opcional)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">URL de la Imagen del Premio Físico (Opcional)</label>
                                 <input
                                     type="text"
                                     value={rewardRecompensaImagenUrl}
@@ -857,7 +857,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         )}
 
                         <div className="md:col-span-2">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Descripción</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Descripción</label>
                             <input
                                 type="text"
                                 value={rewardDesc}
@@ -869,7 +869,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
 
                         {rewardType !== 'CUPON' && rewardType !== 'SERVICIO_GRATIS' && (
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor Asociado (Opcional)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Valor Asociado (Opcional)</label>
                                 <input
                                     type="text"
                                     value={rewardValue}
@@ -880,7 +880,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             </div>
                         )}
                         <div>
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Límite de Stock (Opcional)</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Límite de Stock (Opcional)</label>
                             <input
                                 type="number"
                                 value={rewardStock}
@@ -895,14 +895,14 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         <button
                             type="button"
                             onClick={() => setActiveView('list')}
-                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-transform active:scale-95 cursor-pointer"
+                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wide rounded-2xl transition-transform active:scale-95 cursor-pointer"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={actionLoading === 'loyaltyReward'}
-                            className="flex items-center gap-2 px-6 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                            className="flex items-center gap-2 px-6 py-4 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -928,7 +928,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                         <Gift className="text-[var(--primary-color)]" size={24} style={{ color: primaryColor }} />
                         Fidelización y Marketing
                     </h1>
@@ -941,7 +941,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     {activeTab === 'campaigns' && (
                         <Link
                             href="/admin/referidos/nueva"
-                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center"
+                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 text-center"
                             style={{
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -954,7 +954,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     {activeTab === 'coupons' && (
                         <button
                             onClick={() => setActiveView('create-coupon')}
-                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
+                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -967,7 +967,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     {activeTab === 'points' && (
                         <button
                             onClick={() => setActiveView('adjust-points')}
-                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
+                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -980,7 +980,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     {activeTab === 'automations' && (
                         <button
                             onClick={() => setActiveView('create-automation')}
-                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
+                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -993,7 +993,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     {activeTab === 'loyaltyRewards' && (
                         <button
                             onClick={() => setActiveView('create-loyalty-reward')}
-                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
+                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -1010,77 +1010,77 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             <div className="flex border-b border-slate-200 gap-6 mb-6 overflow-x-auto scrollbar-none">
                 <button
                     onClick={() => setActiveTab('campaigns')}
-                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
-                        activeTab === 'campaigns' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-                    }`}
+                    className={`pb-4 text-xs font-bold uppercase tracking-wide cursor-pointer border-b-2 transition-all whitespace-nowrap ${
+ activeTab === 'campaigns' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+ }`}
                     style={{ borderColor: activeTab === 'campaigns' ? primaryColor : 'transparent' }}
                 >
                     Campañas
                 </button>
                 <button
                     onClick={() => setActiveTab('rewards')}
-                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
-                        activeTab === 'rewards' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-                    }`}
+                    className={`pb-4 text-xs font-bold uppercase tracking-wide cursor-pointer border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
+ activeTab === 'rewards' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+ }`}
                     style={{ borderColor: activeTab === 'rewards' ? primaryColor : 'transparent' }}
                 >
                     Premios Pendientes
                     {stats.premiosDisponibles > 0 && (
-                        <span className="size-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[9px] font-black">
+                        <span className="size-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                             {stats.premiosDisponibles}
                         </span>
                     )}
                 </button>
                 <button
                     onClick={() => setActiveTab('coupons')}
-                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
-                        activeTab === 'coupons' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-                    }`}
+                    className={`pb-4 text-xs font-bold uppercase tracking-wide cursor-pointer border-b-2 transition-all whitespace-nowrap ${
+ activeTab === 'coupons' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+ }`}
                     style={{ borderColor: activeTab === 'coupons' ? primaryColor : 'transparent' }}
                 >
                     Cupones
                 </button>
                 <button
                     onClick={() => setActiveTab('loyaltyRewards')}
-                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                        activeTab === 'loyaltyRewards' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-                    }`}
+                    className={`pb-4 text-xs font-bold uppercase tracking-wide cursor-pointer border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 ${
+ activeTab === 'loyaltyRewards' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+ }`}
                     style={{ borderColor: activeTab === 'loyaltyRewards' ? primaryColor : 'transparent' }}
                 >
                     Catálogo Puntos
                 </button>
                 <button
                     onClick={() => setActiveTab('points')}
-                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
-                        activeTab === 'points' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-                    }`}
+                    className={`pb-4 text-xs font-bold uppercase tracking-wide cursor-pointer border-b-2 transition-all whitespace-nowrap ${
+ activeTab === 'points' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+ }`}
                     style={{ borderColor: activeTab === 'points' ? primaryColor : 'transparent' }}
                 >
                     Puntos de Clientes
                 </button>
                 <button
                     onClick={() => setActiveTab('automations')}
-                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
-                        activeTab === 'automations' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-                    }`}
+                    className={`pb-4 text-xs font-bold uppercase tracking-wide cursor-pointer border-b-2 transition-all whitespace-nowrap ${
+ activeTab === 'automations' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+ }`}
                     style={{ borderColor: activeTab === 'automations' ? primaryColor : 'transparent' }}
                 >
                     Automatizaciones
                 </button>
                 <button
                     onClick={() => setActiveTab('stats')}
-                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
-                        activeTab === 'stats' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-                    }`}
+                    className={`pb-4 text-xs font-bold uppercase tracking-wide cursor-pointer border-b-2 transition-all whitespace-nowrap ${
+ activeTab === 'stats' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+ }`}
                     style={{ borderColor: activeTab === 'stats' ? primaryColor : 'transparent' }}
                 >
                     Analíticas y ROI
                 </button>
                 <button
                     onClick={() => setActiveTab('history')}
-                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
-                        activeTab === 'history' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-                    }`}
+                    className={`pb-4 text-xs font-bold uppercase tracking-wide cursor-pointer border-b-2 transition-all whitespace-nowrap ${
+ activeTab === 'history' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+ }`}
                     style={{ borderColor: activeTab === 'history' ? primaryColor : 'transparent' }}
                 >
                     Historial
@@ -1091,7 +1091,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                     <Loader2 className="animate-spin mb-4" size={32} style={{ color: primaryColor }} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Cargando datos...</span>
+                    <span className="text-xs font-bold uppercase tracking-wide">Cargando datos...</span>
                 </div>
             ) : (
                 <div className="animate-in fade-in duration-300">
@@ -1101,7 +1101,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         campaigns.length === 0 ? (
                             <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
                                 <Gift className="mx-auto text-slate-300 mb-4" size={40} />
-                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No tienes campañas creadas</h3>
+                                <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight mb-2">No tienes campañas creadas</h3>
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
                                     Crea tu primera campaña de fidelización y define las reglas para empezar a fidelizar clientes.
                                 </p>
@@ -1109,7 +1109,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {campaigns.map((camp) => (
-                                    <div key={camp.id} className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
+                                    <div key={camp.id} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
                                         <button
                                             onClick={() => handleToggleActive(camp)}
                                             disabled={actionLoading === camp.id}
@@ -1125,27 +1125,27 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                         </button>
 
                                         <div>
-                                            <span className="text-[7.5px] font-black text-pink-500 uppercase tracking-widest px-2 py-0.5 rounded-md bg-pink-50 border border-pink-100 inline-block mb-3">
+                                            <span className="text-[7.5px] font-bold text-pink-500 uppercase tracking-wide px-2 py-0.5 rounded-md bg-pink-50 border border-pink-100 inline-block mb-3">
                                                 {camp.tipoCampana || 'REFERIDOS'}
                                             </span>
-                                            <h3 className="text-[13px] font-black text-slate-900 uppercase tracking-tight leading-tight mb-1 pr-10">
+                                            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight leading-tight mb-1 pr-10">
                                                 {camp.nombre}
                                             </h3>
-                                            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mb-6">
+                                            <p className="text-xs text-slate-400 font-semibold leading-relaxed mb-6">
                                                 {camp.descripcion || 'Sin descripción'}
                                             </p>
 
                                             <div className="space-y-2.5 bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                                     <span className="text-slate-400">Meta:</span>
                                                     <span className="text-slate-800">{camp.referidosRequeridos} {camp.tipoCampana === 'GASTAR_DOLARES' ? 'Dólares' : 'Reservas'}</span>
                                                 </div>
-                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                                     <span className="text-slate-400">Recompensa:</span>
                                                     <span className="text-slate-855" style={{ color: primaryColor }}>{camp.valorRecompensa}</span>
                                                 </div>
                                                 {camp.valorIncentivo && (
-                                                    <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                    <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                                         <span className="text-slate-400">Incentivo amigo:</span>
                                                         <span className="text-slate-700">{camp.valorIncentivo}</span>
                                                     </div>
@@ -1156,7 +1156,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                         <div className="flex gap-2.5 mt-6 pt-4 border-t border-slate-100">
                                             <Link
                                                 href={`/admin/referidos/nueva?edit=${camp.id}`}
-                                                className="flex-1 py-3 bg-slate-55 hover:bg-slate-100 border border-slate-200/60 rounded-xl text-[8.5px] font-black uppercase tracking-widest text-slate-700 transition-colors text-center"
+                                                className="flex-1 py-3 bg-slate-55 hover:bg-slate-100 border border-slate-200/60 rounded-xl text-[8.5px] font-bold uppercase tracking-wide text-slate-700 transition-colors text-center"
                                             >
                                                 Editar
                                             </Link>
@@ -1178,7 +1178,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         rewards.length === 0 ? (
                             <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
                                 <Award className="mx-auto text-slate-300 mb-4" size={40} />
-                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No hay canjes pendientes</h3>
+                                <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight mb-2">No hay canjes pendientes</h3>
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto">
                                     Cuando tus clientes alcancen la meta o soliciten un canje por sus puntos, sus premios listos para entregar aparecerán aquí.
                                 </p>
@@ -1187,7 +1187,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                        <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
                                             <th className="p-4 pl-6">Cliente</th>
                                             <th className="p-4">Premio</th>
                                             <th className="p-4">Origen</th>
@@ -1199,30 +1199,30 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                         {rewards.map((rew) => (
                                             <tr key={rew.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="p-4 pl-6">
-                                                    <span className="block font-black text-slate-900 leading-none">{rew.Usuario?.nombre || 'Cliente'}</span>
-                                                    <span className="text-[9px] text-slate-400 font-semibold mt-1 block">{rew.Usuario?.phone || 'Sin teléfono'}</span>
+                                                    <span className="block font-bold text-slate-900 leading-none">{rew.Usuario?.nombre || 'Cliente'}</span>
+                                                    <span className="text-xs text-slate-400 font-semibold mt-1 block">{rew.Usuario?.phone || 'Sin teléfono'}</span>
                                                 </td>
                                                 <td className="p-4 text-slate-900">{rew.Campaign?.valorRecompensa}</td>
                                                 <td className="p-4">
-                                                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                                                        rew.tipoOrigen === 'PUNTOS' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-pink-50 text-pink-600 border border-pink-100'
-                                                    }`}>
+                                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+ rew.tipoOrigen === 'PUNTOS' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-pink-50 text-pink-600 border border-pink-100'
+ }`}>
                                                         {rew.tipoOrigen || 'REFERIDO'}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 text-[10px] text-slate-400 font-semibold">
+                                                <td className="p-4 text-xs text-slate-400 font-semibold">
                                                     {new Date(rew.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                                                 </td>
                                                 <td className="p-4 text-right pr-6">
                                                     {rew.estado === 'DISPONIBLE' ? (
                                                         <button
                                                             onClick={() => openDeliveryModal(rew)}
-                                                            className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100 rounded-xl text-[9px] font-black uppercase tracking-widest transition-transform active:scale-95 cursor-pointer"
+                                                            className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100 rounded-xl text-xs font-bold uppercase tracking-wide transition-transform active:scale-95 cursor-pointer"
                                                         >
                                                             Entregar
                                                         </button>
                                                     ) : (
-                                                        <span className="text-slate-400 text-[9px] uppercase tracking-widest font-black">Entregado</span>
+                                                        <span className="text-slate-400 text-xs uppercase tracking-wide font-bold">Entregado</span>
                                                     )}
                                                 </td>
                                             </tr>
@@ -1238,13 +1238,13 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         coupons.length === 0 ? (
                             <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
                                 <Gift className="mx-auto text-slate-300 mb-4" size={40} />
-                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No tienes cupones creados</h3>
+                                <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight mb-2">No tienes cupones creados</h3>
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
                                     Crea cupones promocionales de descuento para compartirlos con tus clientes en su club de recompensas.
                                 </p>
                                 <button
                                     onClick={() => setActiveView('create-coupon')}
-                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
+                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
                                     style={{
                                         backgroundColor: primaryColor,
                                         boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -1257,33 +1257,33 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {coupons.map((coupon) => (
-                                    <div key={coupon.id} className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
+                                    <div key={coupon.id} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
                                         <div>
                                             <div className="flex justify-between items-start mb-3">
-                                                <span className="text-[8px] font-black text-purple-600 uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-purple-50 border border-purple-100">
+                                                <span className="text-xs font-bold text-purple-600 uppercase tracking-wide px-2.5 py-0.5 rounded-md bg-purple-50 border border-purple-100">
                                                     {coupon.tipo === 'PORCENTAJE' ? `${coupon.valor}% DTO` : `$${coupon.valor} DTO`}
                                                 </span>
-                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                                                    coupon.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-150 text-slate-500'
-                                                }`}>
+                                                <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md ${
+ coupon.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-150 text-slate-500'
+ }`}>
                                                     {coupon.activa ? 'ACTIVO' : 'INACTIVO'}
                                                 </span>
                                             </div>
 
-                                            <h3 className="text-sm font-black text-slate-900 tracking-wider uppercase mb-1">
+                                            <h3 className="text-sm font-bold text-slate-900 tracking-wider uppercase mb-1">
                                                 CÓDIGO: <span style={{ color: primaryColor }}>{coupon.codigo}</span>
                                             </h3>
-                                            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mb-6">
+                                            <p className="text-xs text-slate-400 font-semibold leading-relaxed mb-6">
                                                 {coupon.descripcion || 'Sin descripción'}
                                             </p>
 
                                             <div className="space-y-2 bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                                     <span className="text-slate-400">Usos totales:</span>
                                                     <span className="text-slate-800">{coupon.usosActuales} / {coupon.maxUsos || 'Ilimitado'}</span>
                                                 </div>
                                                 {coupon.fechaFin && (
-                                                    <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                    <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                                         <span className="text-slate-400">Vence:</span>
                                                         <span className="text-slate-800">{new Date(coupon.fechaFin).toLocaleDateString()}</span>
                                                     </div>
@@ -1301,13 +1301,13 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         loyaltyRewards.length === 0 ? (
                             <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
                                 <Coins className="mx-auto text-slate-300 mb-4" size={40} />
-                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">Catálogo de Puntos Vacío</h3>
+                                <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight mb-2">Catálogo de Puntos Vacío</h3>
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
                                     Crea premios (como servicios gratuitos o regalos) que tus clientes puedan canjear a cambio de sus puntos.
                                 </p>
                                 <button
                                     onClick={() => setActiveView('create-loyalty-reward')}
-                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
+                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
                                     style={{
                                         backgroundColor: primaryColor,
                                         boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -1320,33 +1320,33 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {loyaltyRewards.map((reward) => (
-                                    <div key={reward.id} className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
+                                    <div key={reward.id} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
                                         <div>
                                             <div className="flex justify-between items-start mb-3">
-                                                <span className="text-[8px] font-black text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">
+                                                <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">
                                                     VALOR: {reward.costoPuntos} PUNTOS
                                                 </span>
-                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                                                    reward.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-                                                }`}>
+                                                <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md ${
+ reward.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
+ }`}>
                                                     {reward.activa ? 'ACTIVO' : 'PAUSADO'}
                                                 </span>
                                             </div>
 
-                                            <h3 className="text-sm font-black text-slate-900 tracking-wider uppercase mb-1">
+                                            <h3 className="text-sm font-bold text-slate-900 tracking-wider uppercase mb-1">
                                                 {reward.nombre}
                                             </h3>
-                                            <p className="text-[10px] text-slate-450 font-semibold leading-relaxed mb-6">
+                                            <p className="text-xs text-slate-450 font-semibold leading-relaxed mb-6">
                                                 {reward.descripcion || 'Sin descripción'}
                                             </p>
 
                                             <div className="space-y-2 bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                                     <span className="text-slate-400">Tipo de Premio:</span>
                                                     <span className="text-slate-800">{reward.tipo}</span>
                                                 </div>
                                                 {reward.cantidadTotal && (
-                                                    <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                    <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                                         <span className="text-slate-400">Stock disponible:</span>
                                                         <span className="text-slate-850">{reward.cantidadDisponible} / {reward.cantidadTotal}</span>
                                                     </div>
@@ -1357,7 +1357,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                         <div className="flex gap-2.5 mt-6 pt-4 border-t border-slate-100">
                                             <button
                                                 onClick={() => handleDeleteLoyaltyReward(reward.id)}
-                                                className="w-full py-3 bg-rose-50 hover:bg-rose-100 border border-rose-200/40 rounded-xl text-[9px] font-black uppercase tracking-widest text-rose-600 transition-colors cursor-pointer text-center"
+                                                className="w-full py-3 bg-rose-50 hover:bg-rose-100 border border-rose-200/40 rounded-xl text-xs font-bold uppercase tracking-wide text-rose-600 transition-colors cursor-pointer text-center"
                                             >
                                                 Eliminar Premio
                                             </button>
@@ -1373,13 +1373,13 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         pointsRankings.length === 0 ? (
                             <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
                                 <Trophy className="mx-auto text-slate-300 mb-4" size={40} />
-                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No hay balances registrados</h3>
+                                <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight mb-2">No hay balances registrados</h3>
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
                                     Los balances de puntos de tus clientes por asistir a citas y referir amigos aparecerán en esta lista.
                                 </p>
                                 <button
                                     onClick={() => setActiveView('adjust-points')}
-                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
+                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
                                     style={{
                                         backgroundColor: primaryColor,
                                         boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -1393,7 +1393,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                        <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
                                             <th className="p-4 pl-6">Cliente</th>
                                             <th className="p-4">WhatsApp</th>
                                             <th className="p-4">Balance Acumulado</th>
@@ -1403,12 +1403,12 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                     <tbody className="text-xs font-bold text-slate-700 divide-y divide-slate-100">
                                         {pointsRankings.map((rank) => (
                                             <tr key={rank.id} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="p-4 pl-6 font-black text-slate-900">{rank.Usuario?.nombre || 'Cliente'}</td>
+                                                <td className="p-4 pl-6 font-bold text-slate-900">{rank.Usuario?.nombre || 'Cliente'}</td>
                                                 <td className="p-4 text-slate-450">{rank.Usuario?.phone || 'Sin teléfono'}</td>
                                                 <td className="p-4">
-                                                    <span className="text-sm font-black text-slate-850" style={{ color: primaryColor }}>{rank.puntos}</span> pts
+                                                    <span className="text-sm font-bold text-slate-850" style={{ color: primaryColor }}>{rank.puntos}</span> pts
                                                 </td>
-                                                <td className="p-4 text-[10px] text-slate-400 font-semibold">
+                                                <td className="p-4 text-xs text-slate-400 font-semibold">
                                                     {new Date(rank.updatedAt).toLocaleDateString()}
                                                 </td>
                                             </tr>
@@ -1424,13 +1424,13 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         automations.length === 0 ? (
                             <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
                                 <Settings className="mx-auto text-slate-300 mb-4" size={40} />
-                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No tienes automatizaciones creadas</h3>
+                                <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight mb-2">No tienes automatizaciones creadas</h3>
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
                                     Configura disparadores automáticos para enviar saludos por cumpleaños, obsequiar cupones o felicitar a tus clientes por WhatsApp.
                                 </p>
                                 <button
                                     onClick={() => setActiveView('create-automation')}
-                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
+                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
                                     style={{
                                         backgroundColor: primaryColor,
                                         boxShadow: `0 10px 15px -3px ${primaryColor}33`
@@ -1443,28 +1443,28 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {automations.map((rule) => (
-                                    <div key={rule.id} className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
+                                    <div key={rule.id} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
                                         <div>
                                             <div className="flex justify-between items-start mb-3">
-                                                <span className="text-[8px] font-black text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">
+                                                <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">
                                                     DISPARADOR: {rule.disparador}
                                                 </span>
-                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                                                    rule.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-                                                }`}>
+                                                <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md ${
+ rule.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
+ }`}>
                                                     {rule.activa ? 'ACTIVA' : 'PAUSADA'}
                                                 </span>
                                             </div>
 
-                                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight leading-tight mb-1">
+                                            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-tight leading-tight mb-1">
                                                 {rule.nombre}
                                             </h3>
-                                            <p className="text-[10px] text-slate-450 font-semibold leading-relaxed mb-6">
+                                            <p className="text-xs text-slate-450 font-semibold leading-relaxed mb-6">
                                                 {rule.descripcion || 'Sin descripción'}
                                             </p>
 
                                             <div className="space-y-2 bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                                     <span className="text-slate-400">Total ejecuciones:</span>
                                                     <span className="text-slate-800">{rule.totalRuns || 0}</span>
                                                 </div>
@@ -1482,26 +1482,26 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             {/* Resumen */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ingresos Generados</span>
-                                    <h4 className="text-2xl font-black text-slate-900 mt-2">${loyaltyStats?.summary?.ingresosGenerados || 0}</h4>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Ingresos Generados</span>
+                                    <h4 className="text-2xl font-bold text-slate-900 mt-2">${loyaltyStats?.summary?.ingresosGenerados || 0}</h4>
                                 </div>
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ROI Estimado</span>
-                                    <h4 className="text-2xl font-black text-slate-900 mt-2" style={{ color: primaryColor }}>{loyaltyStats?.summary?.roiEstimated || loyaltyStats?.summary?.roiEstimado || "0"}%</h4>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">ROI Estimado</span>
+                                    <h4 className="text-2xl font-bold text-slate-900 mt-2" style={{ color: primaryColor }}>{loyaltyStats?.summary?.roiEstimated || loyaltyStats?.summary?.roiEstimado || "0"}%</h4>
                                 </div>
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Puntos Otorgados</span>
-                                    <h4 className="text-2xl font-black text-slate-900 mt-2 text-amber-500">{loyaltyStats?.summary?.puntosEntregados || 0} pts</h4>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Puntos Otorgados</span>
+                                    <h4 className="text-2xl font-bold text-slate-900 mt-2 text-amber-500">{loyaltyStats?.summary?.puntosEntregados || 0} pts</h4>
                                 </div>
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Premios Entregados</span>
-                                    <h4 className="text-2xl font-black text-slate-900 mt-2 text-emerald-600">{loyaltyStats?.summary?.totalPremiosCanjeados || 0}</h4>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Premios Entregados</span>
+                                    <h4 className="text-2xl font-bold text-slate-900 mt-2 text-emerald-600">{loyaltyStats?.summary?.totalPremiosCanjeados || 0}</h4>
                                 </div>
                             </div>
 
                             {/* Ranking de Embajadores */}
                             <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
-                                <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
+                                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
                                     <Trophy size={16} className="text-amber-500 animate-bounce" />
                                     Clientes más Influyentes (Referidores Estrella)
                                 </h3>
@@ -1513,15 +1513,15 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                         {loyaltyStats.topReferrers.map((ref: any, idx: number) => (
                                             <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-3 last:border-b-0 last:pb-0">
                                                 <div className="flex items-center gap-3">
-                                                    <span className="size-6 bg-slate-50 text-slate-700 text-[10px] font-black rounded-full flex items-center justify-center">
+                                                    <span className="size-6 bg-slate-50 text-slate-700 text-xs font-bold rounded-full flex items-center justify-center">
                                                         {idx + 1}
                                                     </span>
                                                     <div>
-                                                        <span className="block text-xs font-black text-slate-800">{ref.nombre}</span>
-                                                        <span className="text-[9px] text-slate-455 font-bold">{ref.telefono}</span>
+                                                        <span className="block text-xs font-bold text-slate-800">{ref.nombre}</span>
+                                                        <span className="text-xs text-slate-455 font-bold">{ref.telefono}</span>
                                                     </div>
                                                 </div>
-                                                <span className="text-xs font-black text-emerald-600">{ref.cantidad} recomendados</span>
+                                                <span className="text-xs font-bold text-emerald-600">{ref.cantidad} recomendados</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1535,7 +1535,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         history.length === 0 ? (
                             <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
                                 <History className="mx-auto text-slate-300 mb-4" size={40} />
-                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">Historial vacío</h3>
+                                <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight mb-2">Historial vacío</h3>
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto">
                                     El registro de todos los referidos y canjes procesados en tu negocio aparecerá aquí.
                                 </p>
@@ -1544,7 +1544,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                        <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
                                             <th className="p-4 pl-6">Referidor</th>
                                             <th className="p-4">Invitado</th>
                                             <th className="p-4">Campaña</th>
@@ -1556,22 +1556,22 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                         {history.map((ev) => (
                                             <tr key={ev.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="p-4 pl-6">
-                                                    <span className="block font-black text-slate-900 leading-none">{ev.Referrer?.nombre || 'Invitador'}</span>
-                                                    <span className="text-[9px] text-slate-400 font-semibold mt-1 block">{ev.Referrer?.phone || ''}</span>
+                                                    <span className="block font-bold text-slate-900 leading-none">{ev.Referrer?.nombre || 'Invitador'}</span>
+                                                    <span className="text-xs text-slate-400 font-semibold mt-1 block">{ev.Referrer?.phone || ''}</span>
                                                 </td>
                                                 <td className="p-4">
-                                                    <span className="block font-black text-slate-800 leading-none">{ev.Referred?.nombre || 'Invitado'}</span>
-                                                    <span className="text-[9px] text-slate-400 font-semibold mt-1 block">{ev.Referred?.phone || ''}</span>
+                                                    <span className="block font-bold text-slate-800 leading-none">{ev.Referred?.nombre || 'Invitado'}</span>
+                                                    <span className="text-xs text-slate-400 font-semibold mt-1 block">{ev.Referred?.phone || ''}</span>
                                                 </td>
                                                 <td className="p-4">{ev.Campaign?.nombre}</td>
                                                 <td className="p-4">
-                                                    <span className={`text-[8.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
-                                                        ev.estado === 'VALIDO' ? 'bg-emerald-50 text-emerald-600' : ev.estado === 'INVALIDO' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'
-                                                    }`}>
+                                                    <span className={`text-[8.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+ ev.estado === 'VALIDO' ? 'bg-emerald-50 text-emerald-600' : ev.estado === 'INVALIDO' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'
+ }`}>
                                                         {ev.estado}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 text-[10px] text-slate-455 font-semibold text-right pr-6">
+                                                <td className="p-4 text-xs text-slate-455 font-semibold text-right pr-6">
                                                     {new Date(ev.createdAt).toLocaleDateString()}
                                                 </td>
                                             </tr>
@@ -1588,27 +1588,27 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             {/* MODAL DE ENTREGA DE PREMIO (ACCIÓN RÁPIDA) */}
             {isDeliveryModalOpen && selectedReward && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-md p-6 border border-slate-105 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col items-center">
-                        <div className="size-16 rounded-[1.8rem] bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500 mb-6 shadow-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 border border-slate-105 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col items-center">
+                        <div className="size-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500 mb-6 shadow-sm">
                             <Check size={28} />
                         </div>
 
-                        <h2 className="text-lg font-black text-slate-900 uppercase italic tracking-tight text-center leading-none mb-1">
+                        <h2 className="text-lg font-bold text-slate-900 tracking-tight text-center leading-none mb-1">
                             Confirmar Entrega
                         </h2>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center mb-6">
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider text-center mb-6">
                             Registra el canje físico del premio del cliente
                         </p>
 
                         <div className="w-full space-y-4 mb-6">
                             <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none mb-1">Premio a entregar:</span>
-                                <span className="text-xs font-black text-slate-800 uppercase tracking-tight block">{selectedReward.Campaign?.valorRecompensa}</span>
-                                <span className="text-[9px] text-slate-455 font-semibold mt-2 block">Cliente: {selectedReward.Usuario?.nombre || 'Usuario'} ({selectedReward.Usuario?.phone})</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block leading-none mb-1">Premio a entregar:</span>
+                                <span className="text-xs font-bold text-slate-800 uppercase tracking-tight block">{selectedReward.Campaign?.valorRecompensa}</span>
+                                <span className="text-xs text-slate-455 font-semibold mt-2 block">Cliente: {selectedReward.Usuario?.nombre || 'Usuario'} ({selectedReward.Usuario?.phone})</span>
                             </div>
 
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Profesional que entrega (Staff)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Profesional que entrega (Staff)</label>
                                 <select
                                     value={deliveryStaffId}
                                     onChange={(e) => setDeliveryStaffId(e.target.value)}
@@ -1622,7 +1622,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             </div>
 
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Comentarios (opcional)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Comentarios (opcional)</label>
                                 <textarea
                                     value={deliveryNotes}
                                     onChange={(e) => setDeliveryNotes(e.target.value)}
@@ -1640,14 +1640,14 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                     setIsDeliveryModalOpen(false);
                                     setSelectedReward(null);
                                 }}
-                                className="px-5 py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-[10px] text-slate-700 uppercase tracking-widest transition-all cursor-pointer active:scale-95"
+                                className="px-5 py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-xs text-slate-700 uppercase tracking-wide transition-all cursor-pointer active:scale-95"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleDeliverReward}
                                 disabled={actionLoading === selectedReward.id}
-                                className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                                className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all cursor-pointer active:scale-95 disabled:opacity-50"
                                 style={{
                                     backgroundColor: primaryColor,
                                     boxShadow: `0 10px 15px -3px ${primaryColor}33`

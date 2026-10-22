@@ -15,10 +15,10 @@ export async function POST() {
       const negocioCitiox = await (prisma as any).negocio.findFirst({
         where: {
           OR: [
-            { slug: { contains: 'citiox', mode: 'insensitive' } },
-            { slug: { contains: 'parrilla', mode: 'insensitive' } },
-            { nombre: { contains: 'Citiox', mode: 'insensitive' } },
-            { nombre: { contains: 'Parrilla', mode: 'insensitive' } }
+            { slug: { contains: 'citiox' } },
+            { slug: { contains: 'parrilla' } },
+            { nombre: { contains: 'Citiox' } },
+            { nombre: { contains: 'Parrilla' } }
           ]
         }
       });

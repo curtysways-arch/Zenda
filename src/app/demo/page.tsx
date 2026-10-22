@@ -228,7 +228,7 @@ export default function DemoPage() {
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-cyan-200 overflow-x-hidden pb-20">
             
             {/* Header / Announcement */}
-            <div className="bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-700 py-2 text-center text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] px-4 flex items-center justify-center gap-2">
+            <div className="bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-700 py-2 text-center text-white text-xs sm:text-xs font-bold uppercase tracking-wide px-4 flex items-center justify-center gap-2">
                 <Rocket size={14} className="animate-bounce" />
                 <span>CitiOx SaaS Demos Interactivas en vivo</span>
             </div>
@@ -238,13 +238,13 @@ export default function DemoPage() {
                 <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
                     <a href="/" className="flex items-center gap-3 cursor-pointer group">
                         <img src="/logo-citiox.png" alt="Citiox Logo" className="h-12 w-auto group-hover:scale-105 transition-transform" />
-                        <span className="text-xl font-black bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent italic">
+                        <span className="text-xl font-bold bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent ">
                             CitiOx
                         </span>
                     </a>
                     <a
                         href="/"
-                        className="flex items-center gap-2 text-xs font-black text-slate-700 hover:text-indigo-600 uppercase tracking-widest px-5 py-2.5 rounded-2xl transition-all border border-slate-200 hover:border-indigo-200 bg-white hover:bg-slate-50 shadow-sm active:scale-95"
+                        className="flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-indigo-600 uppercase tracking-wide px-5 py-2.5 rounded-2xl transition-all border border-slate-200 hover:border-indigo-200 bg-white hover:bg-slate-50 shadow-sm active:scale-95"
                     >
                         <ArrowLeft size={16} />
                         Volver al inicio
@@ -256,7 +256,7 @@ export default function DemoPage() {
             <div className="fixed bottom-6 left-6 z-50">
                 <a
                     href="/"
-                    className="flex items-center gap-2 bg-slate-950 text-white hover:bg-indigo-600 px-5 py-3 rounded-full font-black text-xs uppercase tracking-widest shadow-2xl transition-all border border-white/10 active:scale-95"
+                    className="flex items-center gap-2 bg-slate-950 text-white hover:bg-indigo-600 px-5 py-3 rounded-full font-bold text-xs uppercase tracking-wide shadow-2xl transition-all border border-white/10 active:scale-95"
                 >
                     <ArrowLeft size={16} />
                     Volver al inicio
@@ -265,11 +265,11 @@ export default function DemoPage() {
 
             {/* Hero Section */}
             <section className="max-w-5xl mx-auto px-6 text-center pt-16 pb-12">
-                <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-500/10 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-wider mb-6">
+                <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-500/10 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-wider mb-6">
                     <Shield size={12} />
                     Demos en Vivo de la Plataforma
                 </span>
-                <h1 className="text-4xl sm:text-6xl font-black text-slate-950 tracking-tighter uppercase italic leading-none max-w-4xl mx-auto">
+                <h1 className="text-4xl sm:text-5xl font-bold text-slate-950 tracking-tight leading-none max-w-4xl mx-auto">
                     Experimenta el Poder de <span className="bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-600 bg-clip-text text-transparent">CitiOx</span>
                 </h1>
                 <p className="text-slate-500 font-medium text-base sm:text-xl max-w-2xl mx-auto mt-6 leading-relaxed">
@@ -285,7 +285,7 @@ export default function DemoPage() {
                     return (
                         <div
                             key={demo.slug}
-                            className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden flex flex-col lg:flex-row group"
+                            className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden flex flex-col lg:flex-row group"
                         >
                             {/* Accent line top */}
                             <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${demo.color} z-10`} />
@@ -298,15 +298,15 @@ export default function DemoPage() {
                                 {/* Mockup de teléfono */}
                                 <div className="relative z-10 w-[200px] xl:w-[220px]">
                                     {/* Cuerpo del teléfono */}
-                                    <div className="bg-slate-900 rounded-[2.8rem] p-2.5 shadow-2xl shadow-black/40 border border-white/10">
+                                    <div className="bg-slate-900 rounded-3xl p-2.5 shadow-2xl shadow-black/40 border border-white/10">
                                         {/* Notch */}
-                                        <div className="bg-slate-950 rounded-t-[2.2rem] px-3 pt-3 pb-1">
+                                        <div className="bg-slate-950 rounded-t-3xl px-3 pt-3 pb-1">
                                             <div className="flex items-center justify-center">
                                                 <div className="w-16 h-1.5 bg-slate-800 rounded-full" />
                                             </div>
                                         </div>
                                         {/* Pantalla del iframe */}
-                                        <div className="overflow-hidden rounded-b-[2rem] bg-white" style={{ height: '380px' }}>
+                                        <div className="overflow-hidden rounded-b-3xl bg-white" style={{ height: '380px' }}>
                                             <iframe
                                                 src={isMounted ? `/${demo.slug}` : undefined}
                                                 sandbox="allow-scripts allow-same-origin allow-forms"
@@ -329,7 +329,7 @@ export default function DemoPage() {
                                     </div>
                                     {/* Label flotante */}
                                     <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                                        <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full text-white bg-gradient-to-r ${demo.color} shadow-sm`}>
+                                        <span className={`text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full text-white bg-gradient-to-r ${demo.color} shadow-sm`}>
                                             Vista del Cliente
                                         </span>
                                     </div>
@@ -345,16 +345,16 @@ export default function DemoPage() {
                                                 <DemoIcon size={22} />
                                             </div>
                                             <div>
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">{demo.industry}</span>
-                                                <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tight mt-0.5">{demo.title}</h3>
+                                                <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block">{demo.industry}</span>
+                                                <h3 className="text-2xl font-bold text-slate-900 tracking-tight mt-0.5">{demo.title}</h3>
                                             </div>
                                         </div>
-                                        <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100 shrink-0">
+                                        <span className="text-xs font-bold uppercase tracking-wide px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100 shrink-0">
                                             En Vivo
                                         </span>
                                     </div>
 
-                                    <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Capacidades del SaaS en esta industria:</h4>
+                                    <h4 className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-3">Capacidades del SaaS en esta industria:</h4>
                                     <ul className="space-y-3 mb-8">
                                         {demo.highlights.map((h, i) => (
                                             <li key={i} className="flex items-start gap-2.5 text-xs font-semibold text-slate-700">
@@ -373,7 +373,7 @@ export default function DemoPage() {
                                         <Link
                                             href={`/${demo.slug}`}
                                             target="_blank"
-                                            className="w-full py-4 border border-slate-200 hover:border-slate-300 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-700 flex items-center justify-center gap-1.5 transition-all bg-white hover:bg-slate-50 active:scale-95 shadow-sm"
+                                            className="w-full py-4 border border-slate-200 hover:border-slate-300 rounded-2xl font-bold text-xs uppercase tracking-wide text-slate-700 flex items-center justify-center gap-1.5 transition-all bg-white hover:bg-slate-50 active:scale-95 shadow-sm"
                                         >
                                             Ver en Vivo <ExternalLink size={12} />
                                         </Link>
@@ -388,8 +388,8 @@ export default function DemoPage() {
             {/* SaaS Qualities Grid */}
             <section className="max-w-7xl mx-auto px-6 mt-24">
                 <div className="text-center mb-16 space-y-4">
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600">Por qué elegir CitiOx</span>
-                    <h2 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tight text-slate-900 leading-none">Cualidades Estratégicas del SaaS</h2>
+                    <span className="text-xs font-bold uppercase tracking-wide text-indigo-600">Por qué elegir CitiOx</span>
+                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 leading-none">Cualidades Estratégicas del SaaS</h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -400,7 +400,7 @@ export default function DemoPage() {
                                 <div className={`p-3 rounded-2xl w-fit ${q.color}`}>
                                     <QIcon size={20} />
                                 </div>
-                                <h3 className="text-base font-black text-slate-950 uppercase tracking-tight italic">{q.title}</h3>
+                                <h3 className="text-base font-bold text-slate-950 uppercase tracking-tight ">{q.title}</h3>
                                 <p className="text-slate-500 font-medium text-xs leading-relaxed">{q.desc}</p>
                             </div>
                         );
@@ -410,12 +410,12 @@ export default function DemoPage() {
 
             {/* CTA Final */}
             <section className="max-w-4xl mx-auto px-6 mt-24">
-                <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-[3rem] p-8 sm:p-12 text-center relative overflow-hidden border border-white/5 shadow-2xl">
+                <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden border border-white/5 shadow-2xl">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500 rounded-full blur-3xl opacity-10 -mr-24 -mt-24" />
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500 rounded-full blur-3xl opacity-10 -ml-24 -mb-24" />
                     
                     <div className="relative z-10 space-y-6">
-                        <h2 className="text-2xl sm:text-4xl font-black uppercase italic tracking-tight leading-none max-w-xl mx-auto">
+                        <h2 className="text-2xl sm:text-4xl font-bold tracking-tight leading-none max-w-xl mx-auto">
                             ¿Listo para digitalizar tu propio negocio?
                         </h2>
                         <p className="text-slate-400 font-medium text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
@@ -424,7 +424,7 @@ export default function DemoPage() {
                         <div className="flex flex-col sm:flex-row gap-3 items-center justify-center pt-4">
                             <Link
                                 href="/register"
-                                className="w-full sm:w-auto px-8 py-4 bg-white text-slate-950 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                                className="w-full sm:w-auto px-8 py-4 bg-white text-slate-950 font-bold text-xs uppercase tracking-wide rounded-2xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
                             >
                                 Registrar mi negocio
                                 <ArrowRight size={14} />

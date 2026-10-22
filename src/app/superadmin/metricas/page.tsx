@@ -76,7 +76,7 @@ export default async function MetricasPage() {
                             <ArrowUpRight size={14} /> 12%
                         </span>
                     </div>
-                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Tasa de Conversión</p>
+                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wide mb-1">Tasa de Conversión</p>
                     <h3 className="text-3xl font-extrabold text-slate-900">{tasaConversion}%</h3>
                 </div>
 
@@ -89,7 +89,7 @@ export default async function MetricasPage() {
                             <ArrowUpRight size={14} /> 8%
                         </span>
                     </div>
-                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Crecimiento Mensual</p>
+                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wide mb-1">Crecimiento Mensual</p>
                     <h3 className="text-3xl font-extrabold text-slate-900">+{Math.ceil(totalNegocios * 0.1)} Nuevos</h3>
                 </div>
 
@@ -102,7 +102,7 @@ export default async function MetricasPage() {
                             <ArrowDownRight size={14} /> 3%
                         </span>
                     </div>
-                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Churn Rate</p>
+                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wide mb-1">Churn Rate</p>
                     <h3 className="text-3xl font-extrabold text-slate-900">2.4%</h3>
                 </div>
 
@@ -115,7 +115,7 @@ export default async function MetricasPage() {
                             <ArrowUpRight size={14} /> 25%
                         </span>
                     </div>
-                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Descargas App</p>
+                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wide mb-1">Descargas App</p>
                     <h3 className="text-3xl font-extrabold text-slate-900">1.2k</h3>
                 </div>
             </div>
@@ -153,7 +153,7 @@ export default async function MetricasPage() {
                             </div>
                         ))}
                         {topNegocios.length === 0 && (
-                            <div className="text-center py-8 text-slate-400 font-medium italic">
+                            <div className="text-center py-8 text-slate-400 font-medium ">
                                 Datos insuficientes para generar el ranking.
                             </div>
                         )}

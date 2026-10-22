@@ -95,19 +95,19 @@ export default function WysiwygEditor({ value, onChange }: WysiwygEditorProps) {
                     <button
                         type="button"
                         onClick={() => setIsCodeMode(false)}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-black tracking-wide transition-all flex items-center gap-1.5 ${!isCodeMode ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all flex items-center gap-1.5 ${!isCodeMode ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         ✏️ Editor Visual
                     </button>
                     <button
                         type="button"
                         onClick={() => setIsCodeMode(true)}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-black tracking-wide transition-all flex items-center gap-1.5 ${isCodeMode ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all flex items-center gap-1.5 ${isCodeMode ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         {`</>`} Código HTML
                     </button>
                 </div>
-                <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider hidden sm:inline">
+                <span className="text-xs text-slate-500 font-bold uppercase tracking-wider hidden sm:inline">
                     {isCodeMode ? '🚀 Modo Código HTML directo' : '✨ Modo Editor Enriquecido'}
                 </span>
             </div>

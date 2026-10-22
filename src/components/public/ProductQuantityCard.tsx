@@ -68,7 +68,7 @@ export default function ProductQuantityCard({
         )}
         {currentInCartQty > 0 && (
           <span
-            className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-xs font-black text-white shadow-lg animate-pulse"
+            className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full text-xs font-bold text-white shadow-lg animate-pulse"
             style={{ backgroundColor: primaryColor }}
           >
             {currentInCartQty} en carrito
@@ -88,7 +88,7 @@ export default function ProductQuantityCard({
         <div className="pt-2 border-t border-white/10 space-y-3">
           {/* Precio */}
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-black" style={{ color: primaryColor }}>
+            <span className="text-2xl font-bold" style={{ color: primaryColor }}>
               ${(Number(product.precio) || 0).toFixed(2)}
             </span>
           </div>
@@ -105,7 +105,7 @@ export default function ProductQuantityCard({
               >
                 <Minus className="w-4 h-4" />
               </button>
-              <span className="w-7 text-center text-sm font-black text-white">{selectedQty}</span>
+              <span className="w-7 text-center text-sm font-bold text-white">{selectedQty}</span>
               <button
                 type="button"
                 onClick={handleIncrement}
@@ -119,7 +119,7 @@ export default function ProductQuantityCard({
             <button
               type="button"
               onClick={handleAdd}
-              className="flex-1 py-2.5 px-3 rounded-xl text-xs font-black text-white flex items-center justify-center gap-1.5 shadow-lg active:scale-95 transition-all"
+              className="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 shadow-lg active:scale-95 transition-all"
               style={{ backgroundColor: addedToast ? '#10b981' : primaryColor }}
             >
               {addedToast ? (

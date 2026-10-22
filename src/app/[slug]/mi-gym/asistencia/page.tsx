@@ -103,7 +103,7 @@ export default function MiAsistenciaPage() {
       </div>
 
       <div>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
           <CalendarCheck className="w-6 h-6 text-emerald-500" />
           Historial de Asistencias
         </h1>
@@ -115,39 +115,39 @@ export default function MiAsistenciaPage() {
       {/* Tarjetas de Métricas de Rendimiento */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 text-center space-y-1 shadow-sm">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
             Entrenamientos
           </span>
-          <div className="text-2xl font-black text-emerald-500">
+          <div className="text-2xl font-bold text-emerald-500">
             {stats.totalVisits}
           </div>
-          <span className="text-[11px] text-slate-400">Total asistencias</span>
+          <span className="text-xs text-slate-400">Total asistencias</span>
         </div>
 
         <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 text-center space-y-1 shadow-sm">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
             Tiempo Total
           </span>
-          <div className="text-2xl font-black text-teal-500">
+          <div className="text-2xl font-bold text-teal-500">
             {formatHours(stats.totalMinutes)}
           </div>
-          <span className="text-[11px] text-slate-400">En el gimnasio</span>
+          <span className="text-xs text-slate-400">En el gimnasio</span>
         </div>
 
         <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 text-center space-y-1 shadow-sm">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
             Promedio
           </span>
-          <div className="text-2xl font-black text-indigo-500">
+          <div className="text-2xl font-bold text-indigo-500">
             {stats.averageMinutes} <span className="text-xs font-normal">m</span>
           </div>
-          <span className="text-[11px] text-slate-400">Por sesión</span>
+          <span className="text-xs text-slate-400">Por sesión</span>
         </div>
       </div>
 
       {/* Lista de Registros */}
       <div className="space-y-3">
-        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">
+        <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400 px-1">
           Tus Sesiones
         </h3>
 
@@ -204,11 +204,11 @@ export default function MiAsistenciaPage() {
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-black text-sm text-slate-900 dark:text-white capitalize truncate">
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white capitalize truncate">
                           {item.dateFormatted}
                         </h4>
                         {isInside && (
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500 text-white animate-pulse">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-bold uppercase bg-emerald-500 text-white animate-pulse">
                             En curso
                           </span>
                         )}
@@ -220,10 +220,10 @@ export default function MiAsistenciaPage() {
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="text-sm font-black text-slate-900 dark:text-white block">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white block">
                       {item.formattedDuration}
                     </span>
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                       {isInside ? 'Entrenando' : 'Permanencia'}
                     </span>
                   </div>

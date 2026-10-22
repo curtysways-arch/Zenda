@@ -1,6 +1,16 @@
 import prisma from '../prisma';
 import crypto from 'crypto';
 import { getBusinessTimeZone, getSubscriptionDates } from '@/lib/dateUtils';
+import { TRIAL_DAYS, addDays } from '@/lib/subscription/lifecycle';
+
+// Re-exportar el motor canónico de precios para que el resto del sistema
+// pueda importarlo desde planService (retrocompatibilidad) o desde pricingService.
+export { pricingService } from '@/lib/services/pricingService';
+export type {
+  EffectiveSubscriptionPriceResult,
+  EffectivePriceSource,
+  ApplyNegotiatedPriceParams,
+} from '@/lib/services/pricingService';
 
 export async function getFounderConfig() {
     try {
@@ -14,20 +24,23 @@ export async function getFounderConfig() {
         const founderMaxConfig = configs.find(c => c.clave === 'FOUNDER_MAX');
 
         return {
-            founderLockedPrice: lockedPriceConfig ? parseFloat(lockedPriceConfig.valor) : 10.0,
+            founderLockedPrice: lockedPriceConfig ? parseFloat(lockedPriceConfig.valor) : 9.99,
             founderMax: founderMaxConfig ? parseInt(founderMaxConfig.valor, 10) : 25
         };
     } catch (_) {
         return {
-            founderLockedPrice: 10.0,
+            founderLockedPrice: 9.99,
             founderMax: 25
         };
     }
 }
 
 /**
- * Función canónica universal de cálculo de precio efectivo de suscripción.
- * REGLA: Si lockedPrice !== null, prevalece siempre como precio contractual histórico.
+ * Precio mensual efectivo — misma precedencia que pricingService:
+ *   1. Precio negociado vigente (temporal o permanente).
+ *   2. Precio de Socio Fundador de por vida (lockedPrice).
+ *   3. Precio del plan.
+ * Cuando un precio negociado TEMPORAL termina, vuelve al de fundador o al del plan.
  */
 export function getEffectiveSubscriptionPrice(subscription: {
     lockedPrice?: number | null;
@@ -35,7 +48,16 @@ export function getEffectiveSubscriptionPrice(subscription: {
     customFeatures?: any;
     Plan?: { price: number } | null;
     plan?: { price: number } | null;
+    pricingOverrides?: any[] | null;
 }): number {
+    const now = new Date();
+    const override = (subscription?.pricingOverrides || []).find((o: any) => {
+        if (!o || o.status !== 'ACTIVE') return false;
+        if (o.type === 'PERMANENT') return true;
+        if (o.endAt) return new Date(o.endAt) > now;
+        return o.totalCycles == null || Number(o.currentCycle || 1) <= Number(o.totalCycles);
+    });
+    if (override) return Number(override.amount);
     if (subscription?.lockedPrice !== null && subscription?.lockedPrice !== undefined) {
         return Number(subscription.lockedPrice);
     }
@@ -84,6 +106,7 @@ export async function getEffectiveSubscriptionPricingDetails(subscriptionId: str
         where: { id: subscriptionId },
         include: {
             Plan: true,
+            pricingOverrides: { where: { status: 'ACTIVE' }, orderBy: { createdAt: 'desc' } },
             subscriptionAddons: {
                 include: {
                     addon: true
@@ -191,310 +214,185 @@ export const planService = {
         const plan = await prisma.plan.findUnique({ where: { id: planId } });
         if (!plan) throw new Error('Plan no encontrado');
 
-        const business = await (prisma.negocio as any).findUnique({
-            where: { id: businessId },
-            select: { configuracion: true }
-        });
-        const timeZone = getBusinessTimeZone(business?.configuracion);
+        const currentSub = await (prisma.suscripcion as any).findUnique({ where: { negocioId: businessId } });
 
-        const hasTrial = (plan as any).trial_days > 0;
-        const estado = hasTrial ? 'trial' : 'activa';
+        // Cambiar de plan NO reinicia la prueba ni regala tiempo: conserva estado y fechas,
+        // y también el beneficio de fundador y los precios negociados.
+        if (currentSub) {
+            return await (prisma.suscripcion as any).update({
+                where: { negocioId: businessId },
+                data: { planId, updatedAt: new Date() }
+            });
+        }
 
-        const { startDate, endDate } = getSubscriptionDates(
-            timeZone, 
-            hasTrial ? { durationDays: (plan as any).trial_days } : { durationMonths: 1 }
-        );
-
-        // Leer suscripción actual para preservar beneficio de fundador
-        const currentSub = await (prisma.suscripcion as any).findUnique({
-            where: { negocioId: businessId }
-        });
-
-        // El estado de fundador se preserva al cambiar de plan
-        const keepFounder = currentSub?.isFounder === true;
-        const isFounder = keepFounder;
-        const founderPosition = keepFounder ? currentSub.founderPosition : null;
-        const { founderLockedPrice } = await getFounderConfig();
-        const lockedPrice = keepFounder ? (currentSub.lockedPrice ?? founderLockedPrice) : null;
-
-        return await (prisma.suscripcion as any).upsert({
-            where: { negocioId: businessId },
-            create: {
+        // Negocio sin suscripción: empieza con la prueba estándar de 30 días
+        const now = new Date();
+        const end = addDays(now, TRIAL_DAYS);
+        return await (prisma.suscripcion as any).create({
+            data: {
                 id: crypto.randomUUID(),
                 negocioId: businessId,
-                planId: planId,
-                estado: estado,
-                fechaInicio: startDate,
-                fechaFin: endDate,
-                trial_inicio: hasTrial ? startDate : null,
-                trial_fin: hasTrial ? endDate : null,
-                renovacion_automatica: true,
-                isFounder,
-                founderPosition,
-                lockedPrice,
-                updatedAt: new Date()
-            },
-            update: {
-                planId: planId,
-                estado: estado,
-                fechaInicio: startDate,
-                fechaFin: endDate,
-                trial_inicio: hasTrial ? startDate : null,
-                trial_fin: hasTrial ? endDate : null,
-                isFounder,
-                founderPosition,
-                lockedPrice,
-                customFeatures: currentSub?.customFeatures,
-                updatedAt: new Date()
+                planId,
+                estado: 'trial',
+                fechaInicio: now,
+                fechaFin: end,
+                trial_inicio: now,
+                trial_fin: end,
+                renovacion_automatica: false,
+                isFounder: false,
+                founderPosition: null,
+                lockedPrice: null,
+                updatedAt: now
             }
         });
     },
 
     /**
-     * Proceso de asignación automática de plan para nuevos negocios.
-     * - Si existen menos de 25 fundadores activos:
-     *     Asigna el plan PRO (o el activo más alto) con isFounder=true y lockedPrice=$15/mes.
-     * - Si ya hay 25 o más fundadores activos:
-     *     Asigna el plan PRO con trial de 14 días.
+     * El superadmin marca a un negocio como Socio Fundador a mano (por ejemplo, ya pagó por fuera).
+     * Usa el programa de fundadores de SU tipo de negocio: consume un cupo y toma su precio,
+     * salvo que se indique un precio especial.
+     */
+    /** Quita el beneficio de fundador y libera su cupo para otro negocio del mismo tipo. */
+    async removeFounder(businessId: string) {
+        const sub = await (prisma.suscripcion as any).findUnique({
+            where: { negocioId: businessId },
+            include: { Plan: { include: { family: { include: { founderProgram: true } } } } }
+        });
+        if (!sub?.isFounder) return;
+        const prog = sub.Plan?.family?.founderProgram;
+        await prisma.$transaction(async (tx) => {
+            await (tx.suscripcion as any).update({ where: { id: sub.id }, data: { isFounder: false, founderPosition: null, lockedPrice: null, updatedAt: new Date() } });
+            if (prog && prog.currentMembers > 0) {
+                await tx.founderProgram.update({ where: { id: prog.id }, data: { currentMembers: prog.currentMembers - 1 } });
+            }
+        });
+    },
+
+    async grantFounderManually(businessId: string, customPrice?: number | null, performedBy = 'SUPERADMIN') {
+        const sub = await (prisma.suscripcion as any).findUnique({
+            where: { negocioId: businessId },
+            include: { Plan: { include: { family: { include: { founderProgram: true } } } } }
+        });
+        if (!sub) return { ok: false as const, error: 'El negocio no tiene suscripción' };
+        if (sub.isFounder) return { ok: true as const, position: sub.founderPosition, lockedPrice: sub.lockedPrice };
+
+        const program = sub.Plan?.family?.founderProgram;
+        if (!program?.enabled) return { ok: false as const, error: 'El tipo de negocio no tiene programa de Socios Fundadores activo' };
+
+        return await prisma.$transaction(async (tx) => {
+            const prog = await tx.founderProgram.findUnique({ where: { id: program.id } });
+            if (!prog || prog.currentMembers >= prog.maxMembers) {
+                return { ok: false as const, error: `Ya se ocuparon los ${prog?.maxMembers ?? 0} cupos de fundador de este tipo de negocio` };
+            }
+            const position = prog.currentMembers + 1;
+            const lockedPrice = customPrice !== undefined && customPrice !== null && !isNaN(Number(customPrice)) ? Number(customPrice) : prog.founderPrice;
+            await tx.founderProgram.update({ where: { id: prog.id }, data: { currentMembers: position } });
+            const custom = (sub.customFeatures && typeof sub.customFeatures === 'object') ? sub.customFeatures : {};
+            await (tx.suscripcion as any).update({
+                where: { id: sub.id },
+                data: {
+                    isFounder: true,
+                    founderPosition: position,
+                    lockedPrice,
+                    customFeatures: { ...custom, founderCandidate: false, founderConfirmed: true, founderActivatedAt: new Date().toISOString(), founderGrantedBy: performedBy },
+                    updatedAt: new Date()
+                }
+            });
+            return { ok: true as const, position, lockedPrice };
+        });
+    },
+
+    /**
+     * Plan inicial de un negocio que se registra desde la web (o que crea un vendedor/superadmin).
      *
-     * IMPORTANTE: NO existe un plan separado llamado "Founder".
-     * El beneficio de fundador es un flag dentro de Suscripcion.
+     * Regla única de Citiox:
+     *  - Plan predeterminado de su tipo de negocio (familia de planes).
+     *  - 30 días de prueba COMPLETA desde el registro (TRIAL_DAYS).
+     *  - Si su tipo de negocio tiene programa de Socios Fundadores con cupos libres, queda como
+     *    CANDIDATO: el cupo y el precio de por vida ($9.99 o lo que fije el programa) se confirman
+     *    al aprobarse su primer pago, venga de la pantalla que venga.
+     *  - Nadie se vuelve fundador ni queda "activo" sin pagar.
+     * Si el negocio ya tiene suscripción no se toca nada.
      */
     async assignDefaultPlan(businessId: string, selectedPlanId?: string) {
-        // REGLA CANÓNICA DE PROTECCIÓN COMERCIAL:
-        // Si el negocio ya posee una suscripción, NO reemplaza, NO recalcula,
-        // NO altera lockedPrice y NO borra customFeatures.
-        const existingSub = await prisma.suscripcion.findUnique({
-            where: { negocioId: businessId }
-        });
-        if (existingSub) {
-            console.log(`[planService] assignDefaultPlan: Negocio ${businessId} ya posee suscripción activa (${existingSub.id}). Preservando estado íntegro.`);
-            return existingSub;
-        }
-
-        let basePlan: any = null;
+        const existingSub = await prisma.suscripcion.findUnique({ where: { negocioId: businessId } });
+        if (existingSub) return existingSub;
 
         const business = await (prisma.negocio as any).findUnique({
             where: { id: businessId },
-            select: { 
-                id: true,
-                tipoNegocio: true,
-                businessTypeId: true,
-                configuracion: true 
-            }
+            select: { id: true, tipoNegocio: true, businessTypeId: true, configuracion: true }
         });
 
-        // 1. Si se especificó selectedPlanId, buscar directamente dicho plan
-        if (selectedPlanId) {
-            basePlan = await (prisma.plan as any).findFirst({
-                where: {
-                    OR: [
-                        { id: selectedPlanId },
-                        { slug: selectedPlanId },
-                        { name: { equals: selectedPlanId } }
-                    ],
-                    activo: true
-                },
-                include: {
-                    family: {
-                        include: {
-                            founderProgram: {
-                                include: { founderPlan: true }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // 2. Si no se especificó o no se halló, resolver por PlanFamily según BusinessType o tipoNegocio
-        if (!basePlan && business) {
+        // 1. Familia de planes según el tipo de negocio
+        let family: any = null;
+        if (business) {
             const whereOr: any[] = [];
-            if (business.businessTypeId) {
-                whereOr.push({ id: business.businessTypeId });
-            }
+            if (business.businessTypeId) whereOr.push({ id: business.businessTypeId });
             if (business.tipoNegocio && business.tipoNegocio.trim() !== '') {
                 whereOr.push({ slug: business.tipoNegocio.toLowerCase().trim() });
                 whereOr.push({ name: { contains: business.tipoNegocio.trim() } });
             }
-
             if (whereOr.length > 0) {
                 const bType = await (prisma as any).businessType.findFirst({
                     where: { OR: whereOr },
                     include: {
                         planFamily: {
                             include: {
-                                founderProgram: {
-                                    include: { founderPlan: true }
-                                },
-                                plans: {
-                                    where: { activo: true },
-                                    orderBy: { displayOrder: 'asc' }
-                                }
+                                founderProgram: { include: { founderPlan: true } },
+                                plans: { where: { activo: true }, orderBy: { displayOrder: 'asc' } }
                             }
                         }
                     }
                 });
-
-                const family = bType?.planFamily;
-                const familyPlans = family?.plans || [];
-                if (familyPlans.length > 0) {
-                    basePlan = familyPlans.find((p: any) => p.isDefault) || familyPlans[0];
-                }
-
-                // Si hay programa de fundadores activo en la familia y tiene plan asignado, usarlo como base preferencial
-                const familyFounderProgram = family?.founderProgram;
-                if (familyFounderProgram?.enabled && familyFounderProgram?.founderPlan) {
-                    basePlan = familyFounderProgram.founderPlan;
-                }
+                family = bType?.planFamily || null;
             }
         }
 
-        // 3. Fallback: plan por defecto o primer plan activo
-        if (!basePlan) {
+        // 2. Plan: el elegido (si existe) o el predeterminado de la familia
+        let basePlan: any = null;
+        if (selectedPlanId) {
             basePlan = await (prisma.plan as any).findFirst({
-                where: {
-                    isDefault: true,
-                    activo: true,
-                    id: { not: 'founder' }
-                }
-            }) || await (prisma.plan as any).findFirst({
-                where: {
-                    activo: true,
-                    id: { not: 'founder' }
-                },
-                orderBy: { price: 'asc' }
+                where: { OR: [{ id: selectedPlanId }, { slug: selectedPlanId }, { name: { equals: selectedPlanId } }], activo: true }
             });
         }
-
+        const program = family?.founderProgram;
+        const founderSeatsLeft = Boolean(program?.enabled && program.currentMembers < program.maxMembers);
+        if (!basePlan && family) {
+            const familyPlans = (family.plans || []).filter((p: any) => !p.isFree);
+            basePlan = (founderSeatsLeft && program?.founderPlan) || familyPlans.find((p: any) => p.isDefault) || familyPlans[0] || null;
+        }
         if (!basePlan) {
-            console.warn('❌ assignDefaultPlan: No se encontró ningún plan activo.');
+            basePlan = await (prisma.plan as any).findFirst({ where: { isDefault: true, activo: true, isFree: false, id: { not: 'founder' } } })
+                || await (prisma.plan as any).findFirst({ where: { activo: true, isFree: false, id: { not: 'founder' } }, orderBy: { price: 'asc' } });
+        }
+        if (!basePlan) {
+            console.warn('[planService] assignDefaultPlan: no hay planes activos.');
             return;
         }
-        const timeZone = getBusinessTimeZone(business?.configuracion);
 
-        // ── PROGRAMA SOCIO FUNDADOR (POR FAMILIA O GLOBAL ATÓMICO) ──
-        // Determinar familia del plan asignado
-        const planFamilyId = basePlan.familyId;
-        const founderProgram = planFamilyId ? await prisma.founderProgram.findUnique({
-            where: { familyId: planFamilyId }
-        }) : null;
-
-        // Si la familia tiene FounderProgram explícito
-        if (founderProgram && founderProgram.enabled && founderProgram.currentMembers < founderProgram.maxMembers) {
-            // Asignación atómica dentro de transacción
-            const assignedSub = await prisma.$transaction(async (tx) => {
-                // Bloquear/releer programa para evitar condición de carrera
-                const prog = await tx.founderProgram.findUnique({
-                    where: { id: founderProgram.id }
-                });
-
-                if (!prog || !prog.enabled || prog.currentMembers >= prog.maxMembers) {
-                    return null;
-                }
-
-                // Siguiente posición histórica (nunca se reutiliza)
-                const nextPosition = prog.currentMembers + 1;
-
-                // Actualizar contador del programa de fundador
-                await tx.founderProgram.update({
-                    where: { id: prog.id },
-                    data: { currentMembers: nextPosition }
-                });
-
-                // Registrar auditoría de asignación
-                await tx.planAuditLog.create({
-                    data: {
-                        who: 'SYSTEM:ASSIGN_DEFAULT_PLAN',
-                        what: 'FOUNDER_ASSIGNED',
-                        targetType: 'FAMILY',
-                        targetId: planFamilyId,
-                        newValue: {
-                            businessId,
-                            position: nextPosition,
-                            lockedPrice: prog.founderPrice,
-                            planId: basePlan.id
-                        },
-                        description: `Asignado Socio Fundador #${nextPosition} a negocio ${businessId}`
-                    }
-                });
-
-                const { startDate, endDate } = getSubscriptionDates(timeZone, { durationMonths: 1 });
-
-                return await tx.suscripcion.create({
-                    data: {
-                        id: crypto.randomUUID(),
-                        negocioId: businessId,
-                        planId: basePlan.id,
-                        estado: 'activa',
-                        isFounder: true,
-                        founderPosition: nextPosition,
-                        lockedPrice: prog.founderPrice,
-                        fechaInicio: startDate,
-                        fechaFin: endDate,
-                        renovacion_automatica: true,
-                        updatedAt: new Date()
-                    }
-                });
-            });
-
-            if (assignedSub) {
-                return assignedSub;
-            }
-        }
-
-        // Fallback: Si no hay FounderProgram por familia, usar la configuración global legacy si aplica
-        const { founderLockedPrice, founderMax } = await getFounderConfig();
-        const activeFoundersCount = await (prisma.suscripcion as any).count({
-            where: {
-                isFounder: true,
-                estado: { in: ['active', 'activa', 'ACTIVA'] }
-            }
-        });
-
-        if (activeFoundersCount < founderMax && !founderProgram) {
-            const { startDate, endDate } = getSubscriptionDates(timeZone, { durationMonths: 1 });
-
-            return await (prisma.suscripcion as any).create({
-                data: {
-                    id: crypto.randomUUID(),
-                    negocioId: businessId,
-                    planId: basePlan.id,
-                    estado: 'activa',
-                    isFounder: true,
-                    founderPosition: activeFoundersCount + 1,
-                    lockedPrice: founderLockedPrice,
-                    fechaInicio: startDate,
-                    fechaFin: endDate,
-                    renovacion_automatica: true,
-                    updatedAt: new Date()
-                }
-            });
-        }
-
-        // ── ASIGNAR PLAN PRO TRIAL ──
-        const trialDays = (basePlan as any).trial_days || 14;
-        const { startDate, endDate } = getSubscriptionDates(timeZone, { durationDays: trialDays });
-
-        const features = basePlan.features ? (typeof basePlan.features === 'string' ? JSON.parse(basePlan.features) : basePlan.features) : {};
-        const citasActivacion = Number((features as any)?.citas_activacion ?? 1);
-        const estadoInicial = citasActivacion > 0 ? 'trial_pending' : 'trial';
+        // 3. Prueba de 30 días desde hoy
+        const now = new Date();
+        const trialEnd = addDays(now, TRIAL_DAYS);
 
         return await (prisma.suscripcion as any).create({
             data: {
                 id: crypto.randomUUID(),
                 negocioId: businessId,
                 planId: basePlan.id,
-                estado: estadoInicial,
+                estado: 'trial',
+                pagoPendiente: false,
                 isFounder: false,
                 founderPosition: null,
                 lockedPrice: null,
-                fechaInicio: startDate,
-                fechaFin: endDate,
-                trial_inicio: startDate,
-                trial_fin: endDate,
+                customFeatures: founderSeatsLeft
+                    ? { founderCandidate: true, founderReservedPrice: program.founderPrice, familyId: family.id }
+                    : {},
+                fechaInicio: now,
+                fechaFin: trialEnd,
+                trial_inicio: now,
+                trial_fin: trialEnd,
                 renovacion_automatica: false,
-                updatedAt: new Date()
+                updatedAt: now
             }
         });
     },
@@ -561,5 +459,127 @@ export const planService = {
 
     getPricingDetails(subscriptionId: string) {
         return getEffectiveSubscriptionPricingDetails(subscriptionId);
+    },
+
+    /**
+     * Activa formalmente la condición de Socio Fundador tras confirmar el pago de los primeros $10.
+     * Valida atómicamente la disponibilidad de cupo en el FounderProgram de la familia.
+     */
+    async activateFounderOnPayment(businessId: string, paidAmount: number, performedBy: string = 'SYSTEM', opts: { keepDates?: boolean } = {}) {
+        const sub = await (prisma.suscripcion as any).findUnique({
+            where: { negocioId: businessId },
+            include: {
+                Plan: {
+                    include: {
+                        family: {
+                            include: { founderProgram: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!sub) return { success: false, reason: 'Suscripción no encontrada' };
+
+        // Si ya es fundador, preservar sin recalcular ni duplicar cupo
+        if (sub.isFounder) {
+            return {
+                success: true,
+                isFounder: true,
+                founderPosition: sub.founderPosition,
+                lockedPrice: sub.lockedPrice,
+                alreadyFounder: true
+            };
+        }
+
+        const family = sub.Plan?.family;
+        const founderProgram = family?.founderProgram;
+
+        if (!founderProgram || !founderProgram.enabled) {
+            return { success: false, reason: 'No hay programa de fundadores activo para esta familia de planes' };
+        }
+
+        return await prisma.$transaction(async (tx) => {
+            // Bloquear y releer programa para evitar condiciones de carrera
+            const prog = await tx.founderProgram.findUnique({
+                where: { id: founderProgram.id }
+            });
+
+            if (!prog || !prog.enabled || prog.currentMembers >= prog.maxMembers) {
+                return {
+                    success: false,
+                    reason: 'Cupos de Socio Fundador agotados al momento de registrar el pago'
+                };
+            }
+
+            const nextPosition = prog.currentMembers + 1;
+
+            // Consumir formalmente el cupo histórico (+1)
+            await tx.founderProgram.update({
+                where: { id: prog.id },
+                data: { currentMembers: nextPosition }
+            });
+
+            const currentCustom = (typeof sub.customFeatures === 'object' && sub.customFeatures !== null)
+                ? (sub.customFeatures as Record<string, any>)
+                : {};
+
+            const customFeatures = {
+                ...currentCustom,
+                founderCandidate: false,
+                founderConfirmed: true,
+                founderActivatedAt: new Date().toISOString()
+            };
+
+            // Extender vigencia a 1 mes desde hoy
+            const now = new Date();
+            const fechaFin = new Date(now);
+            fechaFin.setMonth(fechaFin.getMonth() + 1);
+
+            // Activar estatus formal de Fundador (si quien aprueba ya fijó el período, no se tocan fechas)
+            const updatedSub = await (tx.suscripcion as any).update({
+                where: { id: sub.id },
+                data: {
+                    isFounder: true,
+                    founderPosition: nextPosition,
+                    lockedPrice: prog.founderPrice,
+                    ...(opts.keepDates ? {} : {
+                        estado: 'active',
+                        pagoPendiente: false,
+                        fechaInicio: now,
+                        fechaFin: fechaFin,
+                    }),
+                    customFeatures,
+                    updatedAt: new Date()
+                }
+            });
+
+            // Registrar auditoría de activación
+            await tx.planAuditLog.create({
+                data: {
+                    who: performedBy,
+                    what: 'FOUNDER_ACTIVATED_ON_PAYMENT',
+                    targetType: 'FAMILY',
+                    targetId: family.id,
+                    newValue: {
+                        businessId,
+                        position: nextPosition,
+                        lockedPrice: prog.founderPrice,
+                        paidAmount,
+                        planId: sub.planId
+                    },
+                    description: `Socio Fundador #${nextPosition} activado tras confirmación de primer pago ($${paidAmount}) para negocio ${businessId}`
+                }
+            });
+
+            return {
+                success: true,
+                isFounder: true,
+                founderPosition: nextPosition,
+                lockedPrice: prog.founderPrice,
+                subscription: updatedSub
+            };
+        });
     }
 };
+

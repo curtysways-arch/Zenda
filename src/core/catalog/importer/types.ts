@@ -7,7 +7,7 @@
 export type ImportSourceType = 'GOOGLE_SHEETS' | 'EXCEL' | 'CSV' | 'ZIP';
 
 export type ProductConflictMode = 'UPDATE' | 'SKIP' | 'KEEP_EXISTING';
-export type StockConflictMode = 'REPLACE' | 'INCREMENT' | 'KEEP';
+export type StockConflictMode = 'REPLACE' | 'INCREMENT' | 'KEEP' | 'IGNORE';
 export type ImageConflictMode = 'REPLACE' | 'APPEND' | 'KEEP';
 export type CategoryConflictMode = 'AUTO_CREATE' | 'ERROR';
 
@@ -62,6 +62,7 @@ export interface RawRowData {
 
 export interface NormalizedProductRow {
     rowNumber: number;
+    index?: number;
     sku?: string;
     nombre: string;
     descripcion?: string;

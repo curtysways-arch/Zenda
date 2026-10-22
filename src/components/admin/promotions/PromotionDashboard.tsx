@@ -158,7 +158,7 @@ export default function PromotionDashboard({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Tags className="size-6 text-amber-400" />
-            <h1 className="text-2xl font-black italic uppercase tracking-tight text-white !text-white">Módulo de Promociones & Crecimiento</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white !text-white">Módulo de Promociones & Crecimiento</h1>
           </div>
           <p className="text-slate-300 text-xs font-medium max-w-xl">
             {headerDescription}
@@ -168,7 +168,7 @@ export default function PromotionDashboard({
         <button
           type="button"
           onClick={() => handleCreatePromoClick()}
-          className="py-3 px-5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-lg shadow-amber-500/20 cursor-pointer transition-all active:scale-95 flex items-center gap-2"
+          className="py-3 px-5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs uppercase rounded-2xl shadow-lg shadow-amber-500/20 cursor-pointer transition-all active:scale-95 flex items-center gap-2"
         >
           <Plus className="size-4" />
           <span>Crear Promoción</span>
@@ -178,28 +178,28 @@ export default function PromotionDashboard({
       {/* Resumen de Métricas KPI Clave */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-1">
-          <span className="text-[10px] font-black uppercase text-slate-400 block">Ventas Generadas</span>
-          <span className="text-lg font-black text-emerald-600 block">{formatCurrency(metrics.totalSalesWithPromo)}</span>
+          <span className="text-xs font-bold uppercase text-slate-400 block">Ventas Generadas</span>
+          <span className="text-lg font-bold text-emerald-600 block">{formatCurrency(metrics.totalSalesWithPromo)}</span>
         </div>
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-1">
-          <span className="text-[10px] font-black uppercase text-slate-400 block">Pedidos Con Promo</span>
-          <span className="text-lg font-black text-slate-900 block">{metrics.totalOrdersWithPromo}</span>
+          <span className="text-xs font-bold uppercase text-slate-400 block">Pedidos Con Promo</span>
+          <span className="text-lg font-bold text-slate-900 block">{metrics.totalOrdersWithPromo}</span>
         </div>
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-1">
-          <span className="text-[10px] font-black uppercase text-slate-400 block">Descuento Otorgado</span>
-          <span className="text-lg font-black text-amber-600 block">{formatCurrency(metrics.totalDiscountsGiven)}</span>
+          <span className="text-xs font-bold uppercase text-slate-400 block">Descuento Otorgado</span>
+          <span className="text-lg font-bold text-amber-600 block">{formatCurrency(metrics.totalDiscountsGiven)}</span>
         </div>
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-1">
-          <span className="text-[10px] font-black uppercase text-slate-400 block">Ticket Promedio</span>
-          <span className="text-lg font-black text-purple-600 block">{formatCurrency(metrics.avgTicketPromo)}</span>
+          <span className="text-xs font-bold uppercase text-slate-400 block">Ticket Promedio</span>
+          <span className="text-lg font-bold text-purple-600 block">{formatCurrency(metrics.avgTicketPromo)}</span>
         </div>
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-1">
-          <span className="text-[10px] font-black uppercase text-slate-400 block">Promos Activas</span>
-          <span className="text-lg font-black text-blue-600 block">{metrics.activeCount}</span>
+          <span className="text-xs font-bold uppercase text-slate-400 block">Promos Activas</span>
+          <span className="text-lg font-bold text-blue-600 block">{metrics.activeCount}</span>
         </div>
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-1">
-          <span className="text-[10px] font-black uppercase text-slate-400 block">Estado Sistema</span>
-          <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 block text-center mt-1">✓ ONLINE</span>
+          <span className="text-xs font-bold uppercase text-slate-400 block">Estado Sistema</span>
+          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 block text-center mt-1">✓ Online</span>
         </div>
       </div>
 
@@ -236,9 +236,9 @@ export default function PromotionDashboard({
                 }
                 setActiveTab(tab.id as any);
               }}
-              className={`py-2.5 px-4 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
-                isAct ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-              }`}
+              className={`py-2.5 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+ isAct ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+ }`}
             >
               <IconC className={`size-4 ${isAct ? 'text-amber-500' : 'text-slate-400'}`} />
               <span>{tab.label}</span>
@@ -251,7 +251,7 @@ export default function PromotionDashboard({
       {activeTab === 'DASHBOARD' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-black uppercase text-slate-400 tracking-wider">Promociones Activas & Programadas ({promotions.length})</h2>
+            <h2 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Promociones Activas & Programadas ({promotions.length})</h2>
           </div>
 
           {promotions.length === 0 ? (
@@ -266,7 +266,7 @@ export default function PromotionDashboard({
               <button
                 type="button"
                 onClick={() => handleCreatePromoClick()}
-                className="py-3 px-5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-lg cursor-pointer transition-all inline-flex items-center gap-2"
+                className="py-3 px-5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase rounded-2xl shadow-lg cursor-pointer transition-all inline-flex items-center gap-2"
               >
                 <Plus className="size-4" /> Crear Primera Promoción
               </button>

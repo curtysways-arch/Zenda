@@ -290,7 +290,7 @@ export async function GET(
                         const match = catalog.nombre.match(/(\d+)\s*Diamante/i);
                         diamondAmount = match ? parseInt(match[1]) : 0;
                     }
-                    recompensas.push(`+${diamondAmount} Diamantes`);
+                    recompensas.push(`+${diamondAmount} puntos`);
                 } else if (catalog.tipo === 'COUPON') {
                     recompensas.push(`Cupón: ${catalog.nombre}`);
                 } else {
@@ -380,10 +380,77 @@ export async function GET(
             };
         });
 
-        // 9. Separar por pestañas
-        const todas = mappedQuests;
-        const enProgreso = mappedQuests.filter(q => q.estado === 'EN_PROGRESO' || q.estado === 'PENDIENTE_APROBACION');
-        const completadas = mappedQuests.filter(q => q.estado === 'COMPLETADA' || q.estado === 'RECLAMADA');
+        // 8b. Misiones propias del negocio (creadas por el dueño o por la activación rápida del club)
+        const ahora = new Date();
+        const localQuestsRaw = await prisma.quest.findMany({
+            where: {
+                negocioId: negocio.id,
+                activa: true,
+                visible: true,
+                AND: [
+                    { OR: [{ fechaInicio: null }, { fechaInicio: { lte: ahora } }] },
+                    { OR: [{ fechaFin: null }, { fechaFin: { gte: ahora } }] }
+                ]
+            },
+            include: { Campaign: { select: { nombre: true, activa: true } } },
+            orderBy: { createdAt: 'asc' }
+        });
+        const localQuests = localQuestsRaw.filter(q => q.Campaign?.activa !== false);
+
+        const localProgress: Record<string, any> = {};
+        if (userId && localQuests.length > 0) {
+            const ps = await prisma.questProgress.findMany({
+                where: { userId, questId: { in: localQuests.map(q => q.id) } }
+            });
+            ps.forEach(p => { localProgress[p.questId] = p; });
+        }
+
+        const mappedLocal = localQuests.map(q => {
+            let acciones: any[] = [];
+            try {
+                acciones = (typeof q.acciones === 'string' ? JSON.parse(q.acciones) : q.acciones) as any[] || [];
+            } catch { acciones = []; }
+            const recompensas: string[] = [];
+            (Array.isArray(acciones) ? acciones : []).forEach((a: any) => {
+                const v = a?.value;
+                if (a?.action === 'ADD_POINTS') recompensas.push(`+${Number(v?.puntos ?? v) || 0} puntos`);
+                else if (a?.action === 'CREATE_COUPON') recompensas.push('Cupón de descuento');
+                else if (a?.action === 'SERVICE_GIFT') recompensas.push('Servicio gratis');
+                else if (a?.action === 'PRODUCT_GIFT') recompensas.push('Producto gratis');
+                else if (a?.action === 'ADD_WALLET_BALANCE') recompensas.push(`$${Number(v) || 0} de saldo`);
+                else if (a?.action === 'RECOMPENSA' && typeof v === 'string') recompensas.push(v);
+            });
+            const progress = localProgress[q.id];
+            let estado: 'EN_PROGRESO' | 'PENDIENTE_APROBACION' | 'COMPLETADA' | 'RECLAMADA' = 'EN_PROGRESO';
+            if (progress?.estado === 'RECLAMADA') estado = 'RECLAMADA';
+            else if (progress?.estado === 'COMPLETADA') estado = 'COMPLETADA';
+            else if (progress?.estado === 'PENDIENTE_APROBACION') estado = 'PENDIENTE_APROBACION';
+            return {
+                id: q.id,
+                nombre: q.nombre,
+                descripcion: q.descripcion,
+                imagenUrl: q.imagenUrl || undefined,
+                icono: q.icono || 'Award',
+                color: q.color || '#ec4899',
+                campaignId: q.campaignId,
+                campañaNombre: q.Campaign?.nombre || 'Club de beneficios',
+                fechaInicio: q.fechaInicio?.toISOString(),
+                fechaFin: q.fechaFin?.toISOString(),
+                validacionTipo: q.validacionTipo === 'AUTOMATICO' ? 'AUTOMATICO' : 'MANUAL',
+                progresoActual: progress ? progress.progresoActual : 0,
+                progresoRequerido: q.cantidadMeta,
+                aggregation: 'COUNT',
+                unit: '',
+                estado,
+                fechaCompletada: progress?.fechaCompletada?.toISOString() || null,
+                recompensas: recompensas.length > 0 ? recompensas : ['Premio de fidelidad']
+            };
+        });
+
+        // 9. Separar por pestañas (primero las misiones del negocio)
+        const todas = [...mappedLocal, ...mappedQuests];
+        const enProgreso = todas.filter(q => q.estado === 'EN_PROGRESO' || q.estado === 'PENDIENTE_APROBACION');
+        const completadas = todas.filter(q => q.estado === 'COMPLETADA' || q.estado === 'RECLAMADA');
 
         return NextResponse.json({
             success: true,

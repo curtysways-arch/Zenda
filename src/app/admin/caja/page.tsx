@@ -10,7 +10,8 @@ import { createPortal } from 'react-dom';
 import {
     DollarSign, Calendar, ArrowLeft, TrendingUp, TrendingDown,
     PlusCircle, MinusCircle, CheckCircle2, AlertTriangle,
-    Loader2, Lock, Filter, RefreshCw, User, ShieldCheck, Wallet
+    Loader2, Lock, Filter, RefreshCw, User, ShieldCheck, Wallet,
+    Users, Printer, RotateCcw, Key, Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -37,6 +38,25 @@ export default function CajaDashboardPage() {
     const [showIncomeModal, setShowIncomeModal] = useState(false);
     const [showExpenseModal, setShowExpenseModal] = useState(false);
 
+    // Sesión de Caja Activa & Relevo de Turno
+    const [cashSession, setCashSession] = useState<any>(null);
+    const [showOpenModal, setShowOpenModal] = useState(false);
+    const [showCloseModal, setShowCloseModal] = useState(false);
+    const [showHandoverModal, setShowHandoverModal] = useState(false);
+    const [staffList, setStaffList] = useState<any[]>([]);
+
+    const [openAmount, setOpenAmount] = useState('0');
+    const [openNotes, setOpenNotes] = useState('');
+    const [closeCounted, setCloseCounted] = useState('');
+    const [closeNotes, setCloseNotes] = useState('');
+    const [closeReport, setCloseReport] = useState<any>(null);
+
+    const [handoverCounted, setHandoverCounted] = useState('');
+    const [incomingUserId, setIncomingUserId] = useState('');
+    const [handoverNewStart, setHandoverNewStart] = useState('');
+    const [handoverNotes, setHandoverNotes] = useState('');
+    const [submittingSession, setSubmittingSession] = useState(false);
+
     // Modal Form States
     const [cantidadForm, setCantidadForm] = useState<string>('1');
     const [precioUnitarioForm, setPrecioUnitarioForm] = useState<string>('');
@@ -44,6 +64,31 @@ export default function CajaDashboardPage() {
     const [conceptoForm, setConceptoForm] = useState('');
     const [metodoForm, setMetodoForm] = useState<'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA'>('EFECTIVO');
     const [submittingForm, setSubmittingForm] = useState(false);
+
+    const fetchCashSession = async () => {
+        try {
+            const res = await fetch('/api/admin/cash/session');
+            if (res.ok) {
+                const d = await res.json();
+                if (d.success) {
+                    setCashSession(d.session);
+                }
+            }
+        } catch (e) {
+            console.error('Error cargando sesión de caja:', e);
+        }
+    };
+
+    const fetchStaff = async () => {
+        try {
+            const res = await fetch('/api/admin/usuarios');
+            if (res.ok) {
+                const d = await res.json();
+                const list = Array.isArray(d) ? d : (d.users || []);
+                setStaffList(list);
+            }
+        } catch (e) {}
+    };
 
     const fetchFinanceData = async () => {
         setLoading(true);
@@ -69,7 +114,116 @@ export default function CajaDashboardPage() {
 
     useEffect(() => {
         fetchFinanceData();
+        fetchCashSession();
+        fetchStaff();
     }, [filter, startDate, endDate, cashier]);
+
+    const handleOpenSession = async () => {
+        setSubmittingSession(true);
+        try {
+            const res = await fetch('/api/admin/cash/session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    openingCash: parseFloat(openAmount) || 0,
+                    notes: openNotes
+                })
+            });
+            const d = await res.json();
+            if (d.success) {
+                setShowOpenModal(false);
+                setOpenAmount('0');
+                setOpenNotes('');
+                fetchCashSession();
+                fetchFinanceData();
+            } else {
+                alert(d.error || 'Error abriendo sesión de caja');
+            }
+        } catch (e) {
+            alert('Error de conexión');
+        } finally {
+            setSubmittingSession(false);
+        }
+    };
+
+    const handleCloseSession = async () => {
+        if (!cashSession) return;
+        const counted = parseFloat(closeCounted);
+        if (isNaN(counted) || counted < 0) {
+            alert('Por favor ingresa un monto de efectivo contado válido.');
+            return;
+        }
+
+        setSubmittingSession(true);
+        try {
+            const res = await fetch('/api/admin/cash/close', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: cashSession.id,
+                    cashCounted: counted,
+                    notes: closeNotes
+                })
+            });
+            const d = await res.json();
+            if (d.success) {
+                setCloseReport(d.summary);
+                fetchCashSession();
+                fetchFinanceData();
+            } else {
+                alert(d.error || 'Error cerrando turno de caja');
+            }
+        } catch (e) {
+            alert('Error de conexión');
+        } finally {
+            setSubmittingSession(false);
+        }
+    };
+
+    const handleHandoverSession = async () => {
+        if (!cashSession) return;
+        if (!incomingUserId) {
+            alert('Selecciona al cajero que recibe el turno.');
+            return;
+        }
+        const counted = parseFloat(handoverCounted);
+        if (isNaN(counted) || counted < 0) {
+            alert('Ingresa el efectivo contado que entrega el cajero saliente.');
+            return;
+        }
+
+        setSubmittingSession(true);
+        try {
+            const res = await fetch('/api/admin/cash/handover', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: cashSession.id,
+                    outgoingCashCounted: counted,
+                    incomingUserId,
+                    startingCashDeclared: parseFloat(handoverNewStart) || counted,
+                    notes: handoverNotes
+                })
+            });
+            const d = await res.json();
+            if (d.success) {
+                alert('✅ Relevo de cajero completado exitosamente.');
+                setShowHandoverModal(false);
+                setHandoverCounted('');
+                setIncomingUserId('');
+                setHandoverNewStart('');
+                setHandoverNotes('');
+                fetchCashSession();
+                fetchFinanceData();
+            } else {
+                alert(d.error || 'Error en relevo de caja');
+            }
+        } catch (e) {
+            alert('Error de conexión');
+        } finally {
+            setSubmittingSession(false);
+        }
+    };
 
     const handleCreateMovement = async (action: 'ADD_INCOME' | 'ADD_EXPENSE') => {
         const qty = parseFloat(cantidadForm) || 1;
@@ -136,10 +290,10 @@ export default function CajaDashboardPage() {
                         <ArrowLeft size={18} />
                     </button>
                     <div>
-                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none block mb-0.5">
+                        <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide leading-none block mb-0.5">
                             Módulo de Caja Financiera
                         </span>
-                        <h1 className="text-xl font-black text-slate-900 uppercase italic tracking-tight">
+                        <h1 className="text-xl font-bold text-slate-900 tracking-tight">
                             Dashboard Financiero & Arqueo
                         </h1>
                     </div>
@@ -156,24 +310,88 @@ export default function CajaDashboardPage() {
             </header>
 
             <main className="p-6 max-w-7xl mx-auto space-y-8">
+                {/* Panel de Sesión Monetaria Activa (Apertura, Cierre Z, Relevo) */}
+                <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className={cn(
+                                "size-12 rounded-2xl flex items-center justify-center font-bold",
+                                cashSession ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+                            )}>
+                                <Wallet className="size-6" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Terminal / Caja Principal</span>
+                                    {cashSession ? (
+                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase animate-pulse">
+                                            ● Turno Activo
+                                        </span>
+                                    ) : (
+                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase">
+                                            Sin Sesión Abierta
+                                        </span>
+                                    )}
+                                </div>
+                                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                                    {cashSession ? `Cajero: ${cashSession.user?.name || cashSession.user?.email || 'Operador'} (Desde ${format(new Date(cashSession.openedAt), 'HH:mm dd/MM', { locale: es })})` : 'Caja Cerrada'}
+                                </h2>
+                                {cashSession && (
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        Fondo Inicial: <strong className="text-slate-900">${cashSession.openingCash.toFixed(2)}</strong> • Efectivo Esperado: <strong className="text-emerald-700">${Number(cashSession.cashExpected || 0).toFixed(2)}</strong>
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            {!cashSession ? (
+                                <button
+                                    onClick={() => setShowOpenModal(true)}
+                                    className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-md flex items-center gap-2 transition-all cursor-pointer"
+                                >
+                                    <PlusCircle className="size-4" /> Abrir Sesión de Caja
+                                </button>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() => setShowHandoverModal(true)}
+                                        className="px-4 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-wider shadow-md flex items-center gap-2 transition-all cursor-pointer"
+                                    >
+                                        <RotateCcw className="size-4" /> Relevo de Cajero
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setCloseCounted(Number(cashSession.cashExpected || 0).toFixed(2));
+                                            setShowCloseModal(true);
+                                        }}
+                                        className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider shadow-md flex items-center gap-2 transition-all cursor-pointer"
+                                    >
+                                        <Lock className="size-4" /> Cierre Z (Cerrar Turno)
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
                 {/* Banner ÚNICO de Acciones Directas de Caja */}
                 <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white p-5 rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 border border-slate-800">
                     <div>
-                        <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">Operaciones Diarias de Caja</span>
-                        <h2 className="text-lg font-black italic tracking-tight">Gestión Inmediata de Ingresos & Gastos</h2>
+                        <span className="text-xs font-bold text-amber-400 uppercase tracking-wide block">Operaciones Diarias de Caja</span>
+                        <h2 className="text-lg font-bold tracking-tight">Gestión Inmediata de Ingresos & Gastos</h2>
                         <p className="text-xs text-slate-300 font-medium">Registra entradas manuales de dinero o salidas por egresos/compras en segundos.</p>
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
                         <button
                             onClick={() => setShowIncomeModal(true)}
-                            className="flex-1 sm:flex-none px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105"
+                            className="flex-1 sm:flex-none px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105"
                         >
                             <PlusCircle className="size-4" /> <span>➕ Registrar Ingreso</span>
                         </button>
                         <button
                             onClick={() => setShowExpenseModal(true)}
-                            className="flex-1 sm:flex-none px-5 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105"
+                            className="flex-1 sm:flex-none px-5 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-bold text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105"
                         >
                             <MinusCircle className="size-4" /> <span>➖ Registrar Gasto</span>
                         </button>
@@ -188,7 +406,7 @@ export default function CajaDashboardPage() {
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={cn(
-                                    "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer",
+                                    "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
                                     filter === f ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
                                 )}
                             >
@@ -221,57 +439,57 @@ export default function CajaDashboardPage() {
                     {/* Ventas del Día */}
                     <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-2 relative overflow-hidden">
                         <div className="flex items-center justify-between text-slate-400">
-                            <span className="text-[10px] font-black uppercase tracking-widest">Ventas del Período</span>
-                            <div className="size-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+                            <span className="text-xs font-bold uppercase tracking-wide">Ventas del Período</span>
+                            <div className="size-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                                 <DollarSign size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-black text-slate-900 italic tracking-tight">
+                        <p className="text-3xl font-bold text-slate-900 tracking-tight">
                             ${(metrics.totalVentas || 0).toFixed(2)}
                         </p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">POS, Meseros & Pedidos Landing</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase">POS, Meseros & Pedidos Landing</p>
                     </div>
 
                     {/* Ingresos Manuales */}
                     <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-2 relative overflow-hidden">
                         <div className="flex items-center justify-between text-slate-400">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Ingresos Manuales</span>
-                            <div className="size-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black">
+                            <span className="text-xs font-bold uppercase tracking-wide text-emerald-700">Ingresos Manuales</span>
+                            <div className="size-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
                                 <TrendingUp size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-black text-emerald-700 italic tracking-tight">
+                        <p className="text-3xl font-bold text-emerald-700 tracking-tight">
                             +${(metrics.ingresosManuales || 0).toFixed(2)}
                         </p>
-                        <p className="text-[10px] font-bold text-emerald-600 uppercase">Entradas manuales registradas</p>
+                        <p className="text-xs font-bold text-emerald-600 uppercase">Entradas manuales registradas</p>
                     </div>
 
                     {/* Gastos / Egresos */}
                     <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-2 relative overflow-hidden">
                         <div className="flex items-center justify-between text-slate-400">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-rose-700">Gastos / Egresos</span>
-                            <div className="size-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
+                            <span className="text-xs font-bold uppercase tracking-wide text-rose-700">Gastos / Egresos</span>
+                            <div className="size-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
                                 <TrendingDown size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-black text-rose-700 italic tracking-tight">
+                        <p className="text-3xl font-bold text-rose-700 tracking-tight">
                             -${(metrics.gastos || 0).toFixed(2)}
                         </p>
-                        <p className="text-[10px] font-bold text-rose-600 uppercase">Salidas / Compras de caja</p>
+                        <p className="text-xs font-bold text-rose-600 uppercase">Salidas / Compras de caja</p>
                     </div>
 
                     {/* Total Esperado en Caja */}
                     <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl space-y-2 relative overflow-hidden">
                         <div className="flex items-center justify-between text-white/50">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Total Esperado (Efectivo)</span>
-                            <div className="size-10 rounded-2xl bg-white/10 text-emerald-400 flex items-center justify-center font-black">
+                            <span className="text-xs font-bold uppercase tracking-wide text-emerald-400">Total Esperado (Efectivo)</span>
+                            <div className="size-10 rounded-2xl bg-white/10 text-emerald-400 flex items-center justify-center font-bold">
                                 <Wallet size={20} />
                             </div>
                         </div>
-                        <p className="text-3xl font-black text-white italic tracking-tight">
+                        <p className="text-3xl font-bold text-white tracking-tight">
                             ${totalEsperado.toFixed(2)}
                         </p>
-                        <p className="text-[10px] font-bold text-white/60 uppercase">Calculado automáticamente</p>
+                        <p className="text-xs font-bold text-white/60 uppercase">Calculado automáticamente</p>
                     </div>
                 </div>
 
@@ -279,7 +497,7 @@ export default function CajaDashboardPage() {
                 <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                         <div>
-                            <h3 className="text-lg font-black text-slate-900 uppercase italic tracking-tight flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                                 <ShieldCheck className="text-emerald-600 size-5" /> Arqueo de Caja & Cuadre Diario
                             </h3>
                             <p className="text-xs text-slate-500 font-semibold">Ingresa el dinero físico contado en gaveta para validar diferencias.</p>
@@ -287,7 +505,7 @@ export default function CajaDashboardPage() {
 
                         {dineroContado !== '' && (
                             <div className={cn(
-                                "px-4 py-2 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 border",
+                                "px-4 py-2 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 border",
                                 diferencia === 0
                                     ? "bg-emerald-50 text-emerald-800 border-emerald-300"
                                     : diferencia > 0
@@ -306,7 +524,7 @@ export default function CajaDashboardPage() {
 
                     <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
                         <div className="w-full sm:w-80">
-                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">
+                            <label className="block text-xs font-bold uppercase text-slate-400 tracking-wider mb-1">
                                 Dinero Físico Contado ($)
                             </label>
                             <input
@@ -315,7 +533,7 @@ export default function CajaDashboardPage() {
                                 placeholder="Ej. 150.00"
                                 value={dineroContado}
                                 onChange={e => setDineroContado(e.target.value)}
-                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl text-lg font-black bg-slate-50 outline-none focus:border-slate-900 transition-all"
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl text-lg font-bold bg-slate-50 outline-none focus:border-slate-900 transition-all"
                             />
                         </div>
 
@@ -328,23 +546,23 @@ export default function CajaDashboardPage() {
 
                 {/* Desglose por Método de Pago */}
                 <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
-                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider italic">Desglose por Métodos de Pago</h3>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider ">Desglose por Métodos de Pago</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <div className="p-4 bg-emerald-50/60 border border-emerald-100 rounded-2xl">
-                            <p className="text-[10px] font-black text-emerald-800 uppercase">💵 Efectivo</p>
-                            <p className="text-xl font-black text-emerald-950 mt-1">${(metrics.ventasEfectivo || 0).toFixed(2)}</p>
+                            <p className="text-xs font-bold text-emerald-800 uppercase">💵 Efectivo</p>
+                            <p className="text-xl font-bold text-emerald-950 mt-1">${(metrics.ventasEfectivo || 0).toFixed(2)}</p>
                         </div>
                         <div className="p-4 bg-blue-50/60 border border-blue-100 rounded-2xl">
-                            <p className="text-[10px] font-black text-blue-800 uppercase">💳 Tarjeta</p>
-                            <p className="text-xl font-black text-blue-950 mt-1">${(metrics.ventasTarjeta || 0).toFixed(2)}</p>
+                            <p className="text-xs font-bold text-blue-800 uppercase">💳 Tarjeta</p>
+                            <p className="text-xl font-bold text-blue-950 mt-1">${(metrics.ventasTarjeta || 0).toFixed(2)}</p>
                         </div>
                         <div className="p-4 bg-purple-50/60 border border-purple-100 rounded-2xl">
-                            <p className="text-[10px] font-black text-purple-800 uppercase">🏦 Transferencia</p>
-                            <p className="text-xl font-black text-purple-950 mt-1">${(metrics.ventasTransferencia || 0).toFixed(2)}</p>
+                            <p className="text-xs font-bold text-purple-800 uppercase">🏦 Transferencia</p>
+                            <p className="text-xl font-bold text-purple-950 mt-1">${(metrics.ventasTransferencia || 0).toFixed(2)}</p>
                         </div>
                         <div className="p-4 bg-amber-50/60 border border-amber-100 rounded-2xl">
-                            <p className="text-[10px] font-black text-amber-800 uppercase">🔀 Otros / Mixto</p>
-                            <p className="text-xl font-black text-amber-950 mt-1">${(metrics.ventasOtros || 0).toFixed(2)}</p>
+                            <p className="text-xs font-bold text-amber-800 uppercase">🔀 Otros / Mixto</p>
+                            <p className="text-xl font-bold text-amber-950 mt-1">${(metrics.ventasOtros || 0).toFixed(2)}</p>
                         </div>
                     </div>
                 </div>
@@ -353,12 +571,12 @@ export default function CajaDashboardPage() {
                 <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-base font-black text-slate-900 uppercase tracking-tight flex items-center gap-2 italic">
+                            <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight flex items-center gap-2 ">
                                 <Wallet className="text-amber-600 size-5" /> Órdenes Pendientes de Cobro
                             </h3>
                             <p className="text-xs text-slate-500 font-semibold">Órdenes abiertas o entregadas que requieren cobro en Caja (POS, Mesas, Delivery contra entrega)</p>
                         </div>
-                        <span className="text-xs font-black bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
+                        <span className="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
                             Filtro Financiero: PENDIENTE
                         </span>
                     </div>
@@ -370,8 +588,8 @@ export default function CajaDashboardPage() {
                 {/* Lista de Transacciones & Movimientos de Caja */}
                 <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider italic">Historial de Transacciones del Período</h3>
-                        <span className="text-[10px] font-black bg-slate-100 px-3 py-1 rounded-full text-slate-600">
+                        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider ">Historial de Transacciones del Período</h3>
+                        <span className="text-xs font-bold bg-slate-100 px-3 py-1 rounded-full text-slate-600">
                             {data?.payments?.length || 0} Registros
                         </span>
                     </div>
@@ -387,24 +605,24 @@ export default function CajaDashboardPage() {
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={cn(
-                                            "size-10 rounded-xl flex items-center justify-center font-black text-sm",
+                                            "size-10 rounded-xl flex items-center justify-center font-bold text-sm",
                                             isGasto ? "bg-rose-100 text-rose-700" : isIngreso ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
                                         )}>
                                             {isGasto ? '↓' : isIngreso ? '↑' : '$'}
                                         </div>
                                         <div>
-                                            <p className="font-black text-slate-900 uppercase">{pago.clienteNombre}</p>
-                                            <p className="text-[10px] font-semibold text-slate-400">{pago.servicioNombre} • {pago.referencia || 'Venta de contado'}</p>
+                                            <p className="font-bold text-slate-900 uppercase">{pago.clienteNombre}</p>
+                                            <p className="text-xs font-semibold text-slate-400">{pago.servicioNombre} • {pago.referencia || 'Venta de contado'}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
                                         <p className={cn(
-                                            "font-black text-sm",
+                                            "font-bold text-sm",
                                             isGasto ? "text-rose-600" : "text-slate-900"
                                         )}>
                                             {isGasto ? '-' : '+'}${Number(pago.monto).toFixed(2)}
                                         </p>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase">{pago.metodo} • {format(new Date(pago.fecha), 'dd MMM HH:mm', { locale: es })}</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase">{pago.metodo} • {format(new Date(pago.fecha), 'dd MMM HH:mm', { locale: es })}</p>
                                     </div>
                                 </div>
                             );
@@ -419,8 +637,8 @@ export default function CajaDashboardPage() {
                     <div className="bg-white text-slate-900 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 border-2 border-slate-200 my-auto max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                             <div>
-                                <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest block">Operación de Caja</span>
-                                <h3 className="font-black text-lg text-slate-900 uppercase italic">Registrar Ingreso Manual</h3>
+                                <span className="text-xs font-bold uppercase text-emerald-600 tracking-wide block">Operación de Caja</span>
+                                <h3 className="font-bold text-lg text-slate-900 ">Registrar Ingreso Manual</h3>
                             </div>
                             <button 
                                 onClick={() => setShowIncomeModal(false)} 
@@ -432,7 +650,7 @@ export default function CajaDashboardPage() {
                         
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Descripción / Concepto</label>
+                                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Descripción / Concepto</label>
                                 <input
                                     type="text"
                                     value={conceptoForm}
@@ -444,7 +662,7 @@ export default function CajaDashboardPage() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Cantidad</label>
+                                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Cantidad</label>
                                     <input
                                         type="number"
                                         min="1"
@@ -452,35 +670,35 @@ export default function CajaDashboardPage() {
                                         value={cantidadForm}
                                         onChange={e => setCantidadForm(e.target.value)}
                                         placeholder="1"
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-600 transition-all text-center shadow-sm"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-600 transition-all text-center shadow-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Precio Unit. ($)</label>
+                                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Precio Unit. ($)</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         value={precioUnitarioForm}
                                         onChange={e => setPrecioUnitarioForm(e.target.value)}
                                         placeholder="0.00"
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-600 transition-all text-center shadow-sm"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-600 transition-all text-center shadow-sm"
                                     />
                                 </div>
                             </div>
 
                             <div className="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-200 flex justify-between items-center">
-                                <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">Total a Ingresar:</span>
-                                <span className="text-2xl font-black text-emerald-700">
+                                <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider">Total a Ingresar:</span>
+                                <span className="text-2xl font-bold text-emerald-700">
                                     ${((parseFloat(cantidadForm) || 1) * (parseFloat(precioUnitarioForm) || 0)).toFixed(2)}
                                 </span>
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Método de Pago</label>
+                                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Método de Pago</label>
                                 <select
                                     value={metodoForm}
                                     onChange={e => setMetodoForm(e.target.value as any)}
-                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-white text-slate-900 outline-none cursor-pointer focus:border-emerald-600 shadow-sm"
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-xs bg-white text-slate-900 outline-none cursor-pointer focus:border-emerald-600 shadow-sm"
                                 >
                                     <option value="EFECTIVO" className="text-slate-900 bg-white">💵 Efectivo (Gaveta de Caja)</option>
                                     <option value="TRANSFERENCIA" className="text-slate-900 bg-white">🏦 Transferencia Bancaria</option>
@@ -501,7 +719,7 @@ export default function CajaDashboardPage() {
                                 type="button"
                                 onClick={() => handleCreateMovement('ADD_INCOME')}
                                 disabled={submittingForm}
-                                className="w-2/3 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-xl cursor-pointer transition-all disabled:opacity-50"
+                                className="w-2/3 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider shadow-xl cursor-pointer transition-all disabled:opacity-50"
                             >
                                 {submittingForm ? 'Guardando...' : '➕ Confirmar Ingreso'}
                             </button>
@@ -517,8 +735,8 @@ export default function CajaDashboardPage() {
                     <div className="bg-white text-slate-900 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 border-2 border-slate-200 my-auto max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                             <div>
-                                <span className="text-[10px] font-black uppercase text-rose-600 tracking-widest block">Operación de Caja</span>
-                                <h3 className="font-black text-lg text-slate-900 uppercase italic">Registrar Gasto / Egreso</h3>
+                                <span className="text-xs font-bold uppercase text-rose-600 tracking-wide block">Operación de Caja</span>
+                                <h3 className="font-bold text-lg text-slate-900 ">Registrar Gasto / Egreso</h3>
                             </div>
                             <button 
                                 onClick={() => setShowExpenseModal(false)} 
@@ -530,7 +748,7 @@ export default function CajaDashboardPage() {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Descripción / Detalle del Gasto</label>
+                                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Descripción / Detalle del Gasto</label>
                                 <input
                                     type="text"
                                     value={conceptoForm}
@@ -542,7 +760,7 @@ export default function CajaDashboardPage() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Cantidad</label>
+                                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Cantidad</label>
                                     <input
                                         type="number"
                                         min="1"
@@ -550,35 +768,35 @@ export default function CajaDashboardPage() {
                                         value={cantidadForm}
                                         onChange={e => setCantidadForm(e.target.value)}
                                         placeholder="1"
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-rose-600 transition-all text-center shadow-sm"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-rose-600 transition-all text-center shadow-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Precio Unit. ($)</label>
+                                    <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Precio Unit. ($)</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         value={precioUnitarioForm}
                                         onChange={e => setPrecioUnitarioForm(e.target.value)}
                                         placeholder="0.00"
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-rose-600 transition-all text-center shadow-sm"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-rose-600 transition-all text-center shadow-sm"
                                     />
                                 </div>
                             </div>
 
                             <div className="bg-rose-50 p-4 rounded-2xl border-2 border-rose-200 flex justify-between items-center">
-                                <span className="text-xs font-black text-rose-950 uppercase tracking-wider">Total de Egreso:</span>
-                                <span className="text-2xl font-black text-rose-700">
+                                <span className="text-xs font-bold text-rose-950 uppercase tracking-wider">Total de Egreso:</span>
+                                <span className="text-2xl font-bold text-rose-700">
                                     -${((parseFloat(cantidadForm) || 1) * (parseFloat(precioUnitarioForm) || 0)).toFixed(2)}
                                 </span>
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Método de Salida de Dinero</label>
+                                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Método de Salida de Dinero</label>
                                 <select
                                     value={metodoForm}
                                     onChange={e => setMetodoForm(e.target.value as any)}
-                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-white text-slate-900 outline-none cursor-pointer focus:border-rose-600 shadow-sm"
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-xs bg-white text-slate-900 outline-none cursor-pointer focus:border-rose-600 shadow-sm"
                                 >
                                     <option value="EFECTIVO" className="text-slate-900 bg-white">💵 Efectivo (Gaveta de Caja)</option>
                                     <option value="TRANSFERENCIA" className="text-slate-900 bg-white">🏦 Transferencia Bancaria</option>
@@ -599,9 +817,359 @@ export default function CajaDashboardPage() {
                                 type="button"
                                 onClick={() => handleCreateMovement('ADD_EXPENSE')}
                                 disabled={submittingForm}
-                                className="w-2/3 py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-xl cursor-pointer transition-all disabled:opacity-50"
+                                className="w-2/3 py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider shadow-xl cursor-pointer transition-all disabled:opacity-50"
                             >
                                 {submittingForm ? 'Guardando...' : '➖ Confirmar Gasto'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Modal Apertura de Caja */}
+            {mounted && showOpenModal && createPortal(
+                <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                            <div className="size-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                                <PlusCircle size={20} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900 text-base uppercase">Apertura de Sesión de Caja</h3>
+                                <p className="text-xs text-slate-500 font-medium">Inicia el turno monetario para ventas POS</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                                    Fondo Inicial de Caja (Base en Efectivo $)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={openAmount}
+                                    onChange={e => setOpenAmount(e.target.value)}
+                                    placeholder="0.00"
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-xl text-center outline-none focus:border-emerald-600 transition-all bg-slate-50"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                                    Observaciones / Terminal
+                                </label>
+                                <textarea
+                                    value={openNotes}
+                                    onChange={e => setOpenNotes(e.target.value)}
+                                    placeholder="Ej. Terminal Principal. Billetes y monedas verificados."
+                                    rows={2}
+                                    className="w-full p-3 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-slate-900 bg-slate-50"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-2 border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => setShowOpenModal(false)}
+                                className="w-1/3 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs uppercase cursor-pointer hover:bg-slate-200"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleOpenSession}
+                                disabled={submittingSession}
+                                className="w-2/3 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-md disabled:opacity-50 cursor-pointer"
+                            >
+                                {submittingSession ? 'Abriendo...' : '💵 Confirmar Apertura'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Modal Cierre Z de Caja */}
+            {mounted && showCloseModal && cashSession && createPortal(
+                <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                            <div className="size-10 rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center">
+                                <Lock size={20} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900 text-base uppercase">Cierre Z & Cuadre Definitivo</h3>
+                                <p className="text-xs text-slate-500 font-medium">Cierre formal de turno del cajero {cashSession.user?.name || ''}</p>
+                            </div>
+                        </div>
+
+                        {/* Desglose Esperado */}
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                            <div className="flex justify-between font-bold text-slate-600">
+                                <span>Fondo Inicial:</span>
+                                <span>${cashSession.openingCash.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-slate-600">
+                                <span>Efectivo Esperado en Gaveta:</span>
+                                <span className="font-bold text-slate-900">${Number(cashSession.cashExpected || 0).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-500 text-xs">
+                                <span>Tarjeta / Electrónico (No físico):</span>
+                                <span>${Number(cashSession.cardExpected || 0).toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                                    Dinero Físico Contado por Cajero ($) *
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={closeCounted}
+                                    onChange={e => setCloseCounted(e.target.value)}
+                                    placeholder="0.00"
+                                    className="w-full p-3.5 border-2 border-slate-900 rounded-2xl font-bold text-2xl text-center outline-none bg-slate-50 text-slate-900"
+                                />
+                            </div>
+
+                            {closeCounted !== '' && (
+                                <div className={cn(
+                                    "p-3 rounded-xl text-xs font-bold flex items-center justify-between border",
+                                    parseFloat(closeCounted) - cashSession.cashExpected === 0
+                                        ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                        : parseFloat(closeCounted) - cashSession.cashExpected > 0
+                                        ? "bg-blue-50 text-blue-800 border-blue-300"
+                                        : "bg-rose-50 text-rose-800 border-rose-300"
+                                )}>
+                                    <span>Diferencia Calculada:</span>
+                                    <span>
+                                        {parseFloat(closeCounted) - cashSession.cashExpected === 0
+                                            ? '✅ Cuadre Exacto ($0.00)'
+                                            : (parseFloat(closeCounted) - cashSession.cashExpected > 0 ? '+Sobrante: $' : '-Faltante: $') +
+                                              Math.abs(parseFloat(closeCounted) - cashSession.cashExpected).toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                                    Notas y Justificaciones del Cierre
+                                </label>
+                                <textarea
+                                    value={closeNotes}
+                                    onChange={e => setCloseNotes(e.target.value)}
+                                    placeholder="Indica motivos de faltante/sobrante si aplica..."
+                                    rows={2}
+                                    className="w-full p-3 border border-slate-200 rounded-xl text-xs font-medium outline-none bg-slate-50"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-2 border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => setShowCloseModal(false)}
+                                className="w-1/3 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs uppercase cursor-pointer hover:bg-slate-200"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleCloseSession}
+                                disabled={submittingSession}
+                                className="w-2/3 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider shadow-md disabled:opacity-50 cursor-pointer"
+                            >
+                                {submittingSession ? 'Cerrando Turno...' : '🔒 Confirmar Cierre Z'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Modal Relevo de Turno / Cambio de Cajero */}
+            {mounted && showHandoverModal && cashSession && createPortal(
+                <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+                        <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                            <div className="size-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                                <RotateCcw size={20} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900 text-base uppercase">Relevo de Turno / Cajero</h3>
+                                <p className="text-xs text-slate-500 font-medium">Entrega de caja auditable entre cajeros</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                                    Cajero Saliente (Actual)
+                                </label>
+                                <p className="p-3 bg-slate-100 rounded-xl text-xs font-bold text-slate-800">
+                                    {cashSession.user?.name || cashSession.user?.email}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                                    Efectivo Contado Entregado por Saliente ($)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={handoverCounted}
+                                    onChange={e => {
+                                        setHandoverCounted(e.target.value);
+                                        if (!handoverNewStart) setHandoverNewStart(e.target.value);
+                                    }}
+                                    placeholder="0.00"
+                                    className="w-full p-3 border-2 border-slate-200 rounded-xl font-bold text-base text-center outline-none focus:border-amber-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                                    Cajero Entrante (Receptor)
+                                </label>
+                                <select
+                                    value={incomingUserId}
+                                    onChange={e => setIncomingUserId(e.target.value)}
+                                    className="w-full p-3 border border-slate-200 rounded-xl text-xs font-bold bg-white outline-none focus:border-slate-900"
+                                >
+                                    <option value="">Selecciona al nuevo cajero...</option>
+                                    {staffList
+                                        .filter(s => s.id !== cashSession.userId)
+                                        .map(s => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.name || s.email} ({s.role})
+                                            </option>
+                                        ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                                    Fondo Inicial Declarado para Nuevo Turno ($)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={handoverNewStart}
+                                    onChange={e => setHandoverNewStart(e.target.value)}
+                                    placeholder="0.00"
+                                    className="w-full p-3 border-2 border-slate-200 rounded-xl font-bold text-base text-center outline-none focus:border-amber-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                                    Notas del Relevo
+                                </label>
+                                <textarea
+                                    value={handoverNotes}
+                                    onChange={e => setHandoverNotes(e.target.value)}
+                                    placeholder="Observaciones de entrega de llaves, monedas, etc."
+                                    rows={2}
+                                    className="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none bg-slate-50"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-2 border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => setShowHandoverModal(false)}
+                                className="w-1/3 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs uppercase cursor-pointer hover:bg-slate-200"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleHandoverSession}
+                                disabled={submittingSession}
+                                className="w-2/3 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-wider shadow-md disabled:opacity-50 cursor-pointer"
+                            >
+                                {submittingSession ? 'Procesando Relevo...' : '🤝 Confirmar Relevo'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Modal Comprobante Arqueo Z Imprimible */}
+            {mounted && closeReport && createPortal(
+                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 font-mono text-xs">
+                        <div className="text-center border-b border-dashed border-slate-300 pb-4">
+                            <p className="font-bold text-base uppercase">Reporte de cierre z</p>
+                            <p className="text-xs text-slate-500">Citiox POS - control monetario</p>
+                            <p className="text-xs text-slate-400 mt-1">{new Date().toLocaleString()}</p>
+                        </div>
+
+                        <div className="space-y-1.5 border-b border-dashed border-slate-300 pb-3">
+                            <div className="flex justify-between">
+                                <span>Fondo Inicial:</span>
+                                <span className="font-bold">${closeReport.openingCash?.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Ventas Efectivo:</span>
+                                <span className="font-bold">${closeReport.cashSales?.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Ventas Tarjeta:</span>
+                                <span className="font-bold">${closeReport.cardSales?.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Ingresos Manuales:</span>
+                                <span className="font-bold">+${closeReport.manualIncomes?.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Gastos de Caja:</span>
+                                <span className="font-bold">-${closeReport.manualExpenses?.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5 border-b border-dashed border-slate-300 pb-3 font-bold">
+                            <div className="flex justify-between text-slate-900">
+                                <span>Total esperado en caja:</span>
+                                <span>${closeReport.cashExpected?.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-900">
+                                <span>Efectivo contado:</span>
+                                <span>${closeReport.cashCounted?.toFixed(2)}</span>
+                            </div>
+                            <div className={cn(
+                                "flex justify-between text-sm font-bold",
+                                closeReport.difference === 0 ? "text-emerald-700" : closeReport.difference > 0 ? "text-blue-700" : "text-rose-700"
+                            )}>
+                                <span>Diferencia:</span>
+                                <span>${closeReport.difference?.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <div className="pt-2 flex gap-2">
+                            <button
+                                onClick={() => window.print()}
+                                className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-sans font-bold text-xs uppercase flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                <Printer size={16} /> Imprimir Comprobante
+                            </button>
+                            <button
+                                onClick={() => setCloseReport(null)}
+                                className="px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-sans font-bold text-xs uppercase cursor-pointer"
+                            >
+                                Cerrar
                             </button>
                         </div>
                     </div>
@@ -719,14 +1287,14 @@ function PendingCollectionOrdersList({ onCollectionSuccess }: { onCollectionSucc
                 >
                     <div className="flex items-center justify-between border-b border-amber-100 pb-2">
                         <div>
-                            <span className="font-black text-xs text-slate-900">
+                            <span className="font-bold text-xs text-slate-900">
                                 #{order.codigo || order.id.slice(-6).toUpperCase()}
                             </span>
-                            <span className="text-[10px] text-slate-500 font-semibold ml-2">
+                            <span className="text-xs text-slate-500 font-semibold ml-2">
                                 ({order.mesaCode || order.tipoEntrega || 'Venta POS'})
                             </span>
                         </div>
-                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-amber-200 text-amber-900">
+                        <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-amber-200 text-amber-900">
                             {order.estado}
                         </span>
                     </div>
@@ -734,9 +1302,9 @@ function PendingCollectionOrdersList({ onCollectionSuccess }: { onCollectionSucc
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="font-extrabold text-xs text-slate-900">{order.nombreCliente || 'Cliente'}</p>
-                            <p className="text-[10px] text-slate-400 font-semibold">{order.items?.length || 0} productos</p>
+                            <p className="text-xs text-slate-400 font-semibold">{order.items?.length || 0} productos</p>
                         </div>
-                        <p className="text-base font-black text-emerald-700">${(Number(order.total) || 0).toFixed(2)}</p>
+                        <p className="text-base font-bold text-emerald-700">${(Number(order.total) || 0).toFixed(2)}</p>
                     </div>
 
                     {/* Selector de Método de Pago & Botón Cobrar */}
@@ -744,7 +1312,7 @@ function PendingCollectionOrdersList({ onCollectionSuccess }: { onCollectionSucc
                         <select
                             value={selectedMethod}
                             onChange={e => setSelectedMethod(e.target.value as any)}
-                            className="text-[10px] font-bold bg-white border border-amber-200 rounded-lg px-1.5 py-1 text-slate-700 outline-none cursor-pointer"
+                            className="text-xs font-bold bg-white border border-amber-200 rounded-lg px-1.5 py-1 text-slate-700 outline-none cursor-pointer"
                         >
                             <option value="EFECTIVO">💵 Efectivo</option>
                             <option value="TRANSFERENCIA">🏦 Transferencia</option>
@@ -754,7 +1322,7 @@ function PendingCollectionOrdersList({ onCollectionSuccess }: { onCollectionSucc
                         <button
                             onClick={() => handleCollectOrder(order.id)}
                             disabled={processingId === order.id}
-                            className="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-wider shadow-sm flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-all"
+                            className="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-all"
                         >
                             {processingId === order.id ? (
                                 <Loader2 className="w-3 h-3 animate-spin" />

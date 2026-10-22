@@ -185,13 +185,13 @@ export default function EnrollmentModal({
                 <div className="px-6 pt-10 pb-6 border-b border-slate-100 flex items-start justify-between shrink-0 bg-white sticky top-0 z-50">
                     <div className="space-y-1">
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: primaryColor }}>INSCRIPCIÓN</span>
+                            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: primaryColor }}>Inscripción</span>
                             <div className="h-px flex-1 bg-slate-100 min-w-[20px]" />
                         </div>
-                        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight leading-none">
+                        <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-none">
                             {course.name}
                         </h2>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] pt-1" style={{ color: primaryColor }}>
+                        <p className="text-xs font-bold uppercase tracking-wide pt-1" style={{ color: primaryColor }}>
                             CUPOS LIMITADOS DISPONIBLES
                         </p>
                     </div>
@@ -210,7 +210,7 @@ export default function EnrollmentModal({
                                 <CheckCircle size={40} style={{ color: primaryColor }} strokeWidth={3} />
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">¡LISTO!</h3>
+                                <h3 className="text-3xl font-bold text-slate-900 tracking-tight">¡Listo!</h3>
                                 <p className="text-slate-500 text-sm font-medium max-w-xs mx-auto leading-relaxed">
                                     Hemos recibido la inscripción para <span className="font-bold" style={{ color: primaryColor }}>{students.length} alumno(s)</span>. 
                                     Te contactaremos pronto.
@@ -218,7 +218,7 @@ export default function EnrollmentModal({
                             </div>
                             <button 
                                 onClick={onClose}
-                                className="px-8 py-3 rounded-full font-bold text-[10px] uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg"
+                                className="px-8 py-3 rounded-full font-bold text-xs uppercase tracking-wide bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg"
                             >
                                 VOLVER
                             </button>
@@ -228,17 +228,17 @@ export default function EnrollmentModal({
                             {error && (
                                 <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600 animate-in fade-in duration-300">
                                     <AlertCircle size={18} />
-                                    <p className="text-[10px] font-black uppercase tracking-widest">{error}</p>
+                                    <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
                                 </div>
                             )}
 
                             {/* SECCIÓN ALUMNOS */}
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
-                                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2" style={{ color: '#000000' }}>
+                                    <h4 className="text-xs font-bold uppercase tracking-wide flex items-center gap-2" style={{ color: '#000000' }}>
                                         <Users size={14} /> DATOS DE PARTICIPANTES
                                     </h4>
-                                    <span className="text-[9px] font-bold text-slate-500 uppercase bg-slate-100 px-3 py-1 rounded-full">
+                                    <span className="text-xs font-bold text-slate-500 uppercase bg-slate-100 px-3 py-1 rounded-full">
                                         {students.length} DE {course.capacity - (course._count?.enrollments || 0)} CUPOS
                                     </span>
                                 </div>
@@ -258,7 +258,7 @@ export default function EnrollmentModal({
                                             <div className="space-y-4">
                                                 <div className="space-y-2">
                                                     <label 
-                                                        className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1"
+                                                        className="text-xs font-bold text-slate-800 uppercase tracking-wide ml-1"
                                                         style={{ color: '#000000' }}
                                                     >
                                                         NOMBRE DEL PARTICIPANTE
@@ -280,7 +280,7 @@ export default function EnrollmentModal({
                                     <button 
                                         type="button"
                                         onClick={addStudent}
-                                        className="w-full py-4 rounded-2xl border border-dashed border-slate-200 text-slate-500 hover:border-slate-400 transition-all font-bold text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 bg-slate-50/50"
+                                        className="w-full py-4 rounded-2xl border border-dashed border-slate-200 text-slate-500 hover:border-slate-400 transition-all font-bold text-xs uppercase tracking-wide flex items-center justify-center gap-2 bg-slate-50/50"
                                         style={{ color: '#64748b' }}
                                     >
                                         <Plus size={14} /> AÑADIR OTRO PARTICIPANTE
@@ -290,13 +290,13 @@ export default function EnrollmentModal({
 
                             {/* REPRESENTANTE */}
                             <div className="space-y-6 pt-6 border-t border-slate-50">
-                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2" style={{ color: '#000000' }}>
+                                <h4 className="text-xs font-bold uppercase tracking-wide flex items-center gap-2" style={{ color: '#000000' }}>
                                     <User size={14} /> DATOS DE CONTACTO
                                 </h4>
 
                                 <div className="space-y-6 p-6 bg-slate-100/50 rounded-3xl border border-slate-100">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest ml-1" style={{ color: '#000000' }}>TU NOMBRE</label>
+                                        <label className="text-xs font-bold uppercase tracking-wide ml-1" style={{ color: '#000000' }}>Tu nombre</label>
                                         <input
                                             required
                                             type="text"
@@ -323,14 +323,14 @@ export default function EnrollmentModal({
             {!success && (
                 <div className="shrink-0 p-6 bg-white border-t border-slate-100 flex flex-col items-center gap-4 sticky bottom-0 z-[60] pb-10">
                     <div className="flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">VALOR DEL PROGRAMA</span>
-                        <span className="text-4xl font-black tracking-tight leading-none" style={{ color: primaryColor }}>${totalPrice.toLocaleString()}</span>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Valor del programa</span>
+                        <span className="text-4xl font-bold tracking-tight leading-none" style={{ color: primaryColor }}>${totalPrice.toLocaleString()}</span>
                     </div>
                     
                     <button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="w-full h-16 text-white rounded-full flex items-center justify-center gap-3 font-black text-[13px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-xl"
+                        className="w-full h-16 text-white rounded-full flex items-center justify-center gap-3 font-bold text-sm uppercase tracking-wide hover:brightness-110 active:scale-[0.98] transition-all shadow-xl"
                         style={{ backgroundColor: primaryColor, boxShadow: `0 20px 25px -5px ${primaryColor}40` }}
                     >
                         {loading ? <Loader2 size={20} className="animate-spin" /> : null}

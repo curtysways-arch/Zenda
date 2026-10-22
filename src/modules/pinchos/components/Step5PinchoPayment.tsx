@@ -38,9 +38,9 @@ export default function Step5PinchoPayment({
             {/* Tarjeta 1: Código de Pago y Monto Exacto */}
             <div className="bg-gradient-to-r from-orange-50/90 via-orange-50/50 to-orange-50/90 border border-orange-200/80 rounded-3xl p-5 flex items-center justify-between shadow-2xs">
                 <div className="space-y-0.5 text-left">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Código del Pedido</span>
+                    <span className="text-xs font-bold uppercase tracking-wide text-orange-900/70 block">Código del Pedido</span>
                     <div className="flex items-center gap-2">
-                        <span className="text-sm font-mono font-black text-orange-700 tracking-wider">
+                        <span className="text-sm font-mono font-bold text-orange-700 tracking-wider">
                             {friendlyCode}
                         </span>
                         <button
@@ -62,8 +62,8 @@ export default function Step5PinchoPayment({
 
                 <div className="flex items-center gap-3 text-right">
                     <div className="space-y-0.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Monto a Transferir</span>
-                        <span className="text-2xl font-black text-slate-900 tracking-tight">${order.total.toFixed(2)}</span>
+                        <span className="text-xs font-bold uppercase tracking-wide text-orange-900/70 block">Monto a Transferir</span>
+                        <span className="text-2xl font-bold text-slate-900 tracking-tight">${order.total.toFixed(2)}</span>
                     </div>
                     <div className="size-11 bg-orange-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-600/30 shrink-0">
                         <Wallet className="size-6" />
@@ -75,12 +75,12 @@ export default function Step5PinchoPayment({
             <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-4 text-left">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                     <div className="flex items-center gap-3">
-                        <div className="size-10 bg-slate-900 text-white rounded-full flex items-center justify-center font-black shadow-xs shrink-0">
+                        <div className="size-10 bg-slate-900 text-white rounded-full flex items-center justify-center font-bold shadow-xs shrink-0">
                             <Building2 className="size-5" />
                         </div>
-                        <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Datos para la Transferencia</span>
+                        <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">Datos para la Transferencia</span>
                     </div>
-                    <span className="text-xs font-black text-orange-700 uppercase tracking-wider bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-200">
+                    <span className="text-xs font-bold text-orange-700 uppercase tracking-wider bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-200">
                         {bankConfig?.banco || 'BANCO PICHINCHA'}
                     </span>
                 </div>
@@ -91,8 +91,8 @@ export default function Step5PinchoPayment({
                             <User className="size-4" />
                         </div>
                         <div>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TITULAR</span>
-                            <span className="text-xs font-black text-slate-900">{bankConfig?.titular || 'Poleth Caicedo'}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Titular</span>
+                            <span className="text-xs font-bold text-slate-900">{bankConfig?.titular || 'Poleth Caicedo'}</span>
                         </div>
                     </div>
 
@@ -101,8 +101,8 @@ export default function Step5PinchoPayment({
                             <CreditCard className="size-4" />
                         </div>
                         <div>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TIPO CUENTA</span>
-                            <span className="text-xs font-black text-slate-900">{bankConfig?.tipoCuenta || 'Ahorros'}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Tipo cuenta</span>
+                            <span className="text-xs font-bold text-slate-900">{bankConfig?.tipoCuenta || 'Ahorros'}</span>
                         </div>
                     </div>
 
@@ -111,8 +111,8 @@ export default function Step5PinchoPayment({
                             <Hash className="size-4" />
                         </div>
                         <div>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">NÚMERO DE CUENTA</span>
-                            <span className="text-xs font-mono font-black text-slate-900 select-all">{bankConfig?.numeroCuenta || '2213913435'}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Número de cuenta</span>
+                            <span className="text-xs font-mono font-bold text-slate-900 select-all">{bankConfig?.numeroCuenta || '2213913435'}</span>
                         </div>
                     </div>
 
@@ -121,8 +121,8 @@ export default function Step5PinchoPayment({
                             <FileText className="size-4" />
                         </div>
                         <div>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">RUC / CÉDULA</span>
-                            <span className="text-xs font-mono font-black text-slate-900">{bankConfig?.identificacion || '1792345678001'}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">RUC / cédula</span>
+                            <span className="text-xs font-mono font-bold text-slate-900">{bankConfig?.identificacion || '1792345678001'}</span>
                         </div>
                     </div>
                 </div>
@@ -130,7 +130,7 @@ export default function Step5PinchoPayment({
 
             {/* Tarjeta Informativa: Mensaje de Confianza */}
             <div className="bg-gradient-to-r from-amber-50 to-orange-50/60 rounded-3xl p-5 border border-amber-200/80 text-left space-y-2 shadow-2xs">
-                <div className="flex items-center gap-2 font-black text-amber-950 text-xs uppercase tracking-wider">
+                <div className="flex items-center gap-2 font-bold text-amber-950 text-xs uppercase tracking-wider">
                     <Info className="size-4 text-amber-700 shrink-0" />
                     <span>¿Por qué solicitamos el pago antes de preparar tu pedido?</span>
                 </div>
@@ -142,7 +142,7 @@ export default function Step5PinchoPayment({
             {/* Formulario de Carga de Comprobante */}
             <form onSubmit={handleFormSubmit} className="space-y-4">
                 <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-3 text-left">
-                    <label className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                    <label className="block text-xs font-bold text-slate-900 uppercase tracking-wide">
                         SUBIR COMPROBANTE DE PAGO (JPG, PNG, PDF) *
                     </label>
 
@@ -156,7 +156,7 @@ export default function Step5PinchoPayment({
                         
                         <button
                             type="button"
-                            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-black text-xs rounded-xl shadow-md transition-all cursor-pointer shrink-0"
+                            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer shrink-0"
                         >
                             Seleccionar archivo
                         </button>
@@ -179,7 +179,7 @@ export default function Step5PinchoPayment({
 
                     <div className="bg-slate-50 rounded-2xl p-3.5 flex items-start gap-3 border border-slate-200/60">
                         <ShieldCheck className="size-5 text-orange-600 shrink-0 mt-0.5" />
-                        <div className="text-[10px] text-slate-600 font-semibold leading-relaxed">
+                        <div className="text-xs text-slate-600 font-semibold leading-relaxed">
                             <strong className="text-slate-800 block">Tu comprobante es 100% seguro.</strong>
                             Solo se utiliza para validar tu pago e iniciar la producción.
                         </div>
@@ -195,7 +195,7 @@ export default function Step5PinchoPayment({
                 <button
                     type="submit"
                     disabled={uploading || !selectedFile}
-                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
+                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
                 >
                     {uploading ? (
                         <>
@@ -205,7 +205,7 @@ export default function Step5PinchoPayment({
                     ) : (
                         <>
                             <Send className="size-4" />
-                            <span>ENVIAR COMPROBANTE Y FINALIZAR</span>
+                            <span>Enviar comprobante y finalizar</span>
                         </>
                     )}
                 </button>

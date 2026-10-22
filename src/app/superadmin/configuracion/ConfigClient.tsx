@@ -195,13 +195,13 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
     return (
         <div className="space-y-6">
             {/* Sección WhatsApp */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
                 <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
                     <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
                         <Phone size={24} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-slate-900 leading-tight">Contacto de Ventas y Soporte</h3>
+                        <h3 className="text-xl font-bold text-slate-900 leading-tight">Contacto de Ventas y Soporte</h3>
                         <p className="text-sm text-slate-500 font-medium">Define el número de WhatsApp para solicitudes de planes.</p>
                     </div>
                 </div>
@@ -217,7 +217,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                         <button
                             onClick={() => handleSave("NUMERO_WHATSAPP_ADMIN")}
                             disabled={loading}
-                            className="h-[60px] px-8 bg-indigo-600 text-white font-black rounded-2xl hover:bg-slate-900 transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-2 uppercase tracking-widest text-xs mb-[2px]"
+                            className="h-[60px] px-8 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-slate-900 transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-2 uppercase tracking-wide text-xs mb-[2px]"
                         >
                             {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                         </button>
@@ -226,13 +226,13 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
             </div>
 
             {/* Sección Estrategia Comercial */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
                 <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
                     <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
                         <TrendingUp size={24} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-slate-900 leading-tight">Estrategia Comercial</h3>
+                        <h3 className="text-xl font-bold text-slate-900 leading-tight">Estrategia Comercial</h3>
                         <p className="text-sm text-slate-500 font-medium">Ajusta los beneficios y promociones globales de la plataforma.</p>
                     </div>
                 </div>
@@ -271,13 +271,13 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
             </div>
 
             {/* Sección WhatsApp Integration */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
                 <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
                     <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
                         <Phone size={24} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-slate-900 leading-tight">WhatsApp API & Bot</h3>
+                        <h3 className="text-xl font-bold text-slate-900 leading-tight">WhatsApp API & Bot</h3>
                         <p className="text-sm text-slate-500 font-medium">Configura el canal principal y los límites del bot central.</p>
                     </div>
                 </div>
@@ -334,13 +334,13 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
             </div>
 
             {/* Sección Firebase FCM */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
                 <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
                     <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl">
                         <Bell size={24} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-slate-900 leading-tight">Firebase Cloud Messaging (FCM)</h3>
+                        <h3 className="text-xl font-bold text-slate-900 leading-tight">Firebase Cloud Messaging (FCM)</h3>
                         <p className="text-sm text-slate-500 font-medium">Configuración de credenciales para notificaciones push globales.</p>
                     </div>
                 </div>
@@ -406,7 +406,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                     </div>
 
                     <div className="pt-6 border-t border-slate-50">
-                        <h4 className="text-xs font-black text-rose-500 uppercase tracking-widest mb-6">
+                        <h4 className="text-xs font-bold text-rose-500 uppercase tracking-wide mb-6">
                             Configuración Privada (Server-Side)
                         </h4>
                         <div className="grid grid-cols-1 gap-6">
@@ -420,7 +420,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                                 icon={<User size={18} />}
                             />
                             <div className="flex flex-col gap-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">
                                     Firebase Private Key
                                 </label>
                                 <div className="flex gap-4">
@@ -434,7 +434,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                                     <button
                                         onClick={() => handleSave("FIREBASE_PRIVATE_KEY")}
                                         disabled={loading}
-                                        className="h-fit px-8 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-rose-600 transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-2 uppercase tracking-widest text-xs"
+                                        className="h-fit px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-rose-600 transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-2 uppercase tracking-wide text-xs"
                                     >
                                         {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                                     </button>
@@ -446,21 +446,21 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
             </div>
 
             {/* Sección Preguntas Frecuentes (FAQ) */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
                 <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6 justify-between flex-wrap">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-cyan-50 text-cyan-600 rounded-2xl">
                             <HelpCircle size={24} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-slate-900 leading-tight">Preguntas Frecuentes (FAQs)</h3>
+                            <h3 className="text-xl font-bold text-slate-900 leading-tight">Preguntas Frecuentes (FAQs)</h3>
                             <p className="text-sm text-slate-500 font-medium">Administra las preguntas frecuentes que se muestran en la página de inicio.</p>
                         </div>
                     </div>
                     
                     <button
                         onClick={handleAddFaq}
-                        className="h-12 px-6 bg-cyan-600 text-white font-black rounded-xl hover:bg-slate-900 transition-all shadow-md active:scale-95 flex items-center gap-2 uppercase tracking-widest text-[10px]"
+                        className="h-12 px-6 bg-cyan-600 text-white font-bold rounded-xl hover:bg-slate-900 transition-all shadow-md active:scale-95 flex items-center gap-2 uppercase tracking-wide text-xs"
                     >
                         <Plus size={16} /> Agregar FAQ
                     </button>
@@ -476,7 +476,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                             {faqs.map((faq: any, idx: number) => (
                                 <div key={faq.id || idx} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-4 relative group/faq">
                                     <div className="flex justify-between items-center gap-4">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">
                                             Pregunta #{idx + 1}
                                         </span>
                                         <button
@@ -489,22 +489,22 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                                     </div>
                                     <div className="space-y-3">
                                         <div className="flex flex-col gap-1.5">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-1">Pregunta</label>
+                                            <label className="text-xs font-bold uppercase tracking-wide text-slate-400 px-1">Pregunta</label>
                                             <input
                                                 type="text"
                                                 value={faq.question}
                                                 onChange={(e) => handleFaqChange(idx, 'question', e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-cyan-100 focus:border-cyan-600 transition-all placeholder:italic"
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-cyan-100 focus:border-cyan-600 transition-all "
                                                 placeholder="Escribe la pregunta..."
                                             />
                                         </div>
                                         <div className="flex flex-col gap-1.5">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-1">Respuesta</label>
+                                            <label className="text-xs font-bold uppercase tracking-wide text-slate-400 px-1">Respuesta</label>
                                             <textarea
                                                 rows={2}
                                                 value={faq.answer}
                                                 onChange={(e) => handleFaqChange(idx, 'answer', e.target.value)}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-cyan-100 focus:border-cyan-600 transition-all placeholder:italic leading-relaxed"
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-cyan-100 focus:border-cyan-600 transition-all leading-relaxed"
                                                 placeholder="Escribe la respuesta..."
                                             />
                                         </div>
@@ -518,7 +518,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                         <button
                             onClick={() => handleSave("FAQS")}
                             disabled={loading}
-                            className="h-14 px-8 bg-slate-900 text-white font-black rounded-2xl hover:bg-cyan-600 transition-all shadow-xl active:scale-95 disabled:opacity-50 flex items-center gap-2.5 uppercase tracking-widest text-xs"
+                            className="h-14 px-8 bg-slate-900 text-white font-bold rounded-2xl hover:bg-cyan-600 transition-all shadow-xl active:scale-95 disabled:opacity-50 flex items-center gap-2.5 uppercase tracking-wide text-xs"
                         >
                             {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                             {loading ? "Guardando..." : "Guardar Preguntas Frecuentes"}
@@ -528,13 +528,13 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
             </div>
 
             {/* Sección Legal y Cumplimiento */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
                 <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
                     <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
                         <Shield size={24} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-slate-900 leading-tight">Legal y Cumplimiento</h3>
+                        <h3 className="text-xl font-bold text-slate-900 leading-tight">Legal y Cumplimiento</h3>
                         <p className="text-sm text-slate-500 font-medium">Gestiona el contenido legal que se muestra a los usuarios.</p>
                     </div>
                 </div>
@@ -542,7 +542,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                 <div className="space-y-10">
                     {/* Términos y Condiciones */}
                     <div className="flex flex-col gap-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">
                             Términos y Condiciones de Servicio
                         </label>
                         <div className="flex flex-col md:flex-row gap-4">
@@ -557,7 +557,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                                 <button
                                     onClick={() => handleSave("TERMINOS_CONDICIONES")}
                                     disabled={loading}
-                                    className="w-full h-fit px-8 py-5 bg-slate-900 text-white font-black rounded-2xl hover:bg-amber-600 transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                                    className="w-full h-fit px-8 py-5 bg-slate-900 text-white font-bold rounded-2xl hover:bg-amber-600 transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-wide text-xs"
                                 >
                                     {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                                     {loading ? "Guardando..." : "Guardar Términos"}
@@ -568,7 +568,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
 
                     {/* Política de Privacidad */}
                     <div className="flex flex-col gap-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">
                             Política de Privacidad
                         </label>
                         <div className="flex flex-col md:flex-row gap-4">
@@ -583,7 +583,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                                 <button
                                     onClick={() => handleSave("POLITICA_PRIVACIDAD")}
                                     disabled={loading}
-                                    className="w-full h-fit px-8 py-5 bg-slate-900 text-white font-black rounded-2xl hover:bg-indigo-600 transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
+                                    className="w-full h-fit px-8 py-5 bg-slate-900 text-white font-bold rounded-2xl hover:bg-indigo-600 transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 uppercase tracking-wide text-xs"
                                 >
                                     {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                                     {loading ? "Guardando..." : "Guardar Privacidad"}
@@ -612,7 +612,7 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
 function ConfigField({ label, clave, value, onChange, onSave, loading, icon }: any) {
     return (
         <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black uppercase tracking-widest px-1 text-slate-700">
+            <label className="text-xs font-bold uppercase tracking-wide px-1 text-slate-700">
                 {label}
             </label>
             <div className="flex gap-2">

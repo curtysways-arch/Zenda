@@ -123,12 +123,12 @@ export default function FamilyFounderTab({
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                                <h3 className="text-xl font-bold text-slate-900 tracking-tight">
                                     Programa Socios Fundadores — {familyName}
                                 </h3>
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                    program.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
-                                }`}>
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+ program.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+ }`}>
                                     {program.enabled ? 'Activo' : 'Inactivo'}
                                 </span>
                             </div>
@@ -141,12 +141,12 @@ export default function FamilyFounderTab({
                     {/* Stats rápidos */}
                     <div className="flex items-center gap-3">
                         <div className="bg-white px-4 py-2 rounded-2xl border border-slate-200 text-center shadow-xs">
-                            <span className="block text-[10px] font-black uppercase text-slate-400">Cupos Asignados</span>
-                            <span className="text-lg font-black text-slate-900">{program.currentMembers} / {program.maxMembers}</span>
+                            <span className="block text-xs font-bold uppercase text-slate-400">Cupos Asignados</span>
+                            <span className="text-lg font-bold text-slate-900">{program.currentMembers} / {program.maxMembers}</span>
                         </div>
                         <div className="bg-white px-4 py-2 rounded-2xl border border-slate-200 text-center shadow-xs">
-                            <span className="block text-[10px] font-black uppercase text-slate-400">Precio Fundador</span>
-                            <span className="text-lg font-black text-amber-600">${program.founderPrice} <span className="text-xs text-slate-400 font-bold">{program.currency}</span></span>
+                            <span className="block text-xs font-bold uppercase text-slate-400">Precio Fundador</span>
+                            <span className="text-lg font-bold text-amber-600">${program.founderPrice} <span className="text-xs text-slate-400 font-bold">{program.currency}</span></span>
                         </div>
                     </div>
                 </div>
@@ -170,7 +170,7 @@ export default function FamilyFounderTab({
             <form onSubmit={handleSave} className="bg-white rounded-3xl border border-slate-200 p-6 space-y-6 shadow-xs">
                 <div className="border-b border-slate-100 pb-4 flex items-center justify-between">
                     <div>
-                        <h4 className="text-base font-black text-slate-900 tracking-tight">
+                        <h4 className="text-base font-bold text-slate-900 tracking-tight">
                             Reglas Comerciales del Programa Fundador
                         </h4>
                         <p className="text-xs text-slate-500">
@@ -187,7 +187,7 @@ export default function FamilyFounderTab({
                             className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-                        <span className="text-xs font-black text-slate-800">
+                        <span className="text-xs font-bold text-slate-800">
                             {program.enabled ? 'Programa Habilitado' : 'Programa Deshabilitado'}
                         </span>
                     </label>
@@ -217,7 +217,7 @@ export default function FamilyFounderTab({
                             onChange={e => setProgram({ ...program, maxMembers: parseInt(e.target.value) || 0 })}
                             className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold !text-slate-900 outline-none focus:bg-white focus:border-indigo-600"
                         />
-                        <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                        <p className="text-xs text-slate-400 mt-1 font-medium">
                             Mínimo permitido: {program.currentMembers} (socios actuales)
                         </p>
                     </div>
@@ -238,7 +238,7 @@ export default function FamilyFounderTab({
                                 className="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold !text-slate-900 outline-none focus:bg-white focus:border-indigo-600"
                             />
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                        <p className="text-xs text-slate-400 mt-1 font-medium">
                             Será el valor congelado en <span className="font-mono">lockedPrice</span>
                         </p>
                     </div>
@@ -288,7 +288,7 @@ export default function FamilyFounderTab({
                                 </option>
                             ))}
                         </select>
-                        <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                        <p className="text-xs text-slate-400 mt-1 font-medium">
                             Plan que hereda las capacidades
                         </p>
                     </div>
@@ -302,7 +302,7 @@ export default function FamilyFounderTab({
                             <span className="text-xs font-extrabold text-slate-800 block">
                                 Congelar Precio de Por Vida (Lifetime Guarantee)
                             </span>
-                            <span className="text-[11px] text-slate-500 font-medium">
+                            <span className="text-xs text-slate-500 font-medium">
                                 El negocio mantendrá este precio contractual independientemente de futuras alzas tarifarias de la plataforma.
                             </span>
                         </div>
@@ -322,7 +322,7 @@ export default function FamilyFounderTab({
                     <button
                         type="submit"
                         disabled={saving}
-                        className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
+                        className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
                     >
                         {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
                         {saving ? 'Guardando...' : 'Guardar Reglas Fundadores'}
@@ -334,7 +334,7 @@ export default function FamilyFounderTab({
             <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-4 shadow-xs">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                     <div>
-                        <h4 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <h4 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <ShieldCheck size={18} className="text-amber-500" />
                             Socios Fundadores Registrados ({founders.length})
                         </h4>
@@ -369,7 +369,7 @@ export default function FamilyFounderTab({
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
                             <thead>
-                                <tr className="border-b border-slate-200 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                <tr className="border-b border-slate-200 text-xs font-bold uppercase text-slate-400 tracking-wider">
                                     <th className="py-3 px-3">Cupo #</th>
                                     <th className="py-3 px-3">Negocio</th>
                                     <th className="py-3 px-3">Tipo</th>
@@ -383,12 +383,12 @@ export default function FamilyFounderTab({
                             <tbody className="divide-y divide-slate-100">
                                 {founders.map((f: any) => (
                                     <tr key={f.id} className="hover:bg-slate-50/80 transition-colors">
-                                        <td className="py-3 px-3 font-mono font-black text-amber-600">
+                                        <td className="py-3 px-3 font-mono font-bold text-amber-600">
                                             #{f.founderPosition || '—'}
                                         </td>
                                         <td className="py-3 px-3">
                                             <div className="font-bold text-slate-900">{f.businessName}</div>
-                                            <div className="text-[11px] text-slate-400">{f.businessSlug} • {f.businessPhone || f.businessEmail || 'Sin contacto'}</div>
+                                            <div className="text-xs text-slate-400">{f.businessSlug} • {f.businessPhone || f.businessEmail || 'Sin contacto'}</div>
                                         </td>
                                         <td className="py-3 px-3 text-slate-600 font-medium">
                                             {f.businessType}
@@ -398,28 +398,28 @@ export default function FamilyFounderTab({
                                         </td>
                                         <td className="py-3 px-3">
                                             {f.lockedPrice !== null && f.lockedPrice !== undefined ? (
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200">
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
                                                     <Lock size={10} /> ${f.lockedPrice} {f.currency}
                                                 </span>
                                             ) : (
                                                 <span className="text-slate-400 font-medium">—</span>
                                             )}
                                         </td>
-                                        <td className="py-3 px-3 font-black text-slate-900">
+                                        <td className="py-3 px-3 font-bold text-slate-900">
                                             ${f.effectivePrice} {f.currency}
                                         </td>
                                         <td className="py-3 px-3">
-                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                                ['activa', 'active'].includes(f.status)
-                                                    ? 'bg-emerald-100 text-emerald-800'
-                                                    : f.status === 'trial'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : 'bg-slate-100 text-slate-500'
-                                            }`}>
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+ ['activa', 'active'].includes(f.status)
+ ? 'bg-emerald-100 text-emerald-800'
+ : f.status === 'trial'
+ ? 'bg-blue-100 text-blue-800'
+ : 'bg-slate-100 text-slate-500'
+ }`}>
                                                 {f.status}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-3 text-slate-400 text-[11px] font-medium">
+                                        <td className="py-3 px-3 text-slate-400 text-xs font-medium">
                                             {new Date(f.startDate || f.createdAt).toLocaleDateString()}
                                         </td>
                                     </tr>

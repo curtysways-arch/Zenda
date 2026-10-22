@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { guardCustomerIntake } from '@/lib/subscription/receiveGuard';
 import { NextResponse } from 'next/server';
 import { notificationService } from '@/lib/notifications';
 import { NotificationService } from '@/lib/notifications/notificationService';
@@ -34,6 +35,10 @@ export async function POST(req: Request) {
         if (!negocio || negocio.Service.length === 0) {
             return NextResponse.json({ error: 'Negocio o cancha no encontrada' }, { status: 404 });
         }
+
+        // Negocio bloqueado por falta de pago o suspendido: no recibe reservas
+        const intakeBlocked = await guardCustomerIntake(negocio.id);
+        if (intakeBlocked) return intakeBlocked;
 
         // PROTECCIÓN MODO DEMO
         const demoCheck = await checkDemoRestriction(negocio.id);
@@ -384,7 +389,10 @@ export async function POST(req: Request) {
             shareToken: reserva.shareToken 
         });
         
-        if (!body.is_business_creation) {
+        // Reservar no inicia sesión con un número ajeno: solo se renueva si ya era la sesión de ese número
+        const { hasSessionFor } = await import('@/lib/auth/customerSession');
+        const keepSession = !body.is_business_creation && (await hasSessionFor(req, clienteTelefono || ''));
+        if (keepSession) {
             response.cookies.set('customer_token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',

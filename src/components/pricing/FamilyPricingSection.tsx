@@ -25,11 +25,11 @@ export default function FamilyPricingSection({
                 <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
                     <span 
                         style={{ color: familyThemeColor }}
-                        className="px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-white border border-slate-200 shadow-2xs inline-block"
+                        className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-white border border-slate-200 shadow-2xs inline-block"
                     >
                         Planes Transparentes para {familyName}
                     </span>
-                    <h2 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-slate-950 tracking-tight">
                         Elige el plan ideal para tu negocio
                     </h2>
                     <p className="text-slate-600 text-sm font-medium">
@@ -54,7 +54,7 @@ export default function FamilyPricingSection({
                                 }`}
                             >
                                 {isFeatured && (
-                                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+                                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
                                         <Star size={11} className="fill-slate-950" />
                                         MÁS POPULAR
                                     </div>
@@ -62,12 +62,12 @@ export default function FamilyPricingSection({
 
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                            isFeatured ? 'bg-white/10 text-slate-300' : 'bg-slate-100 text-slate-600'
-                                        }`}>
+                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+ isFeatured ? 'bg-white/10 text-slate-300' : 'bg-slate-100 text-slate-600'
+ }`}>
                                             {plan.name}
                                         </span>
-                                        <h3 className={`text-2xl font-black ${isFeatured ? 'text-white' : 'text-slate-900'}`}>
+                                        <h3 className={`text-2xl font-bold ${isFeatured ? 'text-white' : 'text-slate-900'}`}>
                                             {plan.name}
                                         </h3>
                                         <p className={`text-xs font-medium ${isFeatured ? 'text-slate-300' : 'text-slate-500'}`}>
@@ -76,7 +76,7 @@ export default function FamilyPricingSection({
                                     </div>
 
                                     <div className="pt-2">
-                                        <span className={`text-4xl font-black ${isFeatured ? 'text-white' : 'text-slate-950'}`}>
+                                        <span className={`text-4xl font-bold ${isFeatured ? 'text-white' : 'text-slate-950'}`}>
                                             ${plan.price}
                                         </span>
                                         <span className={`text-xs font-bold ${isFeatured ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -99,11 +99,11 @@ export default function FamilyPricingSection({
                                 <div className="pt-8">
                                     <Link
                                         href={`/register?tipo=${registerTipo}&plan=${plan.slug || plan.id}`}
-                                        className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-center transition-all block active:scale-95 shadow-md ${
-                                            isFeatured
-                                                ? 'bg-white text-slate-950 hover:bg-slate-100'
-                                                : 'bg-slate-900 hover:bg-slate-800 text-white'
-                                        }`}
+                                        className={`w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-center transition-all block active:scale-95 shadow-md ${
+ isFeatured
+ ? 'bg-white text-slate-950 hover:bg-slate-100'
+ : 'bg-slate-900 hover:bg-slate-800 text-white'
+ }`}
                                     >
                                         Comenzar Prueba Gratis &rarr;
                                     </Link>

@@ -33,7 +33,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
         }
 
-        const currentConfig = (currentNegocio.configuracion as any) || {};
+        const { normalizeBusinessConfig } = await import('@/lib/businessTypeHelper');
+        const currentConfig = normalizeBusinessConfig(currentNegocio.configuracion);
 
         // Update configuracion object
         // Normalizar diasAtencion: 7 (ISO domingo) → 0 (JS domingo) para consistencia
@@ -41,10 +42,13 @@ export async function POST(req: Request) {
             ? diasAtencion.map((d: any) => { const n = Number(d); return n === 7 ? 0 : n; })
             : undefined;
 
+        const effectiveTipoNegocio = tipoNegocio || currentConfig.tipoNegocio || (currentNegocio as any).tipoNegocio;
+
         const updatedConfig = {
             ...currentConfig,
             wizardCompleted: true,
-            tipoNegocio: tipoNegocio || currentConfig.tipoNegocio,
+            blueprintId: currentConfig.blueprintId || effectiveTipoNegocio,
+            tipoNegocio: effectiveTipoNegocio,
             descripcionCorta: descripcion || currentConfig.descripcionCorta,
             diasAtencion: diasNormalizados !== undefined ? diasNormalizados : currentConfig.diasAtencion
         };

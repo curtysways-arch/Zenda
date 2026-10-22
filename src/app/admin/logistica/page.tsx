@@ -40,6 +40,7 @@ import {
   Sparkles,
   Search,
 } from 'lucide-react';
+import ModuleUpsellGate from '@/components/admin/ModuleUpsellGate';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,7 @@ interface Driver {
     matriculaUrl?: string;
     fotoVehiculoUrl?: string;
     selfieUrl?: string;
+    fotografiaUrl?: string;
     observaciones?: string;
     motivoRechazo?: string;
   };
@@ -168,7 +170,7 @@ function InviteDriverModal({
   onSave,
 }: {
   onClose: () => void;
-  onSave: () => void;
+  onSave: (linkedDriver?: any) => void;
 }) {
   const [countryCode, setCountryCode] = useState('+593'); // 🇪🇨 Ecuador por defecto
   const [form, setForm] = useState({
@@ -194,15 +196,23 @@ function InviteDriverModal({
   ];
 
   // Buscar si el teléfono ya pertenece a un repartidor de la Red Citiox
-  const handlePhoneChange = async (val: string) => {
+  const handlePhoneChange = async (val: string, newCountryCode?: string) => {
+    const activeCountry = newCountryCode || countryCode;
     setForm(f => ({ ...f, telefono: val }));
     setExistingDriver(null);
     setError('');
 
     const clean = val.trim();
-    if (clean.length < 7) return;
+    const cleanDigits = clean.replace(/\D/g, '');
+    // En Ecuador/móviles internacionales, no disparar búsqueda prematura con 6, 7 u 8 dígitos
+    const minDigits = clean.startsWith('+') ? 10 : (clean.startsWith('0') ? 10 : 9);
+    if (cleanDigits.length < minDigits) {
+      return;
+    }
 
-    const fullPhone = clean.startsWith('+') ? clean : `${countryCode}${clean}`;
+    const fullPhone = clean.startsWith('+')
+      ? clean
+      : `${activeCountry}${clean.startsWith('0') ? clean.slice(1) : clean}`;
     setSearching(true);
     try {
       const res = await fetch(`/api/logistics/verify/search-driver?phone=${encodeURIComponent(fullPhone)}`);
@@ -210,7 +220,7 @@ function InviteDriverModal({
         const data = await res.json();
         if (data.exists) {
           setExistingDriver(data);
-          if (data.driverName && !form.nombre) {
+          if (data.driverName) {
             setForm(f => ({ ...f, nombre: data.driverName }));
           }
         }
@@ -228,16 +238,17 @@ function InviteDriverModal({
     setSaving(true);
     setError('');
 
-    const fullPhone = form.telefono.startsWith('+')
-      ? form.telefono
-      : `${countryCode}${form.telefono.trim()}`;
+    const clean = form.telefono.trim();
+    const fullPhone = clean.startsWith('+')
+      ? clean
+      : `${countryCode}${clean.startsWith('0') ? clean.slice(1) : clean}`;
 
     try {
       const res = await fetch('/api/logistics/resources', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: existingDriver.driverName || form.nombre || 'Repartidor Registrado',
+          name: existingDriver.driverName,
           telefono: fullPhone,
           tipoVehiculo: existingDriver.tipoVehiculo || 'MOTO',
           placa: existingDriver.placa || '',
@@ -248,8 +259,7 @@ function InviteDriverModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error vinculando repartidor');
-      alert(`¡Repartidor ${existingDriver.driverName} vinculado! Revisa la pestaña 'Verificaciones' para aprobar sus documentos.`);
-      onSave();
+      onSave(data.resource);
       onClose();
     } catch (e: any) {
       setError(e.message || 'Error al vincular repartidor');
@@ -267,9 +277,10 @@ function InviteDriverModal({
     setSaving(true);
     setError('');
 
-    const fullPhone = form.telefono.startsWith('+')
-      ? form.telefono
-      : `${countryCode}${form.telefono.trim()}`;
+    const clean = form.telefono.trim();
+    const fullPhone = clean.startsWith('+')
+      ? clean
+      : `${countryCode}${clean.startsWith('0') ? clean.slice(1) : clean}`;
 
     try {
       const res = await fetch('/api/logistics/invitations', {
@@ -299,7 +310,7 @@ function InviteDriverModal({
             <Send className="w-8 h-8" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-slate-900">¡Invitación de Auto-Registro Creada!</h3>
+            <h3 className="text-lg font-bold text-slate-900">¡Invitación de Auto-Registro Creada!</h3>
             <p className="text-xs text-slate-500 mt-1 font-medium">
               El repartidor recibirá el enlace por WhatsApp para completar sus datos e ingresar sus documentos (Cédula, Licencia, Matrícula).
             </p>
@@ -314,7 +325,7 @@ function InviteDriverModal({
               href={inviteResult.whatsapp.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-lg shadow-emerald-600/20 cursor-pointer"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider transition-colors shadow-lg shadow-emerald-600/20 cursor-pointer"
             >
               <Phone className="w-4 h-4" />
               Enviar Invitación por WhatsApp
@@ -324,7 +335,7 @@ function InviteDriverModal({
                 navigator.clipboard.writeText(inviteResult.inviteUrl);
                 alert('Enlace copiado al portapapeles');
               }}
-              className="px-4 py-3 border border-slate-200 text-slate-700 rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-slate-50 cursor-pointer"
+              className="px-4 py-3 border border-slate-200 text-slate-700 rounded-2xl font-bold text-xs uppercase tracking-wider hover:bg-slate-50 cursor-pointer"
             >
               Copiar Enlace
             </button>
@@ -345,7 +356,7 @@ function InviteDriverModal({
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b bg-slate-50">
           <div>
-            <h2 className="text-base font-black text-slate-900">Invitar Nuevo Repartidor</h2>
+            <h2 className="text-base font-bold text-slate-900">Invitar Nuevo Repartidor</h2>
             <p className="text-xs text-slate-500 font-medium">El repartidor completará sus documentos mediante su App</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl cursor-pointer">
@@ -355,7 +366,7 @@ function InviteDriverModal({
 
         <div className="p-5 space-y-4">
           <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
               Teléfono WhatsApp del Repartidor *
             </label>
             <div className="flex gap-2">
@@ -363,7 +374,7 @@ function InviteDriverModal({
                 value={countryCode}
                 onChange={e => {
                   setCountryCode(e.target.value);
-                  handlePhoneChange(form.telefono);
+                  handlePhoneChange(form.telefono, e.target.value);
                 }}
                 className="px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none focus:border-purple-600 cursor-pointer"
               >
@@ -389,16 +400,38 @@ function InviteDriverModal({
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
-              Nombre Completo (Opcional)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                Nombre Completo {existingDriver ? '(Verificado)' : '(Opcional)'}
+              </label>
+              {existingDriver && (
+                <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                  🔒 Bloqueado (Identidad oficial)
+                </span>
+              )}
+            </div>
             <input
               type="text"
-              value={form.nombre}
-              onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+              value={existingDriver ? existingDriver.driverName : form.nombre}
+              onChange={e => {
+                if (!existingDriver) {
+                  setForm(f => ({ ...f, nombre: e.target.value }));
+                }
+              }}
+              readOnly={Boolean(existingDriver)}
+              disabled={Boolean(existingDriver)}
               placeholder="Ej: Juan García"
-              className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-purple-600"
+              className={`w-full px-3 py-3 border rounded-2xl text-xs font-bold transition-all ${
+                existingDriver
+                  ? 'bg-slate-100 text-slate-600 border-slate-300 cursor-not-allowed select-none shadow-inner'
+                  : 'bg-slate-50 text-slate-900 border-slate-200 focus:outline-none focus:border-purple-600'
+              }`}
             />
+            {existingDriver && (
+              <p className="text-xs text-amber-700 font-medium mt-1">
+                Este repartidor ya está registrado en Citiox con este nombre y no puede ser modificado.
+              </p>
+            )}
           </div>
 
           {/* TARJETA DETECCIÓN DE REPARTIDOR EXISTENTE EN LA RED CITIOX */}
@@ -406,16 +439,16 @@ function InviteDriverModal({
             <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl space-y-2 animate-in fade-in">
               <div className="flex items-center gap-2 text-purple-900">
                 <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
-                <span className="font-black text-xs uppercase tracking-wider">Repartidor Verificado en Citiox</span>
+                <span className="font-bold text-xs uppercase tracking-wider">Repartidor Verificado en Citiox</span>
               </div>
               <p className="text-xs text-purple-950 font-semibold leading-relaxed">
                 El repartidor <strong>{existingDriver.driverName}</strong> ya posee un perfil activo en la plataforma y trabaja para {existingDriver.negociosCount} negocio(s).
               </p>
-              <div className="p-2.5 bg-white/80 rounded-xl text-[11px] text-slate-600 font-bold space-y-0.5">
+              <div className="p-2.5 bg-white/80 rounded-xl text-xs text-slate-600 font-bold space-y-0.5">
                 <p>🚗 Vehículo: {existingDriver.vehiculo || 'Moto'} {existingDriver.placa ? `(${existingDriver.placa})` : ''}</p>
                 <p>📑 Documentación: Cédula / Licencia ya verificadas en Citiox</p>
               </div>
-              <p className="text-[10px] text-purple-700 font-medium">
+              <p className="text-xs text-purple-700 font-medium">
                 Al vincularlo, su expediente quedará en tu pestaña <strong>Verificaciones</strong> para tu aprobación final sin pedirle documentos de nuevo.
               </p>
             </div>
@@ -424,7 +457,7 @@ function InviteDriverModal({
               <p className="font-bold text-slate-900 flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-purple-600" /> Auto-Registro del Repartidor
               </p>
-              <p className="text-[11px] text-slate-500 leading-normal">
+              <p className="text-xs text-slate-500 leading-normal">
                 Al enviar la invitación por WhatsApp, el repartidor abrirá su formulario de registro privado donde ingresará su Cédula, Licencia y Matrícula.
               </p>
             </div>
@@ -440,7 +473,7 @@ function InviteDriverModal({
           <div className="flex gap-3 pt-2">
             <button
               onClick={onClose}
-              className="flex-1 py-3 border border-slate-200 text-slate-700 font-black text-xs uppercase tracking-wider rounded-2xl hover:bg-slate-50 cursor-pointer"
+              className="flex-1 py-3 border border-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-2xl hover:bg-slate-50 cursor-pointer"
             >
               Cancelar
             </button>
@@ -449,7 +482,7 @@ function InviteDriverModal({
               <button
                 onClick={handleLinkExistingDriver}
                 disabled={saving}
-                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-purple-600/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-purple-600/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 <Plus className="w-4 h-4" />
                 <span>{saving ? 'Vinculando...' : 'Vincular Repartidor'}</span>
@@ -458,7 +491,7 @@ function InviteDriverModal({
               <button
                 onClick={handleCreateInvite}
                 disabled={saving || !form.telefono.trim()}
-                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 <Send className="w-4 h-4" />
                 <span>{saving ? 'Enviando...' : 'Enviar Invitación'}</span>
@@ -570,20 +603,32 @@ function DossierReviewModal({
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Cédula Frente', url: p?.cedulaFrenteUrl },
-                { label: 'Cédula Reverso', url: p?.cedulaReversoUrl },
-                { label: 'Licencia de Conducir', url: p?.licenciaUrl },
-                { label: 'Foto del Vehículo', url: p?.fotoVehiculoUrl },
-                { label: 'Selfie / Perfil', url: p?.selfieUrl },
-              ].map(({ label, url }) => (
-                <div key={label} className="p-3 border border-slate-200 rounded-xl bg-slate-50 flex items-center justify-between">
+                { label: 'Cédula Frente *', url: p?.cedulaFrenteUrl, required: true },
+                { label: 'Cédula Reverso *', url: p?.cedulaReversoUrl, required: true },
+                { label: 'Licencia de Conducir *', url: p?.licenciaUrl, required: p?.tipoVehiculo !== 'A_PIE' && p?.tipoVehiculo !== 'BICICLETA' },
+                { label: 'Foto del Vehículo *', url: p?.fotoVehiculoUrl, required: p?.tipoVehiculo !== 'A_PIE' },
+                { label: 'Selfie / Perfil *', url: p?.selfieUrl || p?.fotografiaUrl, required: true },
+              ].map(({ label, url, required }) => (
+                <div key={label} className={`p-3 border rounded-xl flex items-center justify-between transition-all ${
+                  url ? 'border-emerald-200 bg-emerald-50/40' : required ? 'border-rose-200 bg-rose-50/40' : 'border-slate-200 bg-slate-50'
+                }`}>
                   <span className="text-xs font-semibold text-slate-700">{label}</span>
                   {url ? (
-                    <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Cargado
-                    </span>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      Ver Adjunto
+                    </a>
                   ) : (
-                    <span className="text-xs bg-slate-200 text-slate-500 font-medium px-2 py-0.5 rounded-full">Sin adjunto</span>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+ required ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-slate-200 text-slate-500'
+ }`}>
+                      {required ? 'Falta Documento *' : 'Sin adjunto'}
+                    </span>
                   )}
                 </div>
               ))}
@@ -597,7 +642,7 @@ function DossierReviewModal({
               <textarea
                 value={motivoRechazo}
                 onChange={e => setMotivoRechazo(e.target.value)}
-                placeholder="Ej: Licencia de conducir vencida. Por favor sube una foto legible."
+                placeholder="Ej: Licencia de conducir vencida o documentos borrosos."
                 rows={2}
                 className="w-full p-2.5 border border-rose-300 rounded-lg text-sm focus:outline-none"
               />
@@ -611,23 +656,64 @@ function DossierReviewModal({
             <>
               <button
                 onClick={() => setRejecting(false)}
-                className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-semibold text-sm"
+                className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-semibold text-sm hover:bg-slate-100 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDecision('REJECT')}
                 disabled={loading || !motivoRechazo.trim()}
-                className="flex-1 px-4 py-2.5 bg-rose-600 text-white rounded-xl font-bold text-sm hover:bg-rose-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 bg-rose-600 text-white rounded-xl font-bold text-sm hover:bg-rose-700 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? 'Procesando...' : 'Confirmar Rechazo y Notificar por WhatsApp'}
+              </button>
+            </>
+          ) : p?.verificationStatus === 'APPROVED' ? (
+            <>
+              <button
+                onClick={() => setRejecting(true)}
+                className="px-4 py-2.5 border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <UserX className="w-4 h-4" />
+                Revocar / Rechazar
+              </button>
+              <div className="flex-1 px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                Repartidor Aprobado y Activo
+              </div>
+              <button
+                onClick={onClose}
+                className="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </>
+          ) : p?.verificationStatus === 'REJECTED' ? (
+            <>
+              <div className="flex-1 px-4 py-2.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                <UserX className="w-4 h-4 text-rose-600" />
+                Repartidor Rechazado
+              </div>
+              <button
+                onClick={() => handleDecision('APPROVE')}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 shadow-md cursor-pointer"
+              >
+                <UserCheck className="w-4 h-4" />
+                {loading ? 'Aprobando...' : 'Reconsiderar y Aprobar'}
+              </button>
+              <button
+                onClick={onClose}
+                className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-semibold text-sm hover:bg-slate-100 cursor-pointer"
+              >
+                Cerrar
               </button>
             </>
           ) : (
             <>
               <button
                 onClick={() => handleDecision('REJECT')}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-rose-200 bg-rose-50 text-rose-700 rounded-xl font-bold text-sm hover:bg-rose-100"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-rose-200 bg-rose-50 text-rose-700 rounded-xl font-bold text-sm hover:bg-rose-100 cursor-pointer"
               >
                 <UserX className="w-4 h-4" />
                 Rechazar
@@ -635,7 +721,7 @@ function DossierReviewModal({
               <button
                 onClick={() => handleDecision('APPROVE')}
                 disabled={loading}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 shadow-md"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 shadow-md cursor-pointer"
               >
                 <UserCheck className="w-4 h-4" />
                 {loading ? 'Aprobando...' : 'Aprobar Repartidor'}
@@ -1041,10 +1127,10 @@ function KanbanBoard({ assignments, onUpdate }: { assignments: Assignment[]; onU
       {/* Banner Informativo Asignación InDrive */}
       <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <span className="px-3 py-1 bg-amber-400/20 text-amber-300 rounded-full text-xs font-black uppercase tracking-wider border border-amber-400/30 inline-flex items-center gap-1.5">
+          <span className="px-3 py-1 bg-amber-400/20 text-amber-300 rounded-full text-xs font-bold uppercase tracking-wider border border-amber-400/30 inline-flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" /> MÓDULO AUTÓNOMO MODO INDRIVE
           </span>
-          <h2 className="text-xl font-black text-white">Asignación Automática de Pedidos</h2>
+          <h2 className="text-xl font-bold text-white">Asignación Automática de Pedidos</h2>
           <p className="text-xs text-slate-300 max-w-xl">
             Los pedidos no se asignan manualmente desde administración. Los repartidores verificados por tu local ven la bolsa de domicilios disponibles en su App <strong>/driver</strong> y aceptan las carreras libremente.
           </p>
@@ -1053,7 +1139,7 @@ function KanbanBoard({ assignments, onUpdate }: { assignments: Assignment[]; onU
           href="/driver"
           target="_blank"
           rel="noopener noreferrer"
-          className="px-5 py-3 bg-white text-slate-900 rounded-2xl text-xs font-black uppercase hover:bg-slate-100 transition-colors shadow-lg shrink-0 flex items-center gap-2"
+          className="px-5 py-3 bg-white text-slate-900 rounded-2xl text-xs font-bold uppercase hover:bg-slate-100 transition-colors shadow-lg shrink-0 flex items-center gap-2"
         >
           <span>Abrir App Repartidor</span>
           <ArrowUpRight className="w-4 h-4 text-purple-600" />
@@ -1065,7 +1151,7 @@ function KanbanBoard({ assignments, onUpdate }: { assignments: Assignment[]; onU
         {/* Entregas Activas en Tiempo Real */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
               <Truck className="w-4 h-4 text-purple-600" /> Carreras / Entregas en Curso ({assignments.length})
             </h3>
             <span className="text-xs font-bold text-slate-500">Monitoreo Live</span>
@@ -1076,23 +1162,23 @@ function KanbanBoard({ assignments, onUpdate }: { assignments: Assignment[]; onU
               <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 <Truck className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
                 <p className="text-xs font-bold text-slate-600">No hay entregas activas en este momento</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Los repartidores tomarán los nuevos domicilios cuando se preparen en cocina.</p>
+                <p className="text-xs text-slate-400 mt-0.5">Los repartidores tomarán los nuevos domicilios cuando se preparen en cocina.</p>
               </div>
             ) : (
               assignments.map(a => (
                 <div key={a.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-black text-xs text-slate-900">#{a.ordenReferenciaId || a.id.slice(-6)}</span>
+                      <span className="font-mono font-bold text-xs text-slate-900">#{a.ordenReferenciaId || a.id.slice(-6)}</span>
                       <AssignmentEstadoBadge estado={a.estado} />
                     </div>
                     <p className="text-xs font-bold text-slate-800">{a.clienteNombre}</p>
-                    <p className="text-[11px] text-slate-500">{a.clienteDireccion}</p>
+                    <p className="text-xs text-slate-500">{a.clienteDireccion}</p>
                   </div>
 
                   <div className="text-right">
                     <span className="text-xs font-bold text-purple-600 block">{a.resource?.name || 'Repartidor Libre'}</span>
-                    <span className="text-[10px] text-slate-400">{a.horaAsignacion}</span>
+                    <span className="text-xs text-slate-400">{a.horaAsignacion}</span>
                   </div>
                 </div>
               ))
@@ -1102,7 +1188,7 @@ function KanbanBoard({ assignments, onUpdate }: { assignments: Assignment[]; onU
 
         {/* Resumen de Flota y Responsabilidad */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
-          <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600" /> Verificación de Repartidores por Local
           </h3>
 
@@ -1111,7 +1197,7 @@ function KanbanBoard({ assignments, onUpdate }: { assignments: Assignment[]; onU
               <p className="font-bold flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Responsabilidad del Local
               </p>
-              <p className="text-emerald-800 leading-relaxed text-[11px]">
+              <p className="text-emerald-800 leading-relaxed text-xs">
                 Cada negocio administra la lista de repartidores autorizados para su establecimiento. Puedes revisar licencias, matrículas y antecedentes en la pestaña <strong>Verificaciones</strong>.
               </p>
             </div>
@@ -1120,7 +1206,7 @@ function KanbanBoard({ assignments, onUpdate }: { assignments: Assignment[]; onU
               <p className="font-bold text-slate-900 flex items-center gap-1.5">
                 <Lock className="w-4 h-4 text-slate-600" /> Control de Suspensión
               </p>
-              <p className="text-slate-500 leading-relaxed text-[11px]">
+              <p className="text-slate-500 leading-relaxed text-xs">
                 Si un repartidor no cumple los estándares de tu local, puedes inactivarlo localmente sin afectar sus licencias globales con otros negocios.
               </p>
             </div>
@@ -1233,7 +1319,7 @@ function ResourcesTab({
                     <Phone className="w-3.5 h-3.5 text-slate-400" />
                     {driver.profile.telefono}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">
+                  <span className="text-xs font-bold text-slate-400 uppercase">
                     ID: {driver.id.slice(-6).toUpperCase()}
                   </span>
                 </div>
@@ -1252,11 +1338,11 @@ function ResourcesTab({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleToggleLocalSuspend(driver)}
-                    className={`px-2.5 py-1.5 rounded-lg font-bold text-[11px] transition-colors cursor-pointer ${
-                      isSuspended
-                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                        : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                    }`}
+                    className={`px-2.5 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer ${
+ isSuspended
+ ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+ : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+ }`}
                   >
                     {isSuspended ? 'Reactivar' : 'Suspender Local'}
                   </button>
@@ -1312,11 +1398,11 @@ function DriverFullProfileModal({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b bg-slate-50 rounded-t-3xl">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-purple-600 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-md">
+            <div className="w-12 h-12 bg-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-md">
               {driver.name.charAt(0)}
             </div>
             <div>
-              <h2 className="text-lg font-black text-slate-900">{driver.name}</h2>
+              <h2 className="text-lg font-bold text-slate-900">{driver.name}</h2>
               <p className="text-xs text-slate-500 flex items-center gap-2">
                 <span>📱 {p?.telefono || 'Sin teléfono'}</span>
                 <VerificationStatusBadge status={p?.verificationStatus} />
@@ -1339,11 +1425,11 @@ function DriverFullProfileModal({
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key as any)}
-              className={`py-3 px-3 text-xs font-black uppercase border-b-2 transition-all cursor-pointer ${
-                activeTab === t.key
-                  ? 'border-purple-600 text-purple-700'
-                  : 'border-transparent text-slate-400 hover:text-slate-600'
-              }`}
+              className={`py-3 px-3 text-xs font-bold uppercase border-b-2 transition-all cursor-pointer ${
+ activeTab === t.key
+ ? 'border-purple-600 text-purple-700'
+ : 'border-transparent text-slate-400 hover:text-slate-600'
+ }`}
             >
               {t.label}
             </button>
@@ -1355,12 +1441,12 @@ function DriverFullProfileModal({
           {activeTab === 'INFO' && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl text-xs">
-                <div><span className="text-slate-400 uppercase font-black">Nombre Completo:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{driver.name}</p></div>
-                <div><span className="text-slate-400 uppercase font-black">Teléfono:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{p?.telefono || '—'}</p></div>
-                <div><span className="text-slate-400 uppercase font-black">Identificación:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{p?.documento || '—'}</p></div>
-                <div><span className="text-slate-400 uppercase font-black">Vehículo:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{p?.vehiculo || p?.tipoVehiculo || 'Moto'}</p></div>
-                <div><span className="text-slate-400 uppercase font-black">Placa:</span> <p className="font-bold text-slate-900 text-sm mt-0.5 uppercase">{p?.placa || '—'}</p></div>
-                <div><span className="text-slate-400 uppercase font-black">Estado en este local:</span> <p className="font-bold text-emerald-600 text-sm mt-0.5">{p?.verificationStatus || 'APPROVED'}</p></div>
+                <div><span className="text-slate-400 uppercase font-bold">Nombre Completo:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{driver.name}</p></div>
+                <div><span className="text-slate-400 uppercase font-bold">Teléfono:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{p?.telefono || '—'}</p></div>
+                <div><span className="text-slate-400 uppercase font-bold">Identificación:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{p?.documento || '—'}</p></div>
+                <div><span className="text-slate-400 uppercase font-bold">Vehículo:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{p?.vehiculo || p?.tipoVehiculo || 'Moto'}</p></div>
+                <div><span className="text-slate-400 uppercase font-bold">Placa:</span> <p className="font-bold text-slate-900 text-sm mt-0.5 uppercase">{p?.placa || '—'}</p></div>
+                <div><span className="text-slate-400 uppercase font-bold">Estado en este local:</span> <p className="font-bold text-emerald-600 text-sm mt-0.5">{p?.verificationStatus || 'APPROVED'}</p></div>
               </div>
             </div>
           )}
@@ -1375,9 +1461,9 @@ function DriverFullProfileModal({
               ].map(d => (
                 <div key={d.label} className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-800">{d.label}</span>
-                  <span className={`px-2.5 py-1 rounded-full font-black text-[10px] uppercase ${
-                    d.status === 'Cargado' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
-                  }`}>
+                  <span className={`px-2.5 py-1 rounded-full font-bold text-xs uppercase ${
+ d.status === 'Cargado' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+ }`}>
                     {d.status}
                   </span>
                 </div>
@@ -1388,11 +1474,11 @@ function DriverFullProfileModal({
           {activeTab === 'OP' && (
             <div className="grid grid-cols-2 gap-3 text-center">
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
-                <p className="text-2xl font-black text-emerald-700">12</p>
+                <p className="text-2xl font-bold text-emerald-700">12</p>
                 <p className="text-xs font-bold text-emerald-800">Entregas Completadas</p>
               </div>
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl">
-                <p className="text-2xl font-black text-blue-700">0</p>
+                <p className="text-2xl font-bold text-blue-700">0</p>
                 <p className="text-xs font-bold text-blue-800">Pedidos Activos</p>
               </div>
             </div>
@@ -1403,9 +1489,9 @@ function DriverFullProfileModal({
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between">
                 <div>
                   <p className="font-bold text-slate-900">Aprobación de Registro Local</p>
-                  <p className="text-[11px] text-slate-500">Documentación validada por la administración del negocio</p>
+                  <p className="text-xs text-slate-500">Documentación validada por la administración del negocio</p>
                 </div>
-                <span className="text-[10px] text-slate-400 font-semibold">Hoy</span>
+                <span className="text-xs text-slate-400 font-semibold">Hoy</span>
               </div>
             </div>
           )}
@@ -1418,13 +1504,14 @@ function DriverFullProfileModal({
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 type Tab = 'dashboard' | 'verificaciones' | 'recursos' | 'historial';
 
-export default function LogisticaPage() {
+function LogisticaContent() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showCreateDriverModal, setShowCreateDriverModal] = useState(false);
+  const [reviewDriver, setReviewDriver] = useState<Driver | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -1456,13 +1543,11 @@ export default function LogisticaPage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const pendingVerifications = drivers.filter(
-    d => d.profile?.verificationStatus === 'PENDING_VERIFICATION'
+    d => d.profile?.verificationStatus === 'PENDING_VERIFICATION' || d.profile?.verificationStatus === 'INVITED'
   ).length;
 
   const tabs: { key: Tab; label: string; icon: any; badge?: number }[] = [
     { key: 'dashboard', label: 'Dashboard', icon: Truck },
-    { key: 'verificaciones', label: 'Verificaciones', icon: ShieldCheck, badge: pendingVerifications },
-    { key: 'recursos', label: 'Repartidores', icon: Users },
     { key: 'historial', label: 'Historial', icon: History },
   ];
 
@@ -1477,25 +1562,18 @@ export default function LogisticaPage() {
                 <Truck className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-black text-slate-900">Gestión de Repartidores</h1>
-                <p className="text-xs text-slate-500">Verificación de Documentos & Flota Autónoma (Modo InDrive)</p>
+                <h1 className="text-xl font-bold text-slate-900">Entregas y asignaciones</h1>
+                <p className="text-xs text-slate-500">Asigna pedidos a tus repartidores y sigue cada entrega.</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Link
-                href="/admin/logistica/buscar"
-                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-slate-800 transition-colors shadow-md cursor-pointer"
+                href="/admin/repartidores"
+                className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-800 transition-colors"
               >
-                <Search className="w-3.5 h-3.5" />
-                <span>Buscar Repartidores</span>
+                <Users className="w-4 h-4" />
+                <span>Mi equipo de repartidores{pendingVerifications > 0 ? ` (${pendingVerifications} por revisar)` : ''}</span>
               </Link>
-              <button
-                onClick={() => setShowCreateDriverModal(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-purple-700 transition-colors shadow-md cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Agregar Repartidor</span>
-              </button>
               <button
                 onClick={loadData}
                 className="p-2.5 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer"
@@ -1517,8 +1595,8 @@ export default function LogisticaPage() {
               { label: 'Total Repartidores', value: drivers.length, color: 'text-slate-700' },
             ].map(stat => (
               <div key={stat.label} className="text-center p-3 bg-slate-50 rounded-2xl border border-slate-100 shadow-xs">
-                <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
-                <p className="text-[11px] font-bold text-slate-500 mt-0.5">{stat.label}</p>
+                <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs font-bold text-slate-500 mt-0.5">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -1529,16 +1607,16 @@ export default function LogisticaPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all relative cursor-pointer ${
-                  activeTab === tab.key
-                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all relative cursor-pointer ${
+ activeTab === tab.key
+ ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+ : 'text-slate-600 hover:bg-slate-100'
+ }`}
               >
                 <tab.icon className="w-4 h-4" />
                 <span>{tab.label}</span>
                 {typeof tab.badge === 'number' && tab.badge > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 bg-rose-500 text-white font-black text-[10px] rounded-full">
+                  <span className="ml-1.5 px-2 py-0.5 bg-rose-500 text-white font-bold text-xs rounded-full shadow-sm animate-pulse flex items-center justify-center">
                     {tab.badge}
                   </span>
                 )}
@@ -1581,7 +1659,25 @@ export default function LogisticaPage() {
       {showCreateDriverModal && (
         <InviteDriverModal
           onClose={() => setShowCreateDriverModal(false)}
-          onSave={loadData}
+          onSave={async (linkedDriver?: any) => {
+            setShowCreateDriverModal(false);
+            await loadData();
+            if (linkedDriver) {
+              setActiveTab('verificaciones');
+              setReviewDriver(linkedDriver);
+            }
+          }}
+        />
+      )}
+
+      {reviewDriver && (
+        <DossierReviewModal
+          driver={reviewDriver}
+          onClose={() => setReviewDriver(null)}
+          onDecision={async () => {
+            await loadData();
+            setReviewDriver(null);
+          }}
         />
       )}
 
@@ -1593,5 +1689,48 @@ export default function LogisticaPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function LogisticaPage() {
+  return (
+    <ModuleUpsellGate
+      capabilityKey="DELIVERY"
+      addonCode="ADDON_DELIVERY"
+      title="Repartidores & Logística de Envíos"
+      subtitle="Gestiona tu flota de choferes o motorizados propios y externos, asigna retiros y entregas a domicilio, y rastrea el estado de cada despacho."
+      badgeText="Módulo Crecimiento • Logística"
+      icon={Truck}
+      stats={[
+        { value: '100%', label: 'Control de Envíos' },
+        { value: '0 Error', label: 'Entrega con PIN' },
+        { value: 'Tiempo Real', label: 'Estado de Ruta' },
+        { value: 'Automático', label: 'Liquidación a Chofer' }
+      ]}
+      benefits={[
+        {
+          title: 'Bolsa de Repartidores & Choferes',
+          desc: 'Registra tus motorizados o conductores de confianza, valida sus licencias y gestiona su disponibilidad.',
+          icon: Users
+        },
+        {
+          title: 'Asignación Inteligente de Despachos',
+          desc: 'Asigna órdenes de servicio y pedidos para retiro o entrega a domicilio con un solo clic.',
+          icon: Route
+        },
+        {
+          title: 'Código PIN de Seguridad',
+          desc: 'Verificación estricta de entrega mediante código PIN de 4 dígitos entre cliente y chofer para máxima seguridad.',
+          icon: ShieldCheck
+        },
+        {
+          title: 'Control de Compensaciones y Tarifas',
+          desc: 'Define tarifas de delivery, compensaciones por distancia o propinas abonadas al chofer con historial transparente.',
+          icon: Package
+        }
+      ]}
+    >
+      <LogisticaContent />
+    </ModuleUpsellGate>
   );
 }

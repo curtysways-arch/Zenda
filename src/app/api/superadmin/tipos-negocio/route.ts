@@ -9,6 +9,7 @@ export async function GET() {
   try {
     const tipos = await prisma.businessType.findMany({
       include: {
+        planFamily: true,
         states: { orderBy: { sortOrder: 'asc' } },
         capabilities: true,
         profiles: { orderBy: { sortOrder: 'asc' } },

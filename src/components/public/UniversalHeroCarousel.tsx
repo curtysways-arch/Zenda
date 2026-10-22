@@ -205,7 +205,7 @@ export default function UniversalHeroCarousel({
   };
 
   return (
-    <div className="relative w-full aspect-[16/13] xs:aspect-[16/11] sm:aspect-[16/10] max-h-[380px] rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100/50 group">
+    <div className="relative w-full aspect-[16/13] xs:aspect-[16/11] sm:aspect-[16/10] max-h-[380px] rounded-3xl overflow-hidden shadow-sm border border-slate-100/50 group">
       {/* 1. Carrusel de Imágenes de Fondo */}
       <div className="absolute inset-0 w-full h-full">
         {items.map((item, idx) => {
@@ -234,31 +234,31 @@ export default function UniversalHeroCarousel({
         <div className="flex-1 flex flex-col items-center justify-center space-y-2.5 my-auto">
           {displayBadge && (
             <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-md border border-white/20 rounded-full mx-auto">
-              <span className="text-[7.5px] xs:text-[8px] font-black text-white uppercase tracking-[0.2em] text-center">
+              <span className="text-[7.5px] xs:text-xs font-bold text-white uppercase tracking-wide text-center">
                 {displayBadge}
               </span>
             </div>
           )}
 
           {displayTitle && (
-            <h2 className="text-xl xs:text-2xl sm:text-3xl font-black text-white uppercase italic tracking-tighter drop-shadow-md leading-tight text-center mx-auto max-w-[290px] xs:max-w-[350px]">
+            <h2 className="text-xl xs:text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-md leading-tight text-center mx-auto max-w-[290px] xs:max-w-[350px]">
               {displayTitle}
             </h2>
           )}
 
           {displayDescription && (
-            <p className="text-[9px] xs:text-[10px] font-bold text-white/90 uppercase tracking-[0.12em] leading-relaxed drop-shadow-md max-w-[310px] mx-auto text-center">
+            <p className="text-xs xs:text-xs font-bold text-white/90 uppercase tracking-wide leading-relaxed drop-shadow-md max-w-[310px] mx-auto text-center">
               {displayDescription}
             </p>
           )}
 
           {/* Etiqueta de Precio Dinámica */}
           {(activeItem.priceLabel || (activeItem.price !== null && activeItem.price !== undefined)) && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/90 text-slate-950 font-black rounded-full text-xs shadow-md mt-1 animate-bounce">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/90 text-slate-950 font-bold rounded-full text-xs shadow-md mt-1 animate-bounce">
               <Tag size={12} className="shrink-0" />
               <span>{activeItem.priceLabel || `$${Number(activeItem.price).toFixed(2)}`}</span>
               {(activeItem.previousPrice || activeItem.originalPrice) && (
-                <span className="line-through text-slate-700 text-[10px] font-semibold">
+                <span className="line-through text-slate-700 text-xs font-semibold">
                   ${Number(activeItem.previousPrice || activeItem.originalPrice).toFixed(2)}
                 </span>
               )}
@@ -274,7 +274,7 @@ export default function UniversalHeroCarousel({
               "w-1.5 h-1.5 rounded-full animate-pulse shrink-0",
               isOpenNow ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.5)]"
             )} />
-            <span className="text-[7.5px] font-black text-white uppercase tracking-[0.2em] flex items-center justify-center gap-1 text-center">
+            <span className="text-[7.5px] font-bold text-white uppercase tracking-wide flex items-center justify-center gap-1 text-center">
               <span className={cn(isOpenNow ? "text-emerald-400" : "text-rose-400")}>
                 {isOpenNow ? 'ABIERTO' : 'CERRADO'}
               </span>
@@ -292,7 +292,7 @@ export default function UniversalHeroCarousel({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleButtonClick}
-                  className="inline-flex items-center justify-center gap-2 px-7 py-2.5 text-white rounded-full font-black text-[9px] xs:text-[10px] uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all mx-auto"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-2.5 text-white rounded-full font-bold text-xs xs:text-xs uppercase tracking-wide shadow-lg hover:brightness-110 active:scale-95 transition-all mx-auto"
                   style={{
                     backgroundColor: primaryColor,
                     boxShadow: `0 10px 20px ${primaryColor}35`
@@ -305,7 +305,7 @@ export default function UniversalHeroCarousel({
                 <Link
                   href={buttonHref}
                   onClick={handleButtonClick}
-                  className="inline-flex items-center justify-center gap-2 px-7 py-2.5 text-white rounded-full font-black text-[9px] xs:text-[10px] uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all mx-auto"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-2.5 text-white rounded-full font-bold text-xs xs:text-xs uppercase tracking-wide shadow-lg hover:brightness-110 active:scale-95 transition-all mx-auto"
                   style={{
                     backgroundColor: primaryColor,
                     boxShadow: `0 10px 20px ${primaryColor}35`

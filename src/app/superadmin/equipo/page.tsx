@@ -505,13 +505,13 @@ function RolesTab({ roles, onEdit, onRefresh }: { roles: Rol[]; onEdit: (r: Rol)
                         <div className="flex flex-wrap gap-1.5">
                             {[...new Set(rol.permisos.map(p => p.modulo))].slice(0, 5).map(mod => (
                                 <span key={mod}
-                                    className="px-2 py-0.5 rounded-md text-[10px] font-medium border"
+                                    className="px-2 py-0.5 rounded-md text-xs font-medium border"
                                     style={{ background: `${rol.color}15`, color: rol.color, borderColor: `${rol.color}30` }}>
                                     {mod}
                                 </span>
                             ))}
                             {[...new Set(rol.permisos.map(p => p.modulo))].length > 5 && (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] text-slate-500 bg-white/5 border border-white/10">
+                                <span className="px-2 py-0.5 rounded-md text-xs text-slate-500 bg-white/5 border border-white/10">
                                     +{[...new Set(rol.permisos.map(p => p.modulo))].length - 5} más
                                 </span>
                             )}
@@ -615,11 +615,11 @@ function MatrizPermisos({
                                 <button
                                     onClick={() => saveRolPermisos(rol.id)}
                                     disabled={!!saving || rol.jerarquia === 1}
-                                    className={`text-[10px] px-2 py-1 rounded-lg border transition-all ${
-                                        rol.jerarquia === 1
-                                            ? 'text-slate-600 border-slate-700 cursor-not-allowed'
-                                            : 'text-violet-400 border-violet-500/30 hover:bg-violet-500/10 hover:border-violet-500/50 cursor-pointer'
-                                    }`}
+                                    className={`text-xs px-2 py-1 rounded-lg border transition-all ${
+ rol.jerarquia === 1
+ ? 'text-slate-600 border-slate-700 cursor-not-allowed'
+ : 'text-violet-400 border-violet-500/30 hover:bg-violet-500/10 hover:border-violet-500/50 cursor-pointer'
+ }`}
                                 >
                                     {saving === rol.id ? (
                                         <Loader2 className="w-3 h-3 animate-spin" />
@@ -691,7 +691,7 @@ function MatrizPermisos({
                                                             <AlertTriangle className="w-3 h-3 text-amber-500" />
                                                         )}
                                                     </div>
-                                                    <div className="text-[10px] text-slate-600 mt-0.5">{perm.codigo}</div>
+                                                    <div className="text-xs text-slate-600 mt-0.5">{perm.codigo}</div>
                                                 </div>
                                                 <div className="flex items-center gap-3 ml-4">
                                                     {localRoles.map(rol => {
@@ -801,7 +801,13 @@ function ModalCrearUsuario({ roles, onClose, onSuccess }: { roles: Rol[]; onClos
                         <label className="block text-xs font-medium text-slate-400 mb-1.5">Rol *</label>
                         <select
                             value={form.rolId}
-                            onChange={e => setForm(f => ({ ...f, rolId: e.target.value }))}
+                            onChange={e => {
+                                const rolId = e.target.value;
+                                const rol = roles.find(r => r.id === rolId);
+                                // Vendedores: por defecto solo ven los negocios que crean o se les asignan
+                                const esVentas = /venta/i.test(rol?.nombre || '');
+                                setForm(f => ({ ...f, rolId, scope: esVentas ? 'NEGOCIOS_ASIGNADOS' : f.scope }));
+                            }}
                             required
                             className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-sm focus:outline-none focus:border-violet-500/50 transition-all"
                         >

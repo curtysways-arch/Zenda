@@ -1,84 +1,92 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import {
+  getDentalContext,
+  jsonError,
+  localDateKey,
+  dayRangeUTC,
+  addDaysKey,
+  INACTIVE_APPOINTMENT_STATES,
+} from '@/modules/dental/server/context';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * GET /api/admin/dental/dashboard-stats
+ * Resumen del día para el consultorio, calculado con la zona horaria de la clínica.
+ */
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const access = await getDentalContext();
+    if (!access.ok) return access.response;
+    const { negocioId, timeZone } = access.ctx;
 
-    let negocioId = (session.user as any).negocioId;
-    if (!negocioId && session.user.email) {
-      const u = await prisma.usuario.findUnique({ where: { email: session.user.email } });
-      negocioId = u?.negocioId;
-    }
+    const todayKey = localDateKey(timeZone);
+    const { start: todayStart, end: todayEnd } = dayRangeUTC(todayKey);
+    const weekEnd = dayRangeUTC(addDaysKey(todayKey, 7)).end;
+    const monthStartKey = `${todayKey.slice(0, 7)}-01`;
+    const monthStart = dayRangeUTC(monthStartKey).start;
 
-    if (!negocioId) {
-      return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 403 });
-    }
+    const activeState = { notIn: INACTIVE_APPOINTMENT_STATES };
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const [citasHoy, proximas, pacientesTotal, pacientesNuevosMes, tratamientosActivos, encountersHoy, porConfirmar] =
+      await Promise.all([
+        prisma.appointment.findMany({
+          where: { negocioId, fecha: { gte: todayStart, lte: todayEnd }, estado: activeState },
+          include: {
+            cliente: { select: { id: true, nombre: true, telefono: true } },
+            service: { select: { id: true, nombre: true } },
+            staff: { select: { id: true, name: true } },
+          },
+          orderBy: { horaInicio: 'asc' },
+        }),
+        prisma.appointment.findMany({
+          where: { negocioId, fecha: { gt: todayEnd, lte: weekEnd }, estado: activeState },
+          include: {
+            cliente: { select: { id: true, nombre: true } },
+            service: { select: { id: true, nombre: true } },
+            staff: { select: { id: true, name: true } },
+          },
+          orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
+          take: 8,
+        }),
+        prisma.cliente.count({ where: { negocioId } }),
+        prisma.cliente.count({ where: { negocioId, createdAt: { gte: monthStart } } }),
+        prisma.dentalTreatment.findMany({
+          where: { negocioId, estado: { in: ['PLANIFICADO', 'PENDIENTE', 'EN_PROCESO'] } },
+          select: { costoEstimado: true },
+        }),
+        prisma.clinicalEncounter.findMany({
+          where: { negocioId, appointmentId: { not: null }, fecha: { gte: todayStart } },
+          select: { appointmentId: true },
+        }),
+        prisma.appointment.count({
+          where: { negocioId, fecha: { gte: todayStart }, estado: { in: ['pending', 'PENDIENTE', 'pendiente'] } },
+        }),
+      ]);
 
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-
-    const [citasHoyCount, pacientesTotal, tratamientosCount, proximasCitas, encountersHoyCount] = await Promise.all([
-      prisma.appointment.count({
-        where: {
-          negocioId,
-          fecha: { gte: todayStart, lte: todayEnd },
-          estado: { notIn: ['cancelled', 'cancelada'] }
-        }
-      }),
-      prisma.cliente.count({
-        where: { negocioId }
-      }),
-      prisma.dentalTreatment.count({
-        where: {
-          negocioId,
-          estado: { in: ['PLANIFICADO', 'PENDIENTE', 'EN_PROCESO'] }
-        }
-      }),
-      prisma.appointment.findMany({
-        where: {
-          negocioId,
-          fecha: { gte: todayStart },
-          estado: { notIn: ['cancelled', 'cancelada'] }
-        },
-        include: {
-          cliente: { select: { id: true, nombre: true, telefono: true } },
-          service: { select: { id: true, nombre: true } },
-          staff: { select: { id: true, name: true } }
-        },
-        orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
-        take: 6
-      }),
-      prisma.clinicalEncounter.count({
-        where: {
-          negocioId,
-          fecha: { gte: todayStart, lte: todayEnd }
-        }
-      })
-    ]);
+    const withNotes = new Set(encountersHoy.map((e) => e.appointmentId));
+    const atendidas = citasHoy.filter((c) => ['completed', 'finalizada'].includes(c.estado)).length;
+    const presupuestoPendiente = tratamientosActivos.reduce((s, t) => s + (Number(t.costoEstimado) || 0), 0);
 
     return NextResponse.json({
       success: true,
+      today: todayKey,
       stats: {
-        citasHoy: citasHoyCount,
+        citasHoy: citasHoy.length,
+        atendidasHoy: atendidas,
+        porConfirmar,
+        proximos7Dias: proximas.length,
         pacientesTotal,
-        consultasPendientes: Math.max(0, citasHoyCount - encountersHoyCount),
-        tratamientosEnProceso: tratamientosCount
+        pacientesNuevosMes,
+        tratamientosEnProceso: tratamientosActivos.length,
+        presupuestoPendiente: Math.round(presupuestoPendiente * 100) / 100,
       },
-      proximasCitas
+      agendaHoy: citasHoy.map((c) => ({ ...c, tieneEvolucion: withNotes.has(c.id) })),
+      proximasCitas: proximas,
     });
-  } catch (err: any) {
-    console.error('Error en dental dashboard-stats:', err);
-    return NextResponse.json({ error: err.message || 'Error interno' }, { status: 500 });
+  } catch (err) {
+    console.error('Error en GET /api/admin/dental/dashboard-stats:', err);
+    return jsonError('No se pudo cargar el resumen.', 500);
   }
 }

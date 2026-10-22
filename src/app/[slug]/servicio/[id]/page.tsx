@@ -254,7 +254,7 @@ export default async function CanchaDetailPage({
                 <div className="bg-slate-900/95 backdrop-blur-md text-white px-6 py-3.5 flex items-center justify-between gap-4 w-full shadow-lg z-[120] relative border-b border-white/10 max-w-xl mx-auto border-x border-gray-200/10">
                     <div className="flex items-center gap-3">
                         <div 
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white text-xs font-black shadow-md border border-white/20"
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white text-xs font-bold shadow-md border border-white/20"
                             style={{ background: `linear-gradient(135deg, ${primaryColor}, ${tertiaryColor || primaryColor})` }}
                         >
                             {userReservasActivas}
@@ -265,7 +265,7 @@ export default async function CanchaDetailPage({
                     </div>
                     <Link
                         href={`/${slug}/mis-reservas`}
-                        className="rounded-xl bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.05em] text-slate-900 hover:bg-slate-100 active:scale-95 transition-all shadow-md shrink-0"
+                        className="rounded-xl bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.05em] text-slate-900 hover:bg-slate-100 active:scale-95 transition-all shadow-md shrink-0"
                     >
                         Gestionar mis citas
                     </Link>
@@ -274,7 +274,7 @@ export default async function CanchaDetailPage({
 
             {/* HEADER CURVADO CON DEGRADADO DINÁMICO (SEGÚN REFERENCIA) */}
             <header 
-                className="relative z-30 pt-6 pb-7 px-5 rounded-b-[2rem] sm:rounded-b-[2.5rem] shadow-lg overflow-hidden text-white"
+                className="relative z-30 pt-6 pb-7 px-5 rounded-b-3xl sm:rounded-b-3xl shadow-lg overflow-hidden text-white"
                 style={{ 
                     background: `linear-gradient(135deg, ${primaryColor}, color-mix(in srgb, ${primaryColor} 75%, black 25%))` 
                 }}
@@ -312,10 +312,10 @@ export default async function CanchaDetailPage({
 
                         {/* Nombre del Negocio y Servicio */}
                         <div className="flex flex-col min-w-0">
-                            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.22em] text-white/90 leading-tight truncate">
+                            <span className="text-xs sm:text-xs font-bold uppercase tracking-wide text-white/90 leading-tight truncate">
                                 {negocio.nombre}
                             </span>
-                            <h1 className="text-lg sm:text-xl font-black text-white leading-snug tracking-tight truncate">
+                            <h1 className="text-lg sm:text-xl font-bold text-white leading-snug tracking-tight truncate">
                                 {cancha.nombre}
                             </h1>
                         </div>
@@ -337,13 +337,13 @@ export default async function CanchaDetailPage({
                         {/* Overlay Etiquetas */}
                         <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2">
                             {cancha.duracion && (
-                                <div className="flex items-center gap-1.5 px-3 py-1 bg-black/65 backdrop-blur-md rounded-full border border-white/20 text-white text-[11px] font-bold">
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-black/65 backdrop-blur-md rounded-full border border-white/20 text-white text-xs font-bold">
                                     <Timer size={12} className="text-white" />
                                     <span>{cancha.duracion} min</span>
                                 </div>
                             )}
                             {cancha.tipo && (
-                                <div className="px-3 py-1 bg-black/65 backdrop-blur-md rounded-full border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider">
+                                <div className="px-3 py-1 bg-black/65 backdrop-blur-md rounded-full border border-white/20 text-white text-xs font-bold uppercase tracking-wider">
                                     {cancha.tipo}
                                 </div>
                             )}
@@ -361,7 +361,7 @@ export default async function CanchaDetailPage({
                             >
                                 <Sparkles size={13} />
                             </div>
-                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
                                 Descripción del servicio
                             </h3>
                         </div>
@@ -382,7 +382,7 @@ export default async function CanchaDetailPage({
                             >
                                 <Sparkles size={13} />
                             </div>
-                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
                                 ¿Qué incluye este servicio?
                             </h3>
                         </div>

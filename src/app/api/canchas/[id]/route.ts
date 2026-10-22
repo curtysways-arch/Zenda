@@ -8,6 +8,13 @@ export async function PATCH(
 ) {
     try {
         const { id } = await params;
+        {
+            const own = await (prisma as any).service.findUnique({ where: { id }, select: { negocioId: true } });
+            if (!own) return NextResponse.json({ error: 'Cancha no encontrada' }, { status: 404 });
+            const { requireBusinessAccess } = await import('@/lib/auth/requireBusinessAccess');
+            const access = await requireBusinessAccess(own.negocioId);
+            if (!access.ok) return access.response;
+        }
         const body = await req.json();
         const { nombre, tipo, tipoId, capacidad, precioHora, estaActiva, ubicacionId, extraInfo, imagenes } = body;
 
@@ -40,6 +47,7 @@ export async function PATCH(
         if (precioHora !== undefined) updateData.precio = parseFloat(precioHora);
         if (estaActiva !== undefined) updateData.estaActivo = estaActiva;
         if (ubicacionId !== undefined) updateData.ubicacionId = ubicacionId || null;
+        if ([60, 90, 120].includes(Number(body.duracionMin))) updateData.duracion = Number(body.duracionMin);
 
         // Si se enviaron imágenes nuevas/actualizadas
         if (Array.isArray(imagenes)) {
@@ -92,6 +100,13 @@ export async function DELETE(
 ) {
     try {
         const { id } = await params;
+        {
+            const own = await (prisma as any).service.findUnique({ where: { id }, select: { negocioId: true } });
+            if (!own) return NextResponse.json({ error: 'Cancha no encontrada' }, { status: 404 });
+            const { requireBusinessAccess } = await import('@/lib/auth/requireBusinessAccess');
+            const access = await requireBusinessAccess(own.negocioId);
+            if (!access.ok) return access.response;
+        }
         await (prisma as any).service.delete({
             where: { id }
         });

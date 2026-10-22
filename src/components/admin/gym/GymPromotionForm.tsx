@@ -142,7 +142,7 @@ export default function GymPromotionForm({
             );
           })}
         </div>
-        <p className="text-[10px] text-gray-400 mt-1.5">
+        <p className="text-xs text-gray-400 mt-1.5">
           {BENEFIT_TYPES.find(b => b.value === benefitType)?.example}
         </p>
       </div>
@@ -186,7 +186,7 @@ export default function GymPromotionForm({
           <div>
             <p className="text-xs text-gray-500">Vista previa del precio</p>
             <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-xl font-black text-gray-900">
+              <span className="text-xl font-bold text-gray-900">
                 {selectedPlan.currency} {finalPrice.toFixed(2)}
               </span>
               {finalPrice < selectedPlan.price && (

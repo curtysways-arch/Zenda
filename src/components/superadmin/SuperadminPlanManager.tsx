@@ -498,7 +498,7 @@ export default function SuperadminPlanManager({
             {/* 1. Header y Resumen de Familias */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
                 <div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
                         Planes & Familias de Solución
                     </h2>
                     <p className="text-sm text-slate-500 font-medium mt-1">
@@ -550,14 +550,14 @@ export default function SuperadminPlanManager({
                                     <IconComponent size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="font-black text-sm tracking-tight">{fam.name}</h3>
-                                    <p className={`text-[11px] font-medium mt-0.5 ${active ? 'text-slate-300' : 'text-slate-400'}`}>
+                                    <h3 className="font-bold text-sm tracking-tight">{fam.name}</h3>
+                                    <p className={`text-xs font-medium mt-0.5 ${active ? 'text-slate-300' : 'text-slate-400'}`}>
                                         {fam.plans?.length || 0} planes configurados
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="pt-4 mt-2 border-t border-white/10 flex items-center justify-between text-[11px] font-extrabold">
+                            <div className="pt-4 mt-2 border-t border-white/10 flex items-center justify-between text-xs font-extrabold">
                                 <span className={active ? 'text-indigo-400' : 'text-slate-500'}>
                                     {fam.activeBusinessesCount} negocios
                                 </span>
@@ -574,22 +574,22 @@ export default function SuperadminPlanManager({
                 <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-px">
                     <button
                         onClick={() => setActiveFamilyTab('planes')}
-                        className={`px-4 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                            activeFamilyTab === 'planes'
-                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
-                                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
-                        }`}
+                        className={`px-4 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+ activeFamilyTab === 'planes'
+ ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
+ : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+ }`}
                     >
                         <Package size={15} />
                         Planes ({activeFamily?.plans?.length || 0})
                     </button>
                     <button
                         onClick={() => setActiveFamilyTab('fundadores')}
-                        className={`px-4 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                            activeFamilyTab === 'fundadores'
-                                ? 'border-amber-500 text-amber-600 bg-amber-50/50 rounded-t-xl'
-                                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
-                        }`}
+                        className={`px-4 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+ activeFamilyTab === 'fundadores'
+ ? 'border-amber-500 text-amber-600 bg-amber-50/50 rounded-t-xl'
+ : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+ }`}
                     >
                         <Award size={15} />
                         Socios Fundadores
@@ -599,33 +599,33 @@ export default function SuperadminPlanManager({
                     </button>
                     <button
                         onClick={() => setActiveFamilyTab('business_types')}
-                        className={`px-4 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                            activeFamilyTab === 'business_types'
-                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
-                                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
-                        }`}
+                        className={`px-4 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+ activeFamilyTab === 'business_types'
+ ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
+ : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+ }`}
                     >
                         <Layers size={15} />
                         Tipos de Negocio ({activeFamily?.businessTypes?.length || 0})
                     </button>
                     <button
                         onClick={() => setActiveFamilyTab('configuracion')}
-                        className={`px-4 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                            activeFamilyTab === 'configuracion'
-                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
-                                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
-                        }`}
+                        className={`px-4 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+ activeFamilyTab === 'configuracion'
+ ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
+ : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+ }`}
                     >
                         <SlidersHorizontal size={15} />
                         Configuración Familia
                     </button>
                     <button
                         onClick={() => setActiveFamilyTab('auditoria')}
-                        className={`px-4 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                            activeFamilyTab === 'auditoria'
-                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
-                                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
-                        }`}
+                        className={`px-4 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+ activeFamilyTab === 'auditoria'
+ ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
+ : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+ }`}
                     >
                         <Activity size={15} />
                         Auditoría
@@ -640,10 +640,10 @@ export default function SuperadminPlanManager({
                     return (
                         <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-8 space-y-6">
                             <div className="border-b border-slate-100 pb-4">
-                                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-wider border border-indigo-100">
+                                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-wider border border-indigo-100">
                                     Familia: {activeFamily?.code}
                                 </span>
-                                <h3 className="text-xl font-black text-slate-900 tracking-tight mt-1">
+                                <h3 className="text-xl font-bold text-slate-900 tracking-tight mt-1">
                                     Arquitectura de Planes para {activeFamily?.name}
                                 </h3>
                             </div>
@@ -653,18 +653,18 @@ export default function SuperadminPlanManager({
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div className="space-y-1.5">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="px-3 py-1 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
+                                            <span className="px-3 py-1 bg-emerald-600 text-white rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
                                                 <Lock size={12} /> Plan Free Canónico de {activeFamily?.name}
                                             </span>
-                                            <span className="px-2.5 py-0.5 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                                            <span className="px-2.5 py-0.5 bg-slate-900 text-white rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1">
                                                 🚫 Oculto en Catálogo Comercial
                                             </span>
-                                            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[9px] font-bold">
+                                            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
                                                 Fallback Runtime por Expiración
                                             </span>
                                         </div>
                                         <div>
-                                            <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                                            <h4 className="text-xl font-bold text-slate-900 tracking-tight">
                                                 {freePlan?.name || `${activeFamily?.name} Free`}
                                             </h4>
                                             <p className="text-xs text-slate-600 max-w-2xl font-medium mt-0.5">
@@ -675,13 +675,13 @@ export default function SuperadminPlanManager({
 
                                     <div className="flex items-center gap-3 shrink-0">
                                         <div className="text-right hidden sm:block">
-                                            <span className="text-2xl font-black text-emerald-700">$0.00</span>
+                                            <span className="text-2xl font-bold text-emerald-700">$0.00</span>
                                             <span className="text-xs text-slate-400 font-bold block">/ mes (Sistema)</span>
                                         </div>
                                         {freePlan ? (
                                             <button
                                                 onClick={() => handleOpenEditPlan(freePlan)}
-                                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer flex items-center gap-1.5"
+                                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer flex items-center gap-1.5"
                                             >
                                                 <Lock size={14} /> Gestionar Políticas del Plan Free
                                             </button>
@@ -699,7 +699,7 @@ export default function SuperadminPlanManager({
                                                         dataPolicies: { ...DEFAULT_FREE_POLICIES }
                                                     }));
                                                 }}
-                                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
                                             >
                                                 + Inicializar Plan Free
                                             </button>
@@ -710,21 +710,21 @@ export default function SuperadminPlanManager({
                                 {freePlan && (
                                     <div className="pt-3 border-t border-emerald-200/60 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-600">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-[11px] font-black uppercase text-emerald-800 tracking-wider">Políticas Activas:</span>
-                                            <span className="px-2 py-0.5 bg-emerald-100/80 text-emerald-900 rounded-md text-[11px]">
+                                            <span className="text-xs font-bold uppercase text-emerald-800 tracking-wider">Políticas Activas:</span>
+                                            <span className="px-2 py-0.5 bg-emerald-100/80 text-emerald-900 rounded-md text-xs">
                                                 ✓ Recibir Actividad (RECEIVE)
                                             </span>
-                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded-md text-[11px] border border-rose-100">
+                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded-md text-xs border border-rose-100">
                                                 ✕ Visualizar Datos (VIEW: Protegido)
                                             </span>
-                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded-md text-[11px] border border-rose-100">
+                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded-md text-xs border border-rose-100">
                                                 ✕ Contacto Oculto
                                             </span>
-                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded-md text-[11px] border border-rose-100">
+                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded-md text-xs border border-rose-100">
                                                 ✕ Finanzas Redactadas (null)
                                             </span>
                                         </div>
-                                        <span className="text-[11px] font-bold text-slate-400">
+                                        <span className="text-xs font-bold text-slate-400">
                                             ID: <code className="text-slate-600">{freePlan.id}</code>
                                         </span>
                                     </div>
@@ -734,7 +734,7 @@ export default function SuperadminPlanManager({
                             {/* SECCIÓN PLANES COMERCIALES PÚBLICOS */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 pt-2">
                                 <div>
-                                    <h4 className="text-base font-black text-slate-900 tracking-tight">
+                                    <h4 className="text-base font-bold text-slate-900 tracking-tight">
                                         Planes Comerciales Disponibles para Clientes
                                     </h4>
                                     <p className="text-xs text-slate-500 font-medium">
@@ -779,30 +779,30 @@ export default function SuperadminPlanManager({
                                                 <div className="flex items-center justify-between gap-2">
                                                     <div className="flex items-center gap-1.5 flex-wrap">
                                                         {plan.isFree && (
-                                                            <span className="px-2.5 py-0.5 bg-emerald-600 text-white rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                            <span className="px-2.5 py-0.5 bg-emerald-600 text-white rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1">
                                                                 <Lock size={10} /> Plan Free
                                                             </span>
                                                         )}
                                                         {plan.isDefault && (
-                                                            <span className="px-2.5 py-0.5 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-wider">
+                                                            <span className="px-2.5 py-0.5 bg-slate-900 text-white rounded-full text-xs font-bold uppercase tracking-wider">
                                                                 Por Defecto
                                                             </span>
                                                         )}
                                                         {plan.featured && (
-                                                            <span className="px-2.5 py-0.5 bg-amber-400 text-slate-950 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                            <span className="px-2.5 py-0.5 bg-amber-400 text-slate-950 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1">
                                                                 <Star size={10} className="fill-slate-950" /> Destacado
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                                        plan.activo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
-                                                    }`}>
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+ plan.activo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+ }`}>
                                                         {plan.activo ? 'Activo' : 'Inactivo'}
                                                     </span>
                                                 </div>
 
                                                 <div>
-                                                    <h4 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
+                                                    <h4 className="text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
                                                         {plan.name}
                                                     </h4>
                                                     <p className="text-xs text-slate-500 font-medium line-clamp-2 mt-1">
@@ -811,13 +811,13 @@ export default function SuperadminPlanManager({
                                                 </div>
 
                                                 <div className="pt-2">
-                                                    <span className="text-3xl font-black text-slate-950">${plan.price}</span>
+                                                    <span className="text-3xl font-bold text-slate-950">${plan.price}</span>
                                                     <span className="text-xs text-slate-400 font-bold"> / {plan.billingPeriod || 'mes'}</span>
                                                 </div>
 
                                                 <div className="py-2 border-y border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600">
                                                     <span>Módulos incluidos</span>
-                                                    <span className="text-indigo-600 font-black">{modulesCount} activos</span>
+                                                    <span className="text-indigo-600 font-bold">{modulesCount} activos</span>
                                                 </div>
 
                                                 {/* Límite de Sucursales destacado */}
@@ -828,7 +828,7 @@ export default function SuperadminPlanManager({
                                                             <span className="text-slate-500 font-semibold flex items-center gap-1.5">
                                                                 🏢 Sucursales:
                                                             </span>
-                                                            <span className={`font-black ${branchLimit === -1 || branchLimit > 1 ? 'text-indigo-600' : 'text-slate-700'}`}>
+                                                            <span className={`font-bold ${branchLimit === -1 || branchLimit > 1 ? 'text-indigo-600' : 'text-slate-700'}`}>
                                                                 {branchLimit === -1 ? 'Ilimitadas (Pro)' : branchLimit === 1 ? '1 (Solo Matriz)' : `${branchLimit} Sucursales`}
                                                             </span>
                                                         </div>
@@ -844,7 +844,7 @@ export default function SuperadminPlanManager({
                                                         </div>
                                                     ))}
                                                     {modulesCount > 5 && (
-                                                        <p className="text-[11px] font-bold text-slate-400 pt-1">
+                                                        <p className="text-xs font-bold text-slate-400 pt-1">
                                                             + {modulesCount - 5} módulos más
                                                         </p>
                                                     )}
@@ -854,7 +854,7 @@ export default function SuperadminPlanManager({
                                             <div className="pt-6 mt-4 border-t border-slate-100 flex items-center gap-2">
                                                 <button
                                                     onClick={() => handleOpenEditPlan(plan)}
-                                                    className="flex-1 py-2.5 bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 rounded-xl font-black text-xs uppercase tracking-wider transition-all text-center cursor-pointer"
+                                                    className="flex-1 py-2.5 bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 rounded-xl font-bold text-xs uppercase tracking-wider transition-all text-center cursor-pointer"
                                                 >
                                                     Editar Plan
                                                 </button>
@@ -916,10 +916,10 @@ export default function SuperadminPlanManager({
                         {/* Header del Modal */}
                         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                             <div>
-                                <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-wider">
+                                <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-wider">
                                     Familia: {activeFamily?.name}
                                 </span>
-                                <h3 className="text-2xl font-black text-slate-900 tracking-tight mt-1">
+                                <h3 className="text-2xl font-bold text-slate-900 tracking-tight mt-1">
                                     {editingPlan ? `Editar Plan: ${editingPlan.name}` : 'Crear Nuevo Plan'}
                                 </h3>
                             </div>
@@ -944,7 +944,7 @@ export default function SuperadminPlanManager({
                             
                             {/* Sección 1: Datos Básicos */}
                             <div className="space-y-4">
-                                <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">1. Datos Comerciales del Plan</h4>
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">1. Datos Comerciales del Plan</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div className="sm:col-span-2">
                                         <label className="block text-xs font-bold text-slate-700 mb-1">Nombre del Plan</label>
@@ -1039,7 +1039,7 @@ export default function SuperadminPlanManager({
                                             }}
                                             className="rounded size-4 text-emerald-600 cursor-pointer"
                                         />
-                                        <span className="flex items-center gap-1 font-black">
+                                        <span className="flex items-center gap-1 font-bold">
                                             <Lock size={12} className="text-emerald-600" />
                                             Plan Free Canónico de Familia (Fallback Expiración)
                                         </span>
@@ -1078,7 +1078,7 @@ export default function SuperadminPlanManager({
                             <div className="space-y-4 pt-4 border-t border-slate-100">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                                             2. Módulos y Capacidades Incluidas
                                         </h4>
                                         <p className="text-xs text-slate-500 font-medium">
@@ -1096,7 +1096,7 @@ export default function SuperadminPlanManager({
 
                                         return (
                                             <div key={catKey} className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-3">
-                                                <div className="flex items-center gap-2 font-black text-xs text-slate-900">
+                                                <div className="flex items-center gap-2 font-bold text-xs text-slate-900">
                                                     <IconCat size={16} className="text-indigo-600" />
                                                     <span>{cat.label}</span>
                                                 </div>
@@ -1120,7 +1120,7 @@ export default function SuperadminPlanManager({
                                                                     <p className="font-extrabold text-xs text-slate-900 truncate">
                                                                         {mod.name}
                                                                     </p>
-                                                                    <p className="text-[10px] text-slate-400 font-mono">
+                                                                    <p className="text-xs text-slate-400 font-mono">
                                                                         {mod.code}
                                                                     </p>
                                                                 </div>
@@ -1141,15 +1141,15 @@ export default function SuperadminPlanManager({
 
                             {/* Sección 3: Límites Universales */}
                             <div className="space-y-4 pt-4 border-t border-slate-100">
-                                <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                                     3. Límites Universales del Plan (-1 = Ilimitado)
                                 </h4>
 
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                     <div className="p-3 bg-indigo-50/50 border border-indigo-200/80 rounded-2xl">
-                                        <label className="block text-[11px] font-black text-indigo-950 mb-1 flex items-center justify-between">
+                                        <label className="block text-xs font-bold text-indigo-950 mb-1 flex items-center justify-between">
                                             <span>🏢 Sucursales</span>
-                                            <span className="text-[9px] text-indigo-600 font-bold">MAX_BRANCHES</span>
+                                            <span className="text-xs text-indigo-600 font-bold">Max_branches</span>
                                         </label>
                                         <input
                                             type="number"
@@ -1158,13 +1158,13 @@ export default function SuperadminPlanManager({
                                                 ...planForm,
                                                 limits: { ...planForm.limits, MAX_BRANCHES: parseInt(e.target.value, 10) }
                                             })}
-                                            className="w-full px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs font-black !text-indigo-900 focus:outline-indigo-600"
+                                            className="w-full px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs font-bold !text-indigo-900 focus:outline-indigo-600"
                                             placeholder="1"
                                         />
-                                        <p className="text-[9px] text-indigo-700 font-medium mt-1">1 = Matriz | &gt;1 o -1 = Pro</p>
+                                        <p className="text-xs text-indigo-700 font-medium mt-1">1 = Matriz | &gt;1 o -1 = Pro</p>
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Usuarios / Equipo</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Usuarios / Equipo</label>
                                         <input
                                             type="number"
                                             value={planForm.limits.MAX_USERS}
@@ -1176,7 +1176,7 @@ export default function SuperadminPlanManager({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Productos Catálogo</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Productos Catálogo</label>
                                         <input
                                             type="number"
                                             value={planForm.limits.MAX_PRODUCTS}
@@ -1188,7 +1188,7 @@ export default function SuperadminPlanManager({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Mesas (Restaurante)</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Mesas (Restaurante)</label>
                                         <input
                                             type="number"
                                             value={planForm.limits.MAX_TABLES}
@@ -1200,7 +1200,7 @@ export default function SuperadminPlanManager({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Canchas (Deportes)</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Canchas (Deportes)</label>
                                         <input
                                             type="number"
                                             value={planForm.limits.MAX_COURTS}
@@ -1212,7 +1212,7 @@ export default function SuperadminPlanManager({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Profesionales (Servicios)</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Profesionales (Servicios)</label>
                                         <input
                                             type="number"
                                             value={planForm.limits.MAX_STAFF}
@@ -1224,7 +1224,7 @@ export default function SuperadminPlanManager({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Citas Mensuales</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Citas Mensuales</label>
                                         <input
                                             type="number"
                                             value={planForm.limits.MAX_APPOINTMENTS_MONTHLY}
@@ -1236,7 +1236,7 @@ export default function SuperadminPlanManager({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Pedidos Mensuales</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Pedidos Mensuales</label>
                                         <input
                                             type="number"
                                             value={planForm.limits.MAX_ORDERS_MONTHLY}
@@ -1254,7 +1254,7 @@ export default function SuperadminPlanManager({
                             <div className="space-y-4 pt-4 border-t border-slate-100">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                                             4. Políticas de Acceso a Datos (Data Access Policies)
                                         </h4>
                                         <p className="text-xs text-slate-500 font-medium">
@@ -1265,14 +1265,14 @@ export default function SuperadminPlanManager({
                                         <button
                                             type="button"
                                             onClick={() => setPlanForm({ ...planForm, dataPolicies: { ...DEFAULT_PAID_POLICIES } })}
-                                            className="px-2.5 py-1 text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
+                                            className="px-2.5 py-1 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
                                         >
                                             Todo Permitido
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setPlanForm({ ...planForm, dataPolicies: { ...DEFAULT_FREE_POLICIES } })}
-                                            className="px-2.5 py-1 text-[11px] font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors cursor-pointer"
+                                            className="px-2.5 py-1 text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors cursor-pointer"
                                         >
                                             Modo Free / Expirado
                                         </button>
@@ -1318,7 +1318,7 @@ export default function SuperadminPlanManager({
                                                     <span className="block text-xs font-bold text-slate-800">
                                                         {label}
                                                     </span>
-                                                    <span className="block text-[11px] text-slate-500 font-medium leading-tight">
+                                                    <span className="block text-xs text-slate-500 font-medium leading-tight">
                                                         {desc}
                                                     </span>
                                                 </div>
@@ -1340,7 +1340,7 @@ export default function SuperadminPlanManager({
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/20 active:scale-95 cursor-pointer disabled:opacity-50"
+                                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/20 active:scale-95 cursor-pointer disabled:opacity-50"
                                 >
                                     {loading ? 'Guardando...' : (editingPlan ? 'Actualizar Plan' : 'Crear Plan')}
                                 </button>
@@ -1356,7 +1356,7 @@ export default function SuperadminPlanManager({
                 <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-6">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Nueva Familia de Planes</h3>
+                            <h3 className="text-xl font-bold text-slate-900 tracking-tight">Nueva Familia de Planes</h3>
                             <button onClick={() => setIsFamilyModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                                 <X size={20} />
                             </button>
@@ -1425,7 +1425,7 @@ export default function SuperadminPlanManager({
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-wider"
+                                    className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider"
                                 >
                                     {loading ? 'Creando...' : 'Crear Familia'}
                                 </button>

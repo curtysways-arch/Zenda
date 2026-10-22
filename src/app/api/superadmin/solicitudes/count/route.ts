@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
+
+export const dynamic = 'force-dynamic';
 
 async function isSuperAdmin() {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     const role = (session?.user as any)?.role;
     const roles = (session?.user as any)?.roles || [];
     return role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'ADMIN' || roles.includes('SUPERADMIN') || (session?.user as any)?.isAdminUser;

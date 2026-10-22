@@ -302,7 +302,7 @@ export default function MiEntrenamientoPage() {
       </div>
 
       <div>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
           <Dumbbell className="w-6 h-6 text-emerald-500" />
           Rutinas & Entrenamiento
         </h1>
@@ -320,11 +320,11 @@ export default function MiEntrenamientoPage() {
               setSelectedRoutineId(r.id);
               setWorkoutFinished(false);
             }}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-black shrink-0 transition-all border ${
-              r.id === activeRoutine.id
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-md'
-                : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800 hover:border-slate-300'
-            }`}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold shrink-0 transition-all border ${
+ r.id === activeRoutine.id
+ ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-md'
+ : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+ }`}
           >
             {r.name.split(':')[0]}
           </button>
@@ -335,16 +335,16 @@ export default function MiEntrenamientoPage() {
       <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-3">
         <div className="flex items-center justify-between text-xs">
           <div>
-            <h3 className="font-black text-slate-900 dark:text-white text-sm">
+            <h3 className="font-bold text-slate-900 dark:text-white text-sm">
               {activeRoutine.name}
             </h3>
-            <span className="text-[11px] text-slate-400 font-medium">
+            <span className="text-xs text-slate-400 font-medium">
               {activeRoutine.category} • {activeRoutine.level}
             </span>
           </div>
           <div className="text-right">
-            <span className="text-base font-black text-emerald-500">{progressPercent}%</span>
-            <span className="text-[10px] text-slate-400 block font-semibold">
+            <span className="text-base font-bold text-emerald-500">{progressPercent}%</span>
+            <span className="text-xs text-slate-400 block font-semibold">
               {completedSets} / {totalSets} series
             </span>
           </div>
@@ -361,13 +361,13 @@ export default function MiEntrenamientoPage() {
       {/* Temporizador de Descanso Flotante / Destacado */}
       <div className="rounded-3xl bg-slate-900 text-white p-4 border border-slate-800 flex items-center justify-between shadow-xl">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-mono font-black text-lg ${
-            timerSeconds > 0 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-slate-800 text-slate-400'
-          }`}>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-mono font-bold text-lg ${
+ timerSeconds > 0 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-slate-800 text-slate-400'
+ }`}>
             {timerSeconds > 0 ? `${timerSeconds}s` : '00s'}
           </div>
           <div>
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+            <span className="text-xs uppercase font-bold text-slate-400 tracking-wider block">
               Descanso entre series
             </span>
             <span className="text-xs font-semibold text-slate-200">
@@ -419,28 +419,28 @@ export default function MiEntrenamientoPage() {
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400">
                   Ejercicio {exIndex + 1} • {exercise.muscle}
                 </span>
-                <h4 className="font-black text-base text-slate-900 dark:text-white mt-0.5">
+                <h4 className="font-bold text-base text-slate-900 dark:text-white mt-0.5">
                   {exercise.name}
                 </h4>
               </div>
 
-              <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-bold shrink-0">
+              <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold shrink-0">
                 {exercise.reps}
               </span>
             </div>
 
             {exercise.notes && (
-              <p className="text-xs text-slate-400 italic">
+              <p className="text-xs text-slate-400 ">
                 💡 {exercise.notes}
               </p>
             )}
 
             {/* Checklist de Series */}
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
                 Series ({exercise.sets})
               </div>
               <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
@@ -448,11 +448,11 @@ export default function MiEntrenamientoPage() {
                   <button
                     key={setIdx}
                     onClick={() => toggleSet(exercise.id, setIdx)}
-                    className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 border ${
-                      done
-                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-emerald-500/50'
-                    }`}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border ${
+ done
+ ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm'
+ : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-emerald-500/50'
+ }`}
                   >
                     {done ? (
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
@@ -474,7 +474,7 @@ export default function MiEntrenamientoPage() {
           <div className="w-14 h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30">
             <Trophy className="w-8 h-8" />
           </div>
-          <h3 className="text-xl font-black text-slate-900 dark:text-white">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
             ¡Entrenamiento Completado!
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
@@ -493,7 +493,7 @@ export default function MiEntrenamientoPage() {
         <div className="pt-2">
           <button
             onClick={() => setWorkoutFinished(true)}
-            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-black rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 text-sm transition-all"
+            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 text-sm transition-all"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Finalizar Rutina del Día</span>

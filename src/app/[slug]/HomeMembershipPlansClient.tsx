@@ -488,12 +488,12 @@ export default function HomeMembershipPlansClient({
             <div className="flex justify-between items-end mb-6">
                 <div>
                     <span 
-                        className="text-[10px] font-black uppercase tracking-widest mb-1.5 block"
+                        className="text-xs font-bold uppercase tracking-wide mb-1.5 block"
                         style={{ color: primaryColor }}
                     >
                         MEMBRESÍAS & PASES
                     </span>
-                    <h3 className="text-2xl font-black leading-none text-slate-900">
+                    <h3 className="text-2xl font-bold leading-none text-slate-900">
                         Planes de Entrenamiento
                     </h3>
                     <p className="text-xs text-slate-400 font-medium mt-1.5">
@@ -511,14 +511,14 @@ export default function HomeMembershipPlansClient({
                         </div>
                         <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-amber-500 text-white shadow-xs">
+                                <span className="text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-amber-500 text-white shadow-xs">
                                     Promoción Activa
                                 </span>
-                                <span className="text-xs sm:text-sm font-black text-slate-900 truncate">
+                                <span className="text-xs sm:text-sm font-bold text-slate-900 truncate">
                                     {appliedPromo.titulo}
                                 </span>
                             </div>
-                            <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-1">
+                            <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">
                                 {appliedPromo.descripcion?.replace(/<!-- CITIOX_META:[\s\S]*?-->/, '').trim() || 'Descuento especial aplicado directamente a tu membresía.'}
                             </p>
                         </div>
@@ -543,11 +543,11 @@ export default function HomeMembershipPlansClient({
                     return (
                         <div
                             key={plan.id}
-                            className={`relative bg-white rounded-[2.5rem] border shadow-sm p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-md ${
-                                isFeatured 
-                                    ? 'ring-2 ring-offset-2' 
-                                    : 'border-slate-100 hover:border-slate-200'
-                            }`}
+                            className={`relative bg-white rounded-3xl border shadow-sm p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-md ${
+ isFeatured 
+ ? 'ring-2 ring-offset-2' 
+ : 'border-slate-100 hover:border-slate-200'
+ }`}
                             style={{
                                 borderColor: isFeatured ? primaryColor : undefined,
                                 outlineColor: isFeatured ? primaryColor : undefined
@@ -557,7 +557,7 @@ export default function HomeMembershipPlansClient({
                             <div className="absolute -top-3.5 left-6 right-6 flex items-center justify-between pointer-events-none">
                                 {isFeatured ? (
                                     <div 
-                                        className="px-3.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md flex items-center gap-1.5"
+                                        className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide text-white shadow-md flex items-center gap-1.5"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         <Sparkles size={11} className="fill-current" />
@@ -566,12 +566,12 @@ export default function HomeMembershipPlansClient({
                                 ) : <div />}
 
                                 {pricing.hasDiscount ? (
-                                    <div className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-md flex items-center gap-1">
+                                    <div className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-600 text-white shadow-md flex items-center gap-1">
                                         <Tag size={10} />
                                         ¡Ahorras ${pricing.discount}!
                                     </div>
                                 ) : pricing.isFreeRegistration ? (
-                                    <div className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-md flex items-center gap-1">
+                                    <div className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-600 text-white shadow-md flex items-center gap-1">
                                         <Sparkles size={10} />
                                         Inscripción Gratis
                                     </div>
@@ -582,10 +582,10 @@ export default function HomeMembershipPlansClient({
                                 {/* Header del Plan */}
                                 <div className="flex items-start justify-between gap-2 mb-3 mt-1">
                                     <div>
-                                        <h4 className="font-black text-xl text-slate-900 leading-tight">
+                                        <h4 className="font-bold text-xl text-slate-900 leading-tight">
                                             {plan.name}
                                         </h4>
-                                        <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                                        <span className="inline-block mt-1 text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">
                                             {formatDuration(plan.durationDays)}
                                         </span>
                                     </div>
@@ -605,25 +605,25 @@ export default function HomeMembershipPlansClient({
                                                 ${pricing.originalPrice}
                                             </span>
                                         )}
-                                        <span className="text-3xl font-black text-slate-900 tracking-tight">
+                                        <span className="text-3xl font-bold text-slate-900 tracking-tight">
                                             ${pricing.finalPrice}
                                         </span>
                                         <span className="text-xs font-bold text-slate-400 uppercase">
                                             {plan.currency || 'USD'}
                                         </span>
-                                        <span className="text-[11px] font-medium text-slate-400 ml-1">
+                                        <span className="text-xs font-medium text-slate-400 ml-1">
                                             / {plan.durationDays === 1 ? 'día' : plan.durationDays <= 31 ? 'mes' : `${plan.durationDays} días`}
                                         </span>
                                     </div>
 
                                     {pricing.hasDiscount && (
-                                        <p className="text-[11px] font-bold text-rose-600 mt-1.5 flex items-center gap-1">
+                                        <p className="text-xs font-bold text-rose-600 mt-1.5 flex items-center gap-1">
                                             <Tag size={12} />
                                             Precio promocional aplicado
                                         </p>
                                     )}
                                     {pricing.isFreeRegistration && (
-                                        <p className="text-[11px] font-bold text-emerald-600 mt-1.5 flex items-center gap-1">
+                                        <p className="text-xs font-bold text-emerald-600 mt-1.5 flex items-center gap-1">
                                             <Sparkles size={12} />
                                             ¡Ahorraste matrícula y carnet!
                                         </p>
@@ -633,7 +633,7 @@ export default function HomeMembershipPlansClient({
                                 {/* Checklist de Beneficios */}
                                 {benefitsList.length > 0 && (
                                     <div className="space-y-2.5 mb-6">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                                             Lo que incluye:
                                         </p>
                                         <ul className="space-y-2">
@@ -661,7 +661,7 @@ export default function HomeMembershipPlansClient({
                                 <button
                                     type="button"
                                     onClick={() => handleOpenCheckout(plan)}
-                                    className="w-full py-3.5 px-4 rounded-2xl text-xs font-black uppercase tracking-widest text-white shadow-md flex items-center justify-center gap-2 active:scale-[0.98] hover:opacity-95 transition-all"
+                                    className="w-full py-3.5 px-4 rounded-2xl text-xs font-bold uppercase tracking-wide text-white shadow-md flex items-center justify-center gap-2 active:scale-[0.98] hover:opacity-95 transition-all"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     <CreditCard size={15} />
@@ -669,7 +669,7 @@ export default function HomeMembershipPlansClient({
                                 </button>
                                 <Link
                                     href={`/${slug}/mi-qr`}
-                                    className="w-full py-2.5 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-50 hover:bg-slate-100 flex items-center justify-center gap-1.5 transition-colors"
+                                    className="w-full py-2.5 px-4 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50 hover:bg-slate-100 flex items-center justify-center gap-1.5 transition-colors"
                                 >
                                     <ShieldCheck size={13} className="text-slate-400" />
                                     Acceso con Carnet QR
@@ -687,13 +687,13 @@ export default function HomeMembershipPlansClient({
                 const modalPricing = getPlanPricing(selectedPlan);
                 return (
                     <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in overflow-y-auto">
-                        <div className="relative w-full max-w-lg bg-white rounded-[2rem] border border-slate-100 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+                        <div className="relative w-full max-w-lg bg-white rounded-3xl border border-slate-100 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
                             
                             {/* Header del Modal */}
                             <div className="p-5 sm:p-6 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between shrink-0">
                                 <div>
                                     <span 
-                                        className="text-[10px] font-black uppercase tracking-widest block"
+                                        className="text-xs font-bold uppercase tracking-wide block"
                                         style={{ color: primaryColor }}
                                     >
                                         {step === 'form' 
@@ -702,7 +702,7 @@ export default function HomeMembershipPlansClient({
                                                 ? 'Verificación de Seguridad' 
                                                 : 'Confirmación Oficial'}
                                     </span>
-                                    <h3 className="text-xl font-black text-slate-900 leading-tight">
+                                    <h3 className="text-xl font-bold text-slate-900 leading-tight">
                                         {step === 'form' 
                                             ? selectedPlan.name 
                                             : step === 'otp' 
@@ -715,7 +715,7 @@ export default function HomeMembershipPlansClient({
                                                 <span className="line-through text-slate-400 font-semibold">
                                                     ${modalPricing.originalPrice}
                                                 </span>
-                                                <span className="font-black text-rose-600">
+                                                <span className="font-bold text-rose-600">
                                                     ${modalPricing.finalPrice} {selectedPlan.currency || 'USD'}
                                                 </span>
                                                 <span className="text-slate-400 font-medium">
@@ -752,14 +752,14 @@ export default function HomeMembershipPlansClient({
                                     <div className="space-y-5">
                                         {/* SECCIÓN 1: DATOS DEL SOCIO */}
                                         <div className="space-y-3">
-                                            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-700">
+                                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
                                                 <User size={14} style={{ color: primaryColor }} />
                                                 <span>1. Datos del Socio</span>
                                             </div>
 
                                             <div className="space-y-3">
                                                 <div>
-                                                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                                                    <label className="block text-xs font-bold text-slate-600 mb-1">
                                                         Nombre Completo *
                                                     </label>
                                                     <input
@@ -780,7 +780,7 @@ export default function HomeMembershipPlansClient({
                                                         label="WhatsApp / Móvil *" 
                                                         placeholder="099 123 4567" 
                                                     />
-                                                    <p className="text-[10px] text-slate-400 mt-1 ml-1">
+                                                    <p className="text-xs text-slate-400 mt-1 ml-1">
                                                         Te enviaremos un código OTP a este número para confirmar tu pase de acceso.
                                                     </p>
                                                 </div>
@@ -789,9 +789,9 @@ export default function HomeMembershipPlansClient({
 
                                         {/* RESUMEN DE LA MEMBRESÍA Y PRECIO TRANSPARENTE */}
                                         <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
-                                            <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-slate-700">
+                                            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700">
                                                 <span>Resumen de tu Membresía</span>
-                                                <span className="text-[10px] font-bold text-slate-400">
+                                                <span className="text-xs font-bold text-slate-400">
                                                     {formatDuration(selectedPlan.durationDays)}
                                                 </span>
                                             </div>
@@ -819,17 +819,17 @@ export default function HomeMembershipPlansClient({
                                                             <Sparkles size={12} />
                                                             Inscripción / Matrícula
                                                         </span>
-                                                        <span>¡GRATIS ($0.00)!</span>
+                                                        <span>¡Gratis ($0.00)!</span>
                                                     </div>
                                                 )}
 
                                                 <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline">
-                                                    <span className="font-black text-slate-900 text-sm">Total a Pagar:</span>
+                                                    <span className="font-bold text-slate-900 text-sm">Total a Pagar:</span>
                                                     <div className="text-right">
-                                                        <span className="text-2xl font-black text-slate-900">
+                                                        <span className="text-2xl font-bold text-slate-900">
                                                             ${modalPricing.finalPrice.toFixed(2)}
                                                         </span>
-                                                        <span className="text-[10px] font-bold text-slate-500 uppercase ml-1">
+                                                        <span className="text-xs font-bold text-slate-500 uppercase ml-1">
                                                             {selectedPlan.currency || 'USD'}
                                                         </span>
                                                     </div>
@@ -839,7 +839,7 @@ export default function HomeMembershipPlansClient({
 
                                         {/* SECCIÓN 2: PASARELA Y MÉTODO DE PAGO */}
                                         <div className="space-y-3 pt-2 border-t border-slate-100">
-                                            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-700">
+                                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
                                                 <CreditCard size={14} style={{ color: primaryColor }} />
                                                 <span>2. Pasarela & Método de Pago</span>
                                             </div>
@@ -859,7 +859,7 @@ export default function HomeMembershipPlansClient({
                                                         size={18} 
                                                         className={paymentMethod === 'TARJETA_ONLINE' ? 'text-blue-600' : 'text-slate-400'} 
                                                     />
-                                                    <span className={`text-[10px] font-extrabold uppercase tracking-tight ${paymentMethod === 'TARJETA_ONLINE' ? 'text-blue-900' : 'text-slate-600'}`}>
+                                                    <span className={`text-xs font-extrabold uppercase tracking-tight ${paymentMethod === 'TARJETA_ONLINE' ? 'text-blue-900' : 'text-slate-600'}`}>
                                                         Tarjeta Online
                                                     </span>
                                                 </button>
@@ -877,7 +877,7 @@ export default function HomeMembershipPlansClient({
                                                         size={18} 
                                                         className={paymentMethod === 'TRANSFERENCIA' ? 'text-blue-600' : 'text-slate-400'} 
                                                     />
-                                                    <span className={`text-[10px] font-extrabold uppercase tracking-tight ${paymentMethod === 'TRANSFERENCIA' ? 'text-blue-900' : 'text-slate-600'}`}>
+                                                    <span className={`text-xs font-extrabold uppercase tracking-tight ${paymentMethod === 'TRANSFERENCIA' ? 'text-blue-900' : 'text-slate-600'}`}>
                                                         Transferencia
                                                     </span>
                                                 </button>
@@ -895,7 +895,7 @@ export default function HomeMembershipPlansClient({
                                                         size={18} 
                                                         className={paymentMethod === 'RECEPCION_EFECTIVO' ? 'text-blue-600' : 'text-slate-400'} 
                                                     />
-                                                    <span className={`text-[10px] font-extrabold uppercase tracking-tight ${paymentMethod === 'RECEPCION_EFECTIVO' ? 'text-blue-900' : 'text-slate-600'}`}>
+                                                    <span className={`text-xs font-extrabold uppercase tracking-tight ${paymentMethod === 'RECEPCION_EFECTIVO' ? 'text-blue-900' : 'text-slate-600'}`}>
                                                         En Recepción
                                                     </span>
                                                 </button>
@@ -905,17 +905,17 @@ export default function HomeMembershipPlansClient({
                                             {paymentMethod === 'TARJETA_ONLINE' && (
                                                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 animate-in fade-in">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                                             Pago Seguro con Encriptación SSL
                                                         </span>
                                                         <div className="flex items-center gap-1.5 text-slate-400">
                                                             <Lock size={12} className="text-emerald-500" />
-                                                            <span className="text-[9px] font-bold text-emerald-600">256-bit</span>
+                                                            <span className="text-xs font-bold text-emerald-600">256-bit</span>
                                                         </div>
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
                                                             Número de Tarjeta
                                                         </label>
                                                         <input
@@ -933,7 +933,7 @@ export default function HomeMembershipPlansClient({
 
                                                     <div className="grid grid-cols-2 gap-2.5">
                                                         <div>
-                                                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
                                                                 Vencimiento (MM/AA)
                                                             </label>
                                                             <input
@@ -950,7 +950,7 @@ export default function HomeMembershipPlansClient({
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
                                                                 CVC / CVV
                                                             </label>
                                                             <input
@@ -969,10 +969,10 @@ export default function HomeMembershipPlansClient({
                                             {paymentMethod === 'TRANSFERENCIA' && (
                                                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 animate-in fade-in">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-600">
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
                                                             Datos de Cuenta del Gimnasio
                                                         </span>
-                                                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                                        <span className="text-xs font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                                                             Sin Comisión
                                                         </span>
                                                     </div>
@@ -1009,14 +1009,14 @@ export default function HomeMembershipPlansClient({
                                                             </div>
                                                         </div>
                                                         {copiedAccount && (
-                                                            <p className="text-[10px] text-emerald-600 font-bold text-right">
+                                                            <p className="text-xs text-emerald-600 font-bold text-right">
                                                                 ✓ Copiado al portapapeles
                                                             </p>
                                                         )}
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                                                             Número de Comprobante / Referencia *
                                                         </label>
                                                         <input
@@ -1033,7 +1033,7 @@ export default function HomeMembershipPlansClient({
 
                                             {paymentMethod === 'RECEPCION_EFECTIVO' && (
                                                 <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-900 space-y-2 animate-in fade-in">
-                                                    <div className="flex items-center gap-2 font-black text-xs uppercase">
+                                                    <div className="flex items-center gap-2 font-bold text-xs uppercase">
                                                         <Banknote size={16} className="text-amber-600" />
                                                         <span>Pago al Primer Ingreso</span>
                                                     </div>
@@ -1059,7 +1059,7 @@ export default function HomeMembershipPlansClient({
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                                            <h4 className="text-xl font-bold text-slate-900 tracking-tight">
                                                 Introduce el Código
                                             </h4>
                                             <p className="text-xs text-slate-500 max-w-xs mx-auto">
@@ -1070,7 +1070,7 @@ export default function HomeMembershipPlansClient({
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setStep('form')}
-                                                    className="text-blue-600 hover:underline text-[10px] font-sans font-bold"
+                                                    className="text-blue-600 hover:underline text-xs font-sans font-bold"
                                                 >
                                                     Cambiar
                                                 </button>
@@ -1086,11 +1086,11 @@ export default function HomeMembershipPlansClient({
                                                     return (
                                                         <div
                                                             key={idx}
-                                                            className={`flex-1 h-14 bg-white border-2 rounded-2xl flex items-center justify-center text-2xl font-black transition-all ${
-                                                                char 
-                                                                    ? 'text-slate-900 border-slate-400 shadow-sm' 
-                                                                    : 'bg-slate-50 border-slate-200 text-slate-300'
-                                                            }`}
+                                                            className={`flex-1 h-14 bg-white border-2 rounded-2xl flex items-center justify-center text-2xl font-bold transition-all ${
+ char 
+ ? 'text-slate-900 border-slate-400 shadow-sm' 
+ : 'bg-slate-50 border-slate-200 text-slate-300'
+ }`}
                                                             style={{ borderColor: (isActive || char) ? primaryColor : undefined }}
                                                         >
                                                             {char}
@@ -1113,7 +1113,7 @@ export default function HomeMembershipPlansClient({
                                         {/* Resumen Compacto de la Compra */}
                                         <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs text-slate-600">
                                             <span className="font-medium">Plan: <strong>{selectedPlan.name}</strong></span>
-                                            <span className="font-black text-slate-900">Total: ${modalPricing.finalPrice.toFixed(2)}</span>
+                                            <span className="font-bold text-slate-900">Total: ${modalPricing.finalPrice.toFixed(2)}</span>
                                         </div>
                                     </div>
                                 )}
@@ -1128,10 +1128,10 @@ export default function HomeMembershipPlansClient({
                                         </div>
 
                                         <div>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                                            <span className="text-xs font-bold uppercase tracking-wide text-emerald-600">
                                                 ¡Adquisición Confirmada con Éxito!
                                             </span>
-                                            <h4 className="text-2xl font-black text-slate-900 mt-1">
+                                            <h4 className="text-2xl font-bold text-slate-900 mt-1">
                                                 ¡Bienvenido a {businessName || 'nuestro Club'}!
                                             </h4>
                                             <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
@@ -1155,10 +1155,10 @@ export default function HomeMembershipPlansClient({
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-slate-400">Total:</span>
-                                                <span className="font-black text-slate-900">
+                                                <span className="font-bold text-slate-900">
                                                     ${modalPricing.finalPrice.toFixed(2)} {selectedPlan.currency || 'USD'}
                                                     {modalPricing.hasDiscount && (
-                                                        <span className="text-[10px] font-bold text-rose-600 ml-1.5">
+                                                        <span className="text-xs font-bold text-rose-600 ml-1.5">
                                                             (Ahorro de ${modalPricing.discount})
                                                         </span>
                                                     )}
@@ -1180,7 +1180,7 @@ export default function HomeMembershipPlansClient({
                                         <div className="space-y-2.5 pt-2">
                                             <Link
                                                 href={`/${slug}/mi-qr`}
-                                                className="w-full py-4 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-xl flex items-center justify-center gap-2 transition-all hover:opacity-95"
+                                                className="w-full py-4 px-4 rounded-2xl font-bold text-xs uppercase tracking-wide text-white shadow-xl flex items-center justify-center gap-2 transition-all hover:opacity-95"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 <QrCode size={18} />
@@ -1191,7 +1191,7 @@ export default function HomeMembershipPlansClient({
                                                 href={getSuccessWhatsappUrl()}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center justify-center gap-2 transition-colors"
+                                                className="w-full py-3.5 px-4 rounded-2xl font-bold text-xs uppercase tracking-wide text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center justify-center gap-2 transition-colors"
                                             >
                                                 <MessageCircle size={16} />
                                                 <span>Enviar Constancia a WhatsApp</span>
@@ -1218,7 +1218,7 @@ export default function HomeMembershipPlansClient({
                                         type="button"
                                         onClick={handleRequestOtp}
                                         disabled={isSendingOtp}
-                                        className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+                                        className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wide text-white shadow-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         {isSendingOtp ? (
@@ -1238,7 +1238,7 @@ export default function HomeMembershipPlansClient({
                                             </>
                                         )}
                                     </button>
-                                    <p className="text-center text-[10px] text-slate-400">
+                                    <p className="text-center text-xs text-slate-400">
                                         Al pulsar recibirás un código de confirmación por WhatsApp para activar tu pase.
                                     </p>
                                 </div>
@@ -1250,7 +1250,7 @@ export default function HomeMembershipPlansClient({
                                         type="button"
                                         onClick={handleVerifyOtpAndCheckout}
                                         disabled={isVerifyingOtp || otpCode.replace(/\D/g, '').length < 4}
-                                        className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+                                        className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wide text-white shadow-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         {isVerifyingOtp ? (
@@ -1266,7 +1266,7 @@ export default function HomeMembershipPlansClient({
                                         <button
                                             type="button"
                                             onClick={() => setStep('form')}
-                                            className="text-[11px] font-bold text-slate-400 hover:text-slate-700 flex items-center gap-1 transition-colors"
+                                            className="text-xs font-bold text-slate-400 hover:text-slate-700 flex items-center gap-1 transition-colors"
                                         >
                                             <ArrowLeft size={13} />
                                             <span>Modificar datos</span>
@@ -1275,7 +1275,7 @@ export default function HomeMembershipPlansClient({
                                             type="button"
                                             disabled={otpCountdown > 0 || isSendingOtp}
                                             onClick={handleResendOtp}
-                                            className="text-[11px] font-bold disabled:text-slate-300 text-blue-600 hover:text-blue-700 transition-colors"
+                                            className="text-xs font-bold disabled:text-slate-300 text-blue-600 hover:text-blue-700 transition-colors"
                                         >
                                             {otpCountdown > 0 ? `Reenviar en ${otpCountdown}s` : 'Reenviar código'}
                                         </button>

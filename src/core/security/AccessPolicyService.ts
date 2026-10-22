@@ -21,6 +21,7 @@ import {
   EffectivePlanContext 
 } from './dataPolicyTypes';
 import { DataProtector } from './dataProtector';
+import { computePhase } from '@/lib/subscription/lifecycle';
 
 export class AccessPolicyService {
   /**
@@ -83,15 +84,18 @@ export class AccessPolicyService {
     const planFamilyId = family?.id || null;
     const planFamilyCode = family?.code || null;
 
-    // Verificar vigencia temporal de la suscripción
-    const now = new Date();
-    const fechaFin = sub?.fechaFin ? new Date(sub.fechaFin) : null;
-    const isVencidaFecha = Boolean(fechaFin && now > fechaFin);
+    // Vigencia según el ciclo único (prueba → 7 días de gracia → bloqueado).
+    // Durante la gracia el negocio conserva todo; solo al pasarla se considera vencido.
+    const phaseInfo = computePhase({
+      estado: sub?.estado,
+      fechaFin: sub?.fechaFin,
+      planIsFree: planContratado?.isFree,
+      negocioEstado: negocio.estado,
+    });
     const estadoLower = (sub?.estado || '').toLowerCase();
-    const isExpiredState = estadoLower === 'expired' || estadoLower === 'vencida' || estadoLower === 'suspendida' || estadoLower === 'cancelada';
-    const isPastDue = estadoLower === 'past_due' || estadoLower === 'grace';
+    const isPastDue = phaseInfo.phase === 'GRACE' || estadoLower === 'past_due' || estadoLower === 'grace';
 
-    const isExpired = isExpiredState || isVencidaFecha;
+    const isExpired = phaseInfo.phase === 'BLOCKED' || phaseInfo.phase === 'SUSPENDED';
 
     // ── ESCENARIO A: Suscripción ACTIVA y VIGENTE ──
     if (sub && planContratado && !isExpired) {
@@ -194,7 +198,8 @@ export class AccessPolicyService {
     }
 
     // Evaluación de acciones
-    let receive = policyMap[DATA_ACTIONS.RECEIVE] ?? true; // Por defecto permitido para no bloquear clientes
+    // Bloqueado por falta de pago: no recibe reservas/pedidos (el cliente no quedaría sin atender)
+    let receive = context.isExpired ? false : (policyMap[DATA_ACTIONS.RECEIVE] ?? true);
     let view = policyMap[DATA_ACTIONS.VIEW] ?? (context.isFreeTier ? false : true);
     let details = policyMap[DATA_ACTIONS.VIEW_DETAILS] ?? (context.isFreeTier ? false : true);
     let customer = policyMap[DATA_ACTIONS.VIEW_CUSTOMER] ?? (context.isFreeTier ? false : true);

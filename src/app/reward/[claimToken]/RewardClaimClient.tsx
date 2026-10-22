@@ -1,19 +1,14 @@
 'use client';
 
+/**
+ * Pantalla del personal al escanear el QR de un premio.
+ * Una decisión clara: "Entregar ahora" (el cliente está aquí) o "Avisar que está listo"
+ * (hay que prepararlo y el cliente vuelve luego). Antes siempre eran dos pasos.
+ */
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-    Gift, 
-    User, 
-    Phone, 
-    Building, 
-    Clock, 
-    CheckCircle, 
-    AlertTriangle, 
-    Sparkles, 
-    ArrowLeft,
-    ShieldCheck
-} from 'lucide-react';
+import { AlertTriangle, BellRing, CheckCircle2, Clock, Gift, Loader2, Phone, User } from 'lucide-react';
 import { UnifiedRewardData } from '@/lib/loyalty/rewardService';
 
 interface RewardClaimClientProps {
@@ -23,248 +18,174 @@ interface RewardClaimClientProps {
     audits: any[];
 }
 
+const ACCION: Record<string, string> = {
+    SCANNED: 'Escaneado',
+    REQUESTED: 'Cliente lo pidió',
+    READY: 'Marcado como listo',
+    DELIVERED: 'Entregado',
+    REGENERATED: 'Código renovado',
+};
+
+const cuando = (d: any) =>
+    new Date(d).toLocaleString('es-EC', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
 export default function RewardClaimClient({ reward, sig, employeeName, audits }: RewardClaimClientProps) {
     const router = useRouter();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState<'READY' | 'DELIVER' | null>(null);
     const [status, setStatus] = useState(reward.estado);
     const [error, setError] = useState<string | null>(null);
-    const [claimTokenRevokedAt, setClaimTokenRevokedAt] = useState<Date | null>(
-        reward.claimTokenRevokedAt ? new Date(reward.claimTokenRevokedAt) : null
-    );
+    const [revokedAt, setRevokedAt] = useState<Date | null>(reward.claimTokenRevokedAt ? new Date(reward.claimTokenRevokedAt) : null);
+    const [showLog, setShowLog] = useState(false);
 
     const isExpired = reward.claimTokenExpiresAt ? new Date(reward.claimTokenExpiresAt) < new Date() : false;
+    const delivered = !!revokedAt || status === 'ENTREGADO';
+    const canAct = !delivered && !isExpired && (status === 'SOLICITADO' || status === 'LISTO_PARA_RETIRAR');
 
-    const handleAction = async (actionType: 'READY' | 'DELIVER') => {
-        setLoading(true);
+    const act = async (action: 'READY' | 'DELIVER') => {
+        setLoading(action);
         setError(null);
         try {
             const res = await fetch('/api/admin/loyalty/entregar', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    claimToken: reward.claimToken,
-                    action: actionType,
-                    sig
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ claimToken: reward.claimToken, action, sig }),
             });
-
             const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || 'Error al procesar la acción');
-            }
-
+            if (!res.ok) throw new Error(data.error || 'No se pudo completar la acción.');
             setStatus(data.estado);
-            if (data.estado === 'ENTREGADO') {
-                setClaimTokenRevokedAt(new Date());
-            }
+            if (data.estado === 'ENTREGADO') setRevokedAt(new Date());
             router.refresh();
-        } catch (err: any) {
-            setError(err.message);
+        } catch (e: any) {
+            setError(e.message);
         } finally {
-            setLoading(false);
+            setLoading(null);
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-50/50 pb-20 font-sans">
-            {/* Header decorativo */}
-            <div className="bg-slate-900 text-white pt-10 pb-16 px-6 relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10" style={{
-                    backgroundImage: `radial-gradient(circle at 10% 20%, white 1px, transparent 1px)`,
-                    backgroundSize: '24px 24px'
-                }} />
-                
-                <div className="max-w-md mx-auto flex items-center justify-between relative z-10">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-pink-500">CITIOX FIDELIDAD</span>
-                    <span className="text-[9px] font-bold bg-white/10 px-3 py-1 rounded-full text-slate-300">
-                        Atendido por: {employeeName}
-                    </span>
+        <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
+            <header className="bg-white border-b border-slate-200">
+                <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
+                    <p className="font-semibold">{reward.negocioNombre}</p>
+                    <p className="text-sm text-slate-500">Atiende: {employeeName}</p>
                 </div>
+            </header>
 
-                <div className="max-w-md mx-auto mt-8 text-center space-y-1 relative z-10">
-                    <h1 className="text-3xl font-black uppercase italic tracking-tight">Validar Premio</h1>
-                    <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">
-                        Ficha de entrega física y QR de seguridad
-                    </p>
-                </div>
-            </div>
-
-            {/* Ficha Principal */}
-            <div className="max-w-md mx-auto px-4 -mt-8 relative z-20 space-y-6">
-                
-                {/* Alertas de Estado del QR */}
-                {claimTokenRevokedAt ? (
-                    <div className="bg-rose-50 border border-rose-200 rounded-3xl p-5 text-center space-y-3 shadow-sm animate-in zoom-in-95">
-                        <AlertTriangle className="mx-auto text-rose-600" size={32} />
-                        <div>
-                            <h3 className="text-xs font-black text-rose-800 uppercase tracking-wide">Premio ya entregado</h3>
-                            <p className="text-[11px] font-bold text-rose-700/80 mt-1 uppercase">
-                                Este premio físico ya fue entregado el {claimTokenRevokedAt.toLocaleDateString('es-ES')} a las {claimTokenRevokedAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}.
-                            </p>
-                        </div>
-                    </div>
+            <main className="max-w-md mx-auto px-4 pt-5 space-y-4">
+                {/* Estado principal */}
+                {delivered ? (
+                    <section className="rounded-3xl bg-emerald-600 text-white p-6 text-center">
+                        <CheckCircle2 className="w-14 h-14 mx-auto" />
+                        <h1 className="mt-3 text-2xl font-bold">Premio entregado</h1>
+                        <p className="mt-1 text-white/85">
+                            {revokedAt ? `El ${cuando(revokedAt)}. ` : ''}Este código ya no se puede volver a usar.
+                        </p>
+                    </section>
                 ) : isExpired ? (
-                    <div className="bg-rose-50 border border-rose-200 rounded-3xl p-5 text-center space-y-3 shadow-sm animate-in zoom-in-95">
-                        <AlertTriangle className="mx-auto text-rose-600" size={32} />
-                        <div>
-                            <h3 className="text-xs font-black text-rose-800 uppercase tracking-wide">Código QR Expirado</h3>
-                            <p className="text-[11px] font-bold text-rose-700/80 mt-1 uppercase">
-                                ⚠️ Este código de reclamación ha expirado. Genera uno nuevo desde Mis Premios.
-                            </p>
-                        </div>
-                    </div>
+                    <section className="rounded-3xl bg-amber-50 ring-1 ring-amber-200 p-6 text-center">
+                        <AlertTriangle className="w-12 h-12 mx-auto text-amber-600" />
+                        <h1 className="mt-3 text-xl font-bold">El código venció</h1>
+                        <p className="mt-1 text-slate-600">Pide al cliente que toque "Renovar código" en Mis premios y vuelve a escanear.</p>
+                    </section>
+                ) : status === 'LISTO_PARA_RETIRAR' ? (
+                    <section className="rounded-3xl bg-white ring-2 ring-emerald-500 p-5">
+                        <p className="text-sm font-semibold text-emerald-700">Listo para retirar</p>
+                        <h1 className="mt-1 text-2xl font-bold">Entrega el premio al cliente</h1>
+                    </section>
                 ) : status === 'SOLICITADO' ? (
-                    <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 text-center space-y-2 shadow-sm">
-                        <Clock className="mx-auto text-amber-600 animate-pulse" size={32} />
-                        <div>
-                            <h3 className="text-xs font-black text-amber-800 uppercase tracking-wide">El premio aún está siendo preparado</h3>
-                            <p className="text-[10px] font-bold text-amber-700/80 uppercase">
-                                Por favor, prepara el premio físico para el cliente y márcalo como "Listo para retirar" para habilitar la entrega.
-                            </p>
-                        </div>
-                    </div>
-                ) : status === 'LISTO_PARA_RETIRAR' && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-5 text-center space-y-2 shadow-sm animate-in fade-in">
-                        <Sparkles className="mx-auto text-emerald-600 animate-bounce" size={32} />
-                        <div>
-                            <h3 className="text-xs font-black text-emerald-800 uppercase tracking-wide">¡Listo para retirar!</h3>
-                            <p className="text-[10px] font-bold text-emerald-700/80 uppercase">
-                                El cliente está listo para retirar este premio. Confirma la entrega física presionando el botón.
-                            </p>
-                        </div>
-                    </div>
+                    <section className="rounded-3xl bg-white ring-1 ring-slate-200 p-5">
+                        <p className="text-sm font-semibold text-amber-700">Pendiente de entregar</p>
+                        <h1 className="mt-1 text-2xl font-bold">¿El cliente está aquí?</h1>
+                        <p className="mt-1 text-slate-600">Entrégalo ahora, o márcalo como listo si necesitas prepararlo y le avisamos por WhatsApp.</p>
+                    </section>
+                ) : (
+                    <section className="rounded-3xl bg-white ring-1 ring-slate-200 p-5">
+                        <h1 className="text-xl font-bold">Este premio no está pendiente de entrega</h1>
+                        <p className="mt-1 text-slate-600">Estado actual: {status.toLowerCase().replace(/_/g, ' ')}.</p>
+                    </section>
                 )}
 
-                {error && (
-                    <div className="bg-rose-50 text-rose-700 p-4 rounded-2xl text-xs font-bold text-center border border-rose-100">
-                        {error}
-                    </div>
-                )}
-
-                {/* Tarjeta de Datos */}
-                <div className="bg-white border border-slate-100 rounded-[2.5rem] p-6 shadow-sm space-y-6">
-                    
-                    {/* Detalles del Premio */}
-                    <div className="flex gap-4 items-start">
-                        <div className="size-12 rounded-2xl bg-pink-50 flex items-center justify-center text-pink-500 shrink-0">
-                            <Gift size={24} />
-                        </div>
-                        <div>
-                            <span className="text-[9px] font-black uppercase tracking-wider text-pink-500 bg-pink-50 px-2 py-0.5 rounded-md">
-                                {reward.tipoOrigen === 'PUNTOS' ? 'Canje / Misión' : 'Referido'}
-                            </span>
-                            <h2 className="text-base font-black text-slate-800 uppercase tracking-tight mt-1">{reward.nombre}</h2>
-                            <p className="text-xs text-slate-500 mt-0.5">{reward.descripcion}</p>
+                {/* Ficha del premio */}
+                <section className="rounded-3xl bg-white ring-1 ring-slate-200 overflow-hidden">
+                    <div className="p-5 flex gap-4">
+                        <span className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                            <Gift className="w-7 h-7" />
+                        </span>
+                        <div className="min-w-0">
+                            <h2 className="text-lg font-bold leading-snug">{reward.nombre}</h2>
+                            {reward.descripcion && <p className="text-slate-600 mt-0.5">{reward.descripcion}</p>}
+                            {reward.claimCode && <p className="mt-2 font-mono font-bold tracking-[0.1em] text-slate-800">{reward.claimCode}</p>}
                         </div>
                     </div>
-
-                    <hr className="border-slate-50" />
-
-                    {/* Información del Negocio y Cliente */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <Building size={16} className="text-slate-400" />
-                            <div>
-                                <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 block">NEGOCIO</span>
-                                <span className="text-xs font-bold text-slate-700 uppercase">{reward.negocioNombre}</span>
-                            </div>
+                    <dl className="border-t border-slate-100 divide-y divide-slate-100 text-sm">
+                        <div className="px-5 py-3 flex items-center gap-3">
+                            <User className="w-4 h-4 text-slate-400" />
+                            <dt className="sr-only">Cliente</dt>
+                            <dd className="font-medium">{reward.clienteNombre || 'Cliente'}</dd>
                         </div>
-
-                        <div className="flex items-center gap-3">
-                            <User size={16} className="text-slate-400" />
-                            <div>
-                                <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 block">CLIENTE</span>
-                                <span className="text-xs font-bold text-slate-700 uppercase">{reward.clienteNombre}</span>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <Phone size={16} className="text-slate-400" />
-                            <div>
-                                <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 block">TELÉFONO CLIENTE</span>
-                                <span className="text-xs font-bold text-slate-700">{reward.clienteTelefono}</span>
-                            </div>
-                        </div>
-
-                        {reward.claimCode && (
-                            <div className="flex items-center gap-3">
-                                <ShieldCheck size={16} className="text-slate-400" />
-                                <div>
-                                    <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 block">CÓDIGO DE RECLAMO MANUAL</span>
-                                    <span className="text-sm font-black text-slate-800 font-mono tracking-wider">{reward.claimCode}</span>
-                                </div>
+                        {reward.clienteTelefono && (
+                            <div className="px-5 py-3 flex items-center gap-3">
+                                <Phone className="w-4 h-4 text-slate-400" />
+                                <dt className="sr-only">Teléfono</dt>
+                                <dd>{reward.clienteTelefono}</dd>
                             </div>
                         )}
-                    </div>
+                        {reward.claimTokenExpiresAt && !delivered && (
+                            <div className="px-5 py-3 flex items-center gap-3 text-slate-500">
+                                <Clock className="w-4 h-4 text-slate-400" />
+                                <dt className="sr-only">Vence</dt>
+                                <dd>Código válido hasta el {cuando(reward.claimTokenExpiresAt)}</dd>
+                            </div>
+                        )}
+                    </dl>
+                </section>
 
-                    <hr className="border-slate-50" />
+                {error && <p className="text-sm text-rose-700 bg-rose-50 rounded-xl px-3 py-2">{error}</p>}
 
-                    {/* Acciones de Negocio */}
-                    {!claimTokenRevokedAt && !isExpired && (
-                        <div className="pt-2">
-                            {status === 'SOLICITADO' ? (
-                                <button
-                                    onClick={() => handleAction('READY')}
-                                    disabled={loading}
-                                    className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all border-0 shadow-sm cursor-pointer disabled:opacity-50"
-                                >
-                                    {loading ? 'Procesando...' : 'Marcar listo para retirar'}
-                                </button>
-                            ) : status === 'LISTO_PARA_RETIRAR' ? (
-                                <button
-                                    onClick={() => handleAction('DELIVER')}
-                                    disabled={loading}
-                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all border-0 shadow-sm cursor-pointer disabled:opacity-50"
-                                >
-                                    {loading ? 'Procesando...' : 'Confirmar entrega física'}
-                                </button>
-                            ) : null}
-                        </div>
-                    )}
-                </div>
-
-                {/* Historial de Auditoría de Escaneos */}
-                {audits && audits.length > 0 && (
-                    <div className="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm space-y-4">
-                        <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                            <Clock size={12} />
-                            Historial de Escaneo y Auditoría
-                        </h4>
-                        
-                        <div className="space-y-3 max-h-[180px] overflow-y-auto pr-1">
-                            {audits.map((audit) => (
-                                <div key={audit.id} className="text-[10px] border-b border-slate-50 pb-2.5 last:border-0 last:pb-0 space-y-1">
-                                    <div className="flex justify-between items-center">
-                                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
-                                            audit.accion === 'SCANNED' ? 'bg-slate-100 text-slate-600' :
-                                            audit.accion === 'READY' ? 'bg-amber-50 text-amber-700' :
-                                            audit.accion === 'DELIVERED' ? 'bg-emerald-50 text-emerald-700' :
-                                            'bg-rose-50 text-rose-700'
-                                        }`}>
-                                            {audit.accion === 'SCANNED' ? 'Escaneado' :
-                                             audit.accion === 'READY' ? 'Listo' :
-                                             audit.accion === 'DELIVERED' ? 'Entregado' : audit.accion}
-                                        </span>
-                                        <span className="text-[9px] font-medium text-slate-400">
-                                            {new Date(audit.createdAt).toLocaleDateString('es-ES')} {new Date(audit.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                    </div>
-                                    <p className="text-slate-600 font-semibold">
-                                        Realizado por: <span className="text-slate-800">{audit.empleadoId || 'Sistema'}</span>
-                                    </p>
-                                    {audit.ip && (
-                                        <p className="text-slate-400 text-[8px]">
-                                            IP: {audit.ip} | Dispositivo: {audit.userAgent?.substring(0, 40)}...
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                {canAct && (
+                    <div className="space-y-2">
+                        <button
+                            onClick={() => act('DELIVER')}
+                            disabled={!!loading}
+                            className="w-full py-4 rounded-2xl bg-emerald-600 text-white text-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
+                        >
+                            {loading === 'DELIVER' ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                            Entregar ahora
+                        </button>
+                        {status === 'SOLICITADO' && (
+                            <button
+                                onClick={() => act('READY')}
+                                disabled={!!loading}
+                                className="w-full py-3.5 rounded-2xl bg-white ring-1 ring-slate-200 font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
+                            >
+                                {loading === 'READY' ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />}
+                                Lo preparo y aviso al cliente
+                            </button>
+                        )}
                     </div>
                 )}
-            </div>
+
+                {audits?.length > 0 && (
+                    <section>
+                        <button onClick={() => setShowLog((v) => !v)} className="text-sm font-medium text-slate-500 underline underline-offset-4">
+                            {showLog ? 'Ocultar historial' : `Ver historial (${audits.length})`}
+                        </button>
+                        {showLog && (
+                            <ol className="mt-2 rounded-2xl bg-white ring-1 ring-slate-200 divide-y divide-slate-100 text-sm">
+                                {audits.map((a) => (
+                                    <li key={a.id} className="px-4 py-2.5 flex justify-between gap-3">
+                                        <span>
+                                            {ACCION[a.accion] || a.accion}
+                                            <span className="text-slate-500"> · {a.empleadoId || 'Sistema'}</span>
+                                        </span>
+                                        <span className="text-slate-400 shrink-0">{cuando(a.createdAt)}</span>
+                                    </li>
+                                ))}
+                            </ol>
+                        )}
+                    </section>
+                )}
+            </main>
         </div>
     );
 }

@@ -95,6 +95,10 @@ export async function POST(
             .setExpirationTime("30d") // Aumentamos a 30 días para comodidad del profesor
             .sign(secret);
 
+        const tipoNegocio = ((negocio as any).tipoNegocio || 'PRODUCTOS').toUpperCase();
+        const isAcademy = tipoNegocio === 'ACADEMIA' || tipoNegocio === 'COURSES' || tipoNegocio === 'CURSOS';
+        const defaultClientRedirect = isAcademy ? `/${slug}/mis-cursos` : `/${slug}/perfil`;
+
         const response = NextResponse.json({
             success: true,
             message: "Verificación exitosa",
@@ -106,8 +110,8 @@ export async function POST(
                     : roles.includes('ADMIN_NEGOCIO') 
                         ? '/admin' 
                         : roles.includes('SUPERADMIN')
-                            ? '/admin' // O /superadmin si existiera una ruta separada
-                            : `/${slug}/mis-cursos`
+                            ? '/admin'
+                            : defaultClientRedirect
         });
 
         // Guardar token en cookie segura httpOnly por 30 días

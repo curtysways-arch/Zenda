@@ -564,7 +564,7 @@ function UsuarioFormContent() {
         return (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <Loader2 className="animate-spin text-indigo-600" size={48} />
-                <p className="text-slate-400 font-black uppercase tracking-widest animate-pulse">Cargando datos del colaborador...</p>
+                <p className="text-slate-400 font-bold uppercase tracking-wide animate-pulse">Cargando datos del colaborador...</p>
             </div>
         );
     }
@@ -575,19 +575,19 @@ function UsuarioFormContent() {
             <div className="flex items-center justify-between">
                 <Link
                     href="/admin/usuarios"
-                    className="inline-flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-95"
+                    className="inline-flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95"
                 >
                     <ArrowLeft size={16} /> Volver a Personal
                 </Link>
             </div>
 
             {/* Cabecera Principal */}
-            <div className="bg-slate-900 rounded-[2.5rem] p-8 md:p-10 text-white relative overflow-hidden shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="bg-slate-900 rounded-2xl p-8 md:p-10 text-white relative overflow-hidden shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="relative z-10 space-y-2 max-w-xl">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-black uppercase tracking-widest">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold uppercase tracking-wide">
                         <Sparkles size={12} /> Gestión de Accesos
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight !text-white text-white drop-shadow-sm">
+                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight !text-white text-white drop-shadow-sm">
                         {isEdit ? "Editar Permisos de Colaborador" : "Nuevo Colaborador / Promover"}
                     </h1>
                     <p className="!text-slate-200 text-slate-200 text-xs md:text-sm font-medium">
@@ -597,7 +597,7 @@ function UsuarioFormContent() {
                         }
                     </p>
                 </div>
-                <div className="relative z-10 size-20 rounded-3xl bg-indigo-600 text-white font-black text-3xl flex items-center justify-center shadow-xl shadow-indigo-600/40 uppercase shrink-0">
+                <div className="relative z-10 size-20 rounded-3xl bg-indigo-600 text-white font-bold text-3xl flex items-center justify-center shadow-xl shadow-indigo-600/40 shrink-0">
                     {formData.nombre ? formData.nombre.charAt(0) : <User size={36} />}
                 </div>
                 <div className="absolute -bottom-24 -right-24 size-80 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
@@ -609,13 +609,13 @@ function UsuarioFormContent() {
                     
                     {/* Columna Izquierda: Datos del Usuario */}
                     <div className="lg:col-span-5 space-y-6">
-                        <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
+                        <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
                             <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
                                 <div className="size-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
                                     <User size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="font-black text-slate-900 uppercase tracking-tight text-base">Datos Personales</h3>
+                                    <h3 className="font-bold text-slate-900 uppercase tracking-tight text-base">Datos Personales</h3>
                                     <p className="text-xs text-slate-400 font-medium">Información básica del integrante</p>
                                 </div>
                             </div>
@@ -623,7 +623,7 @@ function UsuarioFormContent() {
                             <div className="space-y-5">
                                 {/* Nombre Completo */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500 pl-1">
                                         Nombre Completo *
                                     </label>
                                     <div className="relative flex items-center">
@@ -644,7 +644,7 @@ function UsuarioFormContent() {
 
                                 {/* Teléfono */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500 pl-1">
                                         Teléfono (WhatsApp) *
                                     </label>
                                     <div className="relative flex items-center">
@@ -665,7 +665,7 @@ function UsuarioFormContent() {
 
                                 {/* Email */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500 pl-1">
                                         Correo Electrónico (Opcional)
                                     </label>
                                     <div className="relative flex items-center">
@@ -688,13 +688,13 @@ function UsuarioFormContent() {
 
                     {/* Columna Derecha: Selección de Roles y Permisos */}
                     <div className="lg:col-span-7 space-y-6">
-                        <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
+                        <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
                             <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
                                 <div className="size-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
                                     <Shield size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="font-black text-slate-900 uppercase tracking-tight text-base">Roles y Niveles de Acceso</h3>
+                                    <h3 className="font-bold text-slate-900 uppercase tracking-tight text-base">Roles y Niveles de Acceso</h3>
                                     <p className="text-xs text-slate-400 font-medium">Selecciona al menos un rol para este colaborador</p>
                                 </div>
                             </div>
@@ -724,11 +724,11 @@ function UsuarioFormContent() {
                                                 </div>
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2">
-                                                        <h4 className="font-black uppercase tracking-tight text-sm text-slate-900">
+                                                        <h4 className="font-bold uppercase tracking-tight text-sm text-slate-900">
                                                             {role.label || roleName}
                                                         </h4>
                                                         {isSelected && (
-                                                            <span className="px-2.5 py-0.5 rounded-full bg-indigo-600 text-white text-[9px] font-black uppercase tracking-widest">
+                                                            <span className="px-2.5 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-bold uppercase tracking-wide">
                                                                 Asignado
                                                             </span>
                                                         )}
@@ -754,14 +754,14 @@ function UsuarioFormContent() {
                 </div>
 
                 {/* Sección 2: Sucursales Asignadas */}
-                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
+                <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                         <div className="flex items-center gap-3">
                             <div className="size-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                                 <Store size={20} />
                             </div>
                             <div>
-                                <h3 className="font-black text-slate-900 uppercase tracking-tight text-base">Sucursales Asignadas</h3>
+                                <h3 className="font-bold text-slate-900 uppercase tracking-tight text-base">Sucursales Asignadas</h3>
                                 <p className="text-xs text-slate-400 font-medium">Define en qué sedes físicas puede operar este colaborador</p>
                             </div>
                         </div>
@@ -807,16 +807,16 @@ function UsuarioFormContent() {
                                             </div>
                                             <div className="space-y-0.5">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-black text-xs uppercase tracking-tight text-slate-900">
+                                                    <span className="font-bold text-xs uppercase tracking-tight text-slate-900">
                                                         {branch.name}
                                                     </span>
                                                     {(branch.isDefault || branch.isMain) && (
-                                                        <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[8px] font-black uppercase tracking-widest">
+                                                        <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-xs font-bold uppercase tracking-wide">
                                                             Matriz
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-[11px] text-slate-400 line-clamp-1">
+                                                <p className="text-xs text-slate-400 line-clamp-1">
                                                     {branch.address || "Dirección no especificada"}
                                                 </p>
                                             </div>
@@ -836,7 +836,7 @@ function UsuarioFormContent() {
                 </div>
 
                 {/* Sección 3: Módulos y Permisos Habilitados */}
-                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
+                <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                         <div className="flex items-center gap-3">
                             <div className="size-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
@@ -844,8 +844,8 @@ function UsuarioFormContent() {
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h3 className="font-black text-slate-900 uppercase tracking-tight text-base">Módulos Habilitados en este Perfil</h3>
-                                    <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-wider">
+                                    <h3 className="font-bold text-slate-900 uppercase tracking-tight text-base">Módulos Habilitados en este Perfil</h3>
+                                    <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-wider">
                                         {formData.allowedModules.length} Activo(s)
                                     </span>
                                 </div>
@@ -855,28 +855,28 @@ function UsuarioFormContent() {
 
                         {/* Presets Rápidos según la vertical del negocio */}
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-1">Preajustes:</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1">Preajustes:</span>
                             
                             {industry === 'gym' && (
                                 <>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('recepcion')}
-                                        className="px-3 py-1.5 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-900 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Scan size={14} /> Recepcionista Torno
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('entrenador')}
-                                        className="px-3 py-1.5 rounded-xl bg-cyan-100 hover:bg-cyan-200 text-cyan-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-cyan-100 hover:bg-cyan-200 text-cyan-900 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Dumbbell size={14} /> Coach / Entrenador
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('caja')}
-                                        className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Wallet size={14} /> Caja / Membresías
                                     </button>
@@ -888,21 +888,21 @@ function UsuarioFormContent() {
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('recepcion')}
-                                        className="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-900 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Calendar size={14} /> Recepcionista Dental
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('doctor')}
-                                        className="px-3 py-1.5 rounded-xl bg-teal-100 hover:bg-teal-200 text-teal-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-teal-100 hover:bg-teal-200 text-teal-900 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Shield size={14} /> Odontólogo / Doctor
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('asistente')}
-                                        className="px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <ClipboardList size={14} /> Asistente Dental
                                     </button>
@@ -914,21 +914,21 @@ function UsuarioFormContent() {
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('recepcion')}
-                                        className="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Calendar size={14} /> Recepcionista
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('especialista')}
-                                        className="px-3 py-1.5 rounded-xl bg-pink-100 hover:bg-pink-200 text-pink-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-pink-100 hover:bg-pink-200 text-pink-800 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Scissors size={14} /> Especialista
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('caja')}
-                                        className="px-3 py-1.5 rounded-xl bg-teal-100 hover:bg-teal-200 text-teal-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-teal-100 hover:bg-teal-200 text-teal-800 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Wallet size={14} /> Caja / Cobros
                                     </button>
@@ -940,21 +940,21 @@ function UsuarioFormContent() {
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('cocina')}
-                                        className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
                                     >
                                         <Utensils size={14} /> Solo Cocina (KDS)
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('mesero')}
-                                        className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Layout size={14} /> Mesero
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('caja')}
-                                        className="px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Wallet size={14} /> Caja / POS
                                     </button>
@@ -966,21 +966,21 @@ function UsuarioFormContent() {
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('canchero')}
-                                        className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Layers size={14} /> Canchero / Turnos
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('recepcion')}
-                                        className="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Calendar size={14} /> Recepción
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => applyPreset('caja')}
-                                        className="px-3 py-1.5 rounded-xl bg-teal-100 hover:bg-teal-200 text-teal-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                        className="px-3 py-1.5 rounded-xl bg-teal-100 hover:bg-teal-200 text-teal-800 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Wallet size={14} /> Caja
                                     </button>
@@ -1030,16 +1030,16 @@ function UsuarioFormContent() {
                                         </div>
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <h4 className="font-black text-xs uppercase tracking-tight text-slate-900">
+                                                <h4 className="font-bold text-xs uppercase tracking-tight text-slate-900">
                                                     {mod.label}
                                                 </h4>
                                                 {mod.id === 'cocina' && (
-                                                    <span className="px-2 py-0.2 rounded-full bg-amber-500 text-white text-[8px] font-black uppercase tracking-wider">
+                                                    <span className="px-2 py-0.2 rounded-full bg-amber-500 text-white text-xs font-bold uppercase tracking-wider">
                                                         Tablet
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-[11px] text-slate-400 font-medium leading-snug">
+                                            <p className="text-xs text-slate-400 font-medium leading-snug">
                                                 {mod.description}
                                             </p>
                                         </div>
@@ -1061,14 +1061,14 @@ function UsuarioFormContent() {
                 <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xl shadow-slate-200/50 flex items-center justify-between gap-4">
                     <Link
                         href="/admin/usuarios"
-                        className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-colors"
+                        className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-slate-500 hover:text-slate-900 transition-colors"
                     >
                         Cancelar
                     </Link>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-xl shadow-indigo-600/30 transition-all flex items-center gap-3 uppercase tracking-widest text-xs active:scale-95 disabled:opacity-50"
+                        className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/30 transition-all flex items-center gap-3 uppercase tracking-wide text-xs active:scale-95 disabled:opacity-50"
                     >
                         {loading ? <Loader2 className="animate-spin" size={18} /> : <><Save size={18} /> {isEdit ? "Guardar Cambios" : "Crear / Promover Colaborador"}</>}
                     </button>
@@ -1083,7 +1083,7 @@ export default function NuevoUsuarioPage() {
         <Suspense fallback={
             <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <Loader2 className="animate-spin text-indigo-600" size={48} />
-                <p className="text-slate-400 font-black uppercase tracking-widest animate-pulse">Cargando formulario...</p>
+                <p className="text-slate-400 font-bold uppercase tracking-wide animate-pulse">Cargando formulario...</p>
             </div>
         }>
             <UsuarioFormContent />

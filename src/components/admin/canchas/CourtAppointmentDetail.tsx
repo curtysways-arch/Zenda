@@ -188,20 +188,20 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
   const renderStatusBadge = () => {
     switch (reserva.estado) {
       case 'pending':
-        return <span className="px-3 py-1.5 bg-amber-100 text-amber-800 text-xs font-black uppercase rounded-xl">🟡 Pendiente</span>;
+        return <span className="px-3 py-1.5 bg-amber-100 text-amber-800 text-xs font-bold uppercase rounded-xl">🟡 Pendiente</span>;
       case 'confirmed':
       case 'approved':
-        return <span className="px-3 py-1.5 bg-sky-100 text-sky-800 text-xs font-black uppercase rounded-xl">🔵 Confirmada</span>;
+        return <span className="px-3 py-1.5 bg-sky-100 text-sky-800 text-xs font-bold uppercase rounded-xl">🔵 Confirmada</span>;
       case 'client_checked_in':
-        return <span className="px-3 py-1.5 bg-indigo-100 text-indigo-800 text-xs font-black uppercase rounded-xl animate-pulse">🙋 Llegó a Cancha</span>;
+        return <span className="px-3 py-1.5 bg-indigo-100 text-indigo-800 text-xs font-bold uppercase rounded-xl animate-pulse">🙋 Llegó a Cancha</span>;
       case 'in_progress':
-        return <span className="px-3 py-1.5 bg-emerald-500 text-white text-xs font-black uppercase rounded-xl animate-pulse">🟢 En Juego</span>;
+        return <span className="px-3 py-1.5 bg-emerald-500 text-white text-xs font-bold uppercase rounded-xl animate-pulse">🟢 En Juego</span>;
       case 'completed':
-        return <span className="px-3 py-1.5 bg-slate-900 text-white text-xs font-black uppercase rounded-xl">🏁 Finalizada</span>;
+        return <span className="px-3 py-1.5 bg-slate-900 text-white text-xs font-bold uppercase rounded-xl">🏁 Finalizada</span>;
       case 'cancelled':
-        return <span className="px-3 py-1.5 bg-rose-100 text-rose-800 text-xs font-black uppercase rounded-xl">❌ Cancelada</span>;
+        return <span className="px-3 py-1.5 bg-rose-100 text-rose-800 text-xs font-bold uppercase rounded-xl">❌ Cancelada</span>;
       case 'no_show':
-        return <span className="px-3 py-1.5 bg-purple-100 text-purple-800 text-xs font-black uppercase rounded-xl">⚠️ No Show</span>;
+        return <span className="px-3 py-1.5 bg-purple-100 text-purple-800 text-xs font-bold uppercase rounded-xl">⚠️ No Show</span>;
       default:
         return <span className="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl">{reserva.estado}</span>;
     }
@@ -216,7 +216,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
           className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group cursor-pointer"
         >
           <ChevronLeft className="group-hover:-translate-x-1 transition-transform" />
-          <span className="text-xs font-black uppercase tracking-widest italic">Volver al Panel</span>
+          <span className="text-xs font-bold uppercase tracking-wide ">Volver al Panel</span>
         </button>
         <div className="flex items-center gap-3">
           {cleanPhone && (
@@ -229,29 +229,29 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
               <Send size={14} /> WhatsApp Cliente
             </a>
           )}
-          <span className="text-[10px] font-mono font-bold text-slate-400 bg-white px-3 py-1.5 rounded-xl border border-slate-200">
+          <span className="text-xs font-mono font-bold text-slate-400 bg-white px-3 py-1.5 rounded-xl border border-slate-200">
             REF: #{reserva.id.slice(-8)}
           </span>
         </div>
       </div>
 
       {/* TARJETA PRINCIPAL DEL CENTRO OPERATIVO */}
-      <div className="bg-white rounded-[3rem] p-6 md:p-10 border border-slate-200 shadow-xl space-y-8">
+      <div className="bg-white rounded-2xl p-6 md:p-10 border border-slate-200 shadow-xl space-y-8">
         
         {/* HEADER OPERATIVO: CANCHA + CLIENTE + ESTADO */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-slate-100 pb-8 items-center">
           <div className="flex items-center gap-5">
-            <div className="size-16 md:size-20 rounded-[2rem] bg-emerald-600 text-white flex items-center justify-center text-2xl md:text-3xl font-black uppercase shadow-lg shadow-emerald-600/20">
+            <div className="size-16 md:size-20 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-2xl md:text-3xl font-bold shadow-lg shadow-emerald-600/20">
               {canchaNombre.slice(0, 2)}
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
                   Cancha Asignada
                 </span>
                 {renderStatusBadge()}
               </div>
-              <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight uppercase italic">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight ">
                 {canchaNombre}
               </h1>
               <p className="text-xs font-bold text-slate-500 flex items-center gap-1 mt-1">
@@ -265,10 +265,10 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
 
           <div className="flex flex-col md:items-end justify-center gap-2">
             <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left md:text-right">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block">
                 Turno Programado
               </span>
-              <p className="text-2xl font-black font-mono text-slate-900 tracking-tight">
+              <p className="text-2xl font-bold font-mono text-slate-900 tracking-tight">
                 {reserva.horaInicio} – {reserva.horaFin}
               </p>
               <p className="text-xs font-bold text-slate-500 uppercase mt-0.5">
@@ -282,7 +282,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
         {activeSubView === 'extend' && (
           <div className="p-6 bg-emerald-50 border-2 border-emerald-500/30 rounded-3xl space-y-4 animate-in fade-in">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-black text-emerald-900 uppercase flex items-center gap-2">
+              <h4 className="text-sm font-bold text-emerald-900 uppercase flex items-center gap-2">
                 <Plus size={16} className="text-emerald-600" /> + Extender Tiempo de Juego
               </h4>
               <button onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -296,18 +296,18 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
               <button
                 type="button"
                 onClick={() => setExtendMinutes(30)}
-                className={`py-3 px-4 rounded-2xl text-xs font-black border transition-all ${
-                  extendMinutes === 30 ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-emerald-800 border-emerald-200'
-                }`}
+                className={`py-3 px-4 rounded-2xl text-xs font-bold border transition-all ${
+ extendMinutes === 30 ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-emerald-800 border-emerald-200'
+ }`}
               >
                 +30 minutos
               </button>
               <button
                 type="button"
                 onClick={() => setExtendMinutes(60)}
-                className={`py-3 px-4 rounded-2xl text-xs font-black border transition-all ${
-                  extendMinutes === 60 ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-emerald-800 border-emerald-200'
-                }`}
+                className={`py-3 px-4 rounded-2xl text-xs font-bold border transition-all ${
+ extendMinutes === 60 ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-emerald-800 border-emerald-200'
+ }`}
               >
                 +60 minutos
               </button>
@@ -315,7 +315,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             <button
               onClick={() => executeAction('EXTEND', { additionalMinutes: extendMinutes })}
               disabled={loading}
-              className="py-3 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+              className="py-3 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : 'Confirmar Extensión en Cancha'}
             </button>
@@ -325,7 +325,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
         {activeSubView === 'change_court' && (
           <div className="p-6 bg-sky-50 border-2 border-sky-500/30 rounded-3xl space-y-4 animate-in fade-in">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-black text-sky-900 uppercase flex items-center gap-2">
+              <h4 className="text-sm font-bold text-sky-900 uppercase flex items-center gap-2">
                 <ArrowRightLeft size={16} className="text-sky-600" /> Reasignar Cancha (Mismo Horario)
               </h4>
               <button onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -340,7 +340,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
                 <Loader2 size={16} className="animate-spin" /> Consultando canchas libres...
               </div>
             ) : alternativeCourts.length === 0 ? (
-              <div className="text-xs text-slate-500 italic py-2">No se encontraron otras canchas en esta sede.</div>
+              <div className="text-xs text-slate-500 py-2">No se encontraron otras canchas en esta sede.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto">
                 {alternativeCourts.map((c) => (
@@ -356,20 +356,20 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
                     }`}
                   >
                     <div>
-                      <span className="font-black block text-sm">{c.nombre}</span>
-                      <span className={`text-[10px] ${selectedNewCourtId === c.id ? 'text-sky-100' : 'text-slate-500'}`}>
+                      <span className="font-bold block text-sm">{c.nombre}</span>
+                      <span className={`text-xs ${selectedNewCourtId === c.id ? 'text-sky-100' : 'text-slate-500'}`}>
                         ${c.precio.toLocaleString()} /hora
                       </span>
                     </div>
                     <div>
                       {c.disponible ? (
-                        <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${
-                          selectedNewCourtId === c.id ? 'bg-white text-sky-700' : 'bg-emerald-100 text-emerald-800'
-                        }`}>
+                        <span className={`text-xs font-bold uppercase px-2.5 py-1 rounded-lg ${
+ selectedNewCourtId === c.id ? 'bg-white text-sky-700' : 'bg-emerald-100 text-emerald-800'
+ }`}>
                           Disponible
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">
+                        <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">
                           {c.motivo || 'Ocupada'}
                         </span>
                       )}
@@ -381,7 +381,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             <button
               onClick={() => executeAction('CHANGE_COURT', { newCanchaId: selectedNewCourtId, newCourtId: selectedNewCourtId })}
               disabled={loading || !selectedNewCourtId}
-              className="py-3 px-8 bg-sky-600 hover:bg-sky-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+              className="py-3 px-8 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : 'Confirmar Reasignación'}
             </button>
@@ -391,7 +391,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
         {activeSubView === 'change_time' && (
           <div className="p-6 bg-indigo-50 border-2 border-indigo-500/30 rounded-3xl space-y-4 animate-in fade-in">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-black text-indigo-900 uppercase flex items-center gap-2">
+              <h4 className="text-sm font-bold text-indigo-900 uppercase flex items-center gap-2">
                 <Clock size={16} className="text-indigo-600" /> Modificar Horario de Cancha
               </h4>
               <button onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -400,7 +400,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             </div>
             <div className="grid grid-cols-2 gap-4 max-w-sm">
               <div>
-                <label className="text-[10px] font-bold text-indigo-950 uppercase block mb-1">Hora Inicio</label>
+                <label className="text-xs font-bold text-indigo-950 uppercase block mb-1">Hora Inicio</label>
                 <input
                   type="time"
                   value={newStartTime}
@@ -409,7 +409,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-indigo-950 uppercase block mb-1">Hora Fin</label>
+                <label className="text-xs font-bold text-indigo-950 uppercase block mb-1">Hora Fin</label>
                 <input
                   type="time"
                   value={newEndTime}
@@ -421,7 +421,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             <button
               onClick={() => executeAction('CHANGE_TIME', { newStartTime, newEndTime })}
               disabled={loading || !newStartTime || !newEndTime}
-              className="py-3 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+              className="py-3 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : 'Guardar Nuevo Horario'}
             </button>
@@ -431,7 +431,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
         {activeSubView === 'payment' && (
           <form onSubmit={handleRegisterPayment} className="p-6 bg-emerald-50 border-2 border-emerald-500/30 rounded-3xl space-y-4 animate-in fade-in">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-black text-emerald-900 uppercase flex items-center gap-2">
+              <h4 className="text-sm font-bold text-emerald-900 uppercase flex items-center gap-2">
                 <CreditCard size={16} className="text-emerald-600" /> Registrar Cobro / Abono
               </h4>
               <button type="button" onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -440,7 +440,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="text-[10px] font-bold text-emerald-950 uppercase block mb-1">Monto ($)</label>
+                <label className="text-xs font-bold text-emerald-950 uppercase block mb-1">Monto ($)</label>
                 <input
                   type="number"
                   min="1"
@@ -452,7 +452,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-emerald-950 uppercase block mb-1">Método</label>
+                <label className="text-xs font-bold text-emerald-950 uppercase block mb-1">Método</label>
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
@@ -465,7 +465,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-emerald-950 uppercase block mb-1">Referencia (Opcional)</label>
+                <label className="text-xs font-bold text-emerald-950 uppercase block mb-1">Referencia (Opcional)</label>
                 <input
                   type="text"
                   placeholder="# Comprobante..."
@@ -478,7 +478,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             <button
               type="submit"
               disabled={loading}
-              className="py-3 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+              className="py-3 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : 'Confirmar Registro de Pago'}
             </button>
@@ -488,7 +488,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
         {activeSubView === 'notes' && (
           <div className="p-6 bg-slate-50 border-2 border-slate-300 rounded-3xl space-y-4 animate-in fade-in">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-black text-slate-800 uppercase flex items-center gap-2">
+              <h4 className="text-sm font-bold text-slate-800 uppercase flex items-center gap-2">
                 <Edit3 size={16} /> Bitácora / Notas Operativas
               </h4>
               <button onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -505,7 +505,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             <button
               onClick={() => executeAction('UPDATE_NOTES', { notes: notesText })}
               disabled={loading}
-              className="py-3 px-8 bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+              className="py-3 px-8 bg-slate-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : 'Guardar Notas'}
             </button>
@@ -515,7 +515,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
         {activeSubView === 'cancel' && (
           <div className="p-6 bg-rose-50 border-2 border-rose-300 rounded-3xl space-y-4 animate-in fade-in">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-black text-rose-900 uppercase flex items-center gap-2">
+              <h4 className="text-sm font-bold text-rose-900 uppercase flex items-center gap-2">
                 <AlertTriangle size={16} className="text-rose-600" /> Cancelar Reserva de Cancha
               </h4>
               <button onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -535,7 +535,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             <button
               onClick={() => executeAction('CANCEL', { reason: cancelReason })}
               disabled={loading}
-              className="py-3 px-8 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+              className="py-3 px-8 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : 'Confirmar Cancelación'}
             </button>
@@ -544,48 +544,48 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
 
         {/* DASHBOARD FINANCIERO */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-200/80 space-y-2 relative overflow-hidden">
+          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 space-y-2 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Turno Total</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wide ">Turno Total</span>
               <CreditCard size={18} className="text-slate-400" />
             </div>
-            <h2 className="text-5xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">
               ${total.toLocaleString()}
             </h2>
-            <span className="text-[10px] font-bold text-slate-500 uppercase block">
+            <span className="text-xs font-bold text-slate-500 uppercase block">
               Tarifa de Cancha
             </span>
           </div>
 
-          <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200/80 shadow-md space-y-4 relative overflow-hidden">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-md space-y-4 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Total Cobrado</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wide ">Total Cobrado</span>
               <Plus size={18} className="text-emerald-500" />
             </div>
-            <h2 className="text-5xl font-black text-emerald-600 tracking-tighter italic uppercase leading-none">
+            <h2 className="text-3xl font-bold text-emerald-600 tracking-tight leading-none">
               ${totalPagado.toLocaleString()}
             </h2>
             <button 
               onClick={() => setActiveSubView('payment')}
-              className="w-full py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
+              className="w-full py-3 bg-emerald-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
             >
               REGISTRAR INGRESO
             </button>
           </div>
 
-          <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200/80 shadow-md space-y-4 relative overflow-hidden">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-md space-y-4 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Saldo Pendiente</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wide ">Saldo Pendiente</span>
               <DollarSign size={18} className="text-amber-500" />
             </div>
             <h2 className={clsx(
-              "text-5xl font-black tracking-tighter italic uppercase leading-none",
+              "text-3xl font-bold tracking-tight leading-none",
               saldoPendiente > 0 ? "text-amber-600" : "text-slate-300"
             )}>
               ${saldoPendiente.toLocaleString()}
             </h2>
             <div className={clsx(
-              "w-full py-2.5 rounded-xl text-center text-[10px] font-black uppercase tracking-wider border",
+              "w-full py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider border",
               saldoPendiente === 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-700 border-amber-200"
             )}>
               {saldoPendiente === 0 ? 'LIQUIDADO' : 'DEUDA ACTIVA'}
@@ -594,33 +594,33 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
         </div>
 
         {/* SEGUIMIENTO EN CANCHA: TIEMPOS DE USO REAL */}
-        <div className="p-6 bg-slate-900 text-white rounded-[2.5rem] space-y-4 shadow-xl">
+        <div className="p-6 bg-slate-900 text-white rounded-2xl space-y-4 shadow-xl">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div className="flex items-center gap-2">
               <Clock3 size={18} className="text-emerald-400" />
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-emerald-400">
                 Seguimiento Operativo en Cancha
               </h3>
             </div>
-            <span className="text-[10px] font-mono text-slate-400">Tiempos Reales de Juego</span>
+            <span className="text-xs font-mono text-slate-400">Tiempos Reales de Juego</span>
           </div>
 
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Llegada Cliente</span>
-              <span className="text-base font-mono font-black text-emerald-300">
+              <span className="text-xs text-slate-400 uppercase font-bold block mb-1">Llegada Cliente</span>
+              <span className="text-base font-mono font-bold text-emerald-300">
                 {reserva.checkedInAt ? new Date(reserva.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
               </span>
             </div>
             <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Inicio de Partido</span>
-              <span className="text-base font-mono font-black text-sky-300">
+              <span className="text-xs text-slate-400 uppercase font-bold block mb-1">Inicio de Partido</span>
+              <span className="text-base font-mono font-bold text-sky-300">
                 {reserva.startedAt ? new Date(reserva.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
               </span>
             </div>
             <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Fin de Partido</span>
-              <span className="text-base font-mono font-black text-amber-300">
+              <span className="text-xs text-slate-400 uppercase font-bold block mb-1">Fin de Partido</span>
+              <span className="text-base font-mono font-bold text-amber-300">
                 {reserva.completedAt ? new Date(reserva.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
               </span>
             </div>
@@ -628,13 +628,13 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
         </div>
 
         {/* ACCIÓN PRINCIPAL CONTEXTUAL DEL PARTIDO */}
-        <div className="p-6 md:p-8 bg-slate-50 border border-slate-200/80 rounded-[2.5rem] space-y-6">
+        <div className="p-6 md:p-8 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block mb-1">
                 Acción Operativa Recomendada
               </span>
-              <h3 className="text-lg font-black text-slate-900 uppercase italic">
+              <h3 className="text-lg font-bold text-slate-900 ">
                 Flujo del Partido en Cancha
               </h3>
             </div>
@@ -646,7 +646,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
               <button
                 onClick={() => executeAction('CONFIRM')}
                 disabled={loading}
-                className="w-full py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 transition-all cursor-pointer active:scale-98"
+                className="w-full py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 transition-all cursor-pointer active:scale-98"
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={20} />}
                 Confirmar Reserva de Cancha
@@ -657,7 +657,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
               <button
                 onClick={() => executeAction('CHECK_IN')}
                 disabled={loading}
-                className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-3 shadow-xl shadow-indigo-600/20 transition-all cursor-pointer active:scale-98"
+                className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 shadow-xl shadow-indigo-600/20 transition-all cursor-pointer active:scale-98"
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <UserCheck size={20} />}
                 Registrar Llegada del Jugador
@@ -668,7 +668,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
               <button
                 onClick={() => executeAction('START_MATCH')}
                 disabled={loading}
-                className="w-full py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 transition-all cursor-pointer active:scale-98 animate-pulse"
+                className="w-full py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 transition-all cursor-pointer active:scale-98 animate-pulse"
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <Play size={20} />}
                 Iniciar Partido (Entrada a Cancha)
@@ -680,14 +680,14 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
                 <button
                   onClick={() => executeAction('FINISH_MATCH')}
                   disabled={loading}
-                  className="py-5 bg-slate-900 hover:bg-black text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-slate-900/20 transition-all cursor-pointer active:scale-98"
+                  className="py-5 bg-slate-900 hover:bg-black text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-slate-900/20 transition-all cursor-pointer active:scale-98"
                 >
                   {loading ? <Loader2 size={18} className="animate-spin" /> : <Flag size={18} />}
                   Finalizar Partido
                 </button>
                 <button
                   onClick={() => setActiveSubView('extend')}
-                  className="py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-emerald-600/20 transition-all cursor-pointer active:scale-98"
+                  className="py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-emerald-600/20 transition-all cursor-pointer active:scale-98"
                 >
                   <Plus size={18} /> + Extender Tiempo
                 </button>
@@ -697,7 +697,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             {reserva.estado === 'completed' && (
               <div className="p-6 bg-slate-100 rounded-2xl text-center space-y-2 border border-slate-200">
                 <CheckCircle2 size={32} className="mx-auto text-emerald-600" />
-                <p className="font-black text-slate-800 uppercase italic text-sm">
+                <p className="font-bold text-slate-800 uppercase text-sm">
                   Partido Finalizado Satisfactoriamente
                 </p>
                 <p className="text-xs text-slate-500 font-medium">
@@ -709,7 +709,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             {(reserva.estado === 'cancelled' || reserva.estado === 'no_show') && (
               <div className="p-6 bg-rose-50 text-rose-800 rounded-2xl text-center space-y-2 border border-rose-200">
                 <XCircle size={32} className="mx-auto text-rose-600" />
-                <p className="font-black uppercase italic text-sm">
+                <p className="font-bold uppercase text-sm">
                   Turno Inactivo ({reserva.estado === 'no_show' ? 'No Show / Inasistencia' : 'Cancelado'})
                 </p>
               </div>
@@ -721,7 +721,7 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
             <button
               type="button"
               onClick={() => setShowMoreActions(!showMoreActions)}
-              className="w-full py-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+              className="w-full py-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <MoreVertical size={16} /> Más Acciones de Cancha
             </button>
@@ -784,16 +784,16 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-slate-700">
               <Receipt size={18} className="text-emerald-600" />
-              <h3 className="text-xs font-black uppercase tracking-widest italic">Historial de Cobros Recibidos</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wide ">Historial de Cobros Recibidos</h3>
             </div>
-            <span className="text-[10px] font-bold text-slate-400">
+            <span className="text-xs font-bold text-slate-400">
               {pagos.length} registro(s)
             </span>
           </div>
 
           <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase text-slate-400">
+              <thead className="bg-slate-50 border-b border-slate-100 text-xs font-bold uppercase text-slate-400">
                 <tr>
                   <th className="px-6 py-4">Fecha / Hora</th>
                   <th className="px-6 py-4">Método</th>
@@ -813,14 +813,14 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
                     <td className="px-6 py-4 text-slate-400 font-mono">
                       {p.referencia || '—'}
                     </td>
-                    <td className="px-6 py-4 text-right font-black font-mono text-slate-900">
+                    <td className="px-6 py-4 text-right font-bold font-mono text-slate-900">
                       +${p.monto?.toLocaleString()}
                     </td>
                   </tr>
                 ))}
                 {pagos.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-slate-400 italic">
+                    <td colSpan={4} className="px-6 py-8 text-center text-slate-400 ">
                       No hay pagos registrados para este turno todavía.
                     </td>
                   </tr>
@@ -835,9 +835,9 @@ export default function CourtAppointmentDetail({ reserva, onRefresh }: CourtAppo
           <div className="p-6 bg-slate-50 border border-slate-200 rounded-3xl space-y-2">
             <div className="flex items-center gap-2 text-slate-500">
               <FileText size={16} />
-              <span className="text-[11px] font-black uppercase tracking-wider">Observaciones Registradas:</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Observaciones Registradas:</span>
             </div>
-            <p className="text-xs text-slate-700 italic">
+            <p className="text-xs text-slate-700 ">
               "{reserva.comentarios}"
             </p>
           </div>

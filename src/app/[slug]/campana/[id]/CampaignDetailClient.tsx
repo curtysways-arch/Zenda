@@ -126,13 +126,13 @@ export default function CampaignDetailClient({
                 {/* Textos dentro de la cabecera (en la parte inferior) */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-white space-y-2">
                     <span 
-                        className="inline-flex items-center gap-1 text-[8px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full shadow-sm text-white"
+                        className="inline-flex items-center gap-1 text-xs font-bold tracking-wide uppercase px-2.5 py-1 rounded-full shadow-sm text-white"
                         style={{ backgroundColor: primaryColor }}
                     >
                         <Sparkles size={8} className="animate-pulse" />
                         Campaña Activa
                     </span>
-                    <h1 className="text-xl md:text-3xl font-black uppercase tracking-tight leading-tight max-w-xl text-white drop-shadow-md">
+                    <h1 className="text-xl md:text-3xl font-bold tracking-tight leading-tight max-w-xl text-white drop-shadow-md">
                         {campaign.nombre}
                     </h1>
                 </div>
@@ -142,9 +142,9 @@ export default function CampaignDetailClient({
             <main className="px-6 -mt-5 relative z-30 space-y-6">
                 
                 {/* Caja de Descripción principal */}
-                <div className="bg-white rounded-[2rem] border border-slate-100/60 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] space-y-4">
+                <div className="bg-white rounded-3xl border border-slate-100/60 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] space-y-4">
                     <div>
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
                             <Info size={12} className="text-slate-400" />
                             Detalles del Club
                         </h3>
@@ -154,7 +154,7 @@ export default function CampaignDetailClient({
                     </div>
 
                     {campaign.fechaFin && (
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold bg-slate-50 rounded-xl p-3 border border-slate-100">
+                        <div className="flex items-center gap-2 text-xs text-slate-500 font-bold bg-slate-50 rounded-xl p-3 border border-slate-100">
                             <Calendar size={12} className="text-slate-400" />
                             <span>Válida hasta el: <strong className="text-slate-700">{new Date(campaign.fechaFin).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></span>
                         </div>
@@ -166,18 +166,18 @@ export default function CampaignDetailClient({
                     
                     {/* Caja Ganas Tú */}
                     <div 
-                        className="bg-white rounded-[2rem] border border-slate-100/60 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex gap-4 items-start relative overflow-hidden"
+                        className="bg-white rounded-3xl border border-slate-100/60 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex gap-4 items-start relative overflow-hidden"
                         style={{ borderLeft: `4px solid ${primaryColor}` }}
                     >
                         <div className="size-11 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: primaryAlpha10, color: primaryColor }}>
                             <Gift size={20} />
                         </div>
                         <div className="space-y-1">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 block leading-none">Beneficio para Ti</span>
-                            <h4 className="text-[13px] font-black text-slate-900 leading-snug uppercase">
+                            <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block leading-none">Beneficio para Ti</span>
+                            <h4 className="text-sm font-bold text-slate-900 leading-snug uppercase">
                                 {campaign.valorRecompensa}
                             </h4>
-                            <p className="text-[10px] text-slate-400 font-medium leading-normal">
+                            <p className="text-xs text-slate-400 font-medium leading-normal">
                                 Lo acumularás en tu cuenta inmediatamente al cumplir la meta.
                             </p>
                         </div>
@@ -185,18 +185,18 @@ export default function CampaignDetailClient({
 
                     {/* Caja Gana tu Amigo */}
                     <div 
-                        className="bg-white rounded-[2rem] border border-slate-100/60 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex gap-4 items-start relative overflow-hidden"
+                        className="bg-white rounded-3xl border border-slate-100/60 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex gap-4 items-start relative overflow-hidden"
                         style={{ borderLeft: `4px solid #f59e0b` }}
                     >
                         <div className="size-11 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
                             <Award size={20} />
                         </div>
                         <div className="space-y-1">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 block leading-none">Beneficio para tu Amigo</span>
-                            <h4 className="text-[13px] font-black text-slate-900 leading-snug uppercase">
+                            <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block leading-none">Beneficio para tu Amigo</span>
+                            <h4 className="text-sm font-bold text-slate-900 leading-snug uppercase">
                                 {campaign.valorIncentivo || '10% de descuento'}
                             </h4>
-                            <p className="text-[10px] text-slate-400 font-medium leading-normal">
+                            <p className="text-xs text-slate-400 font-medium leading-normal">
                                 Se le aplicará automáticamente al reservar con tu código de embajador.
                             </p>
                         </div>
@@ -206,7 +206,7 @@ export default function CampaignDetailClient({
                 {/* Tarjeta de Progreso del Cliente */}
                 {meData ? (
                     <div 
-                        className="bg-white rounded-[2rem] border border-slate-100/60 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] relative overflow-hidden"
+                        className="bg-white rounded-3xl border border-slate-100/60 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] relative overflow-hidden"
                         style={{ 
                             background: `linear-gradient(135deg, #ffffff 0%, ${primaryAlpha05} 100%)` 
                         }}
@@ -219,13 +219,13 @@ export default function CampaignDetailClient({
 
                         <div className="flex justify-between items-start mb-4">
                             <div className="space-y-1">
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none">Tu Progreso de Referidos</span>
-                                <h4 className="text-sm font-black text-slate-900 uppercase">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block leading-none">Tu Progreso de Referidos</span>
+                                <h4 className="text-sm font-bold text-slate-900 uppercase">
                                     {isCompleted ? '🎉 ¡Campaña Completada!' : 'Meta en camino'}
                                 </h4>
                             </div>
                             <div 
-                                className="px-3.5 py-1.5 rounded-full text-[10px] font-black text-white shrink-0 shadow-sm"
+                                className="px-3.5 py-1.5 rounded-full text-xs font-bold text-white shrink-0 shadow-sm"
                                 style={{ backgroundColor: primaryColor }}
                             >
                                 {userProgress} / {reqReferidos} {
@@ -250,7 +250,7 @@ export default function CampaignDetailClient({
                                     <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.3)_50%,transparent_100%)] bg-[length:200%_100%] animate-pulse" />
                                 </div>
                             </div>
-                            <div className="flex justify-between text-[9px] font-bold text-slate-400">
+                            <div className="flex justify-between text-xs font-bold text-slate-400">
                                 <span>Inicio</span>
                                 <span>Meta: {reqReferidos}</span>
                             </div>
@@ -258,15 +258,15 @@ export default function CampaignDetailClient({
 
                         {/* Caja para compartir código embajador (si ya está logueado) */}
                         <div className="mt-6 pt-5 border-t border-slate-100/80 space-y-4">
-                            <h5 className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">
+                            <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wide text-center">
                                 Comparte tu enlace embajador y empieza a ganar
                             </h5>
                             
                             {/* Caja del Código */}
                             <div className="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200/50 rounded-2xl p-3">
                                 <div className="min-w-0">
-                                    <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block leading-none mb-1">Tu Código Único</span>
-                                    <span className="text-xs font-black text-slate-800 tracking-wider uppercase truncate block">
+                                    <span className="text-[7.5px] font-bold text-slate-400 uppercase tracking-wide block leading-none mb-1">Tu Código Único</span>
+                                    <span className="text-xs font-bold text-slate-800 tracking-wider uppercase truncate block">
                                         {meData.codigo}
                                     </span>
                                 </div>
@@ -283,7 +283,7 @@ export default function CampaignDetailClient({
                                     {/* Botón Copiar */}
                                     <button 
                                         onClick={handleCopy}
-                                        className="flex items-center justify-center h-9 px-3 bg-white border border-slate-100 hover:bg-slate-50 text-slate-600 rounded-xl transition-all shadow-sm active:scale-95 gap-1.5 font-black text-[9px] uppercase tracking-wider"
+                                        className="flex items-center justify-center h-9 px-3 bg-white border border-slate-100 hover:bg-slate-50 text-slate-600 rounded-xl transition-all shadow-sm active:scale-95 gap-1.5 font-bold text-xs uppercase tracking-wider"
                                     >
                                         {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
                                         {copied ? 'Copiado' : 'Copiar'}
@@ -294,7 +294,7 @@ export default function CampaignDetailClient({
                             {/* Botón Grande Compartir */}
                             <button 
                                 onClick={handleShare}
-                                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-lg flex items-center justify-center gap-2 hover:brightness-105 active:scale-[0.99] transition-all"
+                                className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wide text-white shadow-lg flex items-center justify-center gap-2 hover:brightness-105 active:scale-[0.99] transition-all"
                                 style={{ backgroundColor: primaryColor }}
                             >
                                 <Share2 size={14} />
@@ -304,19 +304,19 @@ export default function CampaignDetailClient({
                     </div>
                 ) : (
                     // Si el cliente no está logueado en la PWA (No hay token)
-                    <div className="bg-white rounded-[2rem] border border-slate-100/60 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] text-center space-y-4">
+                    <div className="bg-white rounded-3xl border border-slate-100/60 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] text-center space-y-4">
                         <div className="size-14 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mx-auto">
                             <Users size={22} />
                         </div>
                         <div className="space-y-1">
-                            <h4 className="text-sm font-black text-slate-900 uppercase">¿Quieres empezar a referir?</h4>
-                            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed max-w-xs mx-auto">
+                            <h4 className="text-sm font-bold text-slate-900 uppercase">¿Quieres empezar a referir?</h4>
+                            <p className="text-xs text-slate-400 font-semibold leading-relaxed max-w-xs mx-auto">
                                 Únete a nuestro Club de Embajadores. Ingresa tu número de celular para obtener tu código y empezar a ganar premios.
                             </p>
                         </div>
                         <Link 
                             href={`/${slug}/referidos`}
-                            className="inline-flex items-center justify-center px-6 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest text-white shadow-md gap-1.5 active:scale-95 transition-all"
+                            className="inline-flex items-center justify-center px-6 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wide text-white shadow-md gap-1.5 active:scale-95 transition-all"
                             style={{ backgroundColor: primaryColor }}
                         >
                             Unirme al Club
@@ -329,7 +329,7 @@ export default function CampaignDetailClient({
             {/* MODAL DEL CÓDIGO QR */}
             {showQrModal && meData && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="relative w-full max-w-[320px] bg-white rounded-[2.5rem] p-6 shadow-2xl text-center space-y-5 border border-slate-100">
+                    <div className="relative w-full max-w-[320px] bg-white rounded-3xl p-6 shadow-2xl text-center space-y-5 border border-slate-100">
                         {/* Botón cerrar */}
                         <button 
                             onClick={() => setShowQrModal(false)}
@@ -340,12 +340,12 @@ export default function CampaignDetailClient({
 
                         <div className="pt-2">
                             <span 
-                                className="text-[7.5px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full text-white"
+                                className="text-[7.5px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full text-white"
                                 style={{ backgroundColor: primaryColor }}
                             >
                                 Tu Código QR
                             </span>
-                            <h4 className="text-xs font-black text-slate-900 uppercase mt-2.5 leading-tight">
+                            <h4 className="text-xs font-bold text-slate-900 uppercase mt-2.5 leading-tight">
                                 Invita a tus amigos
                             </h4>
                         </div>
@@ -360,7 +360,7 @@ export default function CampaignDetailClient({
                             />
                         </div>
 
-                        <p className="text-[9px] text-slate-400 font-semibold leading-relaxed px-2">
+                        <p className="text-xs text-slate-400 font-semibold leading-relaxed px-2">
                             Tus amigos pueden escanear este código directamente desde tu celular para registrarse como tus referidos.
                         </p>
                     </div>

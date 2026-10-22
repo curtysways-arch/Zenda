@@ -10,6 +10,7 @@ export type BusinessModuleType =
   | 'SPORTS_COURTS'
   | 'FOOD_DELIVERY'
   | 'RESTAURANT'
+  | 'CAFETERIA'
   | 'SHOE_CARE'
   | 'LAUNDRY'
   | 'TECH_REPAIR'

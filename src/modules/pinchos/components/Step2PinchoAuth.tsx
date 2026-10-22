@@ -171,7 +171,7 @@ export default function Step2PinchoAuth({
             {otpStep === 'info' ? (
                 <form onSubmit={handleSendOTP} className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4 text-left">
                     <div className="border-b border-slate-100 pb-3">
-                        <span className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
                             <User className="size-4 text-orange-600" />
                             <span>Identificación del Cliente</span>
                         </span>
@@ -182,7 +182,7 @@ export default function Step2PinchoAuth({
 
                     <div className="space-y-3">
                         <div>
-                            <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                                 Nombre y Apellido *
                             </label>
                             <div className="relative">
@@ -199,7 +199,7 @@ export default function Step2PinchoAuth({
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                                 Número de WhatsApp *
                             </label>
                             <div className="relative">
@@ -227,7 +227,7 @@ export default function Step2PinchoAuth({
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                        className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
                     >
                         {submitting ? (
                             <>
@@ -236,7 +236,7 @@ export default function Step2PinchoAuth({
                             </>
                         ) : (
                             <>
-                                <span>VERIFICAR Y CONTINUAR</span>
+                                <span>Verificar y continuar</span>
                                 <ArrowRight className="size-4" />
                             </>
                         )}
@@ -245,7 +245,7 @@ export default function Step2PinchoAuth({
             ) : (
                 <form onSubmit={handleVerifyOTP} className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4 text-left">
                     <div className="border-b border-slate-100 pb-3">
-                        <span className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
                             <KeyRound className="size-4 text-orange-600" />
                             <span>Código de Verificación OTP</span>
                         </span>
@@ -255,7 +255,7 @@ export default function Step2PinchoAuth({
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                             Código OTP de 6 dígitos *
                         </label>
                         <input
@@ -268,7 +268,7 @@ export default function Step2PinchoAuth({
                             value={otpCode}
                             onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                             placeholder="123456"
-                            className="w-full text-center text-2xl font-mono font-black tracking-[0.4em] text-slate-900 bg-slate-50 border-2 border-orange-400 rounded-xl p-4 focus:outline-none focus:border-orange-600"
+                            className="w-full text-center text-2xl font-mono font-bold tracking-wide text-slate-900 bg-slate-50 border-2 border-orange-400 rounded-xl p-4 focus:outline-none focus:border-orange-600"
                         />
                     </div>
 
@@ -282,14 +282,14 @@ export default function Step2PinchoAuth({
                         <button
                             type="button"
                             onClick={() => setOtpStep('info')}
-                            className="w-1/3 py-3 bg-slate-100 text-slate-700 font-black rounded-xl text-xs uppercase"
+                            className="w-1/3 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs uppercase"
                         >
                             Cambiar Datos
                         </button>
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="w-2/3 py-3.5 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
+                            className="w-2/3 py-3.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
                         >
                             {submitting ? <Loader2 className="size-4 animate-spin" /> : 'VALIDAR SESIÓN'}
                         </button>

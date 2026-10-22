@@ -27,6 +27,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
     const [tipoId, setTipoId] = useState(initialData?.tipoId || '');
     const [capacidad, setCapacidad] = useState(initialData?.capacidad?.toString() || '10');
     const [precioHora, setPrecioHora] = useState(initialData?.precioHora?.toString() || '');
+    const [duracionMin, setDuracionMin] = useState<number>([60, 90, 120].includes(Number(initialData?.duracionMin)) ? Number(initialData.duracionMin) : 60);
     const [estaActiva, setEstaActiva] = useState(initialData?.estaActiva ?? true);
     const [ubicacionId, setUbicacionId] = useState(initialData?.ubicacionId || '');
     
@@ -160,13 +161,14 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                     tipoId: tipoId || null,
                     capacidad: parseInt(capacidad) || 10,
                     precioHora: parseFloat(precioHora) || 0,
+                    duracionMin,
                     estaActiva,
                     ubicacionId: ubicacionId || null,
                     extraInfo: {
                         features: [
                             { title: titulo1, content: cuerpo1 },
                             { title: titulo2, content: cuerpo2 }
-                        ]
+                        ].filter((f) => f.title.trim() || f.content.trim())
                     },
                     imagenes,
                     ...(initialData ? {} : { negocioId: realNegocioId })
@@ -234,7 +236,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                         <ShieldAlert size={18} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-black text-rose-900 leading-tight">Acción bloqueada</p>
+                                        <p className="text-sm font-bold text-rose-900 leading-tight">Acción bloqueada</p>
                                         <p className="text-xs text-rose-700/80 mt-1 font-bold leading-relaxed">{error}</p>
                                     </div>
                                     <button
@@ -268,7 +270,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                         <label htmlFor="ubicacion" className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                                             <MapPin size={12} /> Sede / Ubicación
                                         </label>
-                                        <Link href="/admin/configuracion" className="text-[10px] font-black text-violet-600 hover:text-violet-700 uppercase tracking-widest flex items-center gap-1">
+                                        <Link href="/admin/configuracion" className="text-xs font-bold text-violet-600 hover:text-violet-700 uppercase tracking-wide flex items-center gap-1">
                                             <Plus size={10} /> + GESTIONAR SEDES
                                         </Link>
                                     </div>
@@ -291,7 +293,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                     <div>
                                         <div className="flex justify-between items-center mb-2">
                                             <label htmlFor="tipo" className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Tipo de deporte</label>
-                                            <Link href="/admin/configuracion" className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-widest flex items-center gap-1">
+                                            <Link href="/admin/configuracion" className="text-xs font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wide flex items-center gap-1">
                                                 <Plus size={10} /> + EDITAR TIPOS
                                             </Link>
                                         </div>
@@ -344,10 +346,27 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                     />
                                 </div>
 
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Duración del turno</p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[60, 90, 120].map((m) => (
+                                            <button
+                                                key={m}
+                                                type="button"
+                                                onClick={() => setDuracionMin(m)}
+                                                className={`py-2.5 rounded-xl border-2 text-sm font-bold transition ${duracionMin === m ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-100 bg-gray-50 text-gray-600'}`}
+                                            >
+                                                {m === 60 ? '1 hora' : m === 90 ? '1 h 30' : '2 horas'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1.5">Los horarios de la agenda se ordenan con esta duración (pádel suele usar 1 h 30). El precio sigue siendo por hora.</p>
+                                </div>
+
                                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                     <div className="flex-1">
                                         <p className="text-sm font-bold text-gray-900 leading-none">Estado de la cancha</p>
-                                        <p className="text-[10px] text-gray-500 font-medium">Determina si estará disponible para reservar</p>
+                                        <p className="text-xs text-gray-500 font-medium">Determina si estará disponible para reservar</p>
                                     </div>
                                     <button
                                         type="button"
@@ -364,16 +383,16 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                         <div className="pt-8 border-t border-gray-100 space-y-6 text-left">
                             <div className="flex items-center gap-3">
                                 <div className="h-6 w-1 bg-emerald-500 rounded-full" />
-                                <h3 className="text-xs font-black text-gray-900 uppercase tracking-[0.2em]">POR QUÉ ELEGIR ESTA CANCHA (MARKETING)</h3>
+                                <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide">Por qué elegir esta cancha (marketing)</h3>
                             </div>
                             
-                            <p className="text-[10px] text-gray-400 font-medium italic">Define dos bloques de texto que resalten las ventajas de esta cancha en el portal público.</p>
+                            <p className="text-xs text-gray-400 font-medium ">Define dos bloques de texto que resalten las ventajas de esta cancha en el portal público.</p>
 
-                            <div className="grid gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                            <div className="grid gap-6 p-6 bg-slate-50 rounded-2xl border border-slate-100">
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-2">
-                                        <span className="size-5 rounded-full bg-emerald-100 text-emerald-600 text-[10px] font-black flex items-center justify-center">1</span>
-                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">PRIMER BLOQUE</label>
+                                        <span className="size-5 rounded-full bg-emerald-100 text-emerald-600 text-xs font-bold flex items-center justify-center">1</span>
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Primer bloque</label>
                                     </div>
                                     <div className="grid gap-3">
                                         <input
@@ -394,8 +413,8 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
 
                                 <div className="space-y-4 pt-4 border-t border-slate-200/50">
                                     <div className="flex items-center gap-2">
-                                        <span className="size-5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-black flex items-center justify-center">2</span>
-                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">SEGUNDO BLOQUE</label>
+                                        <span className="size-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center">2</span>
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Segundo bloque</label>
                                     </div>
                                     <div className="grid gap-3">
                                         <input
@@ -427,7 +446,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={uploadingImage}
-                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
+                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 transition shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
                                     >
                                         {uploadingImage ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
                                         SUBIR FOTO
@@ -435,7 +454,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                     <button
                                         type="button"
                                         onClick={() => setShowUrlForm(!showUrlForm)}
-                                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+                                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
                                     >
                                         <LinkIcon size={12} />
                                         URL
@@ -469,7 +488,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                     <button
                                         type="button"
                                         onClick={handleAddUrlImage}
-                                        className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                        className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide"
                                     >
                                         Añadir
                                     </button>
@@ -493,10 +512,10 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                 ))}
 
                                 {imagenes.length === 0 && (
-                                    <div onClick={() => fileInputRef.current?.click()} className="col-span-full py-8 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-[2rem] hover:bg-emerald-50/30 hover:border-emerald-300 transition-all cursor-pointer">
+                                    <div onClick={() => fileInputRef.current?.click()} className="col-span-full py-8 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-2xl hover:bg-emerald-50/30 hover:border-emerald-300 transition-all cursor-pointer">
                                         <ImageIcon size={28} className="mb-1 text-slate-300" />
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Añadir fotos a esta cancha</p>
-                                        <span className="text-[8px] text-slate-400 mt-0.5">Haz clic para elegir un archivo de tu equipo</span>
+                                        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Añadir fotos a esta cancha</p>
+                                        <span className="text-xs text-slate-400 mt-0.5">Haz clic para elegir un archivo de tu equipo</span>
                                     </div>
                                 )}
                             </div>
@@ -508,14 +527,14 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 px-4 py-4 border border-gray-200 text-gray-500 font-bold rounded-2xl hover:bg-gray-50 transition uppercase text-[10px] tracking-widest"
+                                    className="flex-1 px-4 py-4 border border-gray-200 text-gray-500 font-bold rounded-2xl hover:bg-gray-50 transition uppercase text-xs tracking-wide"
                                 >
                                     CANCELAR
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading || uploadingImage}
-                                    className="flex-[2] px-4 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-emerald-600 transition shadow-lg flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest disabled:opacity-50"
+                                    className="flex-[2] px-4 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-emerald-600 transition shadow-lg flex items-center justify-center gap-2 uppercase text-xs tracking-wide disabled:opacity-50"
                                 >
                                     {loading ? <Loader2 className="animate-spin" size={20} /> : (initialData ? 'GUARDAR CAMBIOS' : 'REGISTRAR CANCHA')}
                                 </button>
@@ -526,7 +545,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                     type="button"
                                     onClick={handleDelete}
                                     disabled={loading}
-                                    className="w-full py-3 text-red-500 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-red-50 rounded-2xl transition-all"
+                                    className="w-full py-3 text-red-500 font-bold text-xs uppercase tracking-wide hover:bg-red-50 rounded-2xl transition-all"
                                 >
                                     ELIMINAR ESTA CANCHA
                                 </button>

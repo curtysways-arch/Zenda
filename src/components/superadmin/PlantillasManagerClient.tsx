@@ -313,11 +313,11 @@ export default function PlantillasManagerClient({
                 <div className="absolute -right-20 -top-20 w-80 h-80 bg-gradient-to-br from-emerald-500/10 to-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
                 
                 <div className="space-y-2 max-w-2xl relative z-10">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wide">
                         <Sparkles size={12} />
                         Catálogo de Experiencias Web Citiox
                     </div>
-                    <h1 className="text-2xl lg:text-3xl font-black tracking-tight uppercase italic text-white">
+                    <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-white">
                         Módulo de Plantillas <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Landings & Admins</span>
                     </h1>
                     <p className="text-xs lg:text-sm text-slate-400 font-medium leading-relaxed">
@@ -329,7 +329,7 @@ export default function PlantillasManagerClient({
                     <button
                         onClick={handleSeed}
                         disabled={seeding}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700/80 text-slate-300 hover:text-white border border-slate-700 text-xs font-black uppercase tracking-widest transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700/80 text-slate-300 hover:text-white border border-slate-700 text-xs font-bold uppercase tracking-wide transition-all shadow-sm active:scale-95 disabled:opacity-50"
                         title="Restaura o asegura las plantillas oficiales predeterminadas"
                     >
                         <RefreshCw size={14} className={clsx(seeding && "animate-spin text-emerald-400")} />
@@ -337,7 +337,7 @@ export default function PlantillasManagerClient({
                     </button>
                     <button
                         onClick={() => openCreateModal(activeTab === 'landings' ? 'landing' : 'admin')}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all active:scale-95 cursor-pointer"
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 transition-all active:scale-95 cursor-pointer"
                     >
                         <Plus size={16} />
                         Nueva {activeTab === 'landings' ? 'Landing' : 'Plantilla Admin'}
@@ -348,30 +348,30 @@ export default function PlantillasManagerClient({
             {/* Métricas Rápidas */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Landings Registradas</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Landings Registradas</span>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-black text-slate-900 dark:text-white">{landings.length}</span>
+                        <span className="text-2xl font-bold text-slate-900 dark:text-white">{landings.length}</span>
                         <span className="text-xs font-bold text-emerald-600">({landings.filter(l => l.active).length} activas)</span>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Paneles Admin Registrados</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Paneles Admin Registrados</span>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-black text-slate-900 dark:text-white">{admins.length}</span>
+                        <span className="text-2xl font-bold text-slate-900 dark:text-white">{admins.length}</span>
                         <span className="text-xs font-bold text-cyan-600">({admins.filter(a => a.active).length} activos)</span>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Verticales Soportados</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Verticales Soportados</span>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-black text-slate-900 dark:text-white">{businessTypes.length}</span>
+                        <span className="text-2xl font-bold text-slate-900 dark:text-white">{businessTypes.length}</span>
                         <span className="text-xs font-bold text-slate-400">tipos de negocio</span>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Predeterminadas Asignadas</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Predeterminadas Asignadas</span>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-black text-amber-500">100%</span>
+                        <span className="text-2xl font-bold text-amber-500">100%</span>
                         <span className="text-xs font-bold text-emerald-600">Completado</span>
                     </div>
                 </div>
@@ -383,7 +383,7 @@ export default function PlantillasManagerClient({
                     <button
                         onClick={() => setActiveTab('landings')}
                         className={clsx(
-                            "flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                            "flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
                             activeTab === 'landings'
                                 ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
                                 : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
@@ -395,7 +395,7 @@ export default function PlantillasManagerClient({
                     <button
                         onClick={() => setActiveTab('admins')}
                         className={clsx(
-                            "flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                            "flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
                             activeTab === 'admins'
                                 ? "bg-white dark:bg-slate-800 text-cyan-600 dark:text-cyan-400 shadow-sm"
                                 : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
@@ -408,13 +408,13 @@ export default function PlantillasManagerClient({
 
                 {/* Filtro por Tipo de Negocio */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 custom-scrollbar">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1">
                         <Filter size={12} /> Filtrar:
                     </span>
                     <button
                         onClick={() => setSelectedBusinessType('all')}
                         className={clsx(
-                            "px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shrink-0",
+                            "px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0",
                             selectedBusinessType === 'all'
                                 ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
                                 : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400"
@@ -427,7 +427,7 @@ export default function PlantillasManagerClient({
                             key={bt.id}
                             onClick={() => setSelectedBusinessType(bt.id)}
                             className={clsx(
-                                "px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shrink-0 flex items-center gap-1.5",
+                                "px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 flex items-center gap-1.5",
                                 selectedBusinessType === bt.id
                                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm"
                                     : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400"
@@ -471,7 +471,7 @@ export default function PlantillasManagerClient({
                                     {/* Badges superiores */}
                                     <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
                                         <span 
-                                            className="px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider text-white shadow-md backdrop-blur-md"
+                                            className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-md backdrop-blur-md"
                                             style={{ backgroundColor: tpl.businessType?.color || '#10b981' }}
                                         >
                                             {tpl.businessType?.name || 'Vertical'}
@@ -479,14 +479,14 @@ export default function PlantillasManagerClient({
 
                                         <div className="flex items-center gap-2">
                                             {tpl.isDefault && (
-                                                <span className="px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 flex items-center gap-1 shadow-md">
+                                                <span className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-amber-500 text-slate-950 flex items-center gap-1 shadow-md">
                                                     <Star size={11} className="fill-slate-950" /> Predeterminada
                                                 </span>
                                             )}
                                             <button
                                                 onClick={() => handleToggleActive('landing', tpl)}
                                                 className={clsx(
-                                                    "px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-md backdrop-blur-md cursor-pointer transition-all",
+                                                    "px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md backdrop-blur-md cursor-pointer transition-all",
                                                     tpl.active 
                                                         ? "bg-emerald-500/90 text-white" 
                                                         : "bg-rose-500/90 text-white"
@@ -499,10 +499,10 @@ export default function PlantillasManagerClient({
 
                                     {/* Slug y componente sobre la imagen */}
                                     <div className="absolute bottom-3 left-3 right-3 text-white">
-                                        <h3 className="font-black text-sm uppercase tracking-tight text-white drop-shadow-md">
+                                        <h3 className="font-bold text-sm uppercase tracking-tight text-white drop-shadow-md">
                                             {tpl.name}
                                         </h3>
-                                        <span className="text-[10px] text-slate-300 font-mono">
+                                        <span className="text-xs text-slate-300 font-mono">
                                             Componente: &lt;{tpl.component}&gt;
                                         </span>
                                     </div>
@@ -515,7 +515,7 @@ export default function PlantillasManagerClient({
                                     </p>
 
                                     <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
-                                        <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                                        <div className="flex items-center justify-between text-xs font-bold text-slate-400">
                                             <span>Slug: <strong className="text-slate-700 dark:text-slate-300 font-mono">{tpl.slug}</strong></span>
                                             <span>v{tpl.version}</span>
                                         </div>
@@ -525,7 +525,7 @@ export default function PlantillasManagerClient({
                                                 href={demoUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-black uppercase tracking-wider transition-all"
+                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold uppercase tracking-wider transition-all"
                                             >
                                                 <ExternalLink size={12} /> Ver Demo
                                             </a>
@@ -533,7 +533,7 @@ export default function PlantillasManagerClient({
                                             {!tpl.isDefault && (
                                                 <button
                                                     onClick={() => handleSetDefault('landing', tpl)}
-                                                    className="py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                                                    className="py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                                                     title="Establecer como predeterminada para este tipo de negocio"
                                                 >
                                                     Hacer Default
@@ -594,7 +594,7 @@ export default function PlantillasManagerClient({
                                     {/* Badges superiores */}
                                     <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
                                         <span 
-                                            className="px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider text-white shadow-md backdrop-blur-md"
+                                            className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-md backdrop-blur-md"
                                             style={{ backgroundColor: tpl.businessType?.color || '#06b6d4' }}
                                         >
                                             {tpl.businessType?.name || 'Vertical'}
@@ -602,14 +602,14 @@ export default function PlantillasManagerClient({
 
                                         <div className="flex items-center gap-2">
                                             {tpl.isDefault && (
-                                                <span className="px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 flex items-center gap-1 shadow-md">
+                                                <span className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-amber-500 text-slate-950 flex items-center gap-1 shadow-md">
                                                     <Star size={11} className="fill-slate-950" /> Predeterminado
                                                 </span>
                                             )}
                                             <button
                                                 onClick={() => handleToggleActive('admin', tpl)}
                                                 className={clsx(
-                                                    "px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-md backdrop-blur-md cursor-pointer transition-all",
+                                                    "px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md backdrop-blur-md cursor-pointer transition-all",
                                                     tpl.active 
                                                         ? "bg-cyan-500/90 text-white" 
                                                         : "bg-rose-500/90 text-white"
@@ -623,14 +623,14 @@ export default function PlantillasManagerClient({
                                     {/* Nombre y layout sobre la imagen */}
                                     <div className="absolute bottom-3 left-3 right-3 text-white">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="px-2 py-0.5 rounded-lg bg-white/20 text-white text-[9px] font-mono font-black uppercase tracking-wider">
+                                            <span className="px-2 py-0.5 rounded-lg bg-white/20 text-white text-xs font-mono font-bold uppercase tracking-wider">
                                                 {tpl.layoutType}
                                             </span>
                                         </div>
-                                        <h3 className="font-black text-sm uppercase tracking-tight text-white drop-shadow-md">
+                                        <h3 className="font-bold text-sm uppercase tracking-tight text-white drop-shadow-md">
                                             {tpl.name}
                                         </h3>
-                                        <span className="text-[10px] text-slate-300 font-mono">
+                                        <span className="text-xs text-slate-300 font-mono">
                                             Componente: &lt;{tpl.component}&gt;
                                         </span>
                                     </div>
@@ -641,16 +641,16 @@ export default function PlantillasManagerClient({
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
                                             <span>Formato de Panel:</span>
-                                            <strong className="text-slate-900 dark:text-white uppercase text-[10px]">{tpl.layoutType}</strong>
+                                            <strong className="text-slate-900 dark:text-white uppercase text-xs">{tpl.layoutType}</strong>
                                         </div>
                                         <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
                                             <span>Arquitectura:</span>
-                                            <strong className="text-cyan-600 font-mono text-[10px]">Capabilities Resolved</strong>
+                                            <strong className="text-cyan-600 font-mono text-xs">Capabilities Resolved</strong>
                                         </div>
                                     </div>
 
                                     <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
-                                        <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                                        <div className="flex items-center justify-between text-xs font-bold text-slate-400">
                                             <span>Orden: #{tpl.sortOrder}</span>
                                             <span>v{tpl.version}</span>
                                         </div>
@@ -658,7 +658,7 @@ export default function PlantillasManagerClient({
                                         <div className="flex items-center gap-2">
                                             <a
                                                 href="/superadmin/negocios"
-                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-black uppercase tracking-wider transition-all"
+                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold uppercase tracking-wider transition-all"
                                             >
                                                 <ExternalLink size={12} /> Probar en Negocio
                                             </a>
@@ -666,7 +666,7 @@ export default function PlantillasManagerClient({
                                             {!tpl.isDefault && (
                                                 <button
                                                     onClick={() => handleSetDefault('admin', tpl)}
-                                                    className="py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                                                    className="py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                                                     title="Establecer como predeterminada para este tipo de negocio"
                                                 >
                                                     Hacer Default
@@ -703,7 +703,7 @@ export default function PlantillasManagerClient({
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 lg:p-8 max-w-lg w-full shadow-2xl relative space-y-6">
                         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                             <div>
-                                <h3 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">
+                                <h3 className="text-base font-bold uppercase tracking-tight text-slate-900 dark:text-white">
                                     {editingItem ? 'Editar Plantilla' : 'Nueva Plantilla'} ({modalType === 'landing' ? 'Landing' : 'Admin'})
                                 </h3>
                                 <p className="text-xs text-slate-500 font-medium">Configura los parámetros visuales y técnicos</p>
@@ -718,7 +718,7 @@ export default function PlantillasManagerClient({
 
                         <form onSubmit={handleFormSubmit} className="space-y-4 text-xs font-bold">
                             <div>
-                                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipo de Negocio</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Tipo de Negocio</label>
                                 <select
                                     value={formData.businessTypeId}
                                     onChange={e => setFormData({ ...formData, businessTypeId: e.target.value })}
@@ -732,7 +732,7 @@ export default function PlantillasManagerClient({
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Nombre de la Plantilla</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Nombre de la Plantilla</label>
                                 <input
                                     type="text"
                                     value={formData.name}
@@ -745,7 +745,7 @@ export default function PlantillasManagerClient({
 
                             {modalType === 'landing' && (
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Slug Identificador</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Slug Identificador</label>
                                     <input
                                         type="text"
                                         value={formData.slug}
@@ -758,7 +758,7 @@ export default function PlantillasManagerClient({
                             )}
 
                             <div>
-                                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Componente React</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Componente React</label>
                                 <input
                                     type="text"
                                     value={formData.component}
@@ -771,7 +771,7 @@ export default function PlantillasManagerClient({
 
                             {modalType === 'admin' && (
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipo de Layout</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Tipo de Layout</label>
                                     <select
                                         value={formData.layoutType}
                                         onChange={e => setFormData({ ...formData, layoutType: e.target.value })}
@@ -786,7 +786,7 @@ export default function PlantillasManagerClient({
                             )}
 
                             <div>
-                                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">URL Imagen de Vista Previa</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">URL Imagen de Vista Previa</label>
                                 <input
                                     type="url"
                                     value={formData.previewImage}
@@ -798,7 +798,7 @@ export default function PlantillasManagerClient({
 
                             {modalType === 'landing' && (
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Descripción</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Descripción</label>
                                     <textarea
                                         value={formData.description}
                                         onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -825,13 +825,13 @@ export default function PlantillasManagerClient({
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                                    className="px-4 py-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer"
+                                    className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer"
                                 >
                                     {editingItem ? 'Actualizar' : 'Guardar'}
                                 </button>

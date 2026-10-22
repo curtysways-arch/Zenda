@@ -40,6 +40,8 @@ export async function GET(req: Request) {
       const ubi = ubicacionesByName.get(b.name.toLowerCase().trim());
       return {
         ...b,
+        latitude: b.latitude ?? s.latitude ?? null,
+        longitude: b.longitude ?? s.longitude ?? null,
         horario: s.horario ?? ubi?.horario ?? null,
         mapUrl: s.mapUrl ?? ubi?.mapUrl ?? null,
         imagenUrl: s.imagenUrl ?? ubi?.imagenUrl ?? null,
@@ -84,6 +86,9 @@ export async function POST(req: Request) {
 
     await BranchAccessService.requireBusinessAccess(session.user as any, targetBizId);
 
+    const lat = body.latitude !== undefined && body.latitude !== null && body.latitude !== '' ? Number(body.latitude) : undefined;
+    const lng = body.longitude !== undefined && body.longitude !== null && body.longitude !== '' ? Number(body.longitude) : undefined;
+
     const branch = await BranchService.createBranch(targetBizId, {
       name: body.name,
       code: body.code,
@@ -92,6 +97,8 @@ export async function POST(req: Request) {
       phone: body.phone,
       email: body.email,
       mapUrl: body.mapUrl,
+      latitude: lat,
+      longitude: lng,
       imagenUrl: body.imagenUrl,
       horario: body.horario,
       tieneParqueadero: body.tieneParqueadero,
@@ -132,6 +139,13 @@ export async function PUT(req: Request) {
     }
 
     await BranchAccessService.requireBranchAccess(session.user as any, targetBizId, branchId);
+
+    if (updateData.latitude !== undefined) {
+      updateData.latitude = updateData.latitude !== null && updateData.latitude !== '' ? Number(updateData.latitude) : null;
+    }
+    if (updateData.longitude !== undefined) {
+      updateData.longitude = updateData.longitude !== null && updateData.longitude !== '' ? Number(updateData.longitude) : null;
+    }
 
     const updated = await BranchService.updateBranch(branchId, targetBizId, updateData);
 

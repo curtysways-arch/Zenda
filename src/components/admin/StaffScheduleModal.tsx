@@ -160,15 +160,15 @@ export default function StaffScheduleModal({ isOpen, onClose, staffId, staffName
                 }
             `}} />
             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <div className="bg-white rounded-[3rem] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
                 {/* Header */}
                 <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                     <div>
-                        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-3">
+                        <h2 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
                             <Clock size={28} style={{ color: 'var(--primary-color)' }} />
                             Agenda de {staffName}
                         </h2>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Configura horarios, descansos y excepciones</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mt-1">Configura horarios, descansos y excepciones</p>
                     </div>
                     <button onClick={onClose} className="p-3 hover:bg-white hover:text-rose-500 rounded-2xl transition-all border border-transparent hover:border-slate-100">
                         <X size={24} />
@@ -179,14 +179,14 @@ export default function StaffScheduleModal({ isOpen, onClose, staffId, staffName
                 <div className="flex px-8 pt-4 gap-4 bg-slate-50">
                     <button 
                         onClick={() => setActiveTab('weekly')}
-                        className={`px-6 py-3 rounded-t-2xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'weekly' ? 'bg-white border-x border-t border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`px-6 py-3 rounded-t-2xl font-bold text-xs uppercase tracking-wide transition-all ${activeTab === 'weekly' ? 'bg-white border-x border-t border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
                         style={activeTab === 'weekly' ? { color: 'var(--primary-color)' } : {}}
                     >
                         Horario Semanal
                     </button>
                     <button 
                         onClick={() => setActiveTab('exceptions')}
-                        className={`px-6 py-3 rounded-t-2xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'exceptions' ? 'bg-white border-x border-t border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`px-6 py-3 rounded-t-2xl font-bold text-xs uppercase tracking-wide transition-all ${activeTab === 'exceptions' ? 'bg-white border-x border-t border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
                         style={activeTab === 'exceptions' ? { color: 'var(--primary-color)' } : {}}
                     >
                         Días Libres / Excepciones
@@ -198,7 +198,7 @@ export default function StaffScheduleModal({ isOpen, onClose, staffId, staffName
                     {loading ? (
                         <div className="h-full flex flex-col items-center justify-center py-20 gap-4">
                             <Loader2 className="animate-spin" size={48} style={{ color: 'var(--primary-color)' }} />
-                            <p className="text-slate-400 font-black uppercase tracking-widest">Cargando agenda...</p>
+                            <p className="text-slate-400 font-bold uppercase tracking-wide">Cargando agenda...</p>
                         </div>
                     ) : activeTab === 'weekly' ? (
                         <div className="space-y-4">
@@ -208,7 +208,7 @@ export default function StaffScheduleModal({ isOpen, onClose, staffId, staffName
                             </div>
                             
                             {schedules.map((s, idx) => (
-                                <div key={s.dayOfWeek} className={`p-6 rounded-[2rem] border-2 transition-all ${s.active ? 'border-slate-100 bg-white shadow-sm' : 'border-slate-50 bg-slate-50/50 opacity-60'}`}>
+                                <div key={s.dayOfWeek} className={`p-6 rounded-2xl border-2 transition-all ${s.active ? 'border-slate-100 bg-white shadow-sm' : 'border-slate-50 bg-slate-50/50 opacity-60'}`}>
                                     <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                                         <div className="w-40 flex items-center gap-4">
                                             <input 
@@ -218,7 +218,7 @@ export default function StaffScheduleModal({ isOpen, onClose, staffId, staffName
                                                 className="size-6 rounded-lg cursor-pointer"
                                                 style={ { accentColor: 'var(--primary-color)' } as any }
                                             />
-                                            <span className="font-black text-slate-700 uppercase tracking-tight">{DAYS[s.dayOfWeek].name}</span>
+                                            <span className="font-bold text-slate-700 uppercase tracking-tight">{DAYS[s.dayOfWeek].name}</span>
                                         </div>
 
                                         {s.active ? (
@@ -253,10 +253,10 @@ export default function StaffScheduleModal({ isOpen, onClose, staffId, staffName
 
                                                 <div className="flex-1 space-y-2">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Descansos / Almuerzo</span>
+                                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400">Descansos / Almuerzo</span>
                                                         <button 
                                                             onClick={() => addBreak(idx)}
-                                                            className="flex items-center gap-1 text-[10px] font-black uppercase transition-all"
+                                                            className="flex items-center gap-1 text-xs font-bold uppercase transition-all"
                                                             style={{ color: 'var(--primary-color)' }}
                                                         >
                                                             <Plus size={12} /> Añadir descanso
@@ -283,7 +283,7 @@ export default function StaffScheduleModal({ isOpen, onClose, staffId, staffName
                                                                 </button>
                                                             </div>
                                                         ))}
-                                                        {s.breaks.length === 0 && <span className="text-xs text-slate-300 italic font-medium">Sin descansos</span>}
+                                                        {s.breaks.length === 0 && <span className="text-xs text-slate-300 font-medium">Sin descansos</span>}
                                                     </div>
                                                 </div>
 
@@ -296,7 +296,7 @@ export default function StaffScheduleModal({ isOpen, onClose, staffId, staffName
                                                 </button>
                                             </>
                                         ) : (
-                                            <span className="text-slate-400 text-xs font-black uppercase tracking-widest">Día no laborable</span>
+                                            <span className="text-slate-400 text-xs font-bold uppercase tracking-wide">Día no laborable</span>
                                         )}
                                     </div>
                                 </div>
@@ -305,11 +305,11 @@ export default function StaffScheduleModal({ isOpen, onClose, staffId, staffName
                     ) : (
                         <div className="space-y-6">
                              {/* Exceptions section placeholder - will expand if needed */}
-                             <div className="text-center py-20 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 text-slate-400">
+                             <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400">
                                 <Calendar size={48} className="mx-auto opacity-20 mb-4" />
-                                <p className="font-black uppercase tracking-widest text-sm">Gestiona días de vacaciones o cambios puntuales</p>
+                                <p className="font-bold uppercase tracking-wide text-sm">Gestiona días de vacaciones o cambios puntuales</p>
                                  <button 
-                                    className="mt-4 px-6 py-3 text-white rounded-full text-xs font-black uppercase tracking-widest transition-all"
+                                    className="mt-4 px-6 py-3 text-white rounded-full text-xs font-bold uppercase tracking-wide transition-all"
                                     style={{ backgroundColor: 'var(--primary-color)' }}
                                 >
                                     Próximamente: Añadir Excepción
@@ -323,14 +323,14 @@ export default function StaffScheduleModal({ isOpen, onClose, staffId, staffName
                 <div className="p-8 border-t border-slate-100 flex items-center justify-end gap-4 bg-slate-50">
                     <button 
                         onClick={onClose}
-                        className="px-8 py-4 text-slate-400 font-black text-xs uppercase tracking-widest hover:text-slate-600 transition-all"
+                        className="px-8 py-4 text-slate-400 font-bold text-xs uppercase tracking-wide hover:text-slate-600 transition-all"
                     >
                         Cancelar
                     </button>
                     <button 
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex items-center gap-3 text-white font-black px-10 py-5 rounded-[2rem] shadow-xl disabled:opacity-50 transition-all active:scale-95 uppercase tracking-widest text-xs"
+                        className="flex items-center gap-3 text-white font-bold px-10 py-5 rounded-2xl shadow-xl disabled:opacity-50 transition-all active:scale-95 uppercase tracking-wide text-xs"
                         style={{ backgroundColor: 'var(--primary-color)' }}
                     >
                         {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}

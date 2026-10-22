@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NotificationService } from '@/lib/notifications/notificationService';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -268,6 +269,26 @@ export async function POST(request: Request) {
           data: { A: promoId, B: productoRequeridoId }
         });
       } catch (_) {}
+    }
+
+    // Disparar notificación global de la nueva promoción a los clientes
+    try {
+      await NotificationService.createNotification({
+        negocioId,
+        tipo: 'PROMO',
+        categoria: 'PROMOCIONES',
+        titulo: `🔥 ¡Nueva Oferta: ${titulo}!`,
+        descripcion: descripcion || `Aprovecha esta nueva promoción disponible por tiempo limitado.`,
+        imagenUrl: imagenUrl || undefined,
+        icono: 'Tag',
+        prioridad: 'SUCCESS',
+        recipientType: 'ALL',
+        actionType: 'VER_PROMO',
+        actionPayload: { screen: 'promo', promotionId: newPromo.id },
+        channels: ['APP', 'PUSH']
+      });
+    } catch (notifErr) {
+      console.warn('[Admin Promociones] Error emitiendo notificación de promo:', notifErr);
     }
 
     return NextResponse.json({

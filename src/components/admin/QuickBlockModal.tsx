@@ -93,7 +93,7 @@ export default function QuickBlockModal({
               <Lock size={18} />
             </div>
             <div>
-              <h3 className="font-black text-base uppercase tracking-tight">Bloquear Horario</h3>
+              <h3 className="font-bold text-base uppercase tracking-tight">Bloquear Horario</h3>
               <p className="text-xs text-slate-400">Inhabilita la cancha para que no se pueda reservar</p>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function QuickBlockModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
               Cancha a Bloquear
             </label>
             <select
@@ -127,7 +127,7 @@ export default function QuickBlockModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
                 Hora Inicio
               </label>
               <input
@@ -142,7 +142,7 @@ export default function QuickBlockModal({
               />
             </div>
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
                 Hora Fin
               </label>
               <input
@@ -156,7 +156,7 @@ export default function QuickBlockModal({
           </div>
 
           <div>
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
               Motivo del Bloqueo
             </label>
             <input
@@ -174,11 +174,11 @@ export default function QuickBlockModal({
                   type="button"
                   key={m}
                   onClick={() => setMotivo(m)}
-                  className={`text-[9px] font-bold px-2 py-1 rounded-lg border transition-all ${
-                    motivo === m
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
-                  }`}
+                  className={`text-xs font-bold px-2 py-1 rounded-lg border transition-all ${
+ motivo === m
+ ? 'bg-slate-900 text-white border-slate-900'
+ : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+ }`}
                 >
                   {m}
                 </button>
@@ -197,7 +197,7 @@ export default function QuickBlockModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5"
+              className="px-5 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5"
             >
               {loading ? 'Bloqueando...' : 'Confirmar Bloqueo'}
             </button>

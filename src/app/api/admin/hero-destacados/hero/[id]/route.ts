@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
+  const session = await getEffectiveAdminSession();
   if (!session?.user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
-  const negocioId = (session.user as any).negocioId;
+  const user = session.user as any;
+  const negocioId = user.negocioId || user.businessId;
   if (!negocioId) {
     return NextResponse.json({ error: 'No tienes un negocio asociado' }, { status: 400 });
   }
@@ -86,12 +88,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
+  const session = await getEffectiveAdminSession();
   if (!session?.user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
-  const negocioId = (session.user as any).negocioId;
+  const user = session.user as any;
+  const negocioId = user.negocioId || user.businessId;
   if (!negocioId) {
     return NextResponse.json({ error: 'No tienes un negocio asociado' }, { status: 400 });
   }

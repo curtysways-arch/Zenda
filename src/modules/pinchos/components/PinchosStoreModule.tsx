@@ -311,13 +311,13 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={negocio.logoUrl} alt={negocio.nombre} className="size-9 rounded-xl object-contain border bg-white" />
                     ) : (
-                        <div className="size-9 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase" style={{ backgroundColor: primaryColor }}>
+                        <div className="size-9 rounded-xl flex items-center justify-center text-white text-xs font-bold uppercase" style={{ backgroundColor: primaryColor }}>
                             {negocio.nombre.substring(0, 2)}
                         </div>
                     )}
                     <div className="text-left">
-                        <h1 className="text-sm font-black text-slate-900 leading-tight">{negocio.nombre}</h1>
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Pedidos Online</span>
+                        <h1 className="text-sm font-bold text-slate-900 leading-tight">{negocio.nombre}</h1>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Pedidos Online</span>
                     </div>
                 </div>
 
@@ -331,7 +331,7 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                                 setView('profile');
                             }
                         }}
-                        className="px-3.5 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                        className="px-3.5 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
                     >
                         <User className="size-3.5" />
                         <span>{clientPhone ? 'MIS PEDIDOS' : 'LOGIN'}</span>
@@ -351,7 +351,7 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                     >
                         <ShoppingBag className="size-6 text-orange-600" />
                         {totalItemsCount > 0 && (
-                            <span className="absolute -top-1 -right-1 size-5 bg-rose-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-md animate-pulse">
+                            <span className="absolute -top-1 -right-1 size-5 bg-rose-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md animate-pulse">
                                 {totalItemsCount}
                             </span>
                         )}
@@ -380,7 +380,7 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                         <button
                             type="button"
                             onClick={() => setView('catalog')}
-                            className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-700 hover:text-slate-900 bg-white border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs transition-all active:scale-95 cursor-pointer"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700 hover:text-slate-900 bg-white border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs transition-all active:scale-95 cursor-pointer"
                         >
                             <ArrowLeft className="size-3.5 text-orange-600" />
                             <span>Volver al Menú</span>
@@ -503,11 +503,11 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                             <button
                                 type="button"
                                 onClick={() => setSelectedCategory('all')}
-                                className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
-                                    selectedCategory === 'all'
-                                        ? 'bg-orange-600 text-white shadow-md'
-                                        : 'bg-white text-slate-600 border border-slate-200/80'
-                                }`}
+                                className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
+ selectedCategory === 'all'
+ ? 'bg-orange-600 text-white shadow-md'
+ : 'bg-white text-slate-600 border border-slate-200/80'
+ }`}
                             >
                                 Todos
                             </button>
@@ -516,11 +516,11 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                                     key={cat.id}
                                     type="button"
                                     onClick={() => setSelectedCategory(cat.id)}
-                                    className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
-                                        selectedCategory === cat.id
-                                            ? 'bg-orange-600 text-white shadow-md'
-                                            : 'bg-white text-slate-600 border border-slate-200/80'
-                                    }`}
+                                    className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
+ selectedCategory === cat.id
+ ? 'bg-orange-600 text-white shadow-md'
+ : 'bg-white text-slate-600 border border-slate-200/80'
+ }`}
                                 >
                                     {cat.nombre}
                                 </button>
@@ -552,29 +552,29 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                                     </div>
 
                                     <div>
-                                        <h3 className="text-sm font-black text-slate-900 leading-tight">{prod.nombre}</h3>
+                                        <h3 className="text-sm font-bold text-slate-900 leading-tight">{prod.nombre}</h3>
                                         {prod.descripcion && (
                                             <p className="text-xs text-slate-500 font-medium line-clamp-2 mt-1">{prod.descripcion}</p>
                                         )}
                                     </div>
 
                                     <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                                        <span className="text-base font-black text-slate-900 font-mono">${prod.precio.toFixed(2)}</span>
+                                        <span className="text-base font-bold text-slate-900 font-mono">${prod.precio.toFixed(2)}</span>
 
                                         {qty > 0 ? (
                                             <div className="flex items-center bg-slate-100 rounded-2xl p-1 gap-2 border border-slate-200">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleUpdateQuantity(prod.id, -1)}
-                                                    className="size-8 bg-white text-slate-800 rounded-xl flex items-center justify-center font-black shadow-xs active:scale-90 transition-transform cursor-pointer"
+                                                    className="size-8 bg-white text-slate-800 rounded-xl flex items-center justify-center font-bold shadow-xs active:scale-90 transition-transform cursor-pointer"
                                                 >
                                                     <Minus className="size-3.5 stroke-[2.5]" />
                                                 </button>
-                                                <span className="text-xs font-mono font-black text-slate-900 min-w-[16px] text-center">{qty}</span>
+                                                <span className="text-xs font-mono font-bold text-slate-900 min-w-[16px] text-center">{qty}</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => handleUpdateQuantity(prod.id, 1)}
-                                                    className="size-8 bg-white text-slate-800 rounded-xl flex items-center justify-center font-black shadow-xs active:scale-90 transition-transform cursor-pointer"
+                                                    className="size-8 bg-white text-slate-800 rounded-xl flex items-center justify-center font-bold shadow-xs active:scale-90 transition-transform cursor-pointer"
                                                 >
                                                     <Plus className="size-3.5 stroke-[2.5]" />
                                                 </button>
@@ -583,10 +583,10 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                                             <button
                                                 type="button"
                                                 onClick={() => handleUpdateQuantity(prod.id, 1)}
-                                                className="h-10 px-5 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-2xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+                                                className="h-10 px-5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
                                             >
                                                 <Plus className="size-3.5 stroke-[2.5]" />
-                                                <span>AGREGAR</span>
+                                                <span>Agregar</span>
                                             </button>
                                         )}
                                     </div>

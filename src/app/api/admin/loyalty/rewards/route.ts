@@ -1,7 +1,6 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
 import crypto from "crypto";
 
 // GET /api/admin/loyalty/rewards — Listar premios unificados
@@ -9,7 +8,7 @@ import { ClubResolver } from "@/lib/growth/clubResolver";
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
         const user = session.user as any;
@@ -58,7 +57,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
         const user = session.user as any;

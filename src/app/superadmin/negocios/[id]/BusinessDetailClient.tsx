@@ -406,43 +406,43 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
     return (
         <div className="space-y-8 pb-20">
             {/* Navegación por Módulos (Tabs) */}
-            <div className="flex flex-wrap gap-2 p-1 bg-slate-100/50 rounded-[2rem] w-fit border border-slate-100">
+            <div className="flex flex-wrap gap-2 p-1 bg-slate-100/50 rounded-2xl w-fit border border-slate-100">
                 <button
                     onClick={() => setActiveTab('info')}
-                    className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'info'
-                        ? 'bg-white text-indigo-600 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
-                        }`}
+                    className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-2 ${activeTab === 'info'
+ ? 'bg-white text-indigo-600 shadow-sm'
+ : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+ }`}
                 >
                     <Building2 size={16} />
                     Información del Negocio
                 </button>
                 <button
                     onClick={() => setActiveTab('subscription')}
-                    className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'subscription'
-                        ? 'bg-white text-indigo-600 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
-                        }`}
+                    className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-2 ${activeTab === 'subscription'
+ ? 'bg-white text-indigo-600 shadow-sm'
+ : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+ }`}
                 >
                     <Zap size={16} />
                     Suscripción Actual
                 </button>
                 <button
                     onClick={() => setActiveTab('payments')}
-                    className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'payments'
-                        ? 'bg-white text-indigo-600 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
-                        }`}
+                    className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-2 ${activeTab === 'payments'
+ ? 'bg-white text-indigo-600 shadow-sm'
+ : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+ }`}
                 >
                     <History size={16} />
                     Historial y Pagos
                 </button>
                 <button
                     onClick={() => setActiveTab('loyalty')}
-                    className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'loyalty'
-                        ? 'bg-white text-indigo-600 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
-                        }`}
+                    className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-2 ${activeTab === 'loyalty'
+ ? 'bg-white text-indigo-600 shadow-sm'
+ : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+ }`}
                 >
                     <Crown size={16} />
                     Fidelidad / Temporada
@@ -454,20 +454,20 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                 {activeTab === 'info' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-8">
-                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-8">
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-8">
                                 <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
                                     <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
                                         <Building2 size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-black text-slate-900 uppercase">Perfil Administrativo</h3>
-                                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest italic">Datos de contacto y ubicación física</p>
+                                        <h3 className="text-xl font-bold text-slate-900 ">Perfil Administrativo</h3>
+                                        <p className="text-sm text-slate-400 font-bold uppercase tracking-wide ">Datos de contacto y ubicación física</p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nombre Comercial</label>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Nombre Comercial</label>
                                         <input
                                             type="text"
                                             value={formData.nombre}
@@ -477,7 +477,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Propietario / Representante</label>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Propietario / Representante</label>
                                         <input
                                             type="text"
                                             value={formData.propietario}
@@ -487,7 +487,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">WhatsApp de Gestión</label>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">WhatsApp de Gestión</label>
                                         <input
                                             type="text"
                                             value={formData.whatsapp}
@@ -497,7 +497,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Email Principal</label>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Email Principal</label>
                                         <input
                                             type="email"
                                             value={formData.emailContacto}
@@ -509,7 +509,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Ciudad</label>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Ciudad</label>
                                         <input
                                             type="text"
                                             value={formData.ciudad}
@@ -518,7 +518,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Dirección Exacta</label>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Dirección Exacta</label>
                                         <input
                                             type="text"
                                             value={formData.direccion}
@@ -532,7 +532,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     <button
                                         onClick={handleSave}
                                         disabled={loading}
-                                        className="px-10 py-5 bg-indigo-600 text-white font-black rounded-3xl hover:bg-slate-900 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 flex items-center gap-3 uppercase tracking-widest text-sm"
+                                        className="px-10 py-5 bg-indigo-600 text-white font-bold rounded-3xl hover:bg-slate-900 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 flex items-center gap-3 uppercase tracking-wide text-sm"
                                     >
                                         {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
                                         Actualizar Información
@@ -541,14 +541,14 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                             </div>
 
                             {/* Card de Usuarios y Accesos de Ingreso */}
-                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-6">
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-6">
                                 <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
                                     <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
                                         <User size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-black text-slate-900 uppercase">Usuarios y Accesos de Ingreso</h3>
-                                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest italic">Cuentas para ingresar al panel del negocio</p>
+                                        <h3 className="text-xl font-bold text-slate-900 ">Usuarios y Accesos de Ingreso</h3>
+                                        <p className="text-sm text-slate-400 font-bold uppercase tracking-wide ">Cuentas para ingresar al panel del negocio</p>
                                     </div>
                                 </div>
 
@@ -558,8 +558,8 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                             <div key={user.id} className="p-6 bg-slate-50/50 border border-slate-100 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white hover:shadow-md transition-all group">
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-black text-slate-900 text-sm">{user.nombre || 'Administrador'}</span>
-                                                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[8px] font-black rounded-md uppercase tracking-wider">
+                                                        <span className="font-bold text-slate-900 text-sm">{user.nombre || 'Administrador'}</span>
+                                                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-md uppercase tracking-wider">
                                                             {user.role}
                                                         </span>
                                                     </div>
@@ -579,7 +579,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
 
                                                 <button
                                                     onClick={() => handleOpenResetModal(user)}
-                                                    className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm flex items-center gap-2"
+                                                    className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-slate-600 font-bold text-xs uppercase tracking-wide hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm flex items-center gap-2"
                                                 >
                                                     <RefreshCw size={14} />
                                                     Resetear Contraseña
@@ -589,7 +589,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     ) : (
                                         <div className="text-center py-10 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
                                             <User className="mx-auto text-slate-200 mb-2" size={32} />
-                                            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No hay usuarios administradores registrados para este negocio</p>
+                                            <p className="text-slate-400 font-bold uppercase text-xs tracking-wide">No hay usuarios administradores registrados para este negocio</p>
                                         </div>
                                     )}
                                 </div>
@@ -597,32 +597,32 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                         </div>
 
                         <div className="space-y-8">
-                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 text-center space-y-6">
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center space-y-6">
                                 <div className="p-4 bg-rose-50 text-rose-600 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
                                     <ShieldAlert size={40} />
                                 </div>
                                 <div>
-                                    <h4 className="font-black text-slate-900 uppercase">Estado del Acceso</h4>
+                                    <h4 className="font-bold text-slate-900 uppercase">Estado del Acceso</h4>
                                     <p className="text-xs text-slate-400 font-bold uppercase mt-1">Control de suspensión inmediata</p>
                                 </div>
-                                <div className={`py-4 rounded-2xl border font-black text-xs uppercase tracking-widest ${getStatusBadge(formData.estado)}`}>
+                                <div className={`py-4 rounded-2xl border font-bold text-xs uppercase tracking-wide ${getStatusBadge(formData.estado)}`}>
                                     {formData.estado}
                                 </div>
                                 <button
                                     onClick={handleSuspendBusiness}
-                                    className={`w-full py-5 rounded-3xl font-black uppercase text-xs tracking-widest transition-all ${formData.estado === 'SUSPENDIDO'
-                                        ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20'
-                                        : 'bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-600/20'
-                                        }`}
+                                    className={`w-full py-5 rounded-3xl font-bold uppercase text-xs tracking-wide transition-all ${formData.estado === 'SUSPENDIDO'
+ ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20'
+ : 'bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-600/20'
+ }`}
                                 >
                                     {formData.estado === 'SUSPENDIDO' ? 'Reactivar Negocio' : 'Suspender Negocio'}
                                 </button>
                             </div>
 
-                            <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white space-y-4">
+                            <div className="bg-slate-900 rounded-2xl p-8 text-white space-y-4">
                                 <div className="flex items-center gap-3 text-indigo-400">
                                     <Settings size={20} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Configuraciones rápidas</span>
+                                    <span className="text-xs font-bold uppercase tracking-wide">Configuraciones rápidas</span>
                                 </div>
                                 <button
                                     onClick={() => {
@@ -654,28 +654,28 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                     <div className="space-y-8 max-w-7xl mx-auto">
                         {/* Solicitudes de Cambio Pendientes */}
                         {currentSub?.pagoPendiente && (
-                            <div className="bg-amber-50 border-2 border-amber-200 rounded-[2.5rem] p-8 shadow-xl shadow-amber-900/5 ring-4 ring-amber-500/10 mb-8">
+                            <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-8 shadow-xl shadow-amber-900/5 ring-4 ring-amber-500/10 mb-8">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                     <div className="flex items-center gap-6">
-                                        <div className="p-4 bg-amber-600 text-white rounded-[1.5rem] shadow-lg shadow-amber-600/20">
+                                        <div className="p-4 bg-amber-600 text-white rounded-2xl shadow-lg shadow-amber-600/20">
                                             <AlertCircle size={32} />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <h4 className="text-xl font-black text-amber-900 uppercase">Solicitud de Cambio Pendiente</h4>
-                                                <span className="px-2 py-0.5 bg-white text-amber-600 text-[8px] font-black rounded-md border border-amber-200 uppercase tracking-widest animate-pulse">Confirmar Pago</span>
+                                                <h4 className="text-xl font-bold text-amber-900 ">Solicitud de Cambio Pendiente</h4>
+                                                <span className="px-2 py-0.5 bg-white text-amber-600 text-xs font-bold rounded-md border border-amber-200 uppercase tracking-wide animate-pulse">Confirmar Pago</span>
                                             </div>
                                             <div className="flex flex-wrap gap-4">
-                                                <p className="text-xs font-bold text-amber-700/80 uppercase tracking-widest flex items-center gap-1">
-                                                    Plan: <span className="text-amber-900 font-black">
+                                                <p className="text-xs font-bold text-amber-700/80 uppercase tracking-wide flex items-center gap-1">
+                                                    Plan: <span className="text-amber-900 font-bold">
                                                         {planes.find(p => p.id === currentSub.solicitudPlanId)?.name || 'Plan Solicitado'}
                                                     </span>
                                                 </p>
-                                                <p className="text-xs font-bold text-amber-700/80 uppercase tracking-widest flex items-center gap-1">
-                                                    Ciclo: <span className="text-amber-900 font-black">{currentSub.metodoPago?.includes('ANNUAL') ? 'ANUAL (-20%)' : 'MENSUAL'}</span>
+                                                <p className="text-xs font-bold text-amber-700/80 uppercase tracking-wide flex items-center gap-1">
+                                                    Ciclo: <span className="text-amber-900 font-bold">{currentSub.metodoPago?.includes('ANNUAL') ? 'ANUAL (-20%)' : 'MENSUAL'}</span>
                                                 </p>
-                                                <p className="text-xs font-bold text-amber-700/80 uppercase tracking-widest flex items-center gap-1 italic">
-                                                    Fecha: <span className="text-amber-900 font-black">{new Date(currentSub.updatedAt).toLocaleDateString()}</span>
+                                                <p className="text-xs font-bold text-amber-700/80 uppercase tracking-wide flex items-center gap-1 ">
+                                                    Fecha: <span className="text-amber-900 font-bold">{new Date(currentSub.updatedAt).toLocaleDateString()}</span>
                                                 </p>
                                             </div>
                                         </div>
@@ -684,14 +684,14 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                         <button 
                                             onClick={() => handleSolicitudAction(currentSub.id, 'REJECT')}
                                             disabled={loading}
-                                            className="px-6 py-4 bg-white border-2 border-amber-200 text-amber-700 font-black rounded-3xl hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all uppercase tracking-widest text-[9px] shadow-sm"
+                                            className="px-6 py-4 bg-white border-2 border-amber-200 text-amber-700 font-bold rounded-3xl hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all uppercase tracking-wide text-xs shadow-sm"
                                         >
                                             Rechazar
                                         </button>
                                         <button 
                                             onClick={() => handleSolicitudAction(currentSub.id, 'APPROVE')}
                                             disabled={loading}
-                                            className="px-8 py-4 bg-amber-600 text-white font-black rounded-3xl hover:bg-slate-900 transition-all shadow-xl shadow-amber-600/20 uppercase tracking-widest text-[9px] flex items-center gap-2"
+                                            className="px-8 py-4 bg-amber-600 text-white font-bold rounded-3xl hover:bg-slate-900 transition-all shadow-xl shadow-amber-600/20 uppercase tracking-wide text-xs flex items-center gap-2"
                                         >
                                             <CheckCircle2 size={16} />
                                             Aprobar Ahora
@@ -704,55 +704,55 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             {/* Status Actual */}
                             <div className="lg:col-span-2">
-                                <div className="bg-slate-900 rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl shadow-indigo-900/40">
+                                <div className="bg-slate-900 rounded-2xl p-10 text-white relative overflow-hidden shadow-2xl shadow-indigo-900/40">
                                     <div className="absolute -top-20 -right-20 p-20 opacity-5 bg-white rounded-full"></div>
 
                                     <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10">
                                         <div className="space-y-6">
                                             <div className="flex items-center gap-2">
-                                                <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-[9px] font-black uppercase tracking-widest text-indigo-300">Suscripción Activa</span>
+                                                <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-xs font-bold uppercase tracking-wide text-indigo-300">Suscripción Activa</span>
                                                 {currentSub?.estado === 'trial' && (
-                                                    <span className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-[9px] font-black uppercase tracking-widest text-amber-300">Periodo de Prueba</span>
+                                                    <span className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-xs font-bold uppercase tracking-wide text-amber-300">Periodo de Prueba</span>
                                                 )}
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-indigo-300/60 font-bold uppercase text-[10px] tracking-widest">Plan Actual</p>
-                                                <h4 className="text-5xl font-black uppercase tracking-tight italic text-white flex items-center gap-4">
+                                                <p className="text-indigo-300/60 font-bold uppercase text-xs tracking-wide">Plan Actual</p>
+                                                <h4 className="text-3xl font-bold tracking-tight text-white flex items-center gap-4">
                                                     {currentPlan?.name || 'Gratis'}
                                                     <Zap className="text-amber-400 fill-amber-400" size={32} />
                                                 </h4>
                                             </div>
                                             <div className="flex gap-10 pt-6 border-t border-white/10">
                                                 <div>
-                                                    <span className="block text-[9px] font-black text-white/40 uppercase tracking-widest mb-1 italic text-indigo-300">Próximo Pago</span>
-                                                    <span className="text-lg font-black text-indigo-400">{currentSub?.fechaFin ? new Date(currentSub.fechaFin).toLocaleDateString() : '--/--/--'}</span>
+                                                    <span className="block text-xs font-bold text-white/40 uppercase tracking-wide mb-1 text-indigo-300">Próximo Pago</span>
+                                                    <span className="text-lg font-bold text-indigo-400">{currentSub?.fechaFin ? new Date(currentSub.fechaFin).toLocaleDateString() : '--/--/--'}</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="bg-indigo-600 rounded-[2.5rem] p-8 space-y-6 flex flex-col justify-center shadow-inner">
+                                        <div className="bg-indigo-600 rounded-2xl p-8 space-y-6 flex flex-col justify-center shadow-inner">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-100 opacity-60 italic">Costo Mensual</span>
+                                                <span className="text-xs font-bold uppercase tracking-wide text-indigo-100 opacity-60 ">Costo Mensual</span>
                                                 <div className="p-2 bg-white/20 rounded-xl">
                                                     <CreditCard size={20} className="text-white" />
                                                 </div>
                                             </div>
-                                            <div className="text-4xl font-black text-white flex items-baseline gap-2">
+                                            <div className="text-4xl font-bold text-white flex items-baseline gap-2">
                                                 ${currentPlan?.price || 0}
-                                                <span className="text-xs font-bold opacity-60 uppercase tracking-widest">/ Mes</span>
+                                                <span className="text-xs font-bold opacity-60 uppercase tracking-wide">/ Mes</span>
                                             </div>
                                             <div className="pt-2">
-                                                <p className="text-[9px] text-white/40 font-black uppercase tracking-[0.2em] mb-3 italic">Ciclo de Cobro</p>
+                                                <p className="text-xs text-white/40 font-bold uppercase tracking-wide mb-3 ">Ciclo de Cobro</p>
                                                 <div className="flex gap-2 p-1 bg-black/20 rounded-2xl border border-white/5">
                                                     <button 
                                                         onClick={() => setBillingPeriod('monthly')}
-                                                        className={`flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${billingPeriod === 'monthly' ? 'bg-white text-indigo-600 shadow-sm' : 'text-white/40 hover:text-white'}`}
+                                                        className={`flex-1 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${billingPeriod === 'monthly' ? 'bg-white text-indigo-600 shadow-sm' : 'text-white/40 hover:text-white'}`}
                                                     >
                                                         Mensual
                                                     </button>
                                                     <button 
                                                         onClick={() => setBillingPeriod('annual')}
-                                                        className={`flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${billingPeriod === 'annual' ? 'bg-emerald-500 text-white shadow-sm' : 'text-white/40 hover:text-white'}`}
+                                                        className={`flex-1 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${billingPeriod === 'annual' ? 'bg-emerald-500 text-white shadow-sm' : 'text-white/40 hover:text-white'}`}
                                                     >
                                                         Anual -20%
                                                     </button>
@@ -762,15 +762,15 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     </div>
                                 </div>
 
-                                <div className="mt-8 bg-white rounded-[2.5rem] border border-slate-100 p-8">
+                                <div className="mt-8 bg-white rounded-2xl border border-slate-100 p-8">
                                     <div className="flex items-center justify-between mb-8 border-b border-slate-50 pb-6">
                                         <div className="flex items-center gap-4">
                                             <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
                                                 <Zap size={24} />
                                             </div>
                                             <div>
-                                                <h4 className="font-black text-slate-900 uppercase">Upgrade / Downgrade</h4>
-                                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Selecciona un nuevo plan para el negocio</p>
+                                                <h4 className="font-bold text-slate-900 uppercase">Upgrade / Downgrade</h4>
+                                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">Selecciona un nuevo plan para el negocio</p>
                                             </div>
                                         </div>
                                     </div>
@@ -789,19 +789,19 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                                         setShowConfirmModal(true);
                                                     }}
                                                     disabled={loading || currentPlan?.id === plan.id}
-                                                    className={`p-6 rounded-[2.5rem] border-2 text-left transition-all flex items-center justify-between group ${currentPlan?.id === plan.id
-                                                        ? 'bg-slate-900 border-slate-900 shadow-xl'
-                                                        : 'bg-white border-slate-100 hover:border-indigo-600'
-                                                        }`}
+                                                    className={`p-6 rounded-2xl border-2 text-left transition-all flex items-center justify-between group ${currentPlan?.id === plan.id
+ ? 'bg-slate-900 border-slate-900 shadow-xl'
+ : 'bg-white border-slate-100 hover:border-indigo-600'
+ }`}
                                                 >
                                                     <div className="space-y-1">
-                                                        <div className={`text-[10px] font-black uppercase tracking-widest ${currentPlan?.id === plan.id ? 'text-indigo-400' : 'text-slate-400'}`}>
+                                                        <div className={`text-xs font-bold uppercase tracking-wide ${currentPlan?.id === plan.id ? 'text-indigo-400' : 'text-slate-400'}`}>
                                                             Plan {billingPeriod === 'annual' ? 'Anual (-20%)' : 'Mensual'}
                                                         </div>
-                                                        <div className={`text-xl font-black uppercase italic ${currentPlan?.id === plan.id ? 'text-white' : 'text-slate-900'}`}>{plan.name}</div>
-                                                        <div className={`text-2xl font-black ${currentPlan?.id === plan.id ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                                        <div className={`text-xl font-bold ${currentPlan?.id === plan.id ? 'text-white' : 'text-slate-900'}`}>{plan.name}</div>
+                                                        <div className={`text-2xl font-bold ${currentPlan?.id === plan.id ? 'text-indigo-400' : 'text-indigo-600'}`}>
                                                             ${currentPrice}
-                                                            <span className="text-[10px] ml-1 opacity-60">/mes</span>
+                                                            <span className="text-xs ml-1 opacity-60">/mes</span>
                                                         </div>
                                                     </div>
                                                     {currentPlan?.id === plan.id ? (
@@ -822,18 +822,18 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
 
                             {/* Controles de Tiempo */}
                             <div className="space-y-8">
-                                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-6 text-center">
+                                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-6 text-center">
                                     <div className="p-4 bg-indigo-50 text-indigo-600 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
                                         <Clock size={40} />
                                     </div>
-                                    <h4 className="font-black text-slate-900 uppercase">Ajustar Tiempos</h4>
+                                    <h4 className="font-bold text-slate-900 uppercase">Ajustar Tiempos</h4>
                                     <div className="space-y-3">
                                         <button
                                             onClick={() => {
                                                 setPendingAction({ action: 'RENEW', text: 'Esto añadirá exactamente 1 mes adicional a la suscripción actual.' });
                                                 setShowConfirmModal(true);
                                             }}
-                                            className="w-full py-5 bg-indigo-50 text-indigo-600 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                            className="w-full py-5 bg-indigo-50 text-indigo-600 rounded-3xl font-bold uppercase text-xs tracking-wide hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                                         >
                                             Añadir +1 Mes
                                         </button>
@@ -842,7 +842,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                                 setPendingAction({ action: 'RENEW_ANNUAL', text: 'Esto extenderá la suscripción por un año completo (365 días) desde su fecha actual.' });
                                                 setShowConfirmModal(true);
                                             }}
-                                            className="w-full py-5 bg-emerald-50 text-emerald-600 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center gap-2"
+                                            className="w-full py-5 bg-emerald-50 text-emerald-600 rounded-3xl font-bold uppercase text-xs tracking-wide hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center gap-2"
                                         >
                                             <Zap size={14} className="fill-emerald-600 group-hover:fill-white" />
                                             Añadir +1 Año
@@ -852,7 +852,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                                 setPendingAction({ action: 'EXTEND', text: 'Esto otorgará 7 días de cortesía adicionales a la fecha de expiración.', extraData: { dias: 7 } });
                                                 setShowConfirmModal(true);
                                             }}
-                                            className="w-full py-5 bg-slate-50 text-slate-600 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-slate-900 hover:text-white transition-all border border-slate-100 shadow-sm"
+                                            className="w-full py-5 bg-slate-50 text-slate-600 rounded-3xl font-bold uppercase text-xs tracking-wide hover:bg-slate-900 hover:text-white transition-all border border-slate-100 shadow-sm"
                                         >
                                             Cortesía +7 días
                                         </button>
@@ -860,12 +860,12 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                 </div>
 
                                 {currentSub?.estado === 'trial' && (
-                                    <div className="bg-amber-50 border-2 border-amber-200 rounded-[2.5rem] p-8 text-center space-y-4">
+                                    <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-8 text-center space-y-4">
                                         <div className="p-3 bg-white text-amber-500 rounded-2xl w-fit mx-auto shadow-sm">
                                             <AlertCircle size={32} />
                                         </div>
                                         <div className="space-y-1">
-                                            <h5 className="font-black text-amber-900 uppercase tracking-tight italic">Trial Activo</h5>
+                                            <h5 className="font-bold text-amber-900 uppercase tracking-tight ">Trial Activo</h5>
                                             <p className="text-xs text-amber-800 font-bold leading-relaxed">
                                                 Termina el {new Date(currentSub.trial_fin).toLocaleDateString()}.
                                             </p>
@@ -875,7 +875,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                                 setPendingAction({ action: 'START_TRIAL', text: 'Esto reiniciará el periodo de prueba por 15 días adicionales.', extraData: { dias: 15 } });
                                                 setShowConfirmModal(true);
                                             }}
-                                            className="w-full py-4 bg-white border border-amber-200 rounded-2xl font-black uppercase text-[10px] tracking-widest text-amber-900 hover:bg-amber-100 transition-all font-bold"
+                                            className="w-full py-4 bg-white border border-amber-200 rounded-2xl font-bold uppercase text-xs tracking-wide text-amber-900 hover:bg-amber-100 transition-all font-bold"
                                         >
                                             Reiniciar Trial (15 días)
                                         </button>
@@ -890,14 +890,14 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-8">
                             {/* Historial de Cambios */}
-                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
                                 <div className="flex items-center gap-4 border-b border-slate-50 pb-6 mb-8">
                                     <div className="p-3 bg-slate-50 text-slate-500 rounded-2xl">
                                         <History size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-black text-slate-900 uppercase">Historial de Plan</h3>
-                                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest italic">Log de todas las suscripciones y cambios</p>
+                                        <h3 className="text-xl font-bold text-slate-900 ">Historial de Plan</h3>
+                                        <p className="text-sm text-slate-400 font-bold uppercase tracking-wide ">Log de todas las suscripciones y cambios</p>
                                     </div>
                                 </div>
 
@@ -913,32 +913,32 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-black text-slate-900 uppercase tracking-tight text-sm">
+                                                        <span className="font-bold text-slate-900 uppercase tracking-tight text-sm">
                                                             {h.Plan_SubscriptionHistory_plan_nuevo_idToPlan?.name || 'S/N'}
                                                         </span>
                                                         {h.Plan_SubscriptionHistory_plan_anterior_idToPlan && (
                                                             <>
                                                                 <ChevronRight size={14} className="text-slate-300" />
-                                                                <span className="text-xs text-slate-400 font-bold strike-through opacity-50 italic">era {h.Plan_SubscriptionHistory_plan_anterior_idToPlan.name}</span>
+                                                                <span className="text-xs text-slate-400 font-bold strike-through opacity-50 ">era {h.Plan_SubscriptionHistory_plan_anterior_idToPlan.name}</span>
                                                             </>
                                                         )}
                                                     </div>
                                                     <div className="flex items-center gap-3 mt-1">
-                                                        <span className={`text-[10px] font-black uppercase tracking-widest ${h.tipo_cambio === 'upgrade' ? 'text-emerald-600' : 'text-indigo-400'
-                                                            }`}>{h.tipo_cambio}</span>
-                                                        <span className="text-[10px] font-bold text-slate-300">ADMIN: {h.admin_id}</span>
+                                                        <span className={`text-xs font-bold uppercase tracking-wide ${h.tipo_cambio === 'upgrade' ? 'text-emerald-600' : 'text-indigo-400'
+ }`}>{h.tipo_cambio}</span>
+                                                        <span className="text-xs font-bold text-slate-300">ADMIN: {h.admin_id}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-sm font-black text-slate-900">{new Date(h.fecha_cambio).toLocaleDateString()}</div>
-                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{new Date(h.fecha_cambio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                                <div className="text-sm font-bold text-slate-900">{new Date(h.fecha_cambio).toLocaleDateString()}</div>
+                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">{new Date(h.fecha_cambio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                             </div>
                                         </div>
                                     )) : (
                                         <div className="text-center py-20 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
                                             <History className="mx-auto text-slate-200 mb-4" size={48} />
-                                            <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">Sin historial de cambios registrado</p>
+                                            <p className="text-slate-400 font-bold uppercase text-xs tracking-wide">Sin historial de cambios registrado</p>
                                         </div>
                                     )}
                                 </div>
@@ -947,15 +947,15 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
 
                         <div className="space-y-8">
                             {/* Registro de Pagos Real */}
-                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
                                 <div className="flex items-center justify-between border-b border-slate-50 pb-6 mb-8">
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
                                             <CreditCard size={24} />
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-black text-slate-900 uppercase">Pagos Recibidos</h3>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Monitoreo de ingresos</p>
+                                            <h3 className="text-lg font-bold text-slate-900 ">Pagos Recibidos</h3>
+                                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">Monitoreo de ingresos</p>
                                         </div>
                                     </div>
                                     <button
@@ -971,10 +971,10 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     {payments.length > 0 ? payments.map((p: any) => (
                                         <div key={p.id} className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between group hover:bg-white hover:shadow-md transition-all">
                                             <div>
-                                                <div className="text-base font-black text-slate-900">${p.monto}</div>
+                                                <div className="text-base font-bold text-slate-900">${p.monto}</div>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-[9px] font-black text-emerald-600 uppercase bg-emerald-100 px-2 py-0.5 rounded-full">Recibido</span>
-                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{new Date(p.fecha_pago).toLocaleDateString()}</span>
+                                                    <span className="text-xs font-bold text-emerald-600 uppercase bg-emerald-100 px-2 py-0.5 rounded-full">Recibido</span>
+                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">{new Date(p.fecha_pago).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
                                             {p.comprobante && (
@@ -990,22 +990,22 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     )) : (
                                         <div className="text-center py-10 opacity-40">
                                             <CreditCard className="mx-auto mb-3" size={32} />
-                                            <p className="text-[10px] font-black uppercase tracking-widest">Aún no hay pagos <br /> registrados</p>
+                                            <p className="text-xs font-bold uppercase tracking-wide">Aún no hay pagos <br /> registrados</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2.5rem] p-8 text-white shadow-xl shadow-indigo-600/20">
-                                <h4 className="font-black text-base uppercase tracking-tight mb-4 italic">Resumen Facturación</h4>
+                            <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl p-8 text-white shadow-xl shadow-indigo-600/20">
+                                <h4 className="font-bold text-base uppercase tracking-tight mb-4 ">Resumen Facturación</h4>
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="opacity-60 font-bold uppercase tracking-widest text-[10px]">Total Histórico</span>
-                                        <span className="font-black text-2xl">${payments.reduce((acc: any, p: any) => acc + (p.monto || 0), 0)}</span>
+                                        <span className="opacity-60 font-bold uppercase tracking-wide text-xs">Total Histórico</span>
+                                        <span className="font-bold text-2xl">${payments.reduce((acc: any, p: any) => acc + (p.monto || 0), 0)}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm border-t border-white/10 pt-4">
-                                        <span className="opacity-60 font-bold uppercase tracking-widest text-[10px]">Plan Activo</span>
-                                        <span className="font-black text-emerald-400">${currentPlan?.price || 0}/mes</span>
+                                        <span className="opacity-60 font-bold uppercase tracking-wide text-xs">Plan Activo</span>
+                                        <span className="font-bold text-emerald-400">${currentPlan?.price || 0}/mes</span>
                                     </div>
                                 </div>
                             </div>
@@ -1016,34 +1016,34 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                 {activeTab === 'loyalty' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-8">
-                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
                                 <div className="flex items-center gap-4 border-b border-slate-50 pb-6 mb-8">
                                     <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
                                         <Crown size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-black text-slate-900 uppercase">Temporada de Lealtad</h3>
-                                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest italic">Estado y control de reinicios del Spa</p>
+                                        <h3 className="text-xl font-bold text-slate-900 ">Temporada de Lealtad</h3>
+                                        <p className="text-sm text-slate-400 font-bold uppercase tracking-wide ">Estado y control de reinicios del Spa</p>
                                     </div>
                                 </div>
 
                                 {loadingLoyalty ? (
                                     <div className="text-center py-20">
                                         <Loader2 className="animate-spin mx-auto text-indigo-600 mb-4" size={32} />
-                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Cargando información de temporadas...</p>
+                                        <p className="text-xs font-bold uppercase text-slate-400 tracking-wide">Cargando información de temporadas...</p>
                                     </div>
                                 ) : !loyaltySeason ? (
                                     <div className="text-center py-16 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200 p-8 space-y-6">
                                         <Clock className="mx-auto text-slate-355" size={48} />
                                         <div className="space-y-2">
-                                            <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Sin Temporada Activa</h4>
+                                            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-tight">Sin Temporada Activa</h4>
                                             <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                                                 Este negocio no tiene ninguna temporada de fidelización inicializada. Puedes iniciar la primera temporada de inmediato.
                                             </p>
                                         </div>
                                         <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-sm mx-auto">
                                             <div>
-                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest text-left mb-1.5 pl-1">Duración (Meses)</label>
+                                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide text-left mb-1.5 pl-1">Duración (Meses)</label>
                                                 <input 
                                                     type="number" 
                                                     value={loyaltyDuracionMeses} 
@@ -1053,7 +1053,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest text-left mb-1.5 pl-1">Resta de Diamantes</label>
+                                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide text-left mb-1.5 pl-1">Resta de Diamantes</label>
                                                 <input 
                                                     type="number" 
                                                     value={loyaltyDescuentoDiamantes} 
@@ -1066,7 +1066,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                         <button
                                             onClick={handleSuperadminRestartSeason}
                                             disabled={restartingLoyalty}
-                                            className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-indigo-600/20 active:scale-95 transition-all cursor-pointer"
+                                            className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg shadow-indigo-600/20 active:scale-95 transition-all cursor-pointer"
                                         >
                                             {restartingLoyalty ? <Loader2 size={12} className="animate-spin inline mr-1" /> : null}
                                             Inicializar Primera Temporada
@@ -1076,32 +1076,32 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     <div className="space-y-6">
                                         <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl space-y-4">
                                             <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Estado de Temporada</span>
-                                                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-full">Activa</span>
+                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Estado de Temporada</span>
+                                                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wide rounded-full">Activa</span>
                                             </div>
                                             <div className="grid grid-cols-2 gap-4 text-xs">
                                                 <div>
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-0.5">Fecha Inicio</span>
+                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Fecha Inicio</span>
                                                     <span className="font-bold text-slate-800">{new Date(loyaltySeason.fechaInicio).toLocaleDateString()}</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-0.5">Fecha Cierre / Próx. Reinicio</span>
+                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Fecha Cierre / Próx. Reinicio</span>
                                                     <span className="font-bold text-slate-800">{new Date(loyaltySeason.fechaFin).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="bg-rose-50/50 border border-rose-100 rounded-3xl p-6 space-y-4">
-                                            <h4 className="text-xs font-black text-rose-800 uppercase tracking-tight flex items-center gap-2">
+                                            <h4 className="text-xs font-bold text-rose-800 uppercase tracking-tight flex items-center gap-2">
                                                 ⚠️ Acciones de Reinicio Forzado (Superadmin)
                                             </h4>
-                                            <p className="text-[11px] text-rose-600 leading-relaxed">
+                                            <p className="text-xs text-rose-600 leading-relaxed">
                                                 Al reiniciar la temporada actual, se cerrará de inmediato. A todos los clientes con saldo o experiencia se les restará la cantidad de diamantes definida abajo y se recalculará su nivel de lealtad. Luego, se abrirá la siguiente temporada.
                                             </p>
                                             
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
                                                 <div>
-                                                    <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1 mb-1.5">Nueva Duración (Meses)</label>
+                                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide pl-1 mb-1.5">Nueva Duración (Meses)</label>
                                                     <input 
                                                         type="number" 
                                                         value={loyaltyDuracionMeses} 
@@ -1111,7 +1111,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1 mb-1.5">Descuento de Diamantes</label>
+                                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide pl-1 mb-1.5">Descuento de Diamantes</label>
                                                     <input 
                                                         type="number" 
                                                         value={loyaltyDescuentoDiamantes} 
@@ -1125,7 +1125,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                             <button
                                                 onClick={handleSuperadminRestartSeason}
                                                 disabled={restartingLoyalty}
-                                                className="w-full sm:w-auto px-6 py-3.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all shadow-md cursor-pointer"
+                                                className="w-full sm:w-auto px-6 py-3.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wide rounded-2xl transition-all shadow-md cursor-pointer"
                                             >
                                                 {restartingLoyalty ? <Loader2 size={12} className="animate-spin inline mr-1" /> : null}
                                                 Forzar Reinicio de Temporada
@@ -1138,14 +1138,14 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
 
                         <div className="space-y-8">
                             {/* Historial de Temporadas */}
-                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
                                 <div className="flex items-center gap-4 border-b border-slate-50 pb-6 mb-6">
                                     <div className="p-3 bg-slate-50 text-slate-500 rounded-2xl">
                                         <History size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-black text-slate-900 uppercase">Historial</h3>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Temporadas pasadas</p>
+                                        <h3 className="text-lg font-bold text-slate-900 ">Historial</h3>
+                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">Temporadas pasadas</p>
                                     </div>
                                 </div>
 
@@ -1153,23 +1153,23 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     {loyaltyHistory.length > 0 ? loyaltyHistory.map((h: any) => (
                                         <div key={h.id} className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
                                             <div>
-                                                <div className="text-xs font-black text-slate-800">
+                                                <div className="text-xs font-bold text-slate-800">
                                                     Temporada {new Date(h.fechaInicio).toLocaleDateString()}
                                                 </div>
-                                                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wide mt-0.5">
                                                     Duración: {h.duracionMeses} meses · Restó: {h.descuentoDiamantes} 💎
                                                 </div>
                                             </div>
-                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
-                                                h.activa ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-505'
-                                            }`}>
+                                            <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded ${
+ h.activa ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-505'
+ }`}>
                                                 {h.activa ? 'Activa' : 'Cerrada'}
                                             </span>
                                         </div>
                                     )) : (
                                         <div className="text-center py-10 opacity-40">
                                             <Calendar className="mx-auto mb-3" size={32} />
-                                            <p className="text-[10px] font-black uppercase tracking-widest">Sin historial de <br /> temporadas</p>
+                                            <p className="text-xs font-bold uppercase tracking-wide">Sin historial de <br /> temporadas</p>
                                         </div>
                                     )}
                                 </div>
@@ -1183,13 +1183,13 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
             {showPaymentModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 sm:p-0">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in" onClick={() => setShowPaymentModal(false)}></div>
-                    <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl relative z-10 animate-in zoom-in-95 overflow-hidden border border-white">
+                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl relative z-10 animate-in zoom-in-95 overflow-hidden border border-white">
                         <div className="p-8 pb-4 flex items-center justify-between border-b border-slate-50">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
                                     <CreditCard size={24} />
                                 </div>
-                                <h3 className="text-xl font-black text-slate-900 uppercase">Registrar Pago Manual</h3>
+                                <h3 className="text-xl font-bold text-slate-900 ">Registrar Pago Manual</h3>
                             </div>
                             <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-900 transition-colors">
                                 <X size={24} />
@@ -1198,18 +1198,18 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
 
                         <div className="p-8 space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Monto del Pago (USD)</label>
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Monto del Pago (USD)</label>
                                 <input
                                     type="number"
                                     placeholder="0.00"
                                     value={paymentForm.monto}
                                     onChange={(e) => setPaymentForm({ ...paymentForm, monto: e.target.value })}
-                                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-xl text-slate-900 focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:bg-white transition-all"
+                                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-xl text-slate-900 focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:bg-white transition-all"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Referencia / Observaciones</label>
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Referencia / Observaciones</label>
                                 <input
                                     type="text"
                                     placeholder="Ej: Transferencia Banco X..."
@@ -1220,7 +1220,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Link del Comprobante (URL)</label>
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Link del Comprobante (URL)</label>
                                 <input
                                     type="text"
                                     placeholder="http://..."
@@ -1228,13 +1228,13 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     onChange={(e) => setPaymentForm({ ...paymentForm, comprobante: e.target.value })}
                                     className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:bg-white transition-all"
                                 />
-                                <p className="text-[9px] text-slate-400 font-bold px-1 italic uppercase tracking-tighter">* Por ahora usa un link de Drive, S3 o similar</p>
+                                <p className="text-xs text-slate-400 font-bold px-1 uppercase tracking-tight">* Por ahora usa un link de Drive, S3 o similar</p>
                             </div>
 
                             <button
                                 onClick={handleAddPayment}
                                 disabled={loading}
-                                className="w-full py-5 bg-emerald-600 text-white font-black rounded-[2rem] hover:bg-slate-900 transition-all shadow-xl shadow-emerald-600/20 uppercase tracking-widest text-xs flex items-center justify-center gap-3"
+                                className="w-full py-5 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-slate-900 transition-all shadow-xl shadow-emerald-600/20 uppercase tracking-wide text-xs flex items-center justify-center gap-3"
                             >
                                 {loading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
                                 Guardar Registro de Pago
@@ -1248,39 +1248,39 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
             {showConfirmModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 sm:p-0">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in transition-all" onClick={() => { setShowConfirmModal(false); setPendingPlan(null); setPendingAction(null); }}></div>
-                    <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl relative z-10 animate-in zoom-in-95 slide-in-from-bottom-8 duration-300 overflow-hidden border border-white">
+                    <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl relative z-10 animate-in zoom-in-95 slide-in-from-bottom-8 duration-300 overflow-hidden border border-white">
                         <div className="p-8 pb-0 flex items-center gap-4">
                             <div className="p-4 bg-indigo-50 text-indigo-600 rounded-3xl">
                                 {pendingPlan ? <RefreshCw size={32} className="animate-spin" /> : <ShieldCheck size={32} />}
                             </div>
                             <div>
-                                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+                                <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
                                     {pendingPlan ? 'Confirmar Cambio de Plan' : 'Confirmar Acción'}
                                 </h3>
-                                <p className="text-sm text-slate-400 font-bold uppercase tracking-widest italic">Verifica los detalles antes de aplicar</p>
+                                <p className="text-sm text-slate-400 font-bold uppercase tracking-wide ">Verifica los detalles antes de aplicar</p>
                             </div>
                         </div>
 
                         <div className="p-8 space-y-6">
-                            <div className="bg-slate-50 rounded-[2.5rem] p-6 space-y-4 border border-slate-100/50">
+                            <div className="bg-slate-50 rounded-2xl p-6 space-y-4 border border-slate-100/50">
                                 {pendingPlan ? (
                                     <>
                                         <div className="flex justify-between items-center pb-4 border-b border-slate-200/50">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Negocio</span>
-                                            <span className="font-black text-slate-900 uppercase">{formData.nombre}</span>
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Negocio</span>
+                                            <span className="font-bold text-slate-900 uppercase">{formData.nombre}</span>
                                         </div>
 
                                         <div className="flex items-center justify-between py-2">
                                             <div className="text-center">
-                                                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Plan Actual</span>
-                                                <div className="px-4 py-2 bg-white rounded-xl text-[10px] font-black border border-slate-100 uppercase italic">
+                                                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1 ">Plan Actual</span>
+                                                <div className="px-4 py-2 bg-white rounded-xl text-xs font-bold border border-slate-100 uppercase ">
                                                     {currentPlan?.name || 'Gratis'}
                                                 </div>
                                             </div>
                                             <ChevronRight className="text-indigo-400" size={24} />
                                             <div className="text-center">
-                                                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Plan Nuevo</span>
-                                                <div className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black shadow-lg shadow-indigo-600/20 uppercase">
+                                                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1 ">Plan Nuevo</span>
+                                                <div className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/20 uppercase">
                                                     {pendingPlan.name}
                                                 </div>
                                             </div>
@@ -1288,14 +1288,14 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
 
                                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200/50">
                                             <div>
-                                                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Costo Estimado</span>
-                                                <span className="text-xl font-black text-slate-900">
+                                                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Costo Estimado</span>
+                                                <span className="text-xl font-bold text-slate-900">
                                                     ${billingPeriod === 'annual' ? Math.floor(pendingPlan.price * 12 * 0.8) : pendingPlan.price}
                                                 </span>
                                             </div>
                                             <div className="text-right">
-                                                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nueva Expiración</span>
-                                                <span className="text-[11px] font-black text-indigo-600">
+                                                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Nueva Expiración</span>
+                                                <span className="text-xs font-bold text-indigo-600">
                                                     {(() => {
                                                         const d = new Date(currentSub?.fechaFin || new Date());
                                                         if (billingPeriod === 'annual') {
@@ -1311,8 +1311,8 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     </>
                                 ) : (
                                     <div className="p-4 space-y-2">
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Aviso del Sistema</p>
-                                        <p className="text-sm font-bold text-slate-700 leading-relaxed uppercase italic">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Aviso del Sistema</p>
+                                        <p className="text-sm font-bold text-slate-700 leading-relaxed uppercase ">
                                             {pendingAction?.text}
                                         </p>
                                     </div>
@@ -1322,14 +1322,14 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                             <div className="flex gap-4">
                                 <button
                                     onClick={() => { setShowConfirmModal(false); setPendingPlan(null); setPendingAction(null); }}
-                                    className="flex-1 px-8 py-5 bg-slate-100 text-slate-600 font-black rounded-3xl hover:bg-slate-200 transition-all uppercase tracking-widest text-[10px] shadow-sm"
+                                    className="flex-1 px-8 py-5 bg-slate-100 text-slate-600 font-bold rounded-3xl hover:bg-slate-200 transition-all uppercase tracking-wide text-xs shadow-sm"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={pendingPlan ? handlePlanChangeConfirm : () => handleAction(pendingAction!.action, pendingAction!.extraData)}
                                     disabled={loading}
-                                    className="flex-1 px-8 py-5 bg-indigo-600 text-white font-black rounded-3xl hover:bg-slate-900 transition-all shadow-xl shadow-indigo-600/20 uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                                    className="flex-1 px-8 py-5 bg-indigo-600 text-white font-bold rounded-3xl hover:bg-slate-900 transition-all shadow-xl shadow-indigo-600/20 uppercase tracking-wide text-xs flex items-center justify-center gap-2"
                                 >
                                     {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                                     Confirmar Acción
@@ -1351,13 +1351,13 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                             }
                         }}
                     ></div>
-                    <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl relative z-10 animate-in zoom-in-95 overflow-hidden border border-white">
+                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl relative z-10 animate-in zoom-in-95 overflow-hidden border border-white">
                         <div className="p-8 pb-4 flex items-center justify-between border-b border-slate-50">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
                                     <ShieldCheck size={24} />
                                 </div>
-                                <h3 className="text-xl font-black text-slate-900 uppercase">Restablecer Acceso</h3>
+                                <h3 className="text-xl font-bold text-slate-900 ">Restablecer Acceso</h3>
                             </div>
                             {!loading && (
                                 <button 
@@ -1382,15 +1382,15 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nueva Contraseña Temporal</label>
-                                        <div className="px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-lg text-slate-900 flex justify-between items-center select-all">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Nueva Contraseña Temporal</label>
+                                        <div className="px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-lg text-slate-900 flex justify-between items-center select-all">
                                             <span>{resetPasswordModal.generatedPass}</span>
                                             <button 
                                                 onClick={() => {
                                                     navigator.clipboard.writeText(resetPasswordModal.generatedPass);
                                                     setSuccess("Copiado al portapapeles");
                                                 }}
-                                                className="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 px-3 py-1.5 rounded-xl text-slate-600 font-bold"
+                                                className="text-xs bg-white border border-slate-200 hover:bg-slate-100 px-3 py-1.5 rounded-xl text-slate-600 font-bold"
                                             >
                                                 Copiar
                                             </button>
@@ -1400,7 +1400,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     <button
                                         onClick={handleConfirmResetPassword}
                                         disabled={loading}
-                                        className="w-full py-5 bg-indigo-600 text-white font-black rounded-[2rem] hover:bg-slate-900 transition-all shadow-xl shadow-indigo-600/20 uppercase tracking-widest text-xs flex items-center justify-center gap-3"
+                                        className="w-full py-5 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-slate-900 transition-all shadow-xl shadow-indigo-600/20 uppercase tracking-wide text-xs flex items-center justify-center gap-3"
                                     >
                                         {loading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
                                         Confirmar Nueva Contraseña
@@ -1413,21 +1413,21 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                             <CheckCircle2 size={32} />
                                         </div>
                                         <div>
-                                            <h4 className="font-black text-slate-900 uppercase">¡Contraseña Actualizada!</h4>
+                                            <h4 className="font-bold text-slate-900 uppercase">¡Contraseña Actualizada!</h4>
                                             <p className="text-xs text-slate-400 font-bold mt-1">La contraseña ha sido guardada encriptada y ya está activa.</p>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Credenciales de Ingreso</label>
-                                        <div className="bg-slate-50 border border-slate-200 rounded-[2rem] p-6 space-y-4">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">Credenciales de Ingreso</label>
+                                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
                                             <div className="flex justify-between items-center text-xs">
                                                 <span className="text-slate-400 font-bold uppercase tracking-wider">Email:</span>
-                                                <span className="font-black text-slate-900 select-all">{resetPasswordModal.userEmail}</span>
+                                                <span className="font-bold text-slate-900 select-all">{resetPasswordModal.userEmail}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-xs border-t border-slate-150 pt-4">
                                                 <span className="text-slate-400 font-bold uppercase tracking-wider">Contraseña:</span>
-                                                <span className="font-black text-indigo-600 select-all">{resetPasswordModal.generatedPass}</span>
+                                                <span className="font-bold text-indigo-600 select-all">{resetPasswordModal.generatedPass}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1438,13 +1438,13 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                                 navigator.clipboard.writeText(`Email: ${resetPasswordModal.userEmail}\nContraseña: ${resetPasswordModal.generatedPass}`);
                                                 setSuccess("Datos copiados al portapapeles");
                                             }}
-                                            className="flex-1 py-4 bg-slate-100 text-slate-600 font-black rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-widest text-[9px] text-center"
+                                            className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all uppercase tracking-wide text-xs text-center"
                                         >
                                             Copiar Todo
                                         </button>
                                         <button
                                             onClick={() => setResetPasswordModal(prev => ({ ...prev, show: false }))}
-                                            className="flex-1 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all uppercase tracking-widest text-[9px] text-center shadow-lg shadow-indigo-600/20"
+                                            className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all uppercase tracking-wide text-xs text-center shadow-lg shadow-indigo-600/20"
                                         >
                                             Cerrar
                                         </button>
@@ -1464,7 +1464,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                             <Trash2 size={32} />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-xl font-black text-slate-900">¿Eliminar {negocio.nombre}?</h3>
+                            <h3 className="text-xl font-bold text-slate-900">¿Eliminar {negocio.nombre}?</h3>
                             <p className="text-xs text-slate-500 font-medium leading-relaxed">
                                 Esta acción eliminará de forma permanente el negocio, todos sus usuarios, pedidos, catálogo y configuraciones asociadas. Esta operación no se puede deshacer.
                             </p>
@@ -1481,7 +1481,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                 type="button"
                                 onClick={handleDeleteBusiness}
                                 disabled={deleting}
-                                className="w-1/2 py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-rose-600/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+                                className="w-1/2 py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-rose-600/25 transition-all cursor-pointer flex items-center justify-center gap-2"
                             >
                                 {deleting ? <Loader2 className="animate-spin" size={16} /> : 'Sí, Eliminar'}
                             </button>
@@ -1499,8 +1499,8 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                             {success ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
                         </div>
                         <div>
-                            <p className="font-black uppercase tracking-tight text-sm leading-none">{success ? 'Operación Exitosa' : 'Ocurrió un Error'}</p>
-                            <p className="text-[10px] font-bold opacity-80 mt-1">{success || error}</p>
+                            <p className="font-bold uppercase tracking-tight text-sm leading-none">{success ? 'Operación Exitosa' : 'Ocurrió un Error'}</p>
+                            <p className="text-xs font-bold opacity-80 mt-1">{success || error}</p>
                         </div>
                         <button onClick={() => { setSuccess(null); setError(null) }} className="absolute top-2 right-4 text-white/50 hover:text-white transition-colors text-xl font-bold">×</button>
                     </div>

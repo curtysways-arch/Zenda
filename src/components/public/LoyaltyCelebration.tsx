@@ -194,7 +194,7 @@ export default function LoyaltyCelebration({ slug, primaryColor }: LoyaltyCelebr
             </div>
 
             {/* Modal de lujo */}
-            <div className="relative w-full max-w-[340px] bg-white rounded-[2.5rem] p-6 shadow-2xl text-center space-y-5 border border-slate-100/50 z-20 animate-in zoom-in-95 duration-300 overflow-hidden">
+            <div className="relative w-full max-w-[340px] bg-white rounded-3xl p-6 shadow-2xl text-center space-y-5 border border-slate-100/50 z-20 animate-in zoom-in-95 duration-300 overflow-hidden">
 
                 {/* Efectos de brillo */}
                 <div
@@ -227,33 +227,33 @@ export default function LoyaltyCelebration({ slug, primaryColor }: LoyaltyCelebr
                 {/* Textos */}
                 <div className="space-y-2">
                     <span
-                        className="inline-flex items-center gap-1 text-[8px] font-black tracking-widest uppercase px-3 py-1 rounded-full text-white shadow-sm"
+                        className="inline-flex items-center gap-1 text-xs font-bold tracking-wide uppercase px-3 py-1 rounded-full text-white shadow-sm"
                         style={{ backgroundColor: primaryColor }}
                     >
                         Visita Completada
                     </span>
-                    <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">
+                    <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                         ¡Gracias por tu visita!
                     </h3>
                     <div className="py-2.5 px-4 bg-slate-50 rounded-2xl border border-slate-100 inline-block w-full">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Has acumulado</p>
-                        <p className="text-3xl font-black text-amber-500 tracking-tight">
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Has acumulado</p>
+                        <p className="text-3xl font-bold text-amber-500 tracking-tight">
                             +{celebrationData.puntos} 💎
                         </p>
-                        <p className="text-[9px] text-slate-500 font-semibold mt-1">
+                        <p className="text-xs text-slate-500 font-semibold mt-1">
                             por realizarte: <strong className="text-slate-700 uppercase">{celebrationData.servicioNombre}</strong>
                         </p>
                     </div>
                 </div>
 
-                <p className="text-[10px] text-slate-400 font-semibold leading-relaxed px-2">
+                <p className="text-xs text-slate-400 font-semibold leading-relaxed px-2">
                     Tus diamantes ya están sumados a tu balance y listos para canjearlos por espectaculares premios en la pestaña del Club.
                 </p>
 
                 {/* Botón Aceptar */}
                 <button
                     onClick={handleDismiss}
-                    className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-lg flex items-center justify-center gap-1.5 hover:brightness-105 active:scale-[0.99] transition-all"
+                    className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wide text-white shadow-lg flex items-center justify-center gap-1.5 hover:brightness-105 active:scale-[0.99] transition-all"
                     style={{ backgroundColor: primaryColor }}
                 >
                     ¡Genial, gracias!

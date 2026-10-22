@@ -174,9 +174,9 @@ export default function NotificacionesPage() {
                     <div className="space-y-4">
                         <div className="inline-flex items-center gap-2 px-4 py-2 border rounded-full bg-cyan-50/50 border-cyan-100/50">
                             <Bell size={12} className="text-cyan-500 animate-pulse" />
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-500">Inbox del Sistema</span>
+                            <span className="text-xs font-bold uppercase tracking-wide text-cyan-500">Inbox del Sistema</span>
                         </div>
-                        <h1 className="text-5xl md:text-8xl font-black text-slate-900 tracking-tighter uppercase italic leading-[0.8]">
+                        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
                             Mensajes <br /> <span className="text-cyan-500">Globales</span>
                         </h1>
                     </div>
@@ -193,7 +193,7 @@ export default function NotificacionesPage() {
                                     key={opt.id} 
                                     onClick={() => setFilter(opt.id as any)}
                                     className={clsx(
-                                        "px-4 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all",
+                                        "px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wide transition-all",
                                         filter === opt.id 
                                             ? "bg-slate-900 text-white shadow-xl" 
                                             : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
@@ -207,7 +207,7 @@ export default function NotificacionesPage() {
                         {unreadCount > 0 && (
                             <button 
                                 onClick={handleMarkAllAsRead}
-                                className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-4 px-6 rounded-3xl shadow-sm text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+                                className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 py-4 px-6 rounded-3xl shadow-sm text-xs font-bold uppercase tracking-wide transition-all active:scale-95"
                             >
                                 <CheckSquare size={14} className="text-emerald-500" />
                                 Marcar todo como leído
@@ -220,7 +220,7 @@ export default function NotificacionesPage() {
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-40">
                     <Loader2 className="w-16 h-16 animate-spin text-cyan-500" />
-                    <p className="mt-8 text-slate-400 font-black uppercase tracking-[0.5em] text-[10px] italic">Buscando comunicados...</p>
+                    <p className="mt-8 text-slate-400 font-bold uppercase tracking-wide text-xs ">Buscando comunicados...</p>
                 </div>
             ) : items.length > 0 ? (
                 <div className="space-y-6 max-w-4xl">
@@ -274,7 +274,7 @@ export default function NotificacionesPage() {
                             <div 
                                 key={item.id}
                                 className={clsx(
-                                    "bg-white rounded-[2.5rem] border transition-all overflow-hidden duration-300 relative shadow-sm hover:shadow-md",
+                                    "bg-white rounded-2xl border transition-all overflow-hidden duration-300 relative shadow-sm hover:shadow-md",
                                     isUnread ? "border-cyan-100 ring-2 ring-cyan-50/30" : "border-slate-200/60"
                                 )}
                             >
@@ -304,27 +304,27 @@ export default function NotificacionesPage() {
 
                                         <div className="space-y-1.5 min-w-0 flex-1">
                                             <div className="flex items-center flex-wrap gap-2">
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 italic">
+                                                <span className="text-xs font-bold uppercase tracking-wide text-slate-400 ">
                                                     {format(new Date(item.createdAt), "d 'de' MMMM, yyyy - HH:mm", { locale: es })}
                                                 </span>
                                                 {comm.subtitulo && (
-                                                    <span className="bg-slate-100 text-slate-600 text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border border-slate-200/60">
+                                                    <span className="bg-slate-100 text-slate-600 text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full border border-slate-200/60">
                                                         {comm.subtitulo}
                                                     </span>
                                                 )}
                                                 {isUnread && (
-                                                    <span className="bg-cyan-500 text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full animate-pulse shadow-sm shadow-cyan-500/20">
+                                                    <span className="bg-cyan-500 text-white text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full animate-pulse shadow-sm shadow-cyan-500/20">
                                                         NUEVO
                                                     </span>
                                                 )}
                                                 {isHighPriority && (
-                                                    <span className="bg-rose-50 text-rose-600 border border-rose-100 text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full">
+                                                    <span className="bg-rose-50 text-rose-600 border border-rose-100 text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full">
                                                         IMPORTANTE
                                                     </span>
                                                 )}
                                             </div>
                                             <h3 className={clsx(
-                                                "text-lg md:text-xl font-black italic uppercase tracking-tight line-clamp-2 leading-tight break-words",
+                                                "text-lg md:text-xl font-bold tracking-tight line-clamp-2 leading-tight break-words",
                                                 isUnread ? "text-slate-900" : "text-slate-700"
                                             )}>
                                                 {comm.titulo}
@@ -358,12 +358,12 @@ export default function NotificacionesPage() {
                                         {actionPayload?.appointmentId && (
                                             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-5">
                                                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
+                                                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
                                                         <FileText size={12} className="text-cyan-500" /> Detalles de la Reserva
                                                     </span>
                                                     {detailsData[actionPayload.appointmentId] && (
                                                         <span className={clsx(
-                                                            "text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full",
+                                                            "text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full",
                                                             detailsData[actionPayload.appointmentId].estado === 'CONFIRMADA' 
                                                                 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                                                                 : 'bg-amber-50 text-amber-600 border border-amber-100'
@@ -388,16 +388,16 @@ export default function NotificacionesPage() {
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                             {/* Datos del Cliente */}
                                                             <div className="space-y-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                                                                     <Users size={11} /> Información del Cliente
                                                                 </p>
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className="size-11 rounded-xl bg-cyan-500 text-white font-black text-sm flex items-center justify-center shrink-0">
+                                                                    <div className="size-11 rounded-xl bg-cyan-500 text-white font-bold text-sm flex items-center justify-center shrink-0">
                                                                         {client?.nombre?.charAt(0).toUpperCase() || 'C'}
                                                                     </div>
                                                                     <div className="min-w-0 flex-1">
-                                                                        <p className="text-xs font-black text-slate-800 truncate uppercase">{client?.nombre || 'Cliente sin nombre'}</p>
-                                                                        <p className="text-[10px] text-slate-400 font-medium truncate">{client?.email || 'Sin correo electrónico'}</p>
+                                                                        <p className="text-xs font-bold text-slate-800 truncate uppercase">{client?.nombre || 'Cliente sin nombre'}</p>
+                                                                        <p className="text-xs text-slate-400 font-medium truncate">{client?.email || 'Sin correo electrónico'}</p>
                                                                     </div>
                                                                 </div>
                                                                 
@@ -407,13 +407,13 @@ export default function NotificacionesPage() {
                                                                             href={`https://wa.me/${client.telefono.replace(/[^0-9]/g, '')}`}
                                                                             target="_blank"
                                                                             rel="noreferrer"
-                                                                            className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                                                                            className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 transition-colors active:scale-95"
                                                                         >
                                                                             <MessageSquare size={12} /> WhatsApp
                                                                         </a>
                                                                         <a 
                                                                             href={`tel:${client.telefono}`}
-                                                                            className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                                                                            className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 transition-colors active:scale-95"
                                                                         >
                                                                             Llamar
                                                                         </a>
@@ -424,12 +424,12 @@ export default function NotificacionesPage() {
                                                             {/* Datos del Servicio y Cita */}
                                                             <div className="space-y-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
                                                                 <div className="space-y-2">
-                                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                                                                         <Calendar size={11} /> Detalles del Servicio
                                                                     </p>
-                                                                    <p className="text-xs font-black text-slate-800 uppercase tracking-tight leading-snug">{service?.nombre || 'Servicio'}</p>
+                                                                    <p className="text-xs font-bold text-slate-800 uppercase tracking-tight leading-snug">{service?.nombre || 'Servicio'}</p>
                                                                     
-                                                                    <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold">
+                                                                    <div className="flex items-center gap-4 text-xs text-slate-500 font-bold">
                                                                         <span className="flex items-center gap-1">
                                                                             <Clock size={11} className="text-slate-400" /> {service?.duracion || app.duracion || 60} min
                                                                         </span>
@@ -440,12 +440,12 @@ export default function NotificacionesPage() {
                                                                 </div>
 
                                                                 <div className="pt-2 border-t border-slate-200/50">
-                                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Fecha y Hora</p>
-                                                                    <p className="text-[10px] text-slate-700 font-black uppercase tracking-tight mt-0.5">
+                                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Fecha y Hora</p>
+                                                                    <p className="text-xs text-slate-700 font-bold uppercase tracking-tight mt-0.5">
                                                                         {format(new Date(app.fecha), "eeee d 'de' MMMM", { locale: es })} a las {app.horaInicio}
                                                                     </p>
                                                                     {staff && (
-                                                                        <p className="text-[9px] text-slate-400 font-medium mt-1">
+                                                                        <p className="text-xs text-slate-400 font-medium mt-1">
                                                                             Atendido por: <span className="font-bold text-slate-500 uppercase">{staff.name}</span>
                                                                         </p>
                                                                     )}
@@ -465,26 +465,26 @@ export default function NotificacionesPage() {
                                         {actionPayload?.membershipId && (
                                             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-5">
                                                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
+                                                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
                                                         <CreditCard size={12} className="text-cyan-500" /> Datos del Socio y Membresía
                                                     </span>
-                                                    <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                                    <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
                                                         ACTIVA
                                                     </span>
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     {/* Datos del Socio */}
                                                     <div className="space-y-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                                                             <Users size={11} /> Información del Socio
                                                         </p>
                                                         <div className="flex items-center gap-3">
-                                                            <div className="size-11 rounded-xl bg-cyan-500 text-white font-black text-sm flex items-center justify-center shrink-0">
+                                                            <div className="size-11 rounded-xl bg-cyan-500 text-white font-bold text-sm flex items-center justify-center shrink-0">
                                                                 {actionPayload.customerName?.charAt(0).toUpperCase() || 'S'}
                                                             </div>
                                                             <div className="min-w-0 flex-1">
-                                                                <p className="text-xs font-black text-slate-800 truncate uppercase">{actionPayload.customerName || 'Socio'}</p>
-                                                                <p className="text-[10px] text-slate-400 font-medium truncate">{actionPayload.customerPhone || ''}</p>
+                                                                <p className="text-xs font-bold text-slate-800 truncate uppercase">{actionPayload.customerName || 'Socio'}</p>
+                                                                <p className="text-xs text-slate-400 font-medium truncate">{actionPayload.customerPhone || ''}</p>
                                                             </div>
                                                         </div>
                                                         {actionPayload.customerPhone && (
@@ -493,7 +493,7 @@ export default function NotificacionesPage() {
                                                                     href={`https://wa.me/${actionPayload.customerPhone.replace(/[^0-9]/g, '')}`}
                                                                     target="_blank"
                                                                     rel="noreferrer"
-                                                                    className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                                                                    className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 transition-colors active:scale-95"
                                                                 >
                                                                     <MessageSquare size={12} /> Contactar WhatsApp
                                                                 </a>
@@ -504,17 +504,17 @@ export default function NotificacionesPage() {
                                                     {/* Datos del Plan y Pago */}
                                                     <div className="space-y-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
                                                         <div className="space-y-2">
-                                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                                                                 <CreditCard size={11} /> Plan Adquirido
                                                             </p>
-                                                            <p className="text-xs font-black text-slate-800 uppercase tracking-tight leading-snug">{actionPayload.planName}</p>
-                                                            <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold">
+                                                            <p className="text-xs font-bold text-slate-800 uppercase tracking-tight leading-snug">{actionPayload.planName}</p>
+                                                            <div className="flex items-center gap-4 text-xs text-slate-500 font-bold">
                                                                 <span className="flex items-center gap-1">
                                                                     <DollarSign size={11} className="text-slate-400" /> ${actionPayload.price} {actionPayload.currency || 'USD'}
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <div className="pt-2 border-t border-slate-200/50 text-[10px] text-slate-500 font-medium">
+                                                        <div className="pt-2 border-t border-slate-200/50 text-xs text-slate-500 font-medium">
                                                             Método: <span className="font-bold text-slate-700">{actionPayload.paymentMethod || 'Online'}</span>
                                                         </div>
                                                     </div>
@@ -524,14 +524,14 @@ export default function NotificacionesPage() {
 
                                         {/* Imagen adicional */}
                                         {comm.imagenUrl && (
-                                            <div className="my-4 max-w-lg rounded-[2rem] overflow-hidden border border-slate-200 shadow-md">
+                                            <div className="my-4 max-w-lg rounded-2xl overflow-hidden border border-slate-200 shadow-md">
                                                 <img src={comm.imagenUrl} className="w-full object-cover" alt={comm.titulo} />
                                             </div>
                                         )}
 
                                         {/* Video embebido */}
                                         {comm.videoUrl && (
-                                            <div className="my-4 max-w-lg rounded-[2rem] overflow-hidden border border-slate-200 shadow-md aspect-video">
+                                            <div className="my-4 max-w-lg rounded-2xl overflow-hidden border border-slate-200 shadow-md aspect-video">
                                                 <iframe 
                                                     src={comm.videoUrl} 
                                                     className="w-full h-full" 
@@ -545,10 +545,10 @@ export default function NotificacionesPage() {
                                         <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-slate-100">
                                             {/* Autor / Firma */}
                                             <div className="flex items-center gap-3">
-                                                <div className="size-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 text-xs font-black uppercase italic">
+                                                <div className="size-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold uppercase ">
                                                     {comm.autor?.nombre?.charAt(0) || 'S'}
                                                 </div>
-                                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                                <span className="text-xs font-bold uppercase text-slate-400 tracking-wider">
                                                     {comm.autor?.nombre 
                                                         ? `Enviado por ${comm.autor.nombre} ${comm.autor.apellido || ''} • Soporte Citiox`
                                                         : `Notificación de Sistema • Alerta en Tiempo Real`
@@ -560,7 +560,7 @@ export default function NotificacionesPage() {
                                             {directLink && (
                                                 <Link 
                                                     href={directLink}
-                                                    className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-2xl shadow-md transition-all active:scale-95 shrink-0"
+                                                    className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wide px-5 py-3 rounded-2xl shadow-md transition-all active:scale-95 shrink-0"
                                                 >
                                                     {linkLabel} <ExternalLink size={12} />
                                                 </Link>
@@ -573,10 +573,10 @@ export default function NotificacionesPage() {
                     })}
                 </div>
             ) : (
-                <div className="py-40 bg-white border border-slate-200 border-dashed rounded-[4rem] flex flex-col items-center justify-center text-center px-10 shadow-sm max-w-4xl">
+                <div className="py-40 bg-white border border-slate-200 border-dashed rounded-2xl flex flex-col items-center justify-center text-center px-10 shadow-sm max-w-4xl">
                     <Mail size={48} strokeWidth={1} className="text-slate-200 mb-8 animate-pulse" />
-                    <h3 className="text-2xl font-black text-slate-300 uppercase italic tracking-widest">Bandeja Vacía</h3>
-                    <p className="mt-4 text-slate-400 text-[10px] font-black uppercase tracking-widest italic max-w-xs leading-relaxed">
+                    <h3 className="text-2xl font-bold text-slate-300 tracking-wide">Bandeja Vacía</h3>
+                    <p className="mt-4 text-slate-400 text-xs font-bold uppercase tracking-wide max-w-xs leading-relaxed">
                         No hay comunicados del sistema en esta categoría en este momento.
                     </p>
                 </div>

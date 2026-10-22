@@ -42,7 +42,7 @@ export default function Step3PinchoDelivery({
         <div className="max-w-xl mx-auto space-y-5">
             <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-5 text-left">
                 <div className="border-b border-slate-100 pb-3">
-                    <span className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
                         <MapPin className="size-4 text-orange-600" />
                         <span>Modalidad de Entrega</span>
                     </span>
@@ -61,8 +61,8 @@ export default function Step3PinchoDelivery({
                     >
                         <MapPin className={`size-5 mb-2 ${deliveryType === 'DOMICILIO' ? 'text-orange-600' : 'text-slate-400'}`} />
                         <div>
-                            <span className="text-xs font-black uppercase block">A Domicilio</span>
-                            <span className="text-[10px] text-slate-500 font-medium">Recibe en tu casa</span>
+                            <span className="text-xs font-bold uppercase block">A Domicilio</span>
+                            <span className="text-xs text-slate-500 font-medium">Recibe en tu casa</span>
                         </div>
                     </button>
 
@@ -77,8 +77,8 @@ export default function Step3PinchoDelivery({
                     >
                         <Building2 className={`size-5 mb-2 ${deliveryType === 'RETIRO' ? 'text-orange-600' : 'text-slate-400'}`} />
                         <div>
-                            <span className="text-xs font-black uppercase block">Retiro en Local</span>
-                            <span className="text-[10px] text-slate-500 font-medium">Sin costo de envío</span>
+                            <span className="text-xs font-bold uppercase block">Retiro en Local</span>
+                            <span className="text-xs text-slate-500 font-medium">Sin costo de envío</span>
                         </div>
                     </button>
                 </div>
@@ -87,7 +87,7 @@ export default function Step3PinchoDelivery({
                 {deliveryType === 'DOMICILIO' && (
                     <div className="space-y-3 pt-2">
                         <div>
-                            <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                                 Dirección Principal *
                             </label>
                             <input
@@ -101,7 +101,7 @@ export default function Step3PinchoDelivery({
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                                 Referencia o Edificio
                             </label>
                             <input
@@ -118,7 +118,7 @@ export default function Step3PinchoDelivery({
                             <button
                                 type="button"
                                 onClick={() => setIsMapOpen(true)}
-                                className="w-full py-3 bg-orange-50 border border-orange-200 text-orange-800 hover:bg-orange-100 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                                className="w-full py-3 bg-orange-50 border border-orange-200 text-orange-800 hover:bg-orange-100 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
                             >
                                 <Compass className="size-4 text-orange-600" />
                                 <span>{lat && lng ? '📍 UBICACIÓN EN MAPA CONFIRMADA' : 'SELECCIONAR UBICACIÓN EXACTA EN MAPA'}</span>
@@ -129,9 +129,9 @@ export default function Step3PinchoDelivery({
 
                 <button
                     type="submit"
-                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
                 >
-                    <span>CONTINUAR A CONFIRMACIÓN</span>
+                    <span>Continuar a confirmación</span>
                     <ArrowRight className="size-4" />
                 </button>
             </form>

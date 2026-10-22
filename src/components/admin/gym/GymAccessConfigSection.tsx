@@ -144,11 +144,11 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
       <div className="p-8 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200/60">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200/60">
               <Key className="w-3 h-3 mr-1 text-emerald-500" /> Control de Ingresos & Socios
             </span>
           </div>
-          <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
             <Scan className="w-6 h-6 text-emerald-600" />
             Acceso de Socios
           </h2>
@@ -191,7 +191,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
         {/* ================= SECCIÓN 1: MÉTODOS DE ACCESO ================= */}
         <div className="space-y-6">
           <div>
-            <h3 className="text-base font-black text-gray-900 uppercase tracking-wide flex items-center gap-2">
+            <h3 className="text-base font-bold text-gray-900 uppercase tracking-wide flex items-center gap-2">
               <Users className="w-5 h-5 text-indigo-600" />
               1. Control de Ingreso (Recepción / Mostrador)
             </h3>
@@ -202,7 +202,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
 
           {/* Selector de Método Principal */}
           <div className="space-y-3">
-            <label className="text-xs font-black text-gray-700 uppercase tracking-wider block">
+            <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
               Método Principal de Acceso
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,7 +222,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-gray-900 text-sm">QR del Socio</h4>
                     {config.primaryMethod === 'QR' && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500 text-white">
                         <Check size={12} className="mr-0.5" /> Principal
                       </span>
                     )}
@@ -249,7 +249,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-gray-900 text-sm">Registro Manual</h4>
                     {config.primaryMethod === 'MANUAL' && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500 text-white">
                         <Check size={12} className="mr-0.5" /> Principal
                       </span>
                     )}
@@ -264,7 +264,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
 
           {/* Métodos de Respaldo */}
           <div className="pt-2 border-t border-gray-100">
-            <label className="text-xs font-black text-gray-700 uppercase tracking-wider block mb-3">
+            <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-3">
               Métodos de Respaldo Habilitados
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -294,7 +294,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
                   <span className="text-xs font-bold text-gray-900 block">
                     Permitir Registro Manual como respaldo
                   </span>
-                  <span className="text-[11px] text-gray-500 block mt-0.5">
+                  <span className="text-xs text-gray-500 block mt-0.5">
                     {config.primaryMethod === 'MANUAL' 
                       ? 'Activo por ser el método principal.' 
                       : 'Habilita la búsqueda manual en recepción si el socio olvidó su carnet o celular.'}
@@ -328,7 +328,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
                   <span className="text-xs font-bold text-gray-900 block">
                     Permitir Escaneo QR como respaldo
                   </span>
-                  <span className="text-[11px] text-gray-500 block mt-0.5">
+                  <span className="text-xs text-gray-500 block mt-0.5">
                     {config.primaryMethod === 'QR' 
                       ? 'Activo por ser el método principal.' 
                       : 'Permite pasar carnet QR cuando el flujo prioritario sea manual.'}
@@ -353,7 +353,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
             <div>
-              <h3 className="text-base font-black text-gray-900 uppercase tracking-wide flex items-center gap-2">
+              <h3 className="text-base font-bold text-gray-900 uppercase tracking-wide flex items-center gap-2">
                 <Tv className="w-5 h-5 text-purple-600" />
                 2. Seguridad del QR de Administración (Tótem / Auto-ingreso)
               </h3>
@@ -385,7 +385,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-900 text-sm">QR Dinámico (Pantalla / TV / Tablet)</h4>
-                      <span className="text-[10px] text-emerald-600 font-extrabold uppercase">Máxima Seguridad</span>
+                      <span className="text-xs text-emerald-600 font-extrabold uppercase">Máxima Seguridad</span>
                     </div>
                   </div>
                   {config.adminQr.mode === 'DYNAMIC' && (
@@ -399,7 +399,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
 
               {/* Selector de Intervalo */}
               <div className="pt-4 border-t border-purple-100/60" onClick={(e) => e.stopPropagation()}>
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-wider block mb-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">
                   Intervalo de Renovación del Código
                 </label>
                 <select
@@ -440,7 +440,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-900 text-sm">QR Fijo / Para Imprimir</h4>
-                      <span className="text-[10px] text-amber-600 font-extrabold uppercase">Sin Pantalla Física</span>
+                      <span className="text-xs text-amber-600 font-extrabold uppercase">Sin Pantalla Física</span>
                     </div>
                   </div>
                   {config.adminQr.mode === 'STATIC_PRINTABLE' && (
@@ -457,7 +457,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
                 <button
                   type="button"
                   onClick={() => setShowPrintModal(true)}
-                  className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition"
+                  className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition"
                 >
                   <Printer size={15} />
                   Generar QR para Imprimir
@@ -490,7 +490,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="w-full sm:w-auto px-8 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+            className="w-full sm:w-auto px-8 py-3.5 text-white rounded-2xl font-bold text-xs uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
             style={{ backgroundColor: primaryColor }}
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -522,16 +522,16 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
               {businessLogo ? (
                 <img src={businessLogo} alt={businessName} className="h-16 max-w-[180px] object-contain" />
               ) : (
-                <div className="p-3 bg-slate-100 rounded-2xl text-slate-700 font-black text-lg">
+                <div className="p-3 bg-slate-100 rounded-2xl text-slate-700 font-bold text-lg">
                   {businessName}
                 </div>
               )}
 
               <div>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-emerald-100 text-emerald-800 mb-2">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-emerald-100 text-emerald-800 mb-2">
                   <Zap className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Punto de Acceso Oficial
                 </span>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
                   Registra tu Entrada Aquí
                 </h2>
                 <p className="text-slate-500 text-xs mt-1 max-w-xs mx-auto">
@@ -551,7 +551,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
 
               <div className="space-y-1 text-xs text-slate-400 max-w-xs">
                 <p className="font-bold text-slate-600">Código seguro firmado criptográficamente</p>
-                <p className="text-[10px]">Válido únicamente para socios con membresía activa.</p>
+                <p className="text-xs">Válido únicamente para socios con membresía activa.</p>
               </div>
             </div>
 
@@ -567,7 +567,7 @@ export default function GymAccessConfigSection({ negocio, primaryColor = '#0ea5e
               <button
                 type="button"
                 onClick={handlePrint}
-                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider rounded-xl flex items-center gap-2 shadow-md transition"
+                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl flex items-center gap-2 shadow-md transition"
               >
                 <Printer size={16} />
                 Imprimir Afiche

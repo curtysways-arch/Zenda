@@ -1,7 +1,6 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,16 +9,12 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session || !session.user) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        let negocioId = (session.user as any).negocioId;
-        if (!negocioId && session.user.email) {
-            const u = await prisma.usuario.findUnique({ where: { email: session.user.email } });
-            negocioId = u?.negocioId;
-        }
+        const negocioId = (session.user as any).negocioId;
 
         const { id } = await params;
 
@@ -58,16 +53,12 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session || !session.user) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        let negocioId = (session.user as any).negocioId;
-        if (!negocioId && session.user.email) {
-            const u = await prisma.usuario.findUnique({ where: { email: session.user.email } });
-            negocioId = u?.negocioId;
-        }
+        const negocioId = (session.user as any).negocioId;
 
         const { id } = await params;
         const body = await req.json();

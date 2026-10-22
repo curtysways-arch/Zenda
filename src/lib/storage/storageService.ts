@@ -69,27 +69,82 @@ export class StorageService {
   async handleUpload(
     buffer: Buffer,
     businessId: string,
-    category: string
+    category: string,
+    declaredMime?: string,
+    declaredFilename?: string
   ): Promise<{
     id: string;
     url: string;
     thumbUrl: string;
     mediumUrl: string;
   }> {
-    // 1️⃣ Detectar MIME real
-    const { fileTypeFromBuffer } = await import('file-type');
-    const type = await fileTypeFromBuffer(buffer);
-    if (!type) throw new Error('Unable to detect file type');
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!allowed.includes(type.mime)) {
-      throw new Error('Unsupported file type');
+    // 0️⃣ Detectar si es archivo de Video
+    const isVideo = (declaredMime && declaredMime.startsWith('video/')) || 
+      (declaredFilename && /\.(mp4|webm|mov|m4v|ogg|quicktime)$/i.test(declaredFilename)) ||
+      (buffer.length > 8 && buffer.toString('utf8', 4, 8) === 'ftyp') ||
+      (buffer.length > 4 && buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3);
+
+    if (isVideo) {
+      const folder = `${businessId}/${category}`;
+      const fileId = uuidv4();
+      let ext = declaredFilename ? declaredFilename.split('.').pop()?.toLowerCase() || 'mp4' : 'mp4';
+      if (ext === 'quicktime') ext = 'mov';
+      const videoMime = declaredMime || (ext === 'webm' ? 'video/webm' : ext === 'mov' ? 'video/quicktime' : 'video/mp4');
+      const originalName = `${fileId}_video.${ext}`;
+      const originalUrl = await this.provider.uploadFile(buffer, folder, originalName, videoMime);
+
+      const media = await (prisma as any).media.create({
+        data: {
+          businessId,
+          url: originalUrl,
+          fileKey: `${folder}/${originalName}`,
+          provider: STORAGE_PROVIDER,
+          mimeType: videoMime,
+          size: buffer.length,
+          width: null,
+          height: null,
+          category,
+        },
+      });
+
+      return {
+        id: media.id,
+        url: originalUrl,
+        mediumUrl: originalUrl,
+        thumbUrl: originalUrl,
+      };
+    }
+
+    // 1️⃣ Detectar MIME real de imágenes de forma segura (sin chunks dinámicos que fallen en Turbopack)
+    let format = '';
+    try {
+      const meta = await sharp(buffer).metadata();
+      format = meta.format || '';
+    } catch (_) {
+      if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) format = 'jpeg';
+      else if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) format = 'png';
+      else if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) format = 'gif';
+      else if (buffer.toString('utf8', 8, 12) === 'WEBP') format = 'webp';
+    }
+
+    const mimeMap: Record<string, string> = {
+      jpeg: 'image/jpeg',
+      jpg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+      gif: 'image/gif',
+    };
+
+    const mime = mimeMap[format] || (declaredMime && declaredMime.startsWith('image/') ? declaredMime : null);
+    if (!mime) {
+      throw new Error('Formato no soportado. Usa JPG, PNG, WEBP, GIF o Video (MP4, WebM, MOV).');
     }
 
     const folder = `${businessId}/${category}`;
     const fileId = uuidv4();
 
     // Si es un GIF animado, guardamos el archivo original intacto para mantener la animación
-    if (type.mime === 'image/gif') {
+    if (mime === 'image/gif') {
       const originalName = `${fileId}_original.gif`;
       const originalUrl = await this.provider.uploadFile(buffer, folder, originalName, 'image/gif');
 

@@ -195,11 +195,23 @@ async function runTests() {
             data: makeNegocio("Negocio 1 Test", "negocio-1-test-" + Date.now())
         });
 
-        // Asignar Plan y Socio Fundador para Negocio 1
+        // 1. Asignar Plan por defecto: Negocio 1 queda como CANDIDATO (cupo no consumido todavía)
         const res1 = await planService.assignDefaultPlan(testNegocio1.id, founderPlan.id);
-        assert(res1.isFounder === true, "Negocio 1 califica como socio fundador");
-        assert(res1.founderPosition === 1, "Negocio 1 recibe cupo histórico #1");
-        assert(res1.lockedPrice === 10.0, "Negocio 1 recibe lockedPrice contractual de $10.00");
+        assert(res1.isFounder === false, "Al registrarse, Negocio 1 NO recibe isFounder=true hasta pagar");
+        assert((res1.customFeatures as any)?.founderCandidate === true, "Negocio 1 es candidato a Socio Fundador");
+        
+        let progCheck = await prisma.founderProgram.findUnique({ where: { id: founderProg.id } });
+        assert(progCheck?.currentMembers === 0, "Al registrarse, el cupo de la familia NO se consume (currentMembers sigue en 0)");
+
+        // 2. Negocio 1 paga sus primeros $10 y se activa formalmente
+        const actRes1 = await planService.activateFounderOnPayment(testNegocio1.id, 10.0, "TEST_ADMIN");
+        assert(actRes1.success === true, "Activación de fundador exitosa tras pago de $10");
+        assert(actRes1.isFounder === true, "Negocio 1 ahora sí es Socio Fundador tras pago");
+        assert(actRes1.founderPosition === 1, "Negocio 1 recibe cupo histórico #1 al pagar");
+        assert(actRes1.lockedPrice === 10.0, "Negocio 1 recibe lockedPrice contractual de $10.00");
+
+        progCheck = await prisma.founderProgram.findUnique({ where: { id: founderProg.id } });
+        assert(progCheck?.currentMembers === 1, "Tras pago confirmado, el cupo sube a 1");
 
         // Negocio 2
         testNegocio2 = await prisma.negocio.create({
@@ -207,9 +219,16 @@ async function runTests() {
         });
 
         const res2 = await planService.assignDefaultPlan(testNegocio2.id, founderPlan.id);
-        assert(res2.isFounder === true, "Negocio 2 califica como socio fundador");
-        assert(res2.founderPosition === 2, "Negocio 2 recibe cupo histórico #2");
-        assert(res2.lockedPrice === 10.0, "Negocio 2 recibe lockedPrice contractual de $10.00");
+        assert(res2.isFounder === false, "Negocio 2 se registra como candidato (isFounder=false)");
+        
+        // Negocio 2 paga sus $10
+        const actRes2 = await planService.activateFounderOnPayment(testNegocio2.id, 10.0, "TEST_ADMIN");
+        assert(actRes2.isFounder === true, "Negocio 2 ahora es Socio Fundador tras pago");
+        assert(actRes2.founderPosition === 2, "Negocio 2 recibe cupo histórico #2");
+        assert(actRes2.lockedPrice === 10.0, "Negocio 2 recibe lockedPrice contractual de $10.00");
+
+        progCheck = await prisma.founderProgram.findUnique({ where: { id: founderProg.id } });
+        assert(progCheck?.currentMembers === 2, "Tras segundo pago, el cupo llega al límite de 2");
 
         // Negocio 3 (Cupo lleno: maxMembers = 2)
         testNegocio3 = await prisma.negocio.create({
@@ -217,10 +236,11 @@ async function runTests() {
         });
 
         const res3 = await planService.assignDefaultPlan(testNegocio3.id, founderPlan.id);
-        console.log("DEBUG RES3:", { isFounder: res3.isFounder, founderPosition: res3.founderPosition, lockedPrice: res3.lockedPrice, estado: res3.estado });
-        assert(res3.isFounder === false, "Negocio 3 NO es socio fundador porque el cupo llegó al límite (2/2)");
-        assert(res3.founderPosition === null || res3.founderPosition === undefined, "Negocio 3 no tiene founderPosition");
-        assert(res3.lockedPrice === null || res3.lockedPrice === undefined, "Negocio 3 no tiene lockedPrice");
+        assert(res3.isFounder === false, "Negocio 3 se registra sin ser fundador");
+
+        // Negocio 3 intenta pagar para ser fundador, pero cupos están agotados (2/2)
+        const actRes3 = await planService.activateFounderOnPayment(testNegocio3.id, 10.0, "TEST_ADMIN");
+        assert(actRes3.success === false, "Negocio 3 NO puede ser fundador porque los cupos se agotaron (2/2)");
 
         // Verificar que cancelar la suscripción del Negocio 1 NO libera el cupo
         await prisma.suscripcion.update({
@@ -233,8 +253,9 @@ async function runTests() {
             data: makeNegocio("Negocio 4 Test", "negocio-4-test-" + Date.now())
         });
 
-        const res4 = await planService.assignDefaultPlan(testNegocio4.id, founderPlan.id);
-        assert(res4.isFounder === false, "Negocio 4 NO obtiene cupo aunque el socio #1 haya cancelado (cupo histórico no reutilizable)");
+        await planService.assignDefaultPlan(testNegocio4.id, founderPlan.id);
+        const actRes4 = await planService.activateFounderOnPayment(testNegocio4.id, 10.0, "TEST_ADMIN");
+        assert(actRes4.success === false, "Negocio 4 NO obtiene cupo aunque el socio #1 haya cancelado (cupo histórico no reutilizable)");
 
         // Limpieza negocio 4
         await prisma.suscripcion.deleteMany({ where: { negocioId: testNegocio4.id } });

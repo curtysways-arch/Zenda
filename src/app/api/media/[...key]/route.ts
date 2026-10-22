@@ -36,6 +36,13 @@ export async function GET(
       '.png': 'image/png',
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.mp4': 'video/mp4',
+      '.webm': 'video/webm',
+      '.mov': 'video/quicktime',
+      '.m4v': 'video/mp4',
+      '.ogg': 'video/ogg',
     };
     const mimeType = mimeTypes[ext] || 'application/octet-stream';
 

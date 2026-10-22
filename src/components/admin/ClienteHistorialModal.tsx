@@ -166,7 +166,7 @@ export default function ClienteHistorialModal({
             />
             
             {/* Contenedor del Modal */}
-            <div className="relative bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 border border-slate-100 dark:border-white/5 max-h-[85vh] flex flex-col">
+            <div className="relative bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 border border-slate-100 dark:border-white/5 max-h-[85vh] flex flex-col">
                 
                 {/* Cabecera decorativa */}
                 <div className="h-2 w-full bg-gradient-to-r from-[var(--primary-color,#0ea5e9)] via-pink-500 to-purple-600" />
@@ -180,10 +180,10 @@ export default function ClienteHistorialModal({
 
                 {/* Header Info */}
                 <div className="p-8 pb-4 space-y-2 shrink-0">
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic leading-none">
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
                         Ficha de <span className="text-[var(--primary-color,#0ea5e9)]">Cliente</span>
                     </h2>
-                    <div className="flex flex-wrap items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-wider italic">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider ">
                         <span>Nombre:</span> 
                         <span className="text-slate-800 dark:text-slate-200">{cliente.nombre}</span> 
                         <span className="text-slate-300 dark:text-slate-700">|</span> 
@@ -208,7 +208,7 @@ export default function ClienteHistorialModal({
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={clsx(
-                                    "flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 active:scale-95 active:duration-75",
+                                    "flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wide transition-all shrink-0 active:scale-95 active:duration-75",
                                     isActive 
                                         ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md"
                                         : "bg-slate-50 text-slate-400 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10"
@@ -218,7 +218,7 @@ export default function ClienteHistorialModal({
                                 {tab.label}
                                 {tab.badge !== undefined && tab.badge > 0 && (
                                     <span className={clsx(
-                                        "px-1.5 py-0.5 rounded-lg text-[8px] font-black",
+                                        "px-1.5 py-0.5 rounded-lg text-xs font-bold",
                                         isActive ? "bg-pink-500 text-white" : "bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-300"
                                     )}>
                                         {tab.badge}
@@ -234,11 +234,11 @@ export default function ClienteHistorialModal({
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20">
                             <Loader2 className="animate-spin text-[var(--primary-color,#0ea5e9)] mb-4" size={32} />
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cargando detalles...</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Cargando detalles...</p>
                         </div>
                     ) : error ? (
-                        <div className="p-6 bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10 rounded-[2rem] text-center">
-                            <p className="text-[11px] font-black text-rose-500 uppercase tracking-widest">{error}</p>
+                        <div className="p-6 bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10 rounded-2xl text-center">
+                            <p className="text-xs font-bold text-rose-500 uppercase tracking-wide">{error}</p>
                         </div>
                     ) : (
                         <>
@@ -246,14 +246,14 @@ export default function ClienteHistorialModal({
                             {activeTab === 'fidelidad' && (
                                 <div className="space-y-6 animate-in fade-in duration-300">
                                     {/* Nivel Card */}
-                                    <div className={clsx("relative overflow-hidden p-6 rounded-[2.5rem] bg-gradient-to-br border shadow-lg flex items-center justify-between", levelStyle.bg)}>
+                                    <div className={clsx("relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br border shadow-lg flex items-center justify-between", levelStyle.bg)}>
                                         <div className="flex items-center gap-4 relative z-10">
                                             <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 shadow-md">
                                                 <Award size={28} style={{ color: levelStyle.iconColor }} />
                                             </div>
                                             <div>
-                                                <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Nivel de Lealtad</span>
-                                                <h3 className="text-xl font-black uppercase italic tracking-tight">{levelStyle.label}</h3>
+                                                <span className="text-xs font-bold uppercase tracking-wide opacity-60">Nivel de Lealtad</span>
+                                                <h3 className="text-xl font-bold tracking-tight">{levelStyle.label}</h3>
                                             </div>
                                         </div>
                                         <Sparkles size={40} className="absolute right-6 opacity-10 animate-pulse" />
@@ -261,28 +261,28 @@ export default function ClienteHistorialModal({
 
                                     {/* Stats grid */}
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2rem] p-6 shadow-sm flex items-center gap-4">
+                                        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-2xl p-6 shadow-sm flex items-center gap-4">
                                             <div className="p-3 rounded-2xl bg-cyan-50 text-cyan-500 dark:bg-cyan-500/10 border border-cyan-100 dark:border-cyan-500/20">
                                                 <Gem size={20} />
                                             </div>
                                             <div>
-                                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Diamantes</span>
-                                                <p className="text-2xl font-black text-slate-800 dark:text-white leading-tight">{loyalty.points}</p>
+                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Diamantes</span>
+                                                <p className="text-2xl font-bold text-slate-800 dark:text-white leading-tight">{loyalty.points}</p>
                                             </div>
                                         </div>
-                                        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2rem] p-6 shadow-sm flex items-center gap-4">
+                                        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-2xl p-6 shadow-sm flex items-center gap-4">
                                             <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
                                                 <Wallet size={20} />
                                             </div>
                                             <div>
-                                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Saldo Cashback</span>
-                                                <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-tight">${parseFloat(loyalty.cashback || 0).toFixed(2)}</p>
+                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Saldo Cashback</span>
+                                                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 leading-tight">${parseFloat(loyalty.cashback || 0).toFixed(2)}</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Breve explicación */}
-                                    <p className="text-[10px] font-semibold text-slate-400 text-center italic mt-2">
+                                    <p className="text-xs font-semibold text-slate-400 text-center mt-2">
                                         El cliente acumula diamantes por cada cita completada y reseñas enviadas. El cashback puede usarse como saldo a favor en futuras citas.
                                     </p>
                                 </div>
@@ -294,7 +294,7 @@ export default function ClienteHistorialModal({
                                     {citas.length === 0 ? (
                                         <div className="py-16 text-center space-y-4">
                                             <Calendar size={32} className="mx-auto text-slate-300" />
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No registra citas aún</p>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">No registra citas aún</p>
                                         </div>
                                     ) : (
                                         citas.map((cita) => {
@@ -307,7 +307,7 @@ export default function ClienteHistorialModal({
                                             return (
                                                 <div 
                                                     key={cita.id}
-                                                    className="bg-white dark:bg-slate-900/60 p-5 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm space-y-4 hover:shadow-md transition-shadow"
+                                                    className="bg-white dark:bg-slate-900/60 p-5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm space-y-4 hover:shadow-md transition-shadow"
                                                 >
                                                     <div className="flex items-start justify-between gap-4">
                                                         <div className="flex gap-4 items-center">
@@ -315,20 +315,20 @@ export default function ClienteHistorialModal({
                                                                 <Scissors size={18} />
                                                             </div>
                                                             <div>
-                                                                <h4 className="font-black text-slate-800 dark:text-white uppercase text-xs leading-tight">
+                                                                <h4 className="font-bold text-slate-800 dark:text-white uppercase text-xs leading-tight">
                                                                     {cita.service?.nombre || 'Servicio'}
                                                                 </h4>
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mt-0.5">
+                                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mt-0.5">
                                                                     <User size={10} className="text-[var(--primary-color,#0ea5e9)]" />
                                                                     {cita.staff?.name || 'Profesional'}
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <span className={clsx("px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest", badge.bg, badge.text)}>
+                                                        <span className={clsx("px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide", badge.bg, badge.text)}>
                                                             {badge.label}
                                                         </span>
                                                     </div>
-                                                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-50 dark:border-white/5 text-[11px] text-slate-500 font-bold">
+                                                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-50 dark:border-white/5 text-xs text-slate-500 font-bold">
                                                         <span className="capitalize">{fechaLegible}</span>
                                                         <span className="text-right">{cita.horaInicio} - {cita.horaFin}</span>
                                                     </div>
@@ -345,7 +345,7 @@ export default function ClienteHistorialModal({
                                     {loyalty.cupones?.length === 0 ? (
                                         <div className="py-16 text-center space-y-4">
                                             <Tag size={32} className="mx-auto text-slate-300" />
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No tiene cupones asignados</p>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">No tiene cupones asignados</p>
                                         </div>
                                     ) : (
                                         loyalty.cupones.map((cc: any) => {
@@ -357,7 +357,7 @@ export default function ClienteHistorialModal({
                                             return (
                                                 <div 
                                                     key={cc.id}
-                                                    className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2rem] p-5 shadow-sm flex items-center justify-between gap-4"
+                                                    className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4"
                                                 >
                                                     <div className="flex items-start gap-4">
                                                         <div className="size-11 bg-pink-50 text-pink-500 dark:bg-pink-500/10 rounded-2xl flex items-center justify-center shrink-0 border border-pink-100/50">
@@ -365,22 +365,22 @@ export default function ClienteHistorialModal({
                                                         </div>
                                                         <div>
                                                             <div className="flex items-center gap-2">
-                                                                <h4 className="font-black text-slate-800 dark:text-white uppercase text-xs leading-none">{cc.nombre || 'Cupón Especial'}</h4>
-                                                                <span className={clsx("px-2 py-0.5 rounded text-[8px] font-black border", statusColors)}>
+                                                                <h4 className="font-bold text-slate-800 dark:text-white uppercase text-xs leading-none">{cc.nombre || 'Cupón Especial'}</h4>
+                                                                <span className={clsx("px-2 py-0.5 rounded text-xs font-bold border", statusColors)}>
                                                                     {cc.estado}
                                                                 </span>
                                                             </div>
-                                                            <p className="text-[9px] font-bold text-slate-400 mt-1">{cc.descripcion || 'Sin descripción adicional.'}</p>
-                                                            <div className="flex items-center gap-3 mt-2 text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                                                                <span>CÓDIGO: <strong className="text-slate-800 dark:text-white bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-lg border border-slate-150/40">{cc.codigo}</strong></span>
+                                                            <p className="text-xs font-bold text-slate-400 mt-1">{cc.descripcion || 'Sin descripción adicional.'}</p>
+                                                            <div className="flex items-center gap-3 mt-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                                                <span>Código: <strong className="text-slate-800 dark:text-white bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-lg border border-slate-150/40">{cc.codigo}</strong></span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="text-right shrink-0">
-                                                        <span className="text-2xl font-black italic tracking-tighter text-pink-500">
+                                                        <span className="text-2xl font-bold tracking-tight text-pink-500">
                                                             {cc.tipo === 'PORCENTAJE' ? `${cc.descuento}%` : `$${cc.descuento}`}
                                                         </span>
-                                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Desc.</p>
+                                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mt-1">Desc.</p>
                                                     </div>
                                                 </div>
                                             );
@@ -395,7 +395,7 @@ export default function ClienteHistorialModal({
                                     {loyalty.misiones?.length === 0 ? (
                                         <div className="py-16 text-center space-y-4">
                                             <Trophy size={32} className="mx-auto text-slate-300" />
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No está participando en misiones</p>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">No está participando en misiones</p>
                                         </div>
                                     ) : (
                                         loyalty.misiones.map((mp: any) => {
@@ -407,7 +407,7 @@ export default function ClienteHistorialModal({
                                             return (
                                                 <div 
                                                     key={mp.id} 
-                                                    className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2rem] p-5 shadow-sm space-y-4"
+                                                    className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-2xl p-5 shadow-sm space-y-4"
                                                 >
                                                     <div className="flex justify-between items-start gap-4">
                                                         <div className="flex items-center gap-3">
@@ -417,17 +417,17 @@ export default function ClienteHistorialModal({
                                                                 <Trophy size={18} />
                                                             </div>
                                                             <div>
-                                                                <h4 className="font-black text-slate-800 dark:text-white uppercase text-xs leading-none">{mp.Quest?.nombre || 'Misión'}</h4>
-                                                                <p className="text-[9px] font-bold text-slate-400 mt-1">{mp.Quest?.descripcion}</p>
+                                                                <h4 className="font-bold text-slate-800 dark:text-white uppercase text-xs leading-none">{mp.Quest?.nombre || 'Misión'}</h4>
+                                                                <p className="text-xs font-bold text-slate-400 mt-1">{mp.Quest?.descripcion}</p>
                                                             </div>
                                                         </div>
                                                         {completada ? (
-                                                            <span className="flex items-center gap-1 text-[8px] font-black text-emerald-500 uppercase tracking-wider bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                                                            <span className="flex items-center gap-1 text-xs font-bold text-emerald-500 uppercase tracking-wider bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
                                                                 <CheckCircle2 size={10} /> {mp.estado === 'RECLAMADA' || mp.estado === 'RECOMPENSADA' ? 'Recompensada' : 'Completada'}
                                                             </span>
                                                         ) : (
                                                             <span className={clsx(
-                                                                "flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border",
+                                                                "flex items-center gap-1 text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border",
                                                                 actual > 0 ? "text-amber-600 bg-amber-50 border-amber-100" : "text-slate-500 bg-slate-100 border-slate-200"
                                                             )}>
                                                                 <Clock size={10} /> {actual > 0 ? 'En progreso' : 'Disponible'}
@@ -437,7 +437,7 @@ export default function ClienteHistorialModal({
 
                                                     {/* Barra de Progreso */}
                                                     <div className="space-y-1">
-                                                        <div className="flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                                        <div className="flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-wider">
                                                             <span>Progreso</span>
                                                             <span className="text-slate-700 dark:text-slate-300">{actual} / {meta}</span>
                                                         </div>
@@ -461,7 +461,7 @@ export default function ClienteHistorialModal({
                                     {loyalty.regalos?.length === 0 ? (
                                         <div className="py-16 text-center space-y-4">
                                             <Gift size={32} className="mx-auto text-slate-300" />
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No ha reclamado regalos todavía</p>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">No ha reclamado regalos todavía</p>
                                         </div>
                                     ) : (
                                         loyalty.regalos.map((red: any) => {
@@ -469,17 +469,17 @@ export default function ClienteHistorialModal({
                                             return (
                                                 <div 
                                                     key={red.id}
-                                                    className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2rem] p-5 shadow-sm flex items-center justify-between gap-4"
+                                                    className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4"
                                                 >
                                                     <div className="flex items-center gap-4">
                                                         <div className="size-11 bg-amber-50 text-amber-500 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center shrink-0 border border-amber-100/50">
                                                             <Gift size={18} />
                                                         </div>
                                                                                         <div>
-                                                            <h4 className="font-black text-slate-800 dark:text-white uppercase text-xs leading-none">{red.Reward?.nombre || 'Premio'}</h4>
-                                                            <p className="text-[9px] font-bold text-slate-400 mt-1">Canjeado el {format(new Date(red.createdAt), "dd MMM yyyy", { locale: es })}</p>
+                                                            <h4 className="font-bold text-slate-800 dark:text-white uppercase text-xs leading-none">{red.Reward?.nombre || 'Premio'}</h4>
+                                                            <p className="text-xs font-bold text-slate-400 mt-1">Canjeado el {format(new Date(red.createdAt), "dd MMM yyyy", { locale: es })}</p>
                                                             <div className="flex items-center gap-2 mt-2">
-                                                                <span className={clsx("px-2 py-0.5 rounded text-[8px] font-black border", 
+                                                                <span className={clsx("px-2 py-0.5 rounded text-xs font-bold border", 
                                                                     entregado ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
                                                                 )}>
                                                                     {entregado ? 'Entregado' : 'Pendiente de Entrega'}
@@ -488,8 +488,8 @@ export default function ClienteHistorialModal({
                                                         </div>
                                                     </div>
                                                     <div className="text-right shrink-0">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Costo</span>
-                                                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">{red.Reward?.costoPuntos || 0} Pts</span>
+                                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Costo</span>
+                                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{red.Reward?.costoPuntos || 0} Pts</span>
                                                     </div>
                                                 </div>
                                             );
@@ -505,7 +505,7 @@ export default function ClienteHistorialModal({
                 <div className="p-6 border-t border-slate-50 dark:border-white/5 shrink-0 bg-slate-50/50 dark:bg-slate-900/60 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="px-6 py-3.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:brightness-95 transition-all active:scale-95 shadow-lg active:duration-75"
+                        className="px-6 py-3.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl text-xs font-bold uppercase tracking-wide hover:brightness-95 transition-all active:scale-95 shadow-lg active:duration-75"
                     >
                         Cerrar Ficha
                     </button>

@@ -145,7 +145,7 @@ export default function GymPlansPage() {
       {/* Cabecera */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Planes de Membresía
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
@@ -155,7 +155,7 @@ export default function GymPlansPage() {
 
         <button
           onClick={handleOpenCreate}
-          className="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-orange-500/20 transition-all flex items-center gap-2"
+          className="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-orange-500/20 transition-all flex items-center gap-2"
         >
           <Plus size={16} />
           Nuevo Plan
@@ -199,17 +199,17 @@ export default function GymPlansPage() {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       {p.featured && (
-                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-500 text-white mb-2">
+                        <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500 text-white mb-2">
                           Destacado
                         </span>
                       )}
-                      <h3 className="text-xl font-black uppercase text-slate-900 dark:text-white">
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                         {p.name}
                       </h3>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                      p.active ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-200 text-slate-500'
-                    }`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
+ p.active ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-200 text-slate-500'
+ }`}>
                       {p.active ? 'Activo' : 'Inactivo'}
                     </span>
                   </div>
@@ -221,7 +221,7 @@ export default function GymPlansPage() {
                   )}
 
                   <div className="flex items-baseline gap-1 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                    <span className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
                       ${p.price}
                     </span>
                     <span className="text-xs font-semibold text-slate-400">
@@ -230,7 +230,7 @@ export default function GymPlansPage() {
                   </div>
 
                   <div className="space-y-2 mb-6">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
                       Beneficios incluidos:
                     </p>
                     {benefitsList.map((b: string, i: number) => (
@@ -274,7 +274,7 @@ export default function GymPlansPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black uppercase text-slate-900 dark:text-white">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                 {editingPlan ? 'Editar Plan de Membresía' : 'Nuevo Plan de Membresía'}
               </h3>
               <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-600">

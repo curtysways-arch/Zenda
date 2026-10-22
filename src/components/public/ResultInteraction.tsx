@@ -115,7 +115,7 @@ export default function ResultInteraction({ resultadoId, businessSlug, initialLi
                     </form>
 
                     {error && (
-                        <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest px-2 animate-shake">
+                        <p className="text-xs font-bold text-rose-500 uppercase tracking-wide px-2 animate-shake">
                             {error}
                         </p>
                     )}
@@ -128,14 +128,14 @@ export default function ResultInteraction({ resultadoId, businessSlug, initialLi
                                         {comment.userAvatar ? (
                                             <img src={comment.userAvatar} alt="" className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-slate-400">
+                                            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-400">
                                                 {comment.userName?.charAt(0)}
                                             </div>
                                         )}
                                     </div>
                                     <div className="flex-1 bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                                        <p className="text-[10px] font-black text-slate-900 uppercase italic mb-1">{comment.userName}</p>
-                                        <p className="text-[11px] text-slate-600 leading-relaxed">{comment.content}</p>
+                                        <p className="text-xs font-bold text-slate-900 uppercase mb-1">{comment.userName}</p>
+                                        <p className="text-xs text-slate-600 leading-relaxed">{comment.content}</p>
                                     </div>
                                 </div>
                             ))}

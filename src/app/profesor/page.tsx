@@ -32,17 +32,17 @@ export default async function ProfessorDashboard() {
             {/* 👑 COMPACT HEADER */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                 <div className="space-y-1">
-                    <h1 className="text-xl font-black uppercase tracking-tighter text-slate-900 leading-none italic">
-                        ¡Hola, <span className="text-emerald-500 italic uppercase">Profesor!</span>
+                    <h1 className="text-xl font-bold tracking-tight text-slate-900 leading-none ">
+                        ¡Hola, <span className="text-emerald-500 uppercase">Profesor!</span>
                     </h1>
-                    <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px] italic flex items-center gap-1.5 leading-none">
+                    <p className="text-slate-400 font-bold uppercase tracking-wide text-xs flex items-center gap-1.5 leading-none">
                         <Activity size={10} className="text-emerald-500" /> Resumen General
                     </p>
                 </div>
 
                 <Link 
                     href={businessSlug ? `/${businessSlug}` : "/"}
-                    className="flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl hover:bg-emerald-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95 text-xs font-black uppercase tracking-widest italic"
+                    className="flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl hover:bg-emerald-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95 text-xs font-bold uppercase tracking-wide "
                 >
                     <UserCircle size={16} strokeWidth={3} />
                     Regresar
@@ -56,8 +56,8 @@ export default async function ProfessorDashboard() {
                         <BookOpen size={20} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 italic">Programas</p>
-                        <p className="text-3xl font-black text-slate-900 italic mt-1 leading-none">{coursesCount}</p>
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400 ">Programas</p>
+                        <p className="text-3xl font-bold text-slate-900 mt-1 leading-none">{coursesCount}</p>
                     </div>
                     <div className="absolute bottom-0 right-0 h-1 w-full bg-blue-500/20" />
                 </div>
@@ -67,8 +67,8 @@ export default async function ProfessorDashboard() {
                         <Users size={20} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 italic">Alumnos</p>
-                        <p className="text-3xl font-black text-slate-900 italic mt-1 leading-none">{enrollmentsCount}</p>
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400 ">Alumnos</p>
+                        <p className="text-3xl font-bold text-slate-900 mt-1 leading-none">{enrollmentsCount}</p>
                     </div>
                     <div className="absolute bottom-0 right-0 h-1 w-full bg-emerald-500/20" />
                 </div>
@@ -78,8 +78,8 @@ export default async function ProfessorDashboard() {
                         <Calendar size={20} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 italic">Estado</p>
-                        <p className="text-lg font-black text-slate-900 italic mt-1 leading-none uppercase">En línea</p>
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400 ">Estado</p>
+                        <p className="text-lg font-bold text-slate-900 mt-1 leading-none ">En línea</p>
                     </div>
                     <div className="absolute bottom-0 right-0 h-1 w-full bg-purple-500/20" />
                 </div>
@@ -96,8 +96,8 @@ export default async function ProfessorDashboard() {
                             <Calendar size={20} strokeWidth={3} />
                         </div>
                         <div className="space-y-0.5">
-                            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest italic">Sesiones</p>
-                            <h2 className="text-sm font-black uppercase tracking-widest italic">Gestionar Clases</h2>
+                            <p className="text-xs font-bold text-white/40 uppercase tracking-wide ">Sesiones</p>
+                            <h2 className="text-sm font-bold uppercase tracking-wide ">Gestionar Clases</h2>
                         </div>
                     </div>
                     <ArrowRight size={18} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
@@ -112,8 +112,8 @@ export default async function ProfessorDashboard() {
                             <Activity size={20} strokeWidth={3} />
                         </div>
                         <div className="space-y-0.5">
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic">Lista</p>
-                            <h2 className="text-sm font-black uppercase tracking-widest italic">Pasar Asistencia</h2>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide ">Lista</p>
+                            <h2 className="text-sm font-bold uppercase tracking-wide ">Pasar Asistencia</h2>
                         </div>
                     </div>
                     <ArrowRight size={18} strokeWidth={3} className="text-slate-300 group-hover:translate-x-1 group-hover:text-blue-500 transition-all" />
@@ -121,7 +121,7 @@ export default async function ProfessorDashboard() {
             </div>
 
             <div className="pt-10 flex flex-col items-center opacity-10">
-                <span className="text-[8px] font-black tracking-[1.5em] italic uppercase">PROFESSOR MINI APP</span>
+                <span className="text-xs font-bold tracking-[1.5em] uppercase">Professor mini app</span>
             </div>
         </div>
     );

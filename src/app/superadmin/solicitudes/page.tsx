@@ -1,11 +1,14 @@
 import prisma from "@/lib/prisma";
+import { getTeamContext, visibleBusinessIds } from "@/lib/admin/teamGuard";
 import { Bell, FileCheck } from "lucide-react";
 import SolicitudesClient from "@/components/superadmin/SolicitudesClient";
 
 export default async function SolicitudesPage() {
     // Obtener solicitudes con pago pendiente
+    const ctx = await getTeamContext();
+    const ids = ctx ? await visibleBusinessIds(ctx) : [];
     const solicitudes = await (prisma.suscripcion as any).findMany({
-        where: { pagoPendiente: true },
+        where: { pagoPendiente: true, ...(ids === null ? {} : { negocioId: { in: ids } }) },
         include: {
             Negocio: {
                 select: {
@@ -48,7 +51,7 @@ export default async function SolicitudesPage() {
                             Solicitudes de Plan
                         </h2>
                         {serialized.length > 0 && (
-                            <div className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-black animate-pulse">
+                            <div className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-bold animate-pulse">
                                 {serialized.length}
                             </div>
                         )}
@@ -60,12 +63,12 @@ export default async function SolicitudesPage() {
             </div>
 
             {/* Info Banner */}
-            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-[2rem] p-6 md:p-8 text-white shadow-xl shadow-indigo-600/20 flex items-start gap-5">
+            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-6 md:p-8 text-white shadow-xl shadow-indigo-600/20 flex items-start gap-5">
                 <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shrink-0">
                     <FileCheck size={28} />
                 </div>
                 <div>
-                    <h4 className="font-black text-lg tracking-tight mb-1">Flujo de Verificación</h4>
+                    <h4 className="font-bold text-lg tracking-tight mb-1">Flujo de Verificación</h4>
                     <p className="text-indigo-100 font-medium text-sm leading-relaxed">
                         Cuando un negocio solicita un plan, su estado pasa a <b>"pendiente"</b>. 
                         Revisa el método de pago indicado, valida el comprobante (transferencia) o el cargo (tarjeta), 

@@ -6,13 +6,19 @@ import { checkDemoRestriction } from '@/lib/demo-protection';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
+
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
-    let negocioId = searchParams.get('businessId') || searchParams.get('negocioId');
+    const session = await getEffectiveAdminSession();
+    const sessionNegocioId = (session?.user as any)?.negocioId;
+    const isDelegated = (session?.user as any)?.isDelegated === true;
+    const isSuperAdmin = (session?.user as any)?.role === 'SUPERADMIN' || (session?.user as any)?.roles?.includes('SUPERADMIN');
 
-    if (!negocioId) {
-        const session = await getServerSession(authOptions);
-        negocioId = (session?.user as any)?.negocioId;
+    const paramNegocioId = searchParams.get('businessId') || searchParams.get('negocioId');
+    let negocioId = sessionNegocioId;
+    if (!negocioId || (isSuperAdmin && !isDelegated && paramNegocioId)) {
+        negocioId = paramNegocioId || sessionNegocioId;
     }
 
     if (!negocioId) {
@@ -51,8 +57,15 @@ import { planLimitValidator } from '@/lib/services/planLimitValidator';
 
 export async function POST(req: Request) {
     try {
+        const session = await getEffectiveAdminSession();
+        const sessionNegocioId = (session?.user as any)?.negocioId;
         const body = await req.json();
-        const { name, role, avatar, services, workingHours, businessId, email, password, imageMediaId } = body;
+        const { name, role, avatar, services, workingHours, email, password, imageMediaId } = body;
+        const businessId = body.businessId || sessionNegocioId;
+
+        if (!businessId) {
+            return NextResponse.json({ error: 'Business ID requerido' }, { status: 400 });
+        }
 
         const demoCheck = await checkDemoRestriction(businessId);
         if (demoCheck.restricted) {

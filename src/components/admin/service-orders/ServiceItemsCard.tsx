@@ -109,28 +109,43 @@ export function ServiceItemsCard({
 
       {/* Formulario rápido para agregar ítem */}
       {adding && (
-        <div className="p-3 bg-slate-50 border border-indigo-200 rounded-2xl space-y-2 text-xs">
-          <p className="font-bold text-indigo-900">Nuevo servicio / adicional</p>
-          <div className="flex gap-2">
+        <div className="p-4 bg-indigo-50/50 border border-indigo-200 rounded-2xl space-y-3 text-xs animate-in fade-in duration-150">
+          <div className="flex items-center justify-between">
+            <p className="font-bold text-indigo-950 uppercase text-xs tracking-wider">
+              + Agregar Servicio / Artículo a la Orden
+            </p>
+            <button
+              onClick={() => setAdding(false)}
+              className="text-slate-400 hover:text-slate-600 font-bold px-1"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={newItemName}
               onChange={e => setNewItemName(e.target.value)}
-              placeholder="Ej: Mochila - Limpieza Básica"
-              className="flex-1 px-3 py-2 border border-slate-300 rounded-xl bg-white text-sm focus:outline-none"
+              placeholder="Descripción del servicio (ej: Limpieza de Gorra)"
+              className="flex-1 px-3.5 py-2 border border-slate-300 rounded-xl bg-white text-xs font-medium focus:border-indigo-500 focus:outline-none shadow-2xs"
             />
-            <input
-              type="number"
-              value={newItemPrice}
-              onChange={e => setNewItemPrice(e.target.value)}
-              placeholder="Precio ($)"
-              className="w-24 px-3 py-2 border border-slate-300 rounded-xl bg-white text-sm focus:outline-none"
-            />
+            <div className="flex items-center bg-white border border-slate-300 rounded-xl px-3 py-1.5 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 shadow-2xs">
+              <span className="text-slate-400 font-mono font-bold text-xs mr-1">$</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={newItemPrice}
+                onChange={e => setNewItemPrice(e.target.value)}
+                placeholder="0.00"
+                className="w-24 text-xs font-mono font-bold text-slate-900 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+            </div>
             <button
               onClick={handleAddItem}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700"
+              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              ✓
+              <Check className="w-3.5 h-3.5" /> Agregar
             </button>
           </div>
         </div>
@@ -145,75 +160,93 @@ export function ServiceItemsCard({
           const extras = richArt?.extras || it.extras || [];
 
           return (
-            <div key={it.id || idx} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 text-xs">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 pr-3">
-                  <span className="text-[10px] font-black uppercase text-indigo-600 block">
+            <div key={it.id || idx} className="p-4 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-3 text-xs shadow-2xs hover:border-slate-300 transition-colors">
+              {/* Cabecera del artículo: Título y botón eliminar */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 block">
                     {richArt?.tipo ? `${richArt.tipo} (${richArt.variante || 'Estándar'})` : `Artículo #${idx + 1}`}
                   </span>
-                  <p className="font-bold text-slate-900 text-sm">{it.nombreProducto}</p>
+                  <p className="font-bold text-slate-900 text-sm leading-snug">{it.nombreProducto}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveItem(idx)}
+                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer shrink-0"
+                  title="Eliminar artículo"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
 
-                  {richArt?.observaciones && (
-                    <p className="text-slate-500 font-medium mt-1 text-[11px] italic">
-                      " {richArt.observaciones} "
-                    </p>
-                  )}
+              {richArt?.observaciones && (
+                <p className="text-slate-500 font-medium text-xs bg-white/70 p-2 rounded-xl border border-slate-200/60">
+                  "{richArt.observaciones}"
+                </p>
+              )}
 
-                  {extras.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {extras.map((ex: string, eIdx: number) => (
-                        <span key={eIdx} className="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-bold rounded-md">
-                          + {ex}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+              {extras.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {extras.map((ex: string, eIdx: number) => (
+                    <span key={eIdx} className="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-md">
+                      + {ex}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Fila de Controles: Cantidad, Precio Unitario editable y Subtotal */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/60">
+                {/* Control de Cantidad */}
+                <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
+                  <span className="text-xs font-bold text-slate-400 pl-1.5 pr-0.5 uppercase">Cant:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateQuantity(idx, -1)}
+                    className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    -
+                  </button>
+                  <span className="w-6 text-center font-mono font-bold text-slate-900 text-xs">
+                    {it.cantidad}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateQuantity(idx, 1)}
+                    className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    +
+                  </button>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-xl px-2 py-1">
-                    <button
-                      onClick={() => handleUpdateQuantity(idx, -1)}
-                      className="text-slate-400 hover:text-slate-700 font-bold px-1"
-                    >
-                      -
-                    </button>
-                    <span className="font-mono font-bold text-slate-900">{it.cantidad}</span>
-                    <button
-                      onClick={() => handleUpdateQuantity(idx, 1)}
-                      className="text-slate-400 hover:text-slate-700 font-bold px-1"
-                    >
-                      +
-                    </button>
-                  </div>
+                {/* Control de Precio Unitario con espacio amplio y visible */}
+                <div className="flex items-center bg-white border border-slate-200 rounded-xl px-2.5 py-1 shadow-2xs focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                  <span className="text-xs font-bold text-slate-400 uppercase mr-1">Precio:</span>
+                  <span className="text-slate-400 font-mono font-bold text-xs">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={it.precioUnitario === 0 ? '' : it.precioUnitario}
+                    onChange={e => handleUpdatePrice(idx, e.target.value)}
+                    placeholder="0.00"
+                    className="w-20 font-mono font-bold text-slate-900 text-xs pl-1 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
 
-                  <div className="flex items-center gap-1 bg-white border border-slate-300 rounded-xl px-2 py-1">
-                    <span className="text-slate-400 font-mono">$</span>
-                    <input
-                      type="number"
-                      value={it.precioUnitario}
-                      onChange={e => handleUpdatePrice(idx, e.target.value)}
-                      className="w-14 font-mono font-bold text-slate-900 text-right outline-none"
-                    />
-                  </div>
-
-                  <span className="font-mono font-black text-slate-900 text-sm w-16 text-right">
+                {/* Subtotal del Artículo */}
+                <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100/80 px-3 py-1.5 rounded-xl ml-auto">
+                  <span className="text-xs font-bold uppercase text-indigo-600">Subtotal:</span>
+                  <span className="font-mono font-bold text-indigo-950 text-sm">
                     ${(it.precioUnitario * it.cantidad).toFixed(2)}
                   </span>
-
-                  <button
-                    onClick={() => handleRemoveItem(idx)}
-                    className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
 
               {/* Muestra de fotos adjuntas del artículo */}
               {photos.length > 0 && (
                 <div className="pt-2 border-t border-slate-200/60">
-                  <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">Fotos del Artículo ({photos.length})</span>
+                  <span className="text-xs font-bold uppercase text-slate-500 block mb-1">Fotos del Artículo ({photos.length})</span>
                   <div className="flex gap-2 overflow-x-auto py-1">
                     {photos.map((pUrl: string, pIdx: number) => (
                       <button
@@ -246,12 +279,22 @@ export function ServiceItemsCard({
           </div>
         )}
         {costoEnvio > 0 && (
-          <div className="flex justify-between">
-            <span>Envío / Logística:</span>
-            <span className="font-mono">${costoEnvio.toFixed(2)}</span>
+          <div className="space-y-1 pt-1 border-t border-slate-100">
+            <div className="flex justify-between text-slate-700 font-bold">
+              <span>Logística Total del Cliente:</span>
+              <span className="font-mono text-indigo-700">${costoEnvio.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-xs text-slate-500 pl-2">
+              <span>• Recogida a Domicilio:</span>
+              <span className="font-mono">${(costoEnvio / 2).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-xs text-slate-500 pl-2">
+              <span>• Entrega Final a Domicilio:</span>
+              <span className="font-mono">${(costoEnvio / 2).toFixed(2)}</span>
+            </div>
           </div>
         )}
-        <div className="flex justify-between pt-2 border-t text-sm font-black text-slate-900">
+        <div className="flex justify-between pt-2 border-t text-sm font-bold text-slate-900">
           <span>Monto Total:</span>
           <span className="font-mono text-emerald-600 text-lg">${total.toFixed(2)}</span>
         </div>

@@ -61,10 +61,10 @@ export default async function PublicReservationPage({
                             <img 
                                 src={negocio.logoUrl} 
                                 alt={negocio.nombre} 
-                                className="h-20 w-20 rounded-[2rem] object-cover bg-white/5 p-1 border border-white/10 shadow-2xl transition-transform group-hover:scale-105"
+                                className="h-20 w-20 rounded-3xl object-cover bg-white/5 p-1 border border-white/10 shadow-2xl transition-transform group-hover:scale-105"
                             />
                         ) : (
-                            <div className="size-20 rounded-[2rem] bg-emerald-500 flex items-center justify-center shadow-2xl border border-emerald-400/20 group-hover:scale-105 transition-transform">
+                            <div className="size-20 rounded-3xl bg-emerald-500 flex items-center justify-center shadow-2xl border border-emerald-400/20 group-hover:scale-105 transition-transform">
                                 <Trophy size={32} className="text-white" />
                             </div>
                         )}
@@ -73,13 +73,13 @@ export default async function PublicReservationPage({
                         </div>
                     </Link>
                     <div className="text-center space-y-1">
-                        <h1 className="text-2xl font-black tracking-tighter text-white uppercase italic leading-none">{negocio.nombre}</h1>
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500/60 italic">Reserva Confirmada • ID: {reserva.id.slice(-6).toUpperCase()}</p>
+                        <h1 className="text-2xl font-bold tracking-tight text-white leading-none">{negocio.nombre}</h1>
+                        <p className="text-xs font-bold uppercase tracking-wide text-emerald-500/60 ">Reserva Confirmada • ID: {reserva.id.slice(-6).toUpperCase()}</p>
                     </div>
                 </div>
 
                 {/* Card Principal de Reserva */}
-                <div className="bg-white/5 backdrop-blur-3xl rounded-[3.5rem] border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+                <div className="bg-white/5 backdrop-blur-3xl rounded-3xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
                     
                     {/* Header de la Card */}
                     <div className="p-10 border-b border-white/5 space-y-6">
@@ -88,8 +88,8 @@ export default async function PublicReservationPage({
                                 <CalendarCheck size={28} strokeWidth={2.5} />
                             </div>
                             <div className="space-y-1">
-                                <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Detalles del <span className="text-emerald-500">Turno</span></h2>
-                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest italic">Verifica la información de tu reserva</p>
+                                <h2 className="text-4xl font-bold text-white tracking-tight leading-none">Detalles del <span className="text-emerald-500">Turno</span></h2>
+                                <p className="text-xs font-bold text-white/30 uppercase tracking-wide ">Verifica la información de tu reserva</p>
                             </div>
                         </div>
 
@@ -98,16 +98,16 @@ export default async function PublicReservationPage({
                             <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 group hover:bg-white/[0.05] transition-colors">
                                 <div className="flex items-center gap-2 mb-3 opacity-40">
                                     <Calendar size={14} />
-                                    <span className="text-[8px] font-black uppercase tracking-widest">Fecha</span>
+                                    <span className="text-xs font-bold uppercase tracking-wide">Fecha</span>
                                 </div>
-                                <p className="text-lg font-black text-white uppercase italic tracking-tighter leading-none">{fechaLegible}</p>
+                                <p className="text-lg font-bold text-white tracking-tight leading-none">{fechaLegible}</p>
                             </div>
                             <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 group hover:bg-white/[0.05] transition-colors">
                                 <div className="flex items-center gap-2 mb-3 opacity-40">
                                     <Clock size={14} />
-                                    <span className="text-[8px] font-black uppercase tracking-widest">Horario</span>
+                                    <span className="text-xs font-bold uppercase tracking-wide">Horario</span>
                                 </div>
-                                <p className="text-lg font-black text-white uppercase italic tracking-tighter leading-none">{reserva.horaInicio} - {reserva.horaFin}</p>
+                                <p className="text-lg font-bold text-white tracking-tight leading-none">{reserva.horaInicio} - {reserva.horaFin}</p>
                             </div>
                         </div>
                     </div>
@@ -122,8 +122,8 @@ export default async function PublicReservationPage({
                                     <Zap size={24} fill="currentColor" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-white/30 uppercase tracking-widest block italic">Lugar</label>
-                                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none">{cancha.nombre}</h3>
+                                    <label className="text-xs font-bold text-white/30 uppercase tracking-wide block ">Lugar</label>
+                                    <h3 className="text-2xl font-bold text-white tracking-tight leading-none">{cancha.nombre}</h3>
                                     <p className="text-sm font-medium text-white/60">{((cancha.extraInfo as any)?.tipo) || 'Servicio'}</p>
                                 </div>
                             </div>
@@ -133,23 +133,23 @@ export default async function PublicReservationPage({
                                     <User size={24} />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-white/30 uppercase tracking-widest block italic">A nombre de</label>
-                                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none">{cliente.nombre}</h3>
+                                    <label className="text-xs font-bold text-white/30 uppercase tracking-wide block ">A nombre de</label>
+                                    <h3 className="text-2xl font-bold text-white tracking-tight leading-none">{cliente.nombre}</h3>
                                 </div>
                             </div>
                         </div>
 
                         {/* Total y Pago */}
                         {negocio.mostrarPrecios !== false && (
-                            <div className="bg-emerald-500/5 rounded-[2.5rem] p-8 border border-emerald-500/10 flex items-center justify-between group overflow-hidden relative">
+                            <div className="bg-emerald-500/5 rounded-3xl p-8 border border-emerald-500/10 flex items-center justify-between group overflow-hidden relative">
                                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                                 <div className="space-y-1 relative z-10">
-                                    <label className="text-[10px] font-black text-emerald-500/60 uppercase tracking-widest block italic">Valor del Turno</label>
-                                    <p className="text-5xl font-black text-emerald-500 tracking-tighter italic leading-none">${Number(reserva.total).toLocaleString('es-ES')}</p>
+                                    <label className="text-xs font-bold text-emerald-500/60 uppercase tracking-wide block ">Valor del Turno</label>
+                                    <p className="text-5xl font-bold text-emerald-500 tracking-tight leading-none">${Number(reserva.total).toLocaleString('es-ES')}</p>
                                 </div>
                                 <div className="relative z-10 text-right">
                                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/20 scale-90 md:scale-100">
-                                        <span className="text-[10px] font-black uppercase tracking-widest italic">Confirmado</span>
+                                        <span className="text-xs font-bold uppercase tracking-wide ">Confirmado</span>
                                     </div>
                                 </div>
                             </div>
@@ -161,7 +161,7 @@ export default async function PublicReservationPage({
                         <Link 
                             href={`https://wa.me/${negocio.whatsapp?.replace(/\D/g, '')}`}
                             target="_blank"
-                            className="w-full py-6 flex items-center justify-center gap-3 text-[11px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white transition-all group"
+                            className="w-full py-6 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-wide text-white/40 hover:text-white transition-all group"
                         >
                             <Phone size={16} className="group-hover:text-emerald-500 transition-colors" />
                             Contacto del Complejo
@@ -174,12 +174,12 @@ export default async function PublicReservationPage({
                 <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
                     <Link 
                         href={`/${negocio.slug}`}
-                        className="w-full py-8 bg-white text-slate-900 rounded-[2.5rem] text-[11px] font-black uppercase tracking-[0.4em] hover:bg-slate-100 transition-all text-center flex items-center justify-center gap-4 shadow-2xl italic group"
+                        className="w-full py-8 bg-white text-slate-900 rounded-3xl text-xs font-bold uppercase tracking-wide hover:bg-slate-100 transition-all text-center flex items-center justify-center gap-4 shadow-2xl group"
                     >
                         Ver Más Canchas
                         <ChevronLeft size={20} className="rotate-180 group-hover:translate-x-2 transition-transform" />
                     </Link>
-                    <p className="text-center text-white/20 text-[9px] font-black uppercase tracking-[0.5em] italic">Potenciado por Antigravity Cancha</p>
+                    <p className="text-center text-white/20 text-xs font-bold uppercase tracking-wide ">Potenciado por Antigravity Cancha</p>
                 </div>
 
             </div>

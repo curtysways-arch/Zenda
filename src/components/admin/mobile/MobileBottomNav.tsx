@@ -81,8 +81,8 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
             { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
             { name: 'Agenda', href: '/admin/citas', icon: CalendarDays },
             { name: 'Pacientes', href: '/admin/pacientes', icon: Users },
-            { name: 'Tratamientos', href: '/admin/servicios', icon: Smile },
-            { name: 'Más', isAction: true, icon: Menu },
+            { name: 'Tratamientos', href: '/admin/tratamientos', icon: ClipboardList },
+            { name: 'Menú', isAction: true, icon: Menu },
         ];
     } else if (isGym) {
         navItems = [
@@ -90,23 +90,23 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
             { name: 'Socios', href: '/admin/socios', icon: Users },
             { name: 'Clases', href: '/admin/clases', icon: CalendarDays },
             { name: 'Membresías', href: '/admin/membresias', icon: CreditCard },
-            { name: 'Más', isAction: true, icon: Menu },
+            { name: 'Menú', isAction: true, icon: Menu },
         ];
     } else if (isShoeCare) {
         navItems = [
             { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
             { name: 'Órdenes', href: '/admin/ordenes-servicio', icon: ClipboardList },
-            { name: 'Recepciones', href: '/admin/recepciones', icon: ShoppingBag },
-            { name: 'Ventas POS', href: '/admin/ventas', icon: Store },
-            { name: 'Más', isAction: true, icon: Menu },
+            { name: 'Recepción', href: '/admin/recepciones', icon: ShoppingBag },
+            { name: 'Ventas', href: '/admin/ventas', icon: Store },
+            { name: 'Menú', isAction: true, icon: Menu },
         ];
     } else if (isRestaurant) {
         navItems = [
             { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
-            { name: 'Ventas POS', href: '/admin/ventas', icon: ShoppingBag },
+            { name: 'Ventas', href: '/admin/ventas', icon: ShoppingBag },
             { name: 'Mesas', href: '/admin/mesas', icon: Utensils },
             { name: 'Pedidos', href: '/admin/pedidos-online', icon: Package },
-            { name: 'Más', isAction: true, icon: Menu },
+            { name: 'Menú', isAction: true, icon: Menu },
         ];
     } else if (isCanchas) {
         navItems = [
@@ -114,15 +114,15 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
             { name: 'Canchas', href: '/admin/canchas', icon: Dribbble },
             { name: 'Reservas', href: '/admin/citas', icon: CalendarDays },
             { name: 'Clientes', href: '/admin/clientes', icon: Users },
-            { name: 'Más', isAction: true, icon: Menu },
+            { name: 'Menú', isAction: true, icon: Menu },
         ];
     } else if (isStore) {
         navItems = [
             { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
-            { name: 'Ventas POS', href: '/admin/ventas', icon: ShoppingBag },
+            { name: 'Ventas', href: '/admin/ventas', icon: ShoppingBag },
             { name: 'Pedidos', href: '/admin/pedidos-online', icon: Package },
             { name: 'Productos', href: '/admin/productos', icon: Sparkles },
-            { name: 'Más', isAction: true, icon: Menu },
+            { name: 'Menú', isAction: true, icon: Menu },
         ];
     } else {
         // Servicios generales (Spa, Belleza, Barbería, Peluquería)
@@ -131,7 +131,7 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
             { name: 'Agenda', href: '/admin/citas', icon: CalendarDays },
             { name: 'Clientes', href: '/admin/clientes', icon: Users },
             { name: 'Servicios', href: '/admin/servicios', icon: Sparkles },
-            { name: 'Más', isAction: true, icon: Menu },
+            { name: 'Menú', isAction: true, icon: Menu },
         ];
     }
 
@@ -175,7 +175,7 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
                                 <div className="p-1 rounded-xl transition-all duration-200 hover:bg-slate-100">
                                     <item.icon size={21} strokeWidth={2.2} />
                                 </div>
-                                <span className="text-[10px] font-bold tracking-tight text-center truncate max-w-[68px] opacity-75">
+                                <span className="text-xs font-medium text-center truncate max-w-[72px]">
                                     {item.name}
                                 </span>
                             </button>
@@ -193,7 +193,7 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
                             href={item.href}
                             className={cn(
                                 "relative flex flex-col items-center justify-center flex-1 h-full py-1 gap-1 transition-all duration-200 active:scale-95",
-                                isActive ? "text-slate-900 font-extrabold" : "text-slate-400 font-medium hover:text-slate-600"
+                                isActive ? "text-slate-900" : "text-slate-500 hover:text-slate-700"
                             )}
                         >
                             <div className={cn(
@@ -208,8 +208,8 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
                             </div>
                             <span 
                                 className={cn(
-                                    "text-[10px] tracking-tight text-center truncate max-w-[68px] leading-tight",
-                                    isActive ? "opacity-100 font-extrabold text-slate-900" : "opacity-75"
+                                    "text-xs text-center truncate max-w-[72px] leading-tight",
+                                    isActive ? "font-semibold text-slate-900" : "font-medium"
                                 )}
                                 style={isActive ? { color: primaryColor } : {}}
                             >
@@ -217,7 +217,7 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
                             </span>
                             
                             {(item.name === 'Agenda' || item.name === 'Pedidos' || item.name === 'Reservas') && pendingCount > 0 && (
-                                <span className="absolute top-1.5 right-1/4 size-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white animate-pulse">
+                                <span className="absolute top-1.5 right-1/4 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-xs font-semibold rounded-full flex items-center justify-center border-2 border-white">
                                     {pendingCount}
                                 </span>
                             )}

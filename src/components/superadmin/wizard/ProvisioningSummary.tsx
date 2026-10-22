@@ -62,10 +62,10 @@ export default function ProvisioningSummary({
   return (
     <div className="space-y-6 text-left">
       <div className="text-center space-y-2 max-w-xl mx-auto">
-        <span className="text-[10px] font-black tracking-widest text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+        <span className="text-xs font-bold tracking-wide text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
           Paso 9 — Resumen de Aprovisionamiento
         </span>
-        <h2 className="text-2xl font-black text-white italic">Confirmación de Aprovisionamiento Universal</h2>
+        <h2 className="text-2xl font-bold text-white ">Confirmación de Aprovisionamiento Universal</h2>
         <p className="text-xs text-slate-400">Revisa la configuración declarativa antes de instanciar el negocio en el Runtime.</p>
       </div>
 
@@ -73,8 +73,8 @@ export default function ProvisioningSummary({
         {/* Columna 1: Negocio & Plan */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-4">
           <div className="border-b border-slate-800 pb-3">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Negocio & Plan</span>
-            <h3 className="font-black text-lg text-white mt-1">{payload.generalInfo?.nombre}</h3>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Negocio & Plan</span>
+            <h3 className="font-bold text-lg text-white mt-1">{payload.generalInfo?.nombre}</h3>
             <span className="text-xs text-emerald-400 font-bold">{payload.generalInfo?.slug}.citiox.app</span>
           </div>
 
@@ -85,7 +85,7 @@ export default function ProvisioningSummary({
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Plan Seleccionado:</span>
-              <span className="font-black text-emerald-400">{planName}</span>
+              <span className="font-bold text-emerald-400">{planName}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Admin Email:</span>
@@ -94,25 +94,25 @@ export default function ProvisioningSummary({
           </div>
 
           <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase block">Inversión Estimada</span>
-            <div className="text-2xl font-black text-white">${totalPriceMonthly} <span className="text-xs font-normal text-slate-400">/ mes</span></div>
-            <div className="text-[10px] text-emerald-400 font-bold">${totalPriceYearly} / año (ahorra 15%)</div>
+            <span className="text-xs font-bold text-slate-400 uppercase block">Inversión Estimada</span>
+            <div className="text-2xl font-bold text-white">${totalPriceMonthly} <span className="text-xs font-normal text-slate-400">/ mes</span></div>
+            <div className="text-xs text-emerald-400 font-bold">${totalPriceYearly} / año (ahorra 15%)</div>
           </div>
         </div>
 
         {/* Columna 2: Canales, Capacidades & Recursos */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-4">
           <div className="border-b border-slate-800 pb-3">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Canales & Recursos</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Canales & Recursos</span>
             <h4 className="font-bold text-xs text-amber-400 mt-1">{payload.channels?.length || 0} Canales Operativos</h4>
           </div>
 
           <div className="space-y-1.5 text-xs text-slate-300 max-h-48 overflow-y-auto pr-1">
-            <div className="font-bold text-[10px] text-slate-400 uppercase tracking-wider mb-1">Recursos Iniciales:</div>
+            <div className="font-bold text-xs text-slate-400 uppercase tracking-wider mb-1">Recursos Iniciales:</div>
             {payload.initialResources?.map((res: any, idx: number) => (
-              <div key={idx} className="flex justify-between bg-slate-950 p-2 rounded-xl text-[11px]">
+              <div key={idx} className="flex justify-between bg-slate-950 p-2 rounded-xl text-xs">
                 <span className="text-slate-300">{res.name}</span>
-                <span className="font-black text-amber-400">x{res.quantity || 1}</span>
+                <span className="font-bold text-amber-400">x{res.quantity || 1}</span>
               </div>
             ))}
           </div>
@@ -121,19 +121,19 @@ export default function ProvisioningSummary({
         {/* Columna 3: Módulos & Addons */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-4">
           <div className="border-b border-slate-800 pb-3">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Módulos & Addons</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Módulos & Addons</span>
             <h4 className="font-bold text-xs text-purple-400 mt-1">{(payload.activeModules?.length || 0) + (payload.selectedAddons?.length || 0)} Complementos</h4>
           </div>
 
           <div className="space-y-1 text-xs text-slate-300 max-h-48 overflow-y-auto pr-1">
             {payload.activeModules?.map((mod: string) => (
-              <div key={mod} className="flex items-center gap-1.5 text-[11px] text-purple-300 bg-purple-500/10 p-1.5 rounded-lg border border-purple-500/20">
+              <div key={mod} className="flex items-center gap-1.5 text-xs text-purple-300 bg-purple-500/10 p-1.5 rounded-lg border border-purple-500/20">
                 <Sparkles size={12} />
                 <span>{mod}</span>
               </div>
             ))}
             {payload.selectedAddons?.map((add: string) => (
-              <div key={add} className="flex items-center gap-1.5 text-[11px] text-cyan-300 bg-cyan-500/10 p-1.5 rounded-lg border border-cyan-500/20">
+              <div key={add} className="flex items-center gap-1.5 text-xs text-cyan-300 bg-cyan-500/10 p-1.5 rounded-lg border border-cyan-500/20">
                 <Box size={12} />
                 <span>{add}</span>
               </div>
@@ -182,7 +182,7 @@ export default function ProvisioningSummary({
         <button
           type="button"
           onClick={onPrev}
-          className="flex items-center gap-2 bg-slate-900 border border-slate-800 text-slate-400 font-bold text-xs uppercase tracking-widest px-6 py-4 rounded-2xl hover:text-white transition"
+          className="flex items-center gap-2 bg-slate-900 border border-slate-800 text-slate-400 font-bold text-xs uppercase tracking-wide px-6 py-4 rounded-2xl hover:text-white transition"
         >
           <ArrowLeft size={16} />
           Anterior
@@ -191,7 +191,7 @@ export default function ProvisioningSummary({
           type="button"
           onClick={onConfirmCreation}
           disabled={loading}
-          className="flex items-center gap-3 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest px-10 py-4 rounded-2xl hover:bg-emerald-400 transition shadow-xl shadow-emerald-500/20 disabled:opacity-50"
+          className="flex items-center gap-3 bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wide px-10 py-4 rounded-2xl hover:bg-emerald-400 transition shadow-xl shadow-emerald-500/20 disabled:opacity-50"
         >
           {loading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
           Crear Negocio en 1-Click

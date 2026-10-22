@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { getCanonicalLogistics, getActiveDriverCompensation, isLaundryType } from '@/core/logistics/CanonicalLogisticsService';
 import {
   Store, Building2, MapPin, ExternalLink, CheckCircle, X, Navigation,
-  PackageCheck, Clock, ShieldAlert, Crosshair, Route, ArrowLeft, Check, Sparkles
+  PackageCheck, Clock, ShieldAlert, Crosshair, Route, ArrowLeft, Check, Sparkles, Phone, MessageCircle
 } from 'lucide-react';
 
 interface DbOrder {
   id: string;
   numeroPedido: number;
   codigo?: string;
+  repartidorId?: string;
   nombreCliente: string;
   telefonoCliente: string;
   direccionCliente?: string;
@@ -22,6 +24,14 @@ interface DbOrder {
   paymentStatus?: string;
   createdAt: string;
   extraInfo?: any;
+  branchId?: string;
+  branch?: {
+    id: string;
+    name: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+  };
   negocio?: {
     id: string;
     nombre: string;
@@ -31,6 +41,14 @@ interface DbOrder {
     latitud?: number;
     longitud?: number;
     configuracion?: any;
+    branches?: Array<{
+      id: string;
+      name: string;
+      address?: string;
+      latitude?: number;
+      longitude?: number;
+      isMain?: boolean;
+    }>;
     Ubicacion?: Array<{
       id: string;
       nombre: string;
@@ -54,6 +72,8 @@ interface Props {
   actionLoading: boolean;
   onAccept: (orderId: string) => void;
   onClose: () => void;
+  onUpdateState?: (orderId: string, newState: any, pin?: string) => Promise<any>;
+  onCancel?: (order: DbOrder) => void;
 }
 
 export default function DriverOrderMapModal({
@@ -63,6 +83,8 @@ export default function DriverOrderMapModal({
   actionLoading,
   onAccept,
   onClose,
+  onUpdateState,
+  onCancel,
 }: Props) {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -74,8 +96,13 @@ export default function DriverOrderMapModal({
   const [driverRealCoords, setDriverRealCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsStatus, setGpsStatus] = useState<'SOLICITANDO' | 'ACTIVO' | 'DENEGADO'>('SOLICITANDO');
 
-  const [routeLeg1, setRouteLeg1] = useState<{ distanceKm: string; durationMin: string } | null>(null);
-  const [routeLeg2, setRouteLeg2] = useState<{ distanceKm: string; durationMin: string } | null>(null);
+  // Estados de las rutas:
+  // 1. Repartidor -> A
+  const [routeDriverA, setRouteDriverA] = useState<{ distanceKm: string; durationMin: string; numDist: number; numTime: number } | null>(null);
+  // 2. Punto A -> Punto B (desde el inicio)
+  const [routeAB, setRouteAB] = useState<{ distanceKm: string; durationMin: string; numDist: number; numTime: number } | null>(null);
+  // 3. Repartidor -> B (cuando ya se recogió)
+  const [routeDriverB, setRouteDriverB] = useState<{ distanceKm: string; durationMin: string; numDist: number; numTime: number } | null>(null);
 
   const parseJson = (raw: any) => {
     if (!raw) return {};
@@ -87,7 +114,35 @@ export default function DriverOrderMapModal({
 
   const extra = parseJson(order.extraInfo);
   const cfg = parseJson(order.negocio?.configuracion);
+
+  const businessIdentifier = `${order.negocio?.slug || ''} ${order.negocio?.nombre || ''}`;
+  const canonical = getCanonicalLogistics(order, driverId);
+  const driverComp = getActiveDriverCompensation(order, driverId);
+
+  const isLaundry = isLaundryType((order.negocio as any)?.tipoNegocio, extra, businessIdentifier) ||
+                    (order as any).isLaundry || extra?.isLaundry || 
+                    canonical.tipoMision === 'ROUND_TRIP_SERVICE' ||
+                    Boolean(extra?.servicioNombre || extra?.articulos || extra?.cantidadPares) ||
+                    ['ESPERANDO_REPARTIDOR_RETIRO', 'ESPERANDO_ACEPTACION_REPARTIDOR', 'ESPERANDO_REPARTIDOR_ENTREGA', 'LISTO_PARA_ENTREGA', 'REPARTIDOR_EN_CAMINO', 'RECOGIDO'].includes(order.estado);
+  const isRetiro = (order as any).tipoMision === 'RETIRO' || extra?.tipoMision === 'RETIRO' || ['ESPERANDO_REPARTIDOR_RETIRO', 'ESPERANDO_ACEPTACION_REPARTIDOR', 'REPARTIDOR_EN_CAMINO', 'RECOGIDO'].includes(order.estado);
   
+  // Determinar si ya está recogido
+  const isPickedUp = 
+    order.estado === 'RECOGIDO' ||
+    order.estado === 'ENTREGADO_A_REPARTIDOR' ||
+    order.estado === 'EN_CAMINO' ||
+    order.estado === 'EN_RUTA' ||
+    order.estado === 'EN_RUTA_ENTREGA' ||
+    order.estado === 'WAITING_CLIENT' ||
+    order.estado === 'ESPERANDO_CLIENTE' ||
+    order.estado === 'DELIVERED_TO_WORKSHOP' ||
+    order.estado === 'ENTREGADO' ||
+    Boolean(extra?.isPickedUp || extra?.repartidorRecogio || extra?.repartidorEnRuta);
+
+  const isAlreadyAssigned = 
+    order.repartidorId === driverId ||
+    ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_CAMINO', 'REPARTIDOR_EN_LOCAL', 'RECOGIDO', 'EN_CAMINO', 'EN_RUTA', 'EN_RUTA_ENTREGA', 'WAITING_CLIENT', 'ESPERANDO_CLIENTE'].includes(order.estado);
+
   const getDriverRealFee = () => {
     const realFee = Number(
       extra?.pricingBreakdown?.realShippingCost ||
@@ -124,35 +179,64 @@ export default function DriverOrderMapModal({
     return (orderFee > 0 ? orderFee : 2.50).toFixed(2);
   };
   const deliveryFee = getDriverRealFee();
+  const activeMissionEarning = (driverComp?.monto && driverComp.monto > 0)
+    ? driverComp.monto.toFixed(2)
+    : (isLaundry && Number(deliveryFee) > 0 ? (Number(deliveryFee) / 2).toFixed(2) : deliveryFee);
   const itemsSummary = (order.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ');
 
-  // SUCURSALES
+  // SUCURSALES (Prioridad estricta en Sucursales)
+  const branchDirect = order.branch;
+  const branchesList = order.negocio?.branches || [];
+  const targetBranchId = order.branchId || extra.branchId;
+  const matchedBranch = branchDirect || branchesList.find((b: any) => b.id === targetBranchId) || branchesList.find((b: any) => b.isMain) || (branchesList.length > 0 ? branchesList[0] : null);
+
   const sucursales = order.negocio?.Ubicacion || (order.negocio as any)?.ubicaciones || [];
   const targetUbicacionId = extra.ubicacionId || (order as any).ubicacionId;
   const matchedSucursal = sucursales.find((u: any) => u.id === targetUbicacionId) || (sucursales.length > 0 ? sucursales[0] : null);
 
-  const nombreLocal = matchedSucursal 
-    ? `${order.negocio?.nombre || 'Local'} (${matchedSucursal.nombre})`
-    : (order.negocio?.nombre || 'La Parrilla Citiox');
+  const nombreLocal = matchedBranch 
+    ? `${order.negocio?.nombre || 'Local'} (${matchedBranch.name})`
+    : matchedSucursal 
+      ? `${order.negocio?.nombre || 'Local'} (${matchedSucursal.nombre})`
+      : (order.negocio?.nombre || 'Local');
 
-  const direccionLocal = matchedSucursal?.direccion 
+  const direccionLocal = matchedBranch?.address
+    || matchedSucursal?.direccion 
     || cfg.direccion 
     || order.negocio?.direccion 
     || 'Dirección del local registrada';
 
-  const latA = Number(matchedSucursal?.latitud || cfg.latitudNegocio || order.negocio?.latitud || -0.1136755);
-  const lngA = Number(matchedSucursal?.longitud || cfg.longitudNegocio || order.negocio?.longitud || -78.4723924);
+  const rawLatLocal = Number(
+    matchedBranch?.latitude ||
+    matchedSucursal?.latitud ||
+    order.negocio?.latitud ||
+    extra.origenLat ||
+    cfg.latitudNegocio ||
+    -0.0907211
+  );
+  const rawLngLocal = Number(
+    matchedBranch?.longitude ||
+    matchedSucursal?.longitud ||
+    order.negocio?.longitud ||
+    extra.origenLng ||
+    cfg.longitudNegocio ||
+    -78.4410867
+  );
 
-  const latB = Number(order.latitud || -0.180653);
-  const lngB = Number(order.longitud || -78.467838);
+  const rawLatClient = Number(order.latitud || -0.180653);
+  const rawLngClient = Number(order.longitud || -78.467838);
 
-  const getHoraLlegadaLocal = () => {
-    if (extra.horaLlegadaLocal) return extra.horaLlegadaLocal;
-    const prepMinutes = Number(extra.tiempoPreparacionEstimado || 15);
-    const createdTime = new Date(order.createdAt).getTime();
-    const limitTime = new Date(createdTime + prepMinutes * 60000);
-    return `${limitTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (Faltan ${prepMinutes} min)`;
-  };
+  // En RETIRO: Punto A es el Cliente (se recoge) y Punto B es el Taller (se entrega)
+  // En ENTREGA / Estándar: Punto A es el Local y Punto B es el Cliente
+  const latA = isRetiro ? rawLatClient : rawLatLocal;
+  const lngA = isRetiro ? rawLngClient : rawLngLocal;
+
+  const latB = isRetiro ? rawLatLocal : rawLatClient;
+  const lngB = isRetiro ? rawLngLocal : rawLngClient;
+
+  // Destino activo para navegación de Google Maps
+  const targetLat = isPickedUp ? latB : latA;
+  const targetLng = isPickedUp ? lngB : lngA;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -178,13 +262,24 @@ export default function DriverOrderMapModal({
       return;
     }
 
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setDriverRealCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGpsStatus('ACTIVO');
+      },
+      (err) => {
+        console.warn('GPS inicial no obtenido inmediatamente:', err);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         setDriverRealCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setGpsStatus('ACTIVO');
       },
       () => setGpsStatus('DENEGADO'),
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
@@ -202,68 +297,157 @@ export default function DriverOrderMapModal({
       const L = (window as any).L;
       if (!L) return;
 
-      const latDriver = driverRealCoords?.lat || (latA + 0.004);
-      const lngDriver = driverRealCoords?.lng || (lngA - 0.003);
+      const latDriver = driverRealCoords?.lat ?? (isPickedUp ? (latB - 0.005) : (latA + 0.005));
+      const lngDriver = driverRealCoords?.lng ?? (isPickedUp ? (lngB - 0.005) : (lngA - 0.005));
+
+      if (driverMarkerRef.current) {
+        driverMarkerRef.current.setLatLng([latDriver, lngDriver]);
+      }
 
       try {
-        const res1 = await fetch(
-          `https://router.project-osrm.org/route/v1/driving/${lngDriver},${latDriver};${lngA},${latA}?overview=full&geometries=geojson`
+        // =========================================================================
+        // 1. RUTA VIAL DESDE PUNTO A HASTA PUNTO B (PRESENTE DESDE EL INICIO)
+        // =========================================================================
+        const resAB = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${lngA},${latA};${lngB},${latB}?overview=full&geometries=geojson`
         );
-        if (res1.ok && !isCancelled) {
-          const data1 = await res1.json();
-          if (data1.routes && data1.routes.length > 0) {
-            const r1 = data1.routes[0];
-            const dist1 = (r1.distance / 1000).toFixed(1);
-            const time1 = Math.ceil(r1.duration / 60);
+        if (resAB.ok && !isCancelled) {
+          const dataAB = await resAB.json();
+          if (dataAB.routes && dataAB.routes.length > 0) {
+            const rAB = dataAB.routes[0];
+            const distAB = (rAB.distance / 1000).toFixed(1);
+            const timeAB = Math.ceil(rAB.duration / 60);
 
-            setRouteLeg1({ distanceKm: `${dist1} km`, durationMin: `${time1} min` });
+            setRouteAB({
+              distanceKm: `${distAB} km`,
+              durationMin: `${timeAB} min`,
+              numDist: Number(distAB),
+              numTime: timeAB
+            });
 
-            const coords1 = r1.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
-            if ((mapInstanceRef.current as any).polyLeg1) {
-              mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyLeg1);
+            const coordsAB = rAB.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
+            if ((mapInstanceRef.current as any).polyAB) {
+              mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyAB);
             }
-            const poly1 = L.polyline(coords1, {
-              color: '#2563eb',
-              weight: 6,
-              opacity: 0.85,
-              dashArray: '6, 8',
-            }).addTo(mapInstanceRef.current);
-            (mapInstanceRef.current as any).polyLeg1 = poly1;
 
-            const badgeEl = document.getElementById('badge-a-text');
-            if (badgeEl) badgeEl.innerText = `${time1} min • ${dist1} km`;
+            // Trazado vial por calles de A hacia B
+            const polyAB = L.polyline(coordsAB, {
+              color: '#10b981', // Verde esmeralda para el tramo A -> B
+              weight: isPickedUp ? 3 : 5,
+              opacity: isPickedUp ? 0.35 : 0.9,
+              lineCap: 'round',
+              lineJoin: 'round',
+            }).addTo(mapInstanceRef.current);
+            (mapInstanceRef.current as any).polyAB = polyAB;
+
+            const badgeB = document.getElementById('badge-b-text');
+            if (badgeB && !isPickedUp) {
+              badgeB.innerText = `A ➔ B: ${timeAB} min • ${distAB} km`;
+            }
           }
         }
 
-        const res2 = await fetch(
-          `https://router.project-osrm.org/route/v1/driving/${lngA},${latA};${lngB},${latB}?overview=full&geometries=geojson`
-        );
-        if (res2.ok && !isCancelled) {
-          const data2 = await res2.json();
-          if (data2.routes && data2.routes.length > 0) {
-            const r2 = data2.routes[0];
-            const dist2 = (r2.distance / 1000).toFixed(1);
-            const time2 = Math.ceil(r2.duration / 60);
+        // =========================================================================
+        // 2. RUTA DEL REPARTIDOR (SEGÚN LA ETAPA)
+        // =========================================================================
+        if (!isPickedUp) {
+          // FASE 1: Desde la posición actual del repartidor hacia el PUNTO A
+          const resDriverA = await fetch(
+            `https://router.project-osrm.org/route/v1/driving/${lngDriver},${latDriver};${lngA},${latA}?overview=full&geometries=geojson`
+          );
+          if (resDriverA.ok && !isCancelled) {
+            const dataDriverA = await resDriverA.json();
+            if (dataDriverA.routes && dataDriverA.routes.length > 0) {
+              const rDA = dataDriverA.routes[0];
+              const distDA = (rDA.distance / 1000).toFixed(1);
+              const timeDA = Math.ceil(rDA.duration / 60);
 
-            setRouteLeg2({ distanceKm: `${dist2} km`, durationMin: `${time2} min` });
+              setRouteDriverA({
+                distanceKm: `${distDA} km`,
+                durationMin: `${timeDA} min`,
+                numDist: Number(distDA),
+                numTime: timeDA
+              });
 
-            const coords2 = r2.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
-            if ((mapInstanceRef.current as any).polyLeg2) {
-              mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyLeg2);
+              const coordsDA = rDA.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
+              if ((mapInstanceRef.current as any).polyDriverA) {
+                mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyDriverA);
+              }
+              const polyDriverA = L.polyline(coordsDA, {
+                color: isRetiro ? '#8b5cf6' : '#2563eb', // Morado o Azul rey
+                weight: 6,
+                opacity: 0.95,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }).addTo(mapInstanceRef.current);
+              (mapInstanceRef.current as any).polyDriverA = polyDriverA;
+
+              const badgeA = document.getElementById('badge-a-text');
+              if (badgeA) {
+                badgeA.innerText = `Repartidor ➔ A: ${timeDA} min • ${distDA} km`;
+              }
+
+              // Auto-encuadrar mostrando tanto la ruta del repartidor como el tramo a B
+              try {
+                const allBounds = L.latLngBounds([
+                  [latDriver, lngDriver],
+                  [latA, lngA],
+                  [latB, lngB]
+                ]);
+                mapInstanceRef.current.fitBounds(allBounds, { padding: [60, 60], maxZoom: 16 });
+              } catch {}
             }
-            const poly2 = L.polyline(coords2, {
-              color: '#10b981',
-              weight: 6,
-              opacity: 0.9,
-            }).addTo(mapInstanceRef.current);
-            (mapInstanceRef.current as any).polyLeg2 = poly2;
+          }
+        } else {
+          // FASE 2 (RECOGIDO): Limpiar ruta Repartidor -> A y trazar directa Repartidor -> B
+          if ((mapInstanceRef.current as any).polyDriverA) {
+            mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyDriverA);
+          }
 
-            const badgeEl = document.getElementById('badge-b-text');
-            if (badgeEl) badgeEl.innerText = `${time2} min • ${dist2} km`;
+          const resDriverB = await fetch(
+            `https://router.project-osrm.org/route/v1/driving/${lngDriver},${latDriver};${lngB},${latB}?overview=full&geometries=geojson`
+          );
+          if (resDriverB.ok && !isCancelled) {
+            const dataDriverB = await resDriverB.json();
+            if (dataDriverB.routes && dataDriverB.routes.length > 0) {
+              const rDB = dataDriverB.routes[0];
+              const distDB = (rDB.distance / 1000).toFixed(1);
+              const timeDB = Math.ceil(rDB.duration / 60);
+
+              setRouteDriverB({
+                distanceKm: `${distDB} km`,
+                durationMin: `${timeDB} min`,
+                numDist: Number(distDB),
+                numTime: timeDB
+              });
+
+              const coordsDB = rDB.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
+              if ((mapInstanceRef.current as any).polyDriverB) {
+                mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyDriverB);
+              }
+              const polyDriverB = L.polyline(coordsDB, {
+                color: '#10b981', // Verde esmeralda directo
+                weight: 6,
+                opacity: 0.95,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }).addTo(mapInstanceRef.current);
+              (mapInstanceRef.current as any).polyDriverB = polyDriverB;
+
+              const badgeB = document.getElementById('badge-b-text');
+              if (badgeB) badgeB.innerText = `Repartidor ➔ B: ${timeDB} min • ${distDB} km`;
+
+              const badgeA = document.getElementById('badge-a-text');
+              if (badgeA) badgeA.innerText = '✓ Recogido';
+
+              try {
+                mapInstanceRef.current.fitBounds(polyDriverB.getBounds(), { padding: [60, 60], maxZoom: 16 });
+              } catch {}
+            }
           }
         }
       } catch (err) {
-        console.warn('Error obteniendo ruta OSRM:', err);
+        console.warn('Error en cálculo de rutas viales OSRM:', err);
       }
     }
 
@@ -275,64 +459,68 @@ export default function DriverOrderMapModal({
         });
         mapInstanceRef.current = map;
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        // OpenStreetMap GRATUITO
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
-          subdomains: 'abcd',
+          attribution: '© OpenStreetMap contributors',
         }).addTo(map);
+
+        const badgeAColor = isPickedUp ? '#10b981' : (isRetiro ? '#8b5cf6' : '#2563eb');
+        const badgeBColor = '#10b981';
 
         const iconA = L.divIcon({
           className: 'custom-pin-a',
           html: `
             <div style="position:relative; display:flex; flex-direction:column; align-items:center;">
-              <div id="badge-a-text" style="background:#2563eb; color:white; font-size:11px; font-weight:900; padding:3px 8px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:2px solid white; white-space:nowrap; margin-bottom:4px;">
-                Calculando ruta...
+              <div id="badge-a-text" style="background:${badgeAColor}; color:white; font-size:10px; font-weight:900; padding:2px 8px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:2px solid white; white-space:nowrap; margin-bottom:4px;">
+                ${isPickedUp ? '✓ Recogido' : (isRetiro ? '🧺 A: Cliente' : '🏢 A: Local')}
               </div>
-              <div style="background:#2563eb; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; border:3px solid white; box-shadow:0 6px 16px rgba(37,99,235,0.5);">
-                A
+              <div style="background:${badgeAColor}; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; border:3px solid white; box-shadow:0 6px 16px rgba(0,0,0,0.3);">
+                ${isPickedUp ? '✓' : 'A'}
               </div>
             </div>
           `,
-          iconSize: [120, 65],
-          iconAnchor: [60, 63],
+          iconSize: [140, 65],
+          iconAnchor: [70, 63],
         });
 
         const iconB = L.divIcon({
           className: 'custom-pin-b',
           html: `
             <div style="position:relative; display:flex; flex-direction:column; align-items:center;">
-              <div id="badge-b-text" style="background:#10b981; color:white; font-size:11px; font-weight:900; padding:3px 8px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:2px solid white; white-space:nowrap; margin-bottom:4px;">
-                Calculando ruta...
+              <div id="badge-b-text" style="background:${badgeBColor}; color:white; font-size:10px; font-weight:900; padding:2px 8px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:2px solid white; white-space:nowrap; margin-bottom:4px;">
+                ${isRetiro ? '🏢 B: Taller Matriz' : '📍 B: Cliente'}
               </div>
-              <div style="background:#10b981; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; border:3px solid white; box-shadow:0 6px 16px rgba(16,185,129,0.5);">
+              <div style="background:${badgeBColor}; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; border:3px solid white; box-shadow:0 6px 16px rgba(0,0,0,0.3);">
                 B
               </div>
             </div>
           `,
-          iconSize: [120, 65],
-          iconAnchor: [60, 63],
+          iconSize: [140, 65],
+          iconAnchor: [70, 63],
         });
 
         markerARef.current = L.marker([latA, lngA], { icon: iconA }).addTo(map);
         markerBRef.current = L.marker([latB, lngB], { icon: iconB }).addTo(map);
 
-        const latDriver = driverRealCoords?.lat || (latA + 0.004);
-        const lngDriver = driverRealCoords?.lng || (lngA - 0.003);
+        const latDriver = driverRealCoords?.lat ?? (isPickedUp ? (latB - 0.005) : (latA + 0.005));
+        const lngDriver = driverRealCoords?.lng ?? (isPickedUp ? (lngB - 0.005) : (lngA - 0.005));
 
         const iconDriver = L.divIcon({
           className: 'custom-pin-driver',
           html: `
-            <div style="background:#3b82f6; color:white; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; border:3px solid white; box-shadow:0 0 15px rgba(59,130,246,0.8);">
+            <div style="background:#3b82f6; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; border:3px solid white; box-shadow:0 0 18px rgba(59,130,246,0.95);">
               🛵
             </div>
           `,
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
+          iconSize: [34, 34],
+          iconAnchor: [17, 17],
         });
 
         driverMarkerRef.current = L.marker([latDriver, lngDriver], { icon: iconDriver }).addTo(map);
 
         const bounds = L.latLngBounds([[latDriver, lngDriver], [latA, lngA], [latB, lngB]]);
-        map.fitBounds(bounds, { padding: [50, 50] });
+        map.fitBounds(bounds, { padding: [60, 60] });
 
         calculateRealRoute();
       } catch (e) {
@@ -343,7 +531,7 @@ export default function DriverOrderMapModal({
     }
 
     return () => { isCancelled = true; };
-  }, [mapLoaded, latA, lngA, latB, lngB, driverRealCoords]);
+  }, [mapLoaded, latA, lngA, latB, lngB, driverRealCoords, isRetiro, isPickedUp]);
 
   const paymentState = (order.paymentStatus || (order as any).payment?.estado || extra?.paymentStatus || '').toUpperCase();
   const paymentMethod = ((order as any).metodoPago || (order as any).payment?.metodo || extra?.metodoPago || '').toUpperCase();
@@ -354,193 +542,156 @@ export default function DriverOrderMapModal({
   const isCashOnDelivery = !isOrderPaid;
   const totalVal = Number(order.total || 0).toFixed(2);
 
+  // Cálculos totales de ruta
+  const totalEstTime = (routeDriverA?.numTime || 0) + (routeAB?.numTime || 0);
+  const totalEstDist = ((routeDriverA?.numDist || 0) + (routeAB?.numDist || 0)).toFixed(1);
+
+  // Color del negocio para la cabecera (azul Citiox si no tiene o es muy claro)
+  const bizColor = (() => {
+    const c = (order.negocio as any)?.colorPrimario;
+    if (!c || !/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) return '#0066FF';
+    let h = c.slice(1);
+    if (h.length === 3) h = h.split('').map((x: string) => x + x).join('');
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.62 ? '#0066FF' : `#${h}`;
+  })();
+
+  const pointA = isRetiro
+    ? { label: 'Retiras donde el cliente', name: order.nombreCliente, addr: order.direccionCliente || '', ref: order.referenciaCliente }
+    : { label: 'Retiras en el local', name: nombreLocal, addr: direccionLocal, ref: '' };
+  const pointB = isRetiro
+    ? { label: 'Entregas en el taller', name: nombreLocal, addr: direccionLocal, ref: '' }
+    : { label: 'Entregas al cliente', name: order.nombreCliente, addr: order.direccionCliente || '', ref: order.referenciaCliente };
+
+  const collect = !isLaundry && driverComp?.puedeCobrarCliente && driverComp.montoRecaudarCliente > 0;
+
   return (
-    <div className="fixed inset-0 z-[200] bg-slate-100 text-slate-900 flex flex-col h-[100dvh] overflow-hidden animate-in fade-in duration-300">
-      
-      {/* 1. HEADER FIJO SUPERIOR CON LOGO CITIOX DRIVER (AZUL REY) */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-white px-4 py-3 flex items-center justify-between z-30 shrink-0 shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-blue-600/20 border border-blue-400/30 overflow-hidden flex items-center justify-center shadow-md">
-            <img src="/citiox-driver-logo.png" alt="CiTiOX Driver" className="w-full h-full object-contain" />
-          </div>
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-300 block leading-tight">
-              {nombreLocal}
-            </span>
-            <h2 className="text-sm font-black text-white leading-tight">
-              Pedido #{order.codigo || order.id.slice(-6).toUpperCase()}
-            </h2>
-          </div>
-        </div>
-
-        <button
-          onClick={onClose}
-          className="w-10 h-10 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-md"
-          title="Cerrar detalles"
-        >
-          <X className="w-5 h-5" />
+    <div className="fixed inset-0 z-[200] bg-[#F7F8FB] text-slate-900 flex flex-col h-[100dvh] overflow-hidden">
+      {/* Cabecera */}
+      <div className="text-white px-4 py-3 flex items-center gap-3 shrink-0" style={{ background: bizColor }}>
+        <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center" aria-label="Volver">
+          <ArrowLeft className="w-5 h-5" />
         </button>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-white/80 truncate">{order.negocio?.nombre || 'Negocio'}</p>
+          <p className="font-bold leading-tight">Pedido #{order.codigo || order.id.slice(-6).toUpperCase()}</p>
+        </div>
+        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/20">
+          {isAlreadyAssigned ? (isPickedUp ? 'Hacia la entrega' : 'Hacia el retiro') : 'Disponible'}
+        </span>
       </div>
 
-      {/* 2. MAPA EN LA PARTE SUPERIOR */}
-      <div className="w-full h-[36vh] sm:h-[40vh] bg-slate-200 relative z-10 shrink-0 shadow-md">
+      {/* Mapa */}
+      <div className="w-full h-[38vh] bg-slate-200 relative shrink-0">
         <div ref={mapDivRef} className="w-full h-full" />
-        
         {!mapLoaded && (
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center text-white gap-2 z-20">
-            <div className="w-7 h-7 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-black uppercase tracking-widest text-blue-200">Trazando ruta por calles...</span>
+          <div className="absolute inset-0 bg-slate-100 flex flex-col items-center justify-center gap-2 text-slate-500 z-20">
+            <div className="w-7 h-7 rounded-full border-[3px] border-slate-200 border-t-[#0066FF] animate-spin" />
+            <span className="text-xs">Cargando mapa…</span>
           </div>
         )}
-
-        {/* Badge GPS Status */}
-        <div className="absolute bottom-3 left-3 z-20 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-md flex items-center gap-2 text-xs font-black">
-          <Crosshair className={`w-4 h-4 ${gpsStatus === 'ACTIVO' ? 'text-blue-600 animate-pulse' : 'text-amber-500'}`} />
-          <span className="text-slate-800">
-            {gpsStatus === 'ACTIVO' ? 'GPS Móvil Activo' : 'Obteniendo GPS...'}
+        <a
+          href={`https://www.google.com/maps/dir/?api=1&destination=${targetLat},${targetLng}`}
+          target="_blank"
+          rel="noreferrer"
+          className="absolute bottom-3 right-3 z-20 bg-white text-slate-900 px-3.5 py-2 rounded-full shadow-lg flex items-center gap-1.5 text-sm font-semibold"
+        >
+          <Navigation className="w-4 h-4" style={{ color: bizColor }} />
+          Abrir en Google Maps
+        </a>
+        {gpsStatus === 'DENEGADO' && (
+          <span className="absolute top-3 left-3 z-20 bg-white/95 text-amber-700 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow">
+            Activa tu ubicación para ver tu ruta
           </span>
-        </div>
+        )}
       </div>
 
-      {/* 3. INFORMACIÓN DE LA ORDEN PRE-ACEPTACIÓN (DISEÑO BLANCO Y AZUL SIN BORDES) */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-48 text-left bg-slate-100 custom-scrollbar">
-        
-        {/* 0. Fecha y Hora del Pedido */}
-        <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-blue-600 shrink-0" />
-            <span className="font-extrabold text-slate-700">Fecha y Hora del Pedido:</span>
-          </div>
-          <span className="font-black text-slate-900 font-mono">
-            {order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-EC', {
-              day: 'numeric',
-              month: 'short',
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            }) : 'No registrada'}
-          </span>
-        </div>
-
-        {/* 1. Banner Ganancia */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-4 rounded-3xl flex items-center justify-between shadow-lg shadow-blue-500/20">
-          <span className="text-xs font-black uppercase tracking-wider">TU GANANCIA DE ENVÍO:</span>
-          <span className="text-xl font-black tracking-tight">+${deliveryFee}</span>
-        </div>
-
-        {/* 1.5. Banner Cobro al Cliente */}
-        {isOrderPaid ? (
-          <div className="bg-emerald-50 border border-emerald-200/80 rounded-3xl p-4 shadow-sm text-left flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
-                <Check className="w-6 h-6 stroke-[3]" />
-              </div>
-              <div>
-                <span className="text-xs font-black uppercase text-emerald-950 block">✅ PEDIDO YA PAGADO ($0.00 A COBRAR)</span>
-                <span className="text-xs font-bold text-emerald-700">El cliente pagó online. No debes cobrar efectivo al entregar.</span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-3xl p-4 shadow-md text-left space-y-1">
-            <span className="text-xs font-black uppercase tracking-wider block opacity-90">💵 COBRAR EN EFECTIVO AL CLIENTE:</span>
-            <div className="flex items-center justify-between">
-              <span className="text-xl font-black font-mono">${totalVal}</span>
-              <span className="px-3 py-0.5 bg-slate-950/20 rounded-full text-[10px] font-black uppercase">Cobrar en Puerta</span>
-            </div>
-          </div>
-        )}
-
-        {/* 2. Detalle de Productos en Paquete */}
-        <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-2">
-          <div className="flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-wider">
-            <PackageCheck className="w-4 h-4 text-blue-600 shrink-0" />
-            <span>DETALLE DE PRODUCTOS EN PAQUETE:</span>
-          </div>
-          <p className="font-bold text-slate-800 text-sm leading-relaxed pl-6">
-            {itemsSummary || 'Sin productos registrados'}
-          </p>
-        </div>
-
-        {/* 3. Recoge el Pedido en (Punto A - Local / Sucursal) */}
-        <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-black">A</span>
-              RECOGE EL PEDIDO EN:
-            </span>
-            {matchedSucursal && (
-              <span className="text-[10px] font-black uppercase bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full">
-                Sucursal: {matchedSucursal.nombre}
-              </span>
+      {/* Detalle */}
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-40 space-y-3">
+        {/* Ruta */}
+        <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-semibold text-slate-900 text-sm">Recorrido</p>
+            {totalEstTime > 0 && !isPickedUp ? (
+              <span className="text-xs font-semibold text-slate-600">~{totalEstTime} min · {totalEstDist} km</span>
+            ) : isPickedUp && routeDriverB ? (
+              <span className="text-xs font-semibold text-slate-600">{routeDriverB.durationMin} · {routeDriverB.distanceKm}</span>
+            ) : (
+              <span className="text-xs text-slate-400">Calculando…</span>
             )}
           </div>
-          <p className="font-extrabold text-slate-900 text-sm pl-6 leading-relaxed">
-            {nombreLocal} — {direccionLocal}
-          </p>
-        </div>
-
-        {/* 4. Hora límite de llegada al local */}
-        <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-2">
-          <span className="text-xs font-black uppercase text-amber-600 tracking-wider block flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-amber-600 animate-spin" />
-            HORA LÍMITE DE LLEGADA AL LOCAL (FIJADA POR NEGOCIO):
-          </span>
-          <div className="bg-amber-50 p-4 rounded-2xl flex items-center justify-between">
-            <span className="text-xs font-extrabold text-amber-900">Hora de retiro acordada:</span>
-            <span className="font-black text-amber-600 font-mono text-sm">
-              {getHoraLlegadaLocal()}
-            </span>
+          <div className="relative pl-6 space-y-4">
+            <span className="absolute left-[9px] top-2 bottom-2 w-px bg-slate-200" />
+            {[{ p: pointA, done: isPickedUp, key: 'A', eta: routeDriverA }, { p: pointB, done: false, key: 'B', eta: isPickedUp ? routeDriverB : routeAB }].map(({ p, done, key, eta }) => (
+              <div key={key} className="relative">
+                <span
+                  className="absolute -left-6 top-0.5 w-[19px] h-[19px] rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                  style={{ background: done ? '#10b981' : key === 'A' ? bizColor : '#0f172a' }}
+                >
+                  {done ? <Check className="w-3 h-3" /> : key}
+                </span>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-slate-400">{p.label}</p>
+                    <p className="text-sm font-semibold text-slate-900">{p.name}</p>
+                    {p.addr && <p className="text-xs text-slate-500">{p.addr}</p>}
+                    {p.ref && <p className="text-[11px] text-slate-400 mt-0.5">Ref: {p.ref}</p>}
+                  </div>
+                  {done ? (
+                    <span className="text-[11px] font-semibold text-emerald-600 shrink-0">Hecho</span>
+                  ) : eta ? (
+                    <span className="text-[11px] font-semibold text-slate-500 shrink-0">{eta.durationMin}</span>
+                  ) : null}
+                </div>
+              </div>
+            ))}
           </div>
-          {routeLeg1 && (
-            <p className="text-xs text-slate-500 font-semibold pl-1">
-              📍 Trayecto estimado a la sucursal: {routeLeg1.distanceKm} ({routeLeg1.durationMin} en vía)
+        </section>
+
+        {/* Dinero */}
+        <section className="grid grid-cols-2 gap-3">
+          <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-4">
+            <p className="text-xs text-slate-500">Ganas</p>
+            <p className="text-2xl font-bold text-emerald-600">${activeMissionEarning}</p>
+          </div>
+          <div className={`rounded-2xl p-4 ${collect ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-white ring-1 ring-slate-100'}`}>
+            <p className={`text-xs ${collect ? 'text-amber-800' : 'text-slate-500'}`}>{collect ? 'Cobras en efectivo' : 'Cobro al cliente'}</p>
+            <p className={`text-2xl font-bold ${collect ? 'text-amber-900' : 'text-slate-900'}`}>
+              {collect ? `$${driverComp.montoRecaudarCliente.toFixed(2)}` : '$0.00'}
             </p>
-          )}
-        </div>
-
-        {/* 5. Entrega a Destino (Punto B - Cliente) */}
-        <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-black">B</span>
-              ENTREGA A DESTINO (CLIENTE):
-            </span>
+            {!collect && <p className="text-[11px] text-slate-500">{isLaundry ? 'Sin cobro' : 'Ya pagado'}</p>}
           </div>
-          <p className="font-extrabold text-slate-900 text-sm pl-6 leading-relaxed">
-            {order.direccionCliente || 'Sin dirección de cliente registrada'}
-          </p>
-          {order.referenciaCliente && (
-            <p className="text-xs text-slate-500 font-medium pl-6">Ref: {order.referenciaCliente}</p>
+        </section>
+
+        {/* Artículos */}
+        <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4 flex gap-3">
+          <PackageCheck className="w-5 h-5 text-slate-400 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-xs text-slate-500">{isRetiro ? 'Prendas a retirar' : 'Pedido'}</p>
+            <p className="text-sm text-slate-800">{itemsSummary || 'Sin detalle'}</p>
+          </div>
+        </section>
+      </div>
+
+      {/* Acciones: aquí solo se acepta; los pasos de la entrega se hacen en la pantalla de la misión */}
+      <div className="fixed bottom-0 inset-x-0 z-[300] bg-white border-t border-slate-100 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="max-w-xl mx-auto space-y-2">
+          {!isAlreadyAssigned && (
+            <button
+              onClick={() => onAccept(order.id)}
+              disabled={actionLoading || hasActiveOrder}
+              className="w-full py-4 rounded-2xl text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition"
+              style={{ background: bizColor }}
+            >
+              <CheckCircle className="w-5 h-5" />
+              {hasActiveOrder ? 'Termina tu entrega actual para aceptar otra' : `Aceptar ${isRetiro ? 'retiro' : 'pedido'} · gana $${activeMissionEarning}`}
+            </button>
           )}
+          <button onClick={onClose} className="w-full py-3 rounded-2xl bg-slate-100 text-slate-700 font-semibold text-sm">
+            {isAlreadyAssigned ? 'Volver a la entrega' : 'Volver a la lista'}
+          </button>
         </div>
-
       </div>
-
-      {/* 4. BARRA DE ACCIÓN FIJA INFERIOR BLANCA CON BOTÓN GIGANTE AZUL */}
-      <div className="fixed bottom-0 left-0 right-0 z-[300] bg-white/95 backdrop-blur-md border-t border-slate-200/80 p-4 pb-6 space-y-2 shadow-2xl">
-        <button
-          onClick={() => onAccept(order.id)}
-          disabled={actionLoading || hasActiveOrder}
-          className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <CheckCircle className="w-5 h-5 stroke-[2.5]" />
-          <span>
-            {hasActiveOrder
-              ? '⚠️ Ya tienes 1 entrega activa'
-              : `ACEPTAR ESTA CARRERA (GANANCIA $${deliveryFee})`}
-          </span>
-        </button>
-
-        <button
-          onClick={onClose}
-          className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>VOLVER A LA BOLSA</span>
-        </button>
-      </div>
-
     </div>
   );
 }

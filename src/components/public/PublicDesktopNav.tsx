@@ -5,12 +5,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { hasModule } from '@/lib/business/BusinessModuleResolver';
+import { isLaundryOrShoeCareBusiness } from '@/lib/businessTypeHelper';
 import { useCart } from '@/core/context/CartContext';
+import NotificationBell from '@/components/public/NotificationBell';
+import { getBusinessTypeServiceIcon } from '@/components/icons/businessTypeIconHelper';
 
 interface PublicDesktopNavProps {
     slug: string;
     hasActiveCourses?: boolean;
     pagesCount?: number;
+    promotionsCount?: number;
     logoUrl?: string | null;
     nombre?: string;
     tipoNegocio?: string;
@@ -21,6 +25,7 @@ export default function PublicDesktopNav({
     slug, 
     hasActiveCourses = false, 
     pagesCount = 0,
+    promotionsCount,
     logoUrl = null,
     nombre = '',
     tipoNegocio = 'RESERVA',
@@ -87,19 +92,22 @@ export default function PublicDesktopNav({
         return null;
     }
 
-    const canAppointments = hasModule(tipoNegocio, 'APPOINTMENTS') || hasModule(tipoNegocio, 'RESERVATIONS');
-    const canOrders = hasModule(tipoNegocio, 'ORDERS') ||
+    const isShoeCare = isLaundryOrShoeCareBusiness({ tipoNegocio, slug, nombre });
+    const canAppointments = !isShoeCare && (hasModule(tipoNegocio, 'APPOINTMENTS') || hasModule(tipoNegocio, 'RESERVATIONS'));
+    const canOrders = isShoeCare || hasModule(tipoNegocio, 'ORDERS') ||
         tipoNegocio === 'RESTAURANT' ||
         tipoNegocio === 'RESTAURANTE' ||
         tipoNegocio === 'TIENDA' ||
         tipoNegocio === 'STORE' ||
         tipoNegocio === 'ECOMMERCE' ||
-        tipoNegocio === 'PRODUCTOS';
+        tipoNegocio === 'PRODUCTOS' ||
+        tipoNegocio === 'LAVANDERIA' ||
+        tipoNegocio === 'SHOE_CARE';
         
     const canServices = hasModule(tipoNegocio, 'SERVICES');
-    const isShoeCare = tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
 
     const isGym = tipoNegocio === 'GIMNASIO' || tipoNegocio === 'GYM' || tipoNegocio === 'FITNESS' || slug.includes('gym') || slug.includes('fitness') || slug.includes('vortex');
+    const ServiceIcon = getBusinessTypeServiceIcon({ tipoNegocio, slug, nombre });
 
     const navItems = isGym ? [
         {
@@ -167,7 +175,7 @@ export default function PublicDesktopNav({
         ...(canServices ? [{
             label: 'Servicios',
             href: `/${slug}/servicios`,
-            icon: Scissors,
+            icon: ServiceIcon,
             active: pathname.includes('/servicios')
         }] : []),
         ...(canAppointments ? [{
@@ -176,11 +184,11 @@ export default function PublicDesktopNav({
             icon: Calendar,
             active: pathname.includes('/mis-reservas')
         }] : []),
-        ...(pagesCount > 0 ? [{
-            label: 'Páginas',
-            href: `/${slug}#paginas`,
-            icon: FileText,
-            active: pathname.includes('/pagina')
+        ...((promotionsCount !== undefined ? promotionsCount > 0 : true) ? [{
+            label: 'Promociones',
+            href: `/${slug}/promociones`,
+            icon: Tag,
+            active: pathname.includes('/promocion')
         }] : []),
         ...((isLoyaltyEnabled && hasModule(tipoNegocio, 'LOYALTY')) ? [{
             label: 'Premios',
@@ -306,7 +314,7 @@ export default function PublicDesktopNav({
                         />
                     ) : (
                         <div 
-                            className="w-14 h-14 rounded-full flex items-center justify-center text-white font-black text-xl shadow-lg border-2 border-white group-hover:scale-105 transition-all duration-300"
+                            className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg border-2 border-white group-hover:scale-105 transition-all duration-300"
                             style={{ backgroundColor: 'var(--primary)' }}
                         >
                             {nombre ? nombre.substring(0, 1).toUpperCase() : '✦'}
@@ -314,7 +322,7 @@ export default function PublicDesktopNav({
                     )}
                     {nombre && (
                         <span 
-                            className="font-black text-xl uppercase tracking-[0.1em] leading-none drop-shadow-sm group-hover:opacity-80 transition-opacity"
+                            className="font-bold text-xl tracking-wide leading-none drop-shadow-sm group-hover:opacity-80 transition-opacity"
                             style={{ color: '#0f172a' }}
                         >
                             {nombre}
@@ -329,11 +337,11 @@ export default function PublicDesktopNav({
                             key={item.label}
                             href={item.href}
                             onClick={(e) => handleNavClick(item, e)}
-                            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-[0.12em] transition-all duration-200 ${
-                                item.active 
-                                    ? 'text-white shadow-md' 
-                                    : 'text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm'
-                            }`}
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all duration-200 ${
+ item.active 
+ ? 'text-white shadow-md' 
+ : 'text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm'
+ }`}
                             style={item.active ? { backgroundColor: 'var(--primary)' } : {}}
                         >
                             <item.icon size={13} strokeWidth={item.active ? 2.5 : 2} />
@@ -353,21 +361,23 @@ export default function PublicDesktopNav({
                             <div className="relative flex items-center justify-center">
                                 <ShoppingBag className="w-4 h-4 text-cyan-600 group-hover:scale-110 transition-transform" />
                                 {totalItemsCount > 0 && (
-                                    <span className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white px-1.5 py-0.2 rounded-full text-[9px] font-black shadow-xs animate-pulse min-w-[16px] text-center">
+                                    <span className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white px-1.5 py-0.2 rounded-full text-xs font-bold shadow-xs animate-pulse min-w-[16px] text-center">
                                         {totalItemsCount}
                                     </span>
                                 )}
                             </div>
-                            <span className="font-black text-slate-900">
+                            <span className="font-bold text-slate-900">
                                 {totalItemsCount > 0 ? `Carrito ($${subtotal.toFixed(2)})` : 'Ver Carrito'}
                             </span>
                         </button>
                     )}
 
+                    <NotificationBell slug={slug} initialUnreadCount={0} />
+
                     <Link
                         href={buttonHref}
                         onClick={handleCatalogClick}
-                        className="flex-shrink-0 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+                        className="flex-shrink-0 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
                         style={{ backgroundColor: 'var(--primary)' }}
                     >
                         {buttonText}

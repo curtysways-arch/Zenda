@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { guardCustomerIntake } from '@/lib/subscription/receiveGuard';
 import { NextResponse } from 'next/server';
 import { notificationService } from '@/lib/notifications';
 import { whatsappService } from "@/lib/whatsapp";
@@ -86,7 +87,62 @@ export async function POST(
         const cleanHoraInicio = normalizeTime(horaInicio);
         const [h, m] = cleanHoraInicio.split(':').map(Number);
         const totalMinFin = (h || 0) * 60 + (m || 0) + totalDuracionMinutos;
-        const horaFin = `${Math.floor(totalMinFin / 60).toString().padStart(2, '0')}:${(totalMinFin % 60).toString().padStart(2, '0')}`;
+        let horaFin = `${Math.floor(totalMinFin / 60).toString().padStart(2, '0')}:${(totalMinFin % 60).toString().padStart(2, '0')}`;
+
+        // ── Canchas: duración elegida por el cliente, horario válido, sin choques y precio calculado aquí ──
+        const { isSportsCourtsBusiness } = await import('@/lib/businessTypeHelper');
+        if (isSportsCourtsBusiness(negocio)) {
+            const { loadBusy } = await import('@/lib/courts/busy');
+            const { overlaps, slotPrice, toMin } = await import('@/lib/courts/slots');
+            const fechaStr = String(fecha).slice(0, 10);
+            const horasPedidas = Number(duracionBody);
+            const horas = Number.isFinite(horasPedidas) && horasPedidas > 0
+                ? Math.min(6, Math.max(0.5, Math.round(horasPedidas * 2) / 2))
+                : Math.max(0.5, (service.duracion || 60) / 60);
+            totalDuracionMinutos = Math.round(horas * 60);
+            const finMin = (h || 0) * 60 + (m || 0) + totalDuracionMinutos;
+            horaFin = `${String(Math.floor(finMin / 60) % 24).padStart(2, '0')}:${String(finMin % 60).padStart(2, '0')}`;
+
+            // Dentro del horario de atención
+            const ap = toMin(negocio.horarioApertura || '08:00');
+            let ci = toMin(negocio.horarioCierre || '22:00');
+            if (ci <= ap) ci += 24 * 60;
+            const ini = (h || 0) * 60 + (m || 0);
+            if (!isNaN(ap) && !isNaN(ci) && (ini < ap || finMin > ci)) {
+                return NextResponse.json({ error: `Ese horario está fuera de atención (${negocio.horarioApertura || '08:00'} a ${negocio.horarioCierre || '22:00'}).` }, { status: 400 });
+            }
+            // No en el pasado (hora de Ecuador)
+            const ahora = new Date();
+            const hoyEc = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guayaquil' }).format(ahora);
+            const horaEc = new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Guayaquil', hour: '2-digit', minute: '2-digit', hour12: false }).format(ahora);
+            if (fechaStr < hoyEc || (fechaStr === hoyEc && ini < toMin(horaEc))) {
+                return NextResponse.json({ error: 'Ese horario ya pasó. Elige otro.' }, { status: 400 });
+            }
+            // Sin choques con otras reservas, bloqueos o clases
+            const ocupado = (await loadBusy(negocio.id, fechaStr, [service.id])).get(service.id) || [];
+            if (overlaps(cleanHoraInicio, horaFin, ocupado)) {
+                return NextResponse.json({ error: 'Ese horario acaba de ocuparse. Elige otro.' }, { status: 409 });
+            }
+            // Precio: por hora × horas, con la promoción o descuento automático que aplique
+            const [promoRows, autos] = await Promise.all([
+                (prisma as any).promotionToService.findMany({ where: { serviceId: service.id }, include: { Promotion: true } }).catch(() => []),
+                (prisma as any).automaticDiscount.findMany({ where: { businessId: negocio.id, enabled: true } }).catch(() => []),
+            ]);
+            const auto = autos.find((a: any) => a.serviceId === service.id) || autos.find((a: any) => a.serviceId === null) || null;
+            const precio = slotPrice({
+                dateStr: fechaStr,
+                time: cleanHoraInicio,
+                pricePerHour: Number(service.precio ?? negocio.precioHora ?? 0),
+                hours: horas,
+                promos: promoRows.map((r: any) => r.Promotion).filter(Boolean),
+                auto,
+            });
+            body.precioTotal = precio.total;
+        }
+
+        // Negocio bloqueado por falta de pago o suspendido: no recibe reservas
+        const intakeBlocked = await guardCustomerIntake(negocio.id);
+        if (intakeBlocked) return intakeBlocked;
 
         // PROTECCIÓN MODO DEMO
         const demoCheck = await checkDemoRestriction(negocio.id);
@@ -210,6 +266,15 @@ export async function POST(
             if (Array.isArray(body.extraServices) && body.extraServices.length > 0) {
                 const nombresExtra = body.extraServices.map((s: any) => s.nombre).join(", ");
                 comentariosFinales += `\nServicios extra: ${nombresExtra}`;
+            }
+
+            // Si viene pack promocional y no está ya formateado en comentarios:
+            if (body.packPromo && !comentariosFinales.includes('Pack Promocional')) {
+                const pack = body.packPromo;
+                const sTxt = Array.isArray(pack.servicios) && pack.servicios.length > 0
+                    ? pack.servicios.map((s: string) => `• ${s}`).join('\n')
+                    : `• ${service.nombre}`;
+                comentariosFinales = `📦 Pack Promocional: ${pack.titulo}\nTratamientos incluidos:\n${sTxt}\n` + comentariosFinales;
             }
 
             // Validar y aplicar cupón si se envió
@@ -626,7 +691,20 @@ export async function POST(
             .setExpirationTime('30d')
             .sign(secret);
 
-        const response = NextResponse.json({ success: true, id: reservaCreated.id });
+        // Solo se renueva la sesión si el navegador ya era de ese número (ver lib/auth/customerSession)
+        const { hasSessionFor } = await import('@/lib/auth/customerSession');
+        const keepSession = await hasSessionFor(req, clienteTelefono);
+
+        const response = NextResponse.json({
+            success: true,
+            sesion: keepSession,
+            id: reservaCreated.id,
+            estado: reservaCreated.estado,
+            expiresAt: reservaCreated.expiresAt || null,
+            total: reservaCreated.total,
+            horaFin: reservaCreated.horaFin,
+        });
+        if (!keepSession) return response;
         response.cookies.set('customer_token', customerToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',

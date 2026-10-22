@@ -136,7 +136,7 @@ export default function MiClasesPage() {
       </div>
 
       <div>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
           <Sparkles className="w-6 h-6 text-emerald-500" />
           Clases Grupales
         </h1>
@@ -163,31 +163,31 @@ export default function MiClasesPage() {
       <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
         <button
           onClick={() => setSelectedDay('HOY')}
-          className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${
-            selectedDay === 'HOY'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-              : 'text-slate-400 hover:text-slate-600'
-          }`}
+          className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
+ selectedDay === 'HOY'
+ ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+ : 'text-slate-400 hover:text-slate-600'
+ }`}
         >
           Hoy
         </button>
         <button
           onClick={() => setSelectedDay('MANANA')}
-          className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${
-            selectedDay === 'MANANA'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-              : 'text-slate-400 hover:text-slate-600'
-          }`}
+          className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
+ selectedDay === 'MANANA'
+ ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+ : 'text-slate-400 hover:text-slate-600'
+ }`}
         >
           Mañana
         </button>
         <button
           onClick={() => setSelectedDay('TODOS')}
-          className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${
-            selectedDay === 'TODOS'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-              : 'text-slate-400 hover:text-slate-600'
-          }`}
+          className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
+ selectedDay === 'TODOS'
+ ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+ : 'text-slate-400 hover:text-slate-600'
+ }`}
         >
           Todas
         </button>
@@ -244,19 +244,19 @@ export default function MiClasesPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">
                         {cls.category || 'General'}
                       </span>
-                      <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                         {cls.name}
                       </h3>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-base font-black text-slate-900 dark:text-white block font-mono">
+                      <span className="text-base font-bold text-slate-900 dark:text-white block font-mono">
                         {cls.startTime}
                       </span>
-                      <span className="text-[11px] text-slate-400 font-medium">
+                      <span className="text-xs text-slate-400 font-medium">
                         {cls.durationMinutes} min
                       </span>
                     </div>
@@ -284,13 +284,13 @@ export default function MiClasesPage() {
                     <button
                       onClick={() => handleBooking(cls)}
                       disabled={isFull || !!cls.isBooked || bookingLoading === cls.id}
-                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
-                        cls.isBooked
-                          ? 'bg-emerald-500 text-white shadow-sm'
-                          : isFull
-                          ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
-                          : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 shadow'
-                      }`}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+ cls.isBooked
+ ? 'bg-emerald-500 text-white shadow-sm'
+ : isFull
+ ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+ : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 shadow'
+ }`}
                     >
                       {bookingLoading === cls.id ? (
                         <>

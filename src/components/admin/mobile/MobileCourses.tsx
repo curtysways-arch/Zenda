@@ -41,8 +41,8 @@ export default function MobileCourses({ courses, primaryColor, onNew, onEdit, on
             <div className="sticky top-0 z-30 bg-white border-b border-slate-100 p-6 space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">Cursos</h2>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Capacitaciones y Talleres</p>
+                        <h2 className="text-2xl font-bold text-slate-900 tracking-tight ">Cursos</h2>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide ">Capacitaciones y Talleres</p>
                     </div>
                     <div className="flex gap-2">
                         <Link href="/admin/cursos/inscripciones" className="size-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100 active:scale-90 transition-all">
@@ -65,7 +65,7 @@ export default function MobileCourses({ courses, primaryColor, onNew, onEdit, on
                         placeholder="BUSCAR CURSO..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 transition-all shadow-inner"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-xs font-bold uppercase tracking-wide focus:outline-none focus:ring-2 transition-all shadow-inner"
                         style={{ '--tw-ring-color': primaryColor } as any}
                     />
                 </div>
@@ -77,7 +77,7 @@ export default function MobileCourses({ courses, primaryColor, onNew, onEdit, on
                     <button 
                         key={filter}
                         className={cn(
-                            "px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border",
+                            "px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-all border",
                             filter === 'Todos' ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "bg-white text-slate-400 border-slate-100"
                         )}
                     >
@@ -91,7 +91,7 @@ export default function MobileCourses({ courses, primaryColor, onNew, onEdit, on
                 {filteredCourses.length > 0 ? filteredCourses.map((course) => (
                     <div 
                         key={course.id}
-                        className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm active:scale-[0.99] transition-all group relative flex flex-col"
+                        className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm active:scale-[0.99] transition-all group relative flex flex-col"
                     >
                         {/* Course Image & Status */}
                         <div className="h-44 bg-slate-900 relative">
@@ -104,7 +104,7 @@ export default function MobileCourses({ courses, primaryColor, onNew, onEdit, on
                             )}
                             <div className="absolute top-4 left-4">
                                 <span className={cn(
-                                    "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white shadow-xl backdrop-blur-md",
+                                    "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide text-white shadow-xl backdrop-blur-md",
                                     course.status === 'active' ? "bg-emerald-500/80" : "bg-slate-900/40"
                                 )}>
                                     {course.status}
@@ -122,12 +122,12 @@ export default function MobileCourses({ courses, primaryColor, onNew, onEdit, on
 
                             <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
                                 <div className="text-white space-y-1">
-                                    <h3 className="text-xl font-black uppercase italic tracking-tighter leading-none">{course.name}</h3>
-                                    <p className="text-[10px] font-bold text-white/60 italic">Prof. {course.coach}</p>
+                                    <h3 className="text-xl font-bold tracking-tight leading-none">{course.name}</h3>
+                                    <p className="text-xs font-bold text-white/60 ">Prof. {course.coach}</p>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none">Precio</span>
-                                    <p className="text-2xl font-black text-white italic tracking-tighter leading-none mt-1">${course.price}</p>
+                                    <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide leading-none">Precio</span>
+                                    <p className="text-2xl font-bold text-white tracking-tight leading-none mt-1">${course.price}</p>
                                 </div>
                             </div>
                         </div>
@@ -138,15 +138,15 @@ export default function MobileCourses({ courses, primaryColor, onNew, onEdit, on
                                 <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                     <Users size={16} style={{ color: primaryColor }} />
                                     <div>
-                                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1 italic">Inscritos</p>
-                                        <p className="text-sm font-black text-slate-900 leading-none">{course._count.enrollments} / {course.capacity}</p>
+                                        <p className="text-xs font-bold text-slate-300 uppercase tracking-wide leading-none mb-1 ">Inscritos</p>
+                                        <p className="text-sm font-bold text-slate-900 leading-none">{course._count.enrollments} / {course.capacity}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                     <Calendar size={16} style={{ color: primaryColor }} />
                                     <div>
-                                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1 italic">Fecha</p>
-                                        <p className="text-sm font-black text-slate-900 leading-none">{course.start_date ? new Date(course.start_date).toLocaleDateString() : 'N/A'}</p>
+                                        <p className="text-xs font-bold text-slate-300 uppercase tracking-wide leading-none mb-1 ">Fecha</p>
+                                        <p className="text-sm font-bold text-slate-900 leading-none">{course.start_date ? new Date(course.start_date).toLocaleDateString() : 'N/A'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -154,13 +154,13 @@ export default function MobileCourses({ courses, primaryColor, onNew, onEdit, on
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Clock size={14} className="text-slate-300" />
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide ">
                                         Pago {String(course.payment_type).toUpperCase() === 'TOTAL' ? 'Único' : 'Mensual'}
                                     </span>
                                 </div>
                                 <Link 
                                     href={`/admin/cursos/${course.id}`}
-                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest italic"
+                                    className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide "
                                     style={{ color: primaryColor }}
                                 >
                                     Ver detalles
@@ -171,7 +171,7 @@ export default function MobileCourses({ courses, primaryColor, onNew, onEdit, on
 
                         {course.pendingCount > 0 && (
                             <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                                <div className="bg-amber-500 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl border-2 border-white flex items-center gap-2 animate-bounce">
+                                <div className="bg-amber-500 text-white px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wide shadow-2xl border-2 border-white flex items-center gap-2 animate-bounce">
                                     <Star size={12} className="fill-white" />
                                     {course.pendingCount} Solicitudes
                                 </div>
@@ -183,7 +183,7 @@ export default function MobileCourses({ courses, primaryColor, onNew, onEdit, on
                         <div className="size-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
                             <GraduationCap size={32} />
                         </div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">No se encontraron cursos</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide ">No se encontraron cursos</p>
                     </div>
                 )}
             </div>

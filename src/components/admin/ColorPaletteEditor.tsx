@@ -46,8 +46,8 @@ function ColorField({ label, sublabel, description, value, defaultValue, presets
     return (
         <div className="space-y-2.5">
             <div className="flex justify-between items-end">
-                <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{label}</label>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter italic">{sublabel}</span>
+                <label className="text-xs font-bold text-slate-900 uppercase tracking-wide">{label}</label>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-tight ">{sublabel}</span>
             </div>
             <div className="flex gap-3 items-center">
                 {/* Color Picker Box */}
@@ -77,7 +77,7 @@ function ColorField({ label, sublabel, description, value, defaultValue, presets
                             }
                         }}
                         maxLength={7}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-black tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-300 transition"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-xs font-bold tracking-wide uppercase focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-300 transition"
                         placeholder={defaultValue}
                     />
                     <div className="flex gap-1 flex-wrap">
@@ -98,7 +98,7 @@ function ColorField({ label, sublabel, description, value, defaultValue, presets
                     </div>
                 </div>
             </div>
-            <p className="text-[9px] text-slate-400 font-medium leading-tight italic">{description}</p>
+            <p className="text-xs text-slate-400 font-medium leading-tight ">{description}</p>
         </div>
     );
 }
@@ -173,14 +173,14 @@ export default function ColorPaletteEditor({
     return (
         <div className="flex flex-col lg:flex-row gap-8 items-start w-full">
             {/* PANEL DE CONFIGURACIÓN */}
-            <div className="flex-1 min-w-0 space-y-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/30 p-6 md:p-8">
+            <div className="flex-1 min-w-0 space-y-6 bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/30 p-6 md:p-8">
                 {showHeader && (
                     <div className="space-y-1">
-                        <h4 className="text-base font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                        <h4 className="text-base font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
                             <Palette size={18} className="text-pink-500" />
                             🎨 Personalización de colores
                         </h4>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-tight italic">
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-tight ">
                             Define la identidad visual de tu marca
                         </p>
                     </div>
@@ -214,7 +214,7 @@ export default function ColorPaletteEditor({
                     <button
                         type="button"
                         onClick={handleToggleAdvanced}
-                        className="w-full py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 text-slate-600 transition"
+                        className="w-full py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-2xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 text-slate-600 transition"
                     >
                         <Sliders size={12} className="text-slate-500" />
                         {showAdvanced ? 'Ocultar Configuración Avanzada' : 'Personalizar Colores Avanzados'}
@@ -224,7 +224,7 @@ export default function ColorPaletteEditor({
                 {/* CAMPOS AVANZADOS (OCULTOS POR DEFECTO) */}
                 {showAdvanced && (
                     <div className="space-y-6 pt-6 border-t border-slate-100 animate-in fade-in duration-300">
-                        <span className="text-[10px] font-black text-pink-600 uppercase tracking-widest block">⚙️ Modo Avanzado Activo</span>
+                        <span className="text-xs font-bold text-pink-600 uppercase tracking-wide block">⚙️ Modo Avanzado Activo</span>
                         
                         <ColorField
                             label="Color de Títulos"
@@ -292,7 +292,7 @@ export default function ColorPaletteEditor({
                         modoAvanzadoColores: showAdvanced,
                     })}
                     disabled={isSaving}
-                    className="w-full py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 transition-opacity"
+                    className="w-full py-4 rounded-2xl text-white text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 transition-opacity"
                     style={{ backgroundColor: colors.colorPrimario || '#EC4899' }}
                 >
                     {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -302,11 +302,11 @@ export default function ColorPaletteEditor({
 
             {/* VISTA PREVIA - SIMULADOR INTERACTIVO */}
             <div className="w-[280px] shrink-0 flex flex-col items-center mx-auto lg:mx-0">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">📱 Vista Previa en Tiempo Real</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">📱 Vista Previa en Tiempo Real</span>
                 
                 {/* Contenedor Teléfono */}
                 <div 
-                    className="relative w-[280px] h-[550px] bg-slate-50 border-[7px] border-slate-900 rounded-[2.5rem] shadow-2xl overflow-y-auto flex flex-col font-sans select-none scrollbar-none"
+                    className="relative w-[280px] h-[550px] bg-slate-50 border-[7px] border-slate-900 rounded-2xl shadow-2xl overflow-y-auto flex flex-col font-sans select-none scrollbar-none"
                     style={{ backgroundColor: previewTheme.backgroundColor }}
                 >
                     {/* Altavoz y Cámara Frontal Ficticios */}
@@ -326,7 +326,7 @@ export default function ColorPaletteEditor({
                         <button className="p-1 rounded-full bg-slate-100/50 border-0 flex items-center justify-center">
                             <ChevronLeft size={14} style={{ color: previewTheme.textPrimary }} />
                         </button>
-                        <span className="font-black text-[10px] uppercase tracking-wider" style={{ color: previewTheme.textPrimary }}>
+                        <span className="font-bold text-xs uppercase tracking-wider" style={{ color: previewTheme.textPrimary }}>
                             Club de Fidelización
                         </span>
                         <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
@@ -343,14 +343,14 @@ export default function ColorPaletteEditor({
                                 <User size={18} className="text-pink-400" />
                             </div>
                             <div className="text-left">
-                                <p className="font-black text-[11px] leading-tight" style={{ color: previewTheme.textPrimary }}>¡Hola, Carlos Caicedo! 👋</p>
-                                <p className="text-[8px] font-bold uppercase tracking-wider" style={{ color: previewTheme.textSecondary }}>Gana diamantes y canjea premios</p>
+                                <p className="font-bold text-xs leading-tight" style={{ color: previewTheme.textPrimary }}>¡Hola, Carlos Caicedo! 👋</p>
+                                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: previewTheme.textSecondary }}>Gana diamantes y canjea premios</p>
                             </div>
                         </div>
 
                         {/* Tarjeta de Balance Fiel (Diamantes y Cashback) */}
                         <div 
-                            className="relative overflow-hidden rounded-[1.8rem] p-3.5 text-white shadow-md flex flex-col justify-between min-h-[96px]"
+                            className="relative overflow-hidden rounded-2xl p-3.5 text-white shadow-md flex flex-col justify-between min-h-[96px]"
                             style={{ background: `linear-gradient(135deg, ${previewTheme.primaryColor} 0%, ${previewTheme.primaryHover} 100%)` }}
                         >
                             <div className="grid grid-cols-2 gap-2">
@@ -360,9 +360,9 @@ export default function ColorPaletteEditor({
                                         <Gem size={14} className="text-white" />
                                     </div>
                                     <div className="text-left">
-                                        <span className="text-[6.5px] font-black text-white/70 uppercase tracking-widest block leading-none">DIAMANTES</span>
+                                        <span className="text-[6.5px] font-bold text-white/70 uppercase tracking-wide block leading-none">Diamantes</span>
                                         <div className="flex items-center gap-0.5 mt-0.5">
-                                            <span className="text-xl font-black leading-none">434</span>
+                                            <span className="text-xl font-bold leading-none">434</span>
                                             <span className="text-[14px] leading-none">💎</span>
                                         </div>
                                     </div>
@@ -374,15 +374,15 @@ export default function ColorPaletteEditor({
                                         <Coins size={14} className="text-white" />
                                     </div>
                                     <div className="text-left">
-                                        <span className="text-[6.5px] font-black text-white/70 uppercase tracking-widest block leading-none">CASHBACK</span>
+                                        <span className="text-[6.5px] font-bold text-white/70 uppercase tracking-wide block leading-none">Cashback</span>
                                         <div className="flex items-center gap-0.5 mt-0.5">
-                                            <span className="text-xl font-black leading-none">$10.00</span>
+                                            <span className="text-xl font-bold leading-none">$10.00</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div className="border-t border-white/10 pt-2 flex items-center justify-between text-[7.5px] font-black text-white/80 uppercase tracking-widest">
+                            <div className="border-t border-white/10 pt-2 flex items-center justify-between text-[7.5px] font-bold text-white/80 uppercase tracking-wide">
                                 <span className="flex items-center gap-0.5"><HelpCircle size={8} /> Beneficios activos</span>
                                 <span className="flex items-center gap-0.5"><Clock size={8} /> Ver Historial</span>
                             </div>
@@ -395,11 +395,11 @@ export default function ColorPaletteEditor({
                                     <Award size={14} />
                                 </div>
                                 <div className="text-left">
-                                    <span className="text-[6.5px] font-black text-slate-400 uppercase tracking-widest block">RANGO ACTUAL</span>
-                                    <span className="font-black text-[10px]" style={{ color: previewTheme.textPrimary }}>NIVEL ÉLITE</span>
+                                    <span className="text-[6.5px] font-bold text-slate-400 uppercase tracking-wide block">Rango actual</span>
+                                    <span className="font-bold text-xs" style={{ color: previewTheme.textPrimary }}>Nivel élite</span>
                                 </div>
                             </div>
-                            <span className="text-[7.5px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border" style={{ borderColor: previewTheme.primaryColor, color: previewTheme.primaryColor, backgroundColor: previewTheme.primaryBg }}>
+                            <span className="text-[7.5px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full border" style={{ borderColor: previewTheme.primaryColor, color: previewTheme.primaryColor, backgroundColor: previewTheme.primaryBg }}>
                                 Beneficios
                             </span>
                         </div>
@@ -407,8 +407,8 @@ export default function ColorPaletteEditor({
                         {/* Canje de Premios / Promociones */}
                         <div className="space-y-2">
                             <div className="flex justify-between items-center px-1">
-                                <span className="font-black text-[8.5px] uppercase tracking-wider" style={{ color: previewTheme.textPrimary }}>🔥 Canjea Diamantes</span>
-                                <span className="text-[7.5px] font-black" style={{ color: previewTheme.primaryColor }}>Ver Todo</span>
+                                <span className="font-bold text-[8.5px] uppercase tracking-wider" style={{ color: previewTheme.textPrimary }}>🔥 Canjea Diamantes</span>
+                                <span className="text-[7.5px] font-bold" style={{ color: previewTheme.primaryColor }}>Ver Todo</span>
                             </div>
 
                             {/* Card Premio */}
@@ -418,13 +418,13 @@ export default function ColorPaletteEditor({
                                         <Gift size={16} style={{ color: previewTheme.primaryColor }} />
                                     </div>
                                     <div className="text-left">
-                                        <span className="text-[6.5px] font-black px-1.5 py-0.5 rounded-full text-white inline-block mb-1" style={{ backgroundColor: previewTheme.accentColor }}>
+                                        <span className="text-[6.5px] font-bold px-1.5 py-0.5 rounded-full text-white inline-block mb-1" style={{ backgroundColor: previewTheme.accentColor }}>
                                             200 DIAMANTES
                                         </span>
-                                        <p className="font-black text-[9px] leading-tight" style={{ color: previewTheme.textPrimary }}>Masaje Corporal</p>
+                                        <p className="font-bold text-xs leading-tight" style={{ color: previewTheme.textPrimary }}>Masaje Corporal</p>
                                     </div>
                                 </div>
-                                <button className="px-3 py-1.5 text-[8px] font-black uppercase tracking-widest border-0 text-white rounded-xl active:scale-95 transition" style={{ backgroundColor: previewTheme.primaryColor }}>
+                                <button className="px-3 py-1.5 text-xs font-bold uppercase tracking-wide border-0 text-white rounded-xl active:scale-95 transition" style={{ backgroundColor: previewTheme.primaryColor }}>
                                     Canjear
                                 </button>
                             </div>
@@ -433,7 +433,7 @@ export default function ColorPaletteEditor({
                         {/* Botón de Reservar Turno */}
                         <div className="pt-1.5">
                             <button 
-                                className="w-full py-3 text-[9px] font-black uppercase tracking-widest text-white rounded-2xl shadow-md border-0 active:scale-[0.98] transition"
+                                className="w-full py-3 text-xs font-bold uppercase tracking-wide text-white rounded-2xl shadow-md border-0 active:scale-[0.98] transition"
                                 style={{ backgroundColor: previewTheme.primaryColor }}
                             >
                                 Reservar Cita
@@ -461,7 +461,7 @@ export default function ColorPaletteEditor({
                             <div className="p-1 rounded-full bg-white">
                                 <Gift size={13} style={{ color: previewTheme.primaryColor }} />
                             </div>
-                            <span className="text-[6.5px] font-black" style={{ color: previewTheme.textOnPrimary }}>Premios</span>
+                            <span className="text-[6.5px] font-bold" style={{ color: previewTheme.textOnPrimary }}>Premios</span>
                         </div>
                         <div className="flex flex-col items-center gap-0.5">
                             <User size={13} style={{ color: 'rgba(255, 255, 255, 0.6)' }} />

@@ -127,7 +127,7 @@ export default function ResourceScheduleGrid({
           {/* Cabecera: Columnas por Cancha */}
           <thead>
             <tr className="sticky top-0 z-20 bg-slate-900 border-b border-slate-800 text-white">
-              <th className="p-3.5 w-24 sticky left-0 z-30 bg-slate-900 text-[10px] font-black uppercase tracking-widest text-center border-r border-slate-800 text-slate-400">
+              <th className="p-3.5 w-24 sticky left-0 z-30 bg-slate-900 text-xs font-bold uppercase tracking-wide text-center border-r border-slate-800 text-slate-400">
                 Hora
               </th>
               {resources.length === 0 ? (
@@ -139,17 +139,17 @@ export default function ResourceScheduleGrid({
                     className="p-3.5 text-center border-r border-slate-800/80 min-w-[200px]"
                   >
                     <div className="flex flex-col items-center gap-1">
-                      <span className="text-xs font-black text-white uppercase tracking-tight">
+                      <span className="text-xs font-bold text-white uppercase tracking-tight">
                         {res.name}
                       </span>
                       <div className="flex items-center gap-2">
                         {res.category && (
-                          <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-bold text-emerald-300 uppercase tracking-wide bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                             {res.category}
                           </span>
                         )}
                         {res.metadata?.precioHora > 0 && (
-                          <span className="text-[9px] font-semibold text-slate-400">
+                          <span className="text-xs font-semibold text-slate-400">
                             ${res.metadata.precioHora}/h
                           </span>
                         )}
@@ -171,7 +171,7 @@ export default function ResourceScheduleGrid({
                   className="hover:bg-slate-50/60 transition-colors"
                 >
                   {/* Columna de Hora (Sticky Izquierda) */}
-                  <td className="p-2.5 sticky left-0 z-10 bg-slate-50 text-[11px] font-mono font-bold text-slate-700 text-center border-r border-slate-200 shadow-xs">
+                  <td className="p-2.5 sticky left-0 z-10 bg-slate-50 text-xs font-mono font-bold text-slate-700 text-center border-r border-slate-200 shadow-xs">
                     <div className="flex items-center justify-center gap-1">
                       <span>{time}</span>
                       {night && (
@@ -235,7 +235,7 @@ export default function ResourceScheduleGrid({
                             className={`h-full w-full rounded-2xl p-2.5 flex flex-col justify-between cursor-pointer transition-all duration-150 shadow-xs border ${cardStyle}`}
                           >
                             <div className="flex items-center justify-between gap-1">
-                              <span className={`text-[11px] font-black truncate leading-tight ${isInProgress ? 'text-white' : ''}`}>
+                              <span className={`text-xs font-bold truncate leading-tight ${isInProgress ? 'text-white' : ''}`}>
                                 {isBlock ? `🔧 ${appointment.motivo || 'Bloqueada'}` : appointment.clientName}
                               </span>
                               {appointment.hasNightLighting && !isBlock && (
@@ -243,22 +243,22 @@ export default function ResourceScheduleGrid({
                               )}
                             </div>
 
-                            <div className={`flex items-center justify-between text-[9px] font-semibold opacity-90 mt-1 ${isInProgress ? 'text-white/90' : ''}`}>
+                            <div className={`flex items-center justify-between text-xs font-semibold opacity-90 mt-1 ${isInProgress ? 'text-white/90' : ''}`}>
                               <span className="truncate">
                                 {appointment.startTime}–{appointment.endTime}
                               </span>
                               {!isBlock && (
-                                <span className={`px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider text-[8px] ${
-                                  isPaid 
-                                    ? (isInProgress ? 'bg-white/20 text-white' : 'bg-emerald-200/80 text-emerald-800')
-                                    : (isInProgress ? 'bg-amber-400 text-slate-950' : 'bg-amber-200/80 text-amber-800')
-                                }`}>
+                                <span className={`px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider text-xs ${
+ isPaid 
+ ? (isInProgress ? 'bg-white/20 text-white' : 'bg-emerald-200/80 text-emerald-800')
+ : (isInProgress ? 'bg-amber-400 text-slate-950' : 'bg-amber-200/80 text-amber-800')
+ }`}>
                                   {isPaid ? '✓ Pagado' : '$ Pendiente'}
                                 </span>
                               )}
                             </div>
 
-                            <div className={`flex items-center justify-between text-[9px] opacity-75 mt-0.5 ${isInProgress ? 'text-white/80' : ''}`}>
+                            <div className={`flex items-center justify-between text-xs opacity-75 mt-0.5 ${isInProgress ? 'text-white/80' : ''}`}>
                               <span className="truncate">{appointment.serviceName}</span>
                               <span className="font-bold">
                                 {statusBadge}
@@ -278,7 +278,7 @@ export default function ResourceScheduleGrid({
                         className="p-1.5 border-r border-slate-100 relative h-20 transition-all"
                       >
                         <div className="h-full w-full rounded-2xl border border-dashed border-slate-200/80 hover:border-emerald-400 bg-white hover:bg-emerald-50/40 p-2 flex flex-col justify-between transition-all group">
-                          <div className="flex items-center justify-between text-[9px] text-slate-400 font-medium">
+                          <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
                             <span>Disponible</span>
                             <span>{time}</span>
                           </div>
@@ -286,7 +286,7 @@ export default function ResourceScheduleGrid({
                           <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => onSlotClick && onSlotClick(res.id, time)}
-                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-xs"
+                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-xs"
                               title="Crear Reserva"
                             >
                               <Plus size={10} /> Reservar
@@ -294,7 +294,7 @@ export default function ResourceScheduleGrid({
                             {onBlockClick && (
                               <button
                                 onClick={() => onBlockClick(res.id, time)}
-                                className="p-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[9px]"
+                                className="p-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs"
                                 title="Bloquear Cancha"
                               >
                                 <Lock size={10} />
@@ -302,7 +302,7 @@ export default function ResourceScheduleGrid({
                             )}
                           </div>
 
-                          <div className="flex items-center justify-between text-[8px] text-slate-400">
+                          <div className="flex items-center justify-between text-xs text-slate-400">
                             {night ? (
                               <span className="flex items-center gap-0.5 text-amber-600 font-semibold">
                                 <Moon size={9} /> Tarifa noche

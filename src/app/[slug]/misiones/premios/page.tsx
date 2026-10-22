@@ -1,36 +1,8 @@
-import { getNegocioBySlug } from '@/lib/services';
-import { featureService } from '@/lib/services/featureService';
-import { notFound } from 'next/navigation';
-import PremiosCatalogoClient from './PremiosCatalogoClient';
+import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-
-export default async function PremiosCatalogoPage({
-    params
-}: {
-    params: Promise<{ slug: string }>;
-}) {
+// El catálogo ahora vive dentro del club, en la pestaña Premios.
+export default async function PremiosCatalogoPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    const negocio = await getNegocioBySlug(slug);
-
-    if (!negocio) {
-        notFound();
-    }
-
-    const isLoyaltyEnabled = await featureService.canUseFeature(negocio.id, 'loyalty_module');
-    if (!isLoyaltyEnabled) {
-        notFound();
-    }
-
-    const primaryColor = (negocio as any).colorPrimario || '#ec4899'; // fucsia por defecto
-    const textColor = (negocio as any).colorTexto || '#1e293b';
-
-    return (
-        <PremiosCatalogoClient 
-            slug={slug} 
-            primaryColor={primaryColor} 
-            textColor={textColor}
-            negocioNombre={negocio.nombre}
-        />
-    );
+    redirect(`/${slug}/misiones?tab=premios`);
+    return null;
 }

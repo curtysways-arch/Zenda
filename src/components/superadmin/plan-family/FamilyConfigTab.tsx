@@ -89,7 +89,7 @@ export default function FamilyConfigTab({
     return (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-6 shadow-xs">
             <div className="border-b border-slate-100 pb-4">
-                <h4 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <h4 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     <SlidersHorizontal size={18} className="text-indigo-600" />
                     Configuración General de la Familia
                 </h4>
@@ -179,7 +179,7 @@ export default function FamilyConfigTab({
                                 className="sr-only peer"
                             />
                             <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                            <span className="text-xs font-black text-slate-800">
+                            <span className="text-xs font-bold text-slate-800">
                                 {form.active ? 'Familia Activa' : 'Familia Inactiva'}
                             </span>
                         </label>
@@ -200,7 +200,7 @@ export default function FamilyConfigTab({
                     <button
                         type="submit"
                         disabled={saving}
-                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 shadow-md shadow-indigo-600/20 cursor-pointer disabled:opacity-50"
+                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 shadow-md shadow-indigo-600/20 cursor-pointer disabled:opacity-50"
                     >
                         {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
                         {saving ? 'Guardando...' : 'Guardar Cambios'}
@@ -211,8 +211,8 @@ export default function FamilyConfigTab({
             {/* Zona de peligro / Eliminación */}
             <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <span className="text-xs font-black text-rose-700 block">Eliminar Familia</span>
-                    <span className="text-[11px] text-slate-500 font-medium">
+                    <span className="text-xs font-bold text-rose-700 block">Eliminar Familia</span>
+                    <span className="text-xs text-slate-500 font-medium">
                         Solo se permite eliminar familias sin planes o tipos de negocios asociados. De lo contrario, desactívela.
                     </span>
                 </div>

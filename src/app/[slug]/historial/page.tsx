@@ -126,7 +126,7 @@ export default function HistorialPage() {
                     <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: primaryColor }}>
                         <Clock size={12} className="text-white" />
                     </div>
-                    <h2 className="text-[12px] font-black uppercase tracking-widest text-slate-800">
+                    <h2 className="text-xs font-bold uppercase tracking-wide text-slate-800">
                         Historial de Diamantes
                     </h2>
                 </div>
@@ -136,7 +136,7 @@ export default function HistorialPage() {
             {/* Contenido Principal */}
             <div className="max-w-md mx-auto px-2.5 mt-4 space-y-4">
                 {/* Resumen de Saldo */}
-                <div className="relative overflow-hidden rounded-[2.5rem] p-5 text-white shadow-[0_20px_40px_rgba(0,0,0,0.06)] flex items-center justify-between min-h-[96px]"
+                <div className="relative overflow-hidden rounded-3xl p-5 text-white shadow-[0_20px_40px_rgba(0,0,0,0.06)] flex items-center justify-between min-h-[96px]"
                     style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, color-mix(in srgb, ${primaryColor}, #000 35%) 100%)` }}
                 >
                     <div className="flex gap-3 items-center">
@@ -144,17 +144,17 @@ export default function HistorialPage() {
                             <Gem size={20} className="text-white" />
                         </div>
                         <div className="text-left space-y-0.5">
-                            <span className="text-[8px] font-black text-white/70 uppercase tracking-widest block leading-none">
+                            <span className="text-xs font-bold text-white/70 uppercase tracking-wide block leading-none">
                                 Saldo Actual
                             </span>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-2xl font-black leading-none">{saldo.toLocaleString()}</span>
+                                <span className="text-2xl font-bold leading-none">{saldo.toLocaleString()}</span>
                                 <Gem size={16} className="text-white/85 fill-white/10 stroke-[2.5]" />
                             </div>
                         </div>
                     </div>
                     <div className="text-right">
-                        <span className="text-[7px] font-black text-white/80 bg-white/15 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                        <span className="text-xs font-bold text-white/80 bg-white/15 px-2.5 py-1 rounded-full uppercase tracking-wider">
                             {history.length} Transacciones
                         </span>
                     </div>
@@ -162,7 +162,7 @@ export default function HistorialPage() {
 
                 {/* Lista de Transacciones */}
                 <div className="space-y-2.5">
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-left px-1">
+                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400 text-left px-1">
                         Movimientos recientes
                     </h3>
 
@@ -182,7 +182,7 @@ export default function HistorialPage() {
                             ))}
                         </div>
                     ) : history.length === 0 ? (
-                        <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 text-center space-y-3">
+                        <div className="bg-white border border-slate-100 rounded-3xl p-8 text-center space-y-3">
                             <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center mx-auto text-slate-400">
                                 <Clock size={24} />
                             </div>
@@ -212,14 +212,14 @@ export default function HistorialPage() {
 
                                             {/* Info */}
                                             <div className="text-left min-w-0">
-                                                <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-tight leading-tight line-clamp-1">
+                                                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-tight leading-tight line-clamp-1">
                                                     {item.label}
                                                 </h4>
-                                                <span className="text-[8px] text-slate-400 font-semibold block mt-0.5 leading-none">
+                                                <span className="text-xs text-slate-400 font-semibold block mt-0.5 leading-none">
                                                     {format(new Date(item.fecha), "d 'de' MMMM, yyyy - h:mm a", { locale: es })}
                                                 </span>
                                                 {item.notas && (
-                                                    <p className="text-[8.5px] text-slate-400 font-medium leading-tight mt-1 line-clamp-2 italic">
+                                                    <p className="text-[8.5px] text-slate-400 font-medium leading-tight mt-1 line-clamp-2 ">
                                                         {item.notas}
                                                     </p>
                                                 )}
@@ -228,7 +228,7 @@ export default function HistorialPage() {
 
                                         {/* Monto de Diamantes */}
                                         <div className="flex items-center gap-0.5 shrink-0 ml-3">
-                                            <span className={`text-[12px] font-black ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                            <span className={`text-xs font-bold ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
                                                 {isPositive ? '+' : ''}{item.puntos}
                                             </span>
                                             <Gem size={10} className={isPositive ? 'text-emerald-500/85 fill-emerald-500/10' : 'text-rose-500/85 fill-rose-500/10'} />

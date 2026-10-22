@@ -158,8 +158,8 @@ export default function ImageZoomModal({
                         <X size={20} />
                     </button>
                     <div className="flex flex-col">
-                        {title && <span className="text-xs font-black uppercase tracking-wider text-white/90 truncate max-w-[200px] xs:max-w-[300px]">{title}</span>}
-                        <span className="text-[10px] font-bold text-white/60 tracking-widest uppercase">
+                        {title && <span className="text-xs font-bold uppercase tracking-wider text-white/90 truncate max-w-[200px] xs:max-w-[300px]">{title}</span>}
+                        <span className="text-xs font-bold text-white/60 tracking-wide uppercase">
                             {currentItem.label ? currentItem.label : `${currentIndex + 1} / ${images.length}`}
                         </span>
                     </div>
@@ -175,7 +175,7 @@ export default function ImageZoomModal({
                     >
                         <ZoomOut size={16} />
                     </button>
-                    <span className="text-[10px] font-black text-white px-2 tracking-widest w-12 text-center">
+                    <span className="text-xs font-bold text-white px-2 tracking-wide w-12 text-center">
                         {Math.round(zoomScale * 100)}%
                     </span>
                     <button
@@ -254,12 +254,12 @@ export default function ImageZoomModal({
             </div>
 
             {/* Bottom Caption Bar */}
-            <div className="relative z-50 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between text-white/70 text-[11px] font-semibold tracking-wide">
+            <div className="relative z-50 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between text-white/70 text-xs font-semibold tracking-wide">
                 <span className="truncate max-w-[70%]">
                     {currentItem.label && images.length > 1 ? `${currentItem.label} • ` : ''}
                     Doble clic o pellizcar para hacer zoom
                 </span>
-                <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">
+                <span className="text-xs font-bold uppercase text-white/40 tracking-wide">
                     {currentIndex + 1} de {images.length}
                 </span>
             </div>

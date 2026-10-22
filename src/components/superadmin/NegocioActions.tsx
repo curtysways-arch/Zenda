@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Ban,
     CheckCircle,
@@ -10,7 +10,8 @@ import {
     ExternalLink,
     Pencil,
     QrCode,
-    ShieldCheck
+    ShieldCheck,
+    MoreHorizontal
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -26,6 +27,17 @@ export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps)
     const [loading, setLoading] = useState(false);
     const [enteringAdmin, setEnteringAdmin] = useState(false);
     const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const close = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+        };
+        document.addEventListener("mousedown", close);
+        return () => document.removeEventListener("mousedown", close);
+    }, [menuOpen]);
 
     const handleEnterAdmin = async () => {
         setEnteringAdmin(true);
@@ -91,81 +103,75 @@ export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps)
         }
     };
 
+    const isActive = negocio.estado === 'ACTIVO' || negocio.estado === 'PRUEBA';
+    const item = "w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 disabled:opacity-50";
+
     return (
-        <div className="flex items-center justify-end gap-1.5 px-2">
-            {(loading || enteringAdmin) && <Loader2 size={16} className="animate-spin text-slate-400 mr-1" />}
+        <div className="flex items-center justify-end gap-1">
+            {(loading || enteringAdmin) && <Loader2 size={14} className="animate-spin text-slate-400" />}
 
             <button
                 onClick={handleEnterAdmin}
                 disabled={loading || enteringAdmin}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-emerald-600/20 active:scale-95 disabled:opacity-50 cursor-pointer"
-                title="Entrar al panel Admin de este negocio con Sesión Delegada"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold disabled:opacity-50 whitespace-nowrap"
+                title="Entrar al panel de este negocio"
             >
-                <ShieldCheck size={14} className="text-emerald-200" />
-                <span>{enteringAdmin ? 'Entrando...' : 'Entrar al Admin'}</span>
-            </button>
-
-            <button
-                onClick={() => setIsQRModalOpen(true)}
-                disabled={loading}
-                className="p-2 hover:bg-emerald-50 rounded-xl text-slate-400 hover:text-emerald-600 transition-all disabled:opacity-50"
-                title="Generar Código QR"
-            >
-                <QrCode size={18} />
+                <ShieldCheck size={13} />
+                {enteringAdmin ? 'Entrando…' : 'Entrar'}
             </button>
 
             <Link
                 href={`/${negocio.slug}`}
                 target="_blank"
-                className="p-2 hover:bg-indigo-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all"
-                title="Página Pública"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100"
+                title="Ver página pública"
+                aria-label="Ver página pública"
             >
-                <ExternalLink size={18} />
+                <ExternalLink size={16} />
             </Link>
 
-            <button
-                onClick={onEdit}
-                disabled={loading}
-                className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-indigo-600 transition-all disabled:opacity-50"
-                title="Editar Datos"
-            >
-                <Pencil size={18} />
-            </button>
-
-            {negocio.estado === 'ACTIVO' || negocio.estado === 'PRUEBA' ? (
+            <div ref={menuRef} className="relative">
                 <button
-                    onClick={() => updateStatus('SUSPENDIDO')}
-                    disabled={loading}
-                    className="p-2 hover:bg-rose-50 rounded-xl text-slate-400 hover:text-rose-600 transition-all disabled:opacity-50"
-                    title="Suspender"
+                    type="button"
+                    onClick={() => setMenuOpen((v) => !v)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100"
+                    aria-label="Más acciones"
+                    aria-expanded={menuOpen}
                 >
-                    <Ban size={18} />
+                    <MoreHorizontal size={16} />
                 </button>
-            ) : (
-                <button
-                    onClick={() => updateStatus('ACTIVO')}
-                    disabled={loading}
-                    className="p-2 hover:bg-emerald-50 rounded-xl text-slate-400 hover:text-emerald-600 transition-all disabled:opacity-50"
-                    title="Activar"
-                >
-                    <CheckCircle size={18} />
-                </button>
-            )}
+                {menuOpen && (
+                    <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-30">
+                        <Link href={`/superadmin/negocios/${negocio.id}`} className={item} onClick={() => setMenuOpen(false)}>
+                            <Eye size={15} className="text-slate-400" /> Ver detalle
+                        </Link>
+                        <button type="button" className={item} onClick={() => { setMenuOpen(false); onEdit(); }} disabled={loading}>
+                            <Pencil size={15} className="text-slate-400" /> Editar datos
+                        </button>
+                        <button type="button" className={item} onClick={() => { setMenuOpen(false); setIsQRModalOpen(true); }}>
+                            <QrCode size={15} className="text-slate-400" /> Código QR
+                        </button>
+                        <div className="my-1 border-t border-slate-100" />
+                        {isActive ? (
+                            <button type="button" className={`${item} text-amber-700`} onClick={() => { setMenuOpen(false); updateStatus('SUSPENDIDO'); }} disabled={loading}>
+                                <Ban size={15} /> Suspender
+                            </button>
+                        ) : (
+                            <button type="button" className={`${item} text-emerald-700`} onClick={() => { setMenuOpen(false); updateStatus('ACTIVO'); }} disabled={loading}>
+                                <CheckCircle size={15} /> Activar
+                            </button>
+                        )}
+                        <button type="button" className={`${item} text-rose-600`} onClick={() => { setMenuOpen(false); deleteNegocio(); }} disabled={loading}>
+                            <Trash2 size={15} /> Eliminar
+                        </button>
+                    </div>
+                )}
+            </div>
 
-            <button
-                onClick={deleteNegocio}
-                disabled={loading}
-                className="p-2 hover:bg-rose-50 rounded-xl text-slate-400 hover:text-rose-600 transition-all disabled:opacity-50"
-                title="Eliminar Permanente"
-            >
-                <Trash2 size={18} />
-            </button>
-
-            {/* Modal de Código QR */}
-            <NegocioQRModal 
-                isOpen={isQRModalOpen} 
-                onClose={() => setIsQRModalOpen(false)} 
-                negocio={negocio} 
+            <NegocioQRModal
+                isOpen={isQRModalOpen}
+                onClose={() => setIsQRModalOpen(false)}
+                negocio={negocio}
             />
         </div>
     );

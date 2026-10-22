@@ -259,11 +259,11 @@ export default function MiAccesoPage() {
             setScanFeedback(null);
             setActiveTab('MY_QR');
           }}
-          className={`flex-1 py-3 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-2 ${
-            activeTab === 'MY_QR'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-          }`}
+          className={`flex-1 py-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+ activeTab === 'MY_QR'
+ ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+ : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+ }`}
         >
           <QrCode className="w-4 h-4" />
           <span>Mi Pase QR</span>
@@ -274,11 +274,11 @@ export default function MiAccesoPage() {
             setScanFeedback(null);
             setActiveTab('SCAN_TOTEM');
           }}
-          className={`flex-1 py-3 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-2 ${
-            activeTab === 'SCAN_TOTEM'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-          }`}
+          className={`flex-1 py-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+ activeTab === 'SCAN_TOTEM'
+ ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+ : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+ }`}
         >
           <Scan className="w-4 h-4" />
           <span>Escanear Tótem</span>
@@ -298,7 +298,7 @@ export default function MiAccesoPage() {
                 <Clock className="w-3.5 h-3.5 text-emerald-500" />
                 {currentTime}
               </span>
-              <span className="flex items-center gap-1 text-[11px] text-emerald-500 font-bold uppercase tracking-wider">
+              <span className="flex items-center gap-1 text-xs text-emerald-500 font-bold uppercase tracking-wider">
                 <ShieldCheck className="w-3.5 h-3.5" /> Pase Oficial
               </span>
             </div>
@@ -322,7 +322,7 @@ export default function MiAccesoPage() {
 
             {/* Datos del Socio */}
             <div className="space-y-1">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                 {member?.nombre || 'Socio'}
               </h2>
               <p className="text-xs text-slate-400 font-mono">
@@ -333,10 +333,10 @@ export default function MiAccesoPage() {
             {/* Estado de Membresía */}
             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="text-left">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">
+                <span className="text-xs uppercase tracking-wider text-slate-400 font-bold block">
                   Plan Actual
                 </span>
-                <span className="text-xs font-black text-slate-800 dark:text-slate-200">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                   {activeMembership?.planName || 'Sin Plan'}
                 </span>
               </div>
@@ -344,16 +344,16 @@ export default function MiAccesoPage() {
               <div>
                 {activeMembership ? (
                   isExpired ? (
-                    <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-rose-500/10 text-rose-500 border border-rose-500/20">
                       Vencido
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                       {activeMembership.remainingDays} Días Restantes
                     </span>
                   )
                 ) : (
-                  <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-slate-500/10 text-slate-400">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-slate-500/10 text-slate-400">
                     Inactivo
                   </span>
                 )}
@@ -393,7 +393,7 @@ export default function MiAccesoPage() {
               </div>
 
               <div>
-                <h3 className="text-2xl font-black">{scanFeedback.title}</h3>
+                <h3 className="text-2xl font-bold">{scanFeedback.title}</h3>
                 <p className="text-sm font-medium opacity-90 mt-1">{scanFeedback.message}</p>
               </div>
 
@@ -403,7 +403,7 @@ export default function MiAccesoPage() {
                     setScanFeedback(null);
                     startCamera();
                   }}
-                  className="w-full py-3.5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-xs shadow hover:opacity-90 transition-all"
+                  className="w-full py-3.5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs shadow hover:opacity-90 transition-all"
                 >
                   Escanear Nuevamente
                 </button>
@@ -435,7 +435,7 @@ export default function MiAccesoPage() {
                     <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-emerald-400 rounded-br-2xl" />
                     <div className="absolute inset-x-0 top-1/2 h-0.5 bg-emerald-400/80 animate-pulse shadow-sm" />
                   </div>
-                  <span className="mt-4 px-3 py-1 bg-black/60 backdrop-blur rounded-full text-[11px] font-bold text-emerald-300 uppercase tracking-wider">
+                  <span className="mt-4 px-3 py-1 bg-black/60 backdrop-blur rounded-full text-xs font-bold text-emerald-300 uppercase tracking-wider">
                     Apunta a la pantalla del gimnasio
                   </span>
                 </div>

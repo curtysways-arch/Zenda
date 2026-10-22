@@ -53,11 +53,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import PhoneInput from "@/components/ui/PhoneInput";
+import { useNotifications } from "@/hooks/useNotifications";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import MapSelectionModal from "@/components/public/MapSelectionModal";
 import { useCart } from "@/core/context/CartContext";
 import { isPWAInstalled, installPWA, addInstallationListener, removeInstallationListener } from "@/lib/pwa-install";
+import { useFavorites, type FavoriteItem } from "@/lib/favorites";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -95,14 +97,64 @@ export default function MiPerfilPage() {
   // Listas de direcciones, tarjetas, favoritos
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [savedCards, setSavedCards] = useState<any[]>([]);
-  const [favoriteItems, setFavoriteItems] = useState<any[]>([]);
+  const currentSlugStr = typeof slug === 'string' ? slug : '';
+  const { businessFavorites, removeFavorite, clearFavorites } = useFavorites({
+    slug: currentSlugStr,
+    negocioId: negocio?.id
+  });
+
+  // Determinar si el negocio maneja productos
+  const canShowProducts = useMemo(() => {
+    if (!negocio) return false;
+    if (typeof negocio.hasProducts === 'boolean') return negocio.hasProducts;
+    const tipo = ((negocio.tipoNegocio || negocio.type || negocio.tipo || '') as string).toUpperCase();
+    return ['PRODUCTOS', 'TIENDA', 'STORE', 'ECOMMERCE', 'MINIMARKET', 'FARMACIA'].includes(tipo) || (negocio.productCount ?? 0) > 0;
+  }, [negocio]);
+
+  // Lista de favoritos exclusiva y relevante para este negocio
+  const scopedFavorites = useMemo(() => {
+    if (!canShowProducts) {
+      return businessFavorites.filter(item => item.tipo !== 'PRODUCTO');
+    }
+    return businessFavorites;
+  }, [businessFavorites, canShowProducts]);
+
+  const [favoriteTab, setFavoriteTab] = useState<'ALL' | 'PRODUCTO' | 'SERVICIO' | 'CANCHA'>('ALL');
+
+  // Si no se permiten productos y la pestaña estaba en PRODUCTO, volver a ALL
+  useEffect(() => {
+    if (!canShowProducts && favoriteTab === 'PRODUCTO') {
+      setFavoriteTab('ALL');
+    }
+  }, [canShowProducts, favoriteTab]);
+
+  const filteredFavoritesList = useMemo(() => {
+    if (favoriteTab === 'ALL') return scopedFavorites;
+    return scopedFavorites.filter(item => item.tipo === favoriteTab);
+  }, [scopedFavorites, favoriteTab]);
+
+  const productosFavCount = useMemo(() => scopedFavorites.filter(i => i.tipo === 'PRODUCTO').length, [scopedFavorites]);
+  const serviciosFavCount = useMemo(() => scopedFavorites.filter(i => i.tipo === 'SERVICIO').length, [scopedFavorites]);
+  const canchasFavCount = useMemo(() => scopedFavorites.filter(i => i.tipo === 'CANCHA').length, [scopedFavorites]);
+  const isCanchasBiz = useMemo(() => {
+    const t = ((negocio?.tipoNegocio || negocio?.type || negocio?.tipo || '') as string).toUpperCase();
+    return t === 'CANCHAS' || t === 'SPORTS' || t === 'SPORT' || currentSlugStr === 'canchas' || currentSlugStr.includes('cancha') || Boolean(negocio?.isCanchas);
+  }, [negocio, currentSlugStr]);
   const [cuponesCount, setCuponesCount] = useState<number>(0);
+  const { unreadCount: notifUnreadCount } = useNotifications(typeof slug === 'string' ? slug : '');
 
   // Estado e instalador de App (PWA)
   const [isPWAInstalledState, setIsPWAInstalledState] = useState<boolean>(false);
   const [canInstallPWA, setCanInstallPWA] = useState<boolean>(false);
 
   useEffect(() => {
+    // Limpiar flag legacy de localStorage si se visita en navegador estándar
+    if (typeof window !== 'undefined' && !window.matchMedia('(display-mode: standalone)').matches && !(window.navigator as any).standalone) {
+      try {
+        localStorage.removeItem('pwa_installed');
+      } catch (_) {}
+    }
+
     setIsPWAInstalledState(isPWAInstalled());
 
     const handlePWAChange = (available: boolean) => {
@@ -120,8 +172,8 @@ export default function MiPerfilPage() {
     if (canInstallPWA) {
       const res = await installPWA();
       if (res) setIsPWAInstalledState(true);
-    } else {
-      alert(`Para instalar la App de ${negocio?.nombre || 'Restaurante'} en tu celular:\n\n📱 En Android: Abre el menú de tu navegador (...) y presiona "Instalar aplicación" o "Agregar a la pantalla principal".\n\n📱 En iPhone: Toca el icono de Compartir y selecciona "Agregar a inicio".`);
+      const bizName = negocio?.nombre || negocio?.name || 'nuestro negocio';
+      alert(`Para instalar la App de ${bizName} en tu celular:\n\n📱 En Android: Abre el menú de tu navegador (...) y presiona "Instalar aplicación" o "Agregar a la pantalla principal".\n\n📱 En iPhone: Toca el icono de Compartir y selecciona "Agregar a inicio".`);
     }
   };
 
@@ -456,6 +508,9 @@ export default function MiPerfilPage() {
       if (res.ok) {
         setStep('otp');
         setCountdown(600);
+        setTimeout(() => {
+          otpInputRef.current?.focus();
+        }, 100);
       } else {
         setError(data.error || "No se pudo enviar el código. Verifica tu número.");
       }
@@ -517,10 +572,10 @@ export default function MiPerfilPage() {
     return { label: 'Cliente Nuevo', icon: '🌱', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
   }, [cliente]);
 
-  const displayName = cliente?.nombre || 'Carlos Caicedo';
-  const displayPhone = cliente?.telefono || '+593 959 997 521';
-  const displayEmail = cliente?.email || 'carlos.caicedo@email.com';
-  const firstLetter = displayName.charAt(0).toUpperCase();
+  const displayName = cliente?.nombre || (typeof window !== 'undefined' ? localStorage.getItem('user_name') : null) || 'Cliente';
+  const displayPhone = cliente?.telefono || (typeof window !== 'undefined' ? (localStorage.getItem(`${slug}_client_phone`) || localStorage.getItem('user_phone')) : null) || '';
+  const displayEmail = cliente?.email || '';
+  const firstLetter = (displayName || 'C').charAt(0).toUpperCase();
 
   const primaryColor = negocio?.colorPrimario || '#06b6d4';
   const secondaryColor = negocio?.colorSecundario || '#0f172a';
@@ -529,7 +584,7 @@ export default function MiPerfilPage() {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-3">
         <Loader2 className="animate-spin text-amber-500" size={48} />
-        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Cargando Mi Cuenta...</span>
+        <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Cargando Mi Cuenta...</span>
       </div>
     );
   }
@@ -549,15 +604,30 @@ export default function MiPerfilPage() {
               <Menu size={20} />
             </button>
             <div>
-              <h1 className="text-sm font-black text-white leading-tight flex items-center gap-1.5">
-                <span>¡Hola, {displayName.split(' ')[0]}!</span>
-                <span className="text-base">👋</span>
-              </h1>
-              <p className="text-[11px] text-slate-400 font-medium leading-none mt-0.5">
-                {(negocio?.tipoNegocio === 'RESTAURANTE' || negocio?.tipoNegocio === 'GASTRONOMIA' || negocio?.tipoNegocio === 'RESTAURANT')
-                  ? '¿Qué se te antoja hoy?'
-                  : '¿Qué deseas comprar hoy?'}
-              </p>
+              {step === 'profile' ? (
+                <>
+                  <h1 className="text-sm font-bold text-white leading-tight flex items-center gap-1.5">
+                    <span>¡Hola, {displayName.split(' ')[0]}!</span>
+                    <span className="text-base">👋</span>
+                  </h1>
+                  <p className="text-xs text-slate-400 font-medium leading-none mt-0.5">
+                    {(negocio?.tipoNegocio === 'RESTAURANTE' || negocio?.tipoNegocio === 'GASTRONOMIA' || negocio?.tipoNegocio === 'RESTAURANT')
+                      ? '¿Qué se te antoja hoy?'
+                      : (negocio?.tipoNegocio === 'LAVANDERIA' || negocio?.tipoNegocio === 'LAVANDERIAS' || negocio?.tipoNegocio === 'SHOE_CARE' || slug.includes('lavad') || slug.includes('bubble'))
+                        ? 'Tu servicio de limpieza y cuidado'
+                        : '¿Qué deseas comprar hoy?'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-sm font-bold text-white leading-tight flex items-center gap-1.5">
+                    <span>Mi Cuenta</span>
+                  </h1>
+                  <p className="text-xs text-slate-400 font-medium leading-none mt-0.5">
+                    Acceso a tu cuenta y pedidos
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
@@ -565,15 +635,19 @@ export default function MiPerfilPage() {
             <button 
               type="button" 
               onClick={() => router.push(`/${slug}/notificaciones`)}
-              className="relative p-2 rounded-xl bg-slate-900 text-slate-200 border border-slate-800 cursor-pointer"
+              className="relative p-2 rounded-xl bg-slate-900 text-slate-200 border border-slate-800 cursor-pointer hover:bg-slate-800 transition-colors"
+              title="Notificaciones"
+              aria-label="Ver notificaciones"
             >
               <Bell size={18} />
-              <span 
-                style={{ backgroundColor: primaryColor }}
-                className="absolute -top-1 -right-1 size-4 text-white font-black text-[9px] rounded-full flex items-center justify-center shadow-xs"
-              >
-                2
-              </span>
+              {notifUnreadCount > 0 && (
+                <span 
+                  style={{ backgroundColor: primaryColor }}
+                  className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 text-white font-bold text-xs rounded-full flex items-center justify-center shadow-xs"
+                >
+                  {notifUnreadCount > 99 ? '99+' : notifUnreadCount}
+                </span>
+              )}
             </button>
 
             <button 
@@ -584,7 +658,7 @@ export default function MiPerfilPage() {
               <MessageSquare size={18} />
               <span 
                 style={{ backgroundColor: primaryColor }}
-                className="absolute -top-1 -right-1 size-4 text-white font-black text-[9px] rounded-full flex items-center justify-center shadow-xs"
+                className="absolute -top-1 -right-1 size-4 text-white font-bold text-xs rounded-full flex items-center justify-center shadow-xs"
               >
                 4
               </span>
@@ -596,13 +670,13 @@ export default function MiPerfilPage() {
       {/* ── 2. LOGIN / OTP IF NOT AUTHENTICATED ── */}
       {step === 'phone' && (
         <main className="max-w-4xl w-full mx-auto p-4 pt-10 text-center space-y-6">
-          <h2 className="text-4xl font-black italic uppercase tracking-tight text-slate-900">Bienvenido</h2>
+          <h2 className="text-4xl font-bold tracking-tight text-slate-900">Bienvenido</h2>
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Ingresa tu teléfono para acceder a tu cuenta</p>
           <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200 text-left space-y-4 max-w-lg mx-auto">
-            <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Número Celular</label>
+            <label className="text-xs font-bold uppercase text-slate-500 tracking-wider block">Número Celular</label>
             <PhoneInput value={telefono} onChange={setTelefono} className="w-full" />
             {error && (
-              <div className="p-3 bg-red-50 text-red-600 text-xs font-black rounded-xl border border-red-200 flex items-center gap-2">
+              <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-200 flex items-center gap-2">
                 <AlertCircle size={16} /> <span>{error}</span>
               </div>
             )}
@@ -610,7 +684,7 @@ export default function MiPerfilPage() {
               type="button"
               onClick={handleSendOtp}
               disabled={loading || telefono.length < 8}
-              className="w-full py-3.5 bg-slate-950 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3.5 bg-slate-950 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? <Loader2 className="animate-spin" size={18} /> : <>Continuar <ArrowRight size={18} /></>}
             </button>
@@ -623,36 +697,69 @@ export default function MiPerfilPage() {
           <div className="size-16 mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 flex items-center justify-center text-amber-500">
             <Key size={28} />
           </div>
-          <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">Código WhatsApp</h2>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ingresa el código enviado a tu celular</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Código WhatsApp</h2>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Ingresa el código enviado a tu celular</p>
 
           <form onSubmit={handleVerifyOtp} className="space-y-6 bg-white p-6 rounded-3xl shadow-xl border border-slate-200 max-w-lg mx-auto">
-            <div className="flex justify-between items-center gap-1.5">
-              {[0,1,2,3,4,5].map(idx => (
-                <div 
-                  key={idx} 
-                  className={`flex-1 h-14 bg-slate-50 border-2 rounded-xl flex items-center justify-center text-2xl font-black ${
-                    code[idx] ? 'border-amber-500 text-slate-900 bg-white shadow-xs' : 'border-slate-200 text-slate-300'
-                  }`}
-                >
-                  {code[idx] || ''}
-                </div>
-              ))}
+            <div 
+              onClick={() => otpInputRef.current?.focus()}
+              className="relative cursor-pointer select-none"
+            >
+              <div className="flex justify-between items-center gap-1.5">
+                {[0,1,2,3,4,5].map(idx => (
+                  <div 
+                    key={idx} 
+                    className={`flex-1 h-14 bg-slate-50 border-2 rounded-xl flex items-center justify-center text-2xl font-bold transition-all ${
+ code[idx] 
+ ? 'border-amber-500 text-slate-900 bg-white shadow-xs scale-102' 
+ : (code.length === idx ? 'border-slate-400 bg-white ring-2 ring-amber-400/20' : 'border-slate-200 text-slate-300')
+ }`}
+                  >
+                    {code[idx] || ''}
+                  </div>
+                ))}
+              </div>
+              <input 
+                ref={otpInputRef} 
+                type="tel" 
+                inputMode="numeric" 
+                pattern="[0-9]*" 
+                autoFocus 
+                autoComplete="one-time-code"
+                maxLength={6} 
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10" 
+                value={code} 
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setCode(val);
+                }} 
+              />
             </div>
-            <input 
-              ref={otpInputRef} 
-              type="text" 
-              inputMode="numeric" 
-              pattern="[0-9]*" 
-              autoFocus 
-              maxLength={6} 
-              className="sr-only" 
-              value={code} 
-              onChange={e => setCode(e.target.value.replace(/\D/g, ''))} 
-            />
+
+            <div className="flex items-center justify-between text-xs font-bold text-slate-400 px-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep('phone');
+                  setCode('');
+                  setError('');
+                }}
+                className="hover:text-slate-700 underline cursor-pointer"
+              >
+                ← Cambiar número
+              </button>
+              <button
+                type="button"
+                onClick={handleSendOtp}
+                disabled={loading}
+                className="hover:text-amber-600 underline cursor-pointer disabled:opacity-50"
+              >
+                Reenviar código
+              </button>
+            </div>
 
             {error && (
-              <div className="p-3 bg-red-50 text-red-600 text-xs font-black rounded-xl border border-red-200 flex items-center gap-2">
+              <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-200 flex items-center gap-2">
                 <AlertCircle size={16} /> <span>{error}</span>
               </div>
             )}
@@ -660,7 +767,7 @@ export default function MiPerfilPage() {
             <button
               type="submit"
               disabled={loading || code.length !== 6}
-              className="w-full py-3.5 bg-slate-950 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3.5 bg-slate-950 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? <Loader2 className="animate-spin" size={18} /> : <>Verificar Código <Check size={18} /></>}
             </button>
@@ -688,7 +795,7 @@ export default function MiPerfilPage() {
                   ) : (
                     <div 
                       style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
-                      className="w-16 h-16 rounded-full text-white font-black text-2xl flex items-center justify-center shadow-md border-2 border-white"
+                      className="w-16 h-16 rounded-full text-white font-bold text-2xl flex items-center justify-center shadow-md border-2 border-white"
                     >
                       {firstLetter}
                     </div>
@@ -703,8 +810,8 @@ export default function MiPerfilPage() {
                 {/* Información de usuario */}
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-base font-black text-slate-900 leading-snug">{displayName}</h2>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border flex items-center gap-1 ${userLevelTag.color}`}>
+                    <h2 className="text-base font-bold text-slate-900 leading-snug">{displayName}</h2>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1 ${userLevelTag.color}`}>
                       <span>{userLevelTag.icon}</span>
                       <span>{userLevelTag.label}</span>
                     </span>
@@ -738,13 +845,13 @@ export default function MiPerfilPage() {
                   >
                     <ShoppingBag size={14} />
                   </span>
-                  <span className="text-[10px] font-black uppercase text-slate-400">Pedidos</span>
+                  <span className="text-xs font-bold uppercase text-slate-400">Pedidos</span>
                 </div>
                 <div>
-                  <span className="text-base font-black text-slate-900 block leading-tight">
+                  <span className="text-base font-bold text-slate-900 block leading-tight">
                     {cliente?.totalPedidos ?? cliente?.stats?.totalPedidos ?? 0}
                   </span>
-                  <span className="text-[10px] font-medium text-slate-400 block">Realizados</span>
+                  <span className="text-xs font-medium text-slate-400 block">Realizados</span>
                 </div>
               </button>
 
@@ -757,13 +864,13 @@ export default function MiPerfilPage() {
                   <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
                     <Star size={14} />
                   </span>
-                  <span className="text-[10px] font-black uppercase text-slate-400">Puntos</span>
+                  <span className="text-xs font-bold uppercase text-slate-400">Puntos</span>
                 </div>
                 <div>
-                  <span className="text-base font-black text-slate-900 block leading-tight">
+                  <span className="text-base font-bold text-slate-900 block leading-tight">
                     {cliente?.loyalty?.puntos ?? 0}
                   </span>
-                  <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
+                  <span className="text-xs font-medium text-slate-400 block">Disponibles</span>
                 </div>
               </button>
 
@@ -779,13 +886,13 @@ export default function MiPerfilPage() {
                   >
                     <Tag size={14} />
                   </span>
-                  <span className="text-[10px] font-black uppercase text-slate-400">Cupones</span>
+                  <span className="text-xs font-bold uppercase text-slate-400">Cupones</span>
                 </div>
                 <div>
-                  <span className="text-base font-black text-slate-900 block leading-tight">
+                  <span className="text-base font-bold text-slate-900 block leading-tight">
                     {cuponesCount}
                   </span>
-                  <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
+                  <span className="text-xs font-medium text-slate-400 block">Disponibles</span>
                 </div>
               </button>
             </div>
@@ -801,12 +908,12 @@ export default function MiPerfilPage() {
                     <MapPin size={18} />
                   </span>
                   <div className="space-y-1">
-                    <span className="text-[11px] font-black uppercase text-slate-500 block tracking-wider">Dirección registrada</span>
-                    <p className="text-xs font-black text-slate-900 leading-snug">
+                    <span className="text-xs font-bold uppercase text-slate-500 block tracking-wider">Dirección registrada</span>
+                    <p className="text-xs font-bold text-slate-900 leading-snug">
                       {direccionRegistrada}
                     </p>
                     {referenciaRegistrada && (
-                      <p className="text-[11px] text-slate-500 font-medium">Ref: {referenciaRegistrada}</p>
+                      <p className="text-xs text-slate-500 font-medium">Ref: {referenciaRegistrada}</p>
                     )}
                   </div>
                 </div>
@@ -826,10 +933,10 @@ export default function MiPerfilPage() {
                   color: primaryColor,
                   borderColor: `${primaryColor}40`
                 }}
-                className="w-full py-3 px-4 font-black text-xs uppercase tracking-wider rounded-2xl border transition-all hover:opacity-90 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 font-bold text-xs uppercase tracking-wider rounded-2xl border transition-all hover:opacity-90 cursor-pointer flex items-center justify-center gap-2"
               >
                 <Compass size={16} />
-                <span>ACTUALIZAR UBICACIÓN EN EL MAPA</span>
+                <span>Actualizar ubicación en el mapa</span>
               </button>
             </div>
 
@@ -845,21 +952,28 @@ export default function MiPerfilPage() {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-2xl shrink-0 shadow-inner">
-                  📱
+                <div className="w-12 h-12 rounded-2xl bg-white p-1.5 backdrop-blur-md border border-white/40 flex items-center justify-center shrink-0 shadow-md overflow-hidden">
+                  <img
+                    src={negocio?.logoUrl || '/citiox-icon.png'}
+                    alt={negocio?.nombre || 'CitiOx'}
+                    className="w-full h-full object-contain rounded-xl"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/citiox-icon.png';
+                    }}
+                  />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-white/80 block">
+                  <span className="text-xs font-bold uppercase tracking-wide text-white/80 block">
                     {(negocio?.tipoNegocio === 'RESTAURANTE' || negocio?.tipoNegocio === 'GASTRONOMIA' || negocio?.tipoNegocio === 'RESTAURANT')
                       ? 'App del Restaurante'
                       : 'App de la Tienda'}
                   </span>
-                  <h4 className="text-sm font-black text-white leading-tight">
+                  <h4 className="text-sm font-bold text-white leading-tight">
                     {isPWAInstalledState 
                       ? '¡Ya tienes la App instalada!' 
                       : `Descarga la App de ${negocio?.nombre || 'nuestra tienda'}`}
                   </h4>
-                  <p className="text-[11px] text-white/90 font-medium leading-tight mt-0.5">
+                  <p className="text-xs text-white/90 font-medium leading-tight mt-0.5">
                     {isPWAInstalledState 
                       ? ((negocio?.tipoNegocio === 'RESTAURANTE' || negocio?.tipoNegocio === 'GASTRONOMIA' || negocio?.tipoNegocio === 'RESTAURANT')
                           ? 'Disfruta de la máxima velocidad al pedir tu comida y notificaciones en tiempo real.'
@@ -875,13 +989,13 @@ export default function MiPerfilPage() {
                 type="button"
                 onClick={handleInstallPWA}
                 style={{ color: primaryColor }}
-                className="w-full py-3 bg-white hover:bg-slate-50 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-95 border border-white"
+                className="w-full py-3 bg-white hover:bg-slate-50 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-95 border border-white"
               >
                 <Smartphone size={16} />
                 <span>Instalar App Gratis en mi Celular</span>
               </button>
             ) : (
-              <div className="py-2 px-3 bg-white/15 rounded-xl border border-white/20 flex items-center justify-center gap-2 text-[11px] font-bold text-white">
+              <div className="py-2 px-3 bg-white/15 rounded-xl border border-white/20 flex items-center justify-center gap-2 text-xs font-bold text-white">
                 <CheckCircle2 size={15} />
                 <span>App lista y activa en tu dispositivo</span>
               </div>
@@ -890,13 +1004,20 @@ export default function MiPerfilPage() {
 
           {/* ── 4. LISTADO DE OPCIONES "MI CUENTA" ── */}
           <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-200 space-y-1">
-            <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider px-4 pt-3 pb-1">Mi cuenta</h3>
+            <h3 className="text-xs font-bold uppercase text-slate-900 tracking-wider px-4 pt-3 pb-1">Mi cuenta</h3>
 
             {[
               { id: 'personal_info', label: 'Información personal', desc: 'Actualiza tus datos personales', icon: User },
               { id: 'addresses', label: 'Mis direcciones', desc: 'Gestiona tus direcciones guardadas', icon: MapPin },
               { id: 'payments', label: 'Métodos de pago', desc: 'Tarjetas y pagos guardados', icon: CreditCard },
-              { id: 'favorites', label: 'Mis favoritos', desc: 'Productos y compras favoritas', icon: Star },
+              { 
+                id: 'favorites', 
+                label: 'Mis favoritos', 
+                desc: scopedFavorites.length > 0 
+                  ? `${scopedFavorites.length} guardado${scopedFavorites.length > 1 ? 's' : ''}` 
+                  : (canShowProducts ? 'Productos y servicios guardados' : 'Servicios guardados'), 
+                icon: Heart 
+              },
               { id: 'settings', label: 'Configuración', desc: 'Notificaciones, privacidad y más', icon: Settings },
               { id: 'support', label: 'Ayuda y soporte', desc: 'Centro de ayuda y contacto', icon: HelpCircle },
             ].map(item => {
@@ -916,8 +1037,8 @@ export default function MiPerfilPage() {
                       <IconComponent size={18} />
                     </span>
                     <div>
-                      <span className="text-xs font-black text-slate-900 block leading-tight">{item.label}</span>
-                      <span className="text-[11px] text-slate-500 font-medium block mt-0.5">{item.desc}</span>
+                      <span className="text-xs font-bold text-slate-900 block leading-tight">{item.label}</span>
+                      <span className="text-xs text-slate-500 font-medium block mt-0.5">{item.desc}</span>
                     </div>
                   </div>
 
@@ -949,7 +1070,7 @@ export default function MiPerfilPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <User className="w-5 h-5" style={{ color: primaryColor }} />
-                <h3 className="font-black text-sm uppercase text-slate-900">Información Personal</h3>
+                <h3 className="font-bold text-sm uppercase text-slate-900">Información Personal</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 rounded-xl text-slate-400 hover:bg-slate-100">
                 <XCircle size={20} />
@@ -958,7 +1079,7 @@ export default function MiPerfilPage() {
 
             <form onSubmit={handleSavePersonalInfo} className="space-y-4 text-xs">
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Nombre Completo</label>
+                <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Nombre Completo</label>
                 <input
                   type="text"
                   required
@@ -969,7 +1090,7 @@ export default function MiPerfilPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Correo Electrónico</label>
+                <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Correo Electrónico</label>
                 <input
                   type="email"
                   value={editEmail}
@@ -979,7 +1100,7 @@ export default function MiPerfilPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Teléfono Móvil (Registrado)</label>
+                <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Teléfono Móvil (Registrado)</label>
                 <input
                   type="text"
                   disabled
@@ -992,7 +1113,7 @@ export default function MiPerfilPage() {
                 <button type="button" onClick={() => setActiveModal(null)} className="py-2.5 px-4 bg-slate-100 text-slate-700 font-bold rounded-xl">
                   Cancelar
                 </button>
-                <button type="submit" disabled={savingProfile} className="py-2.5 px-5 bg-slate-950 text-white font-black rounded-xl shadow-md">
+                <button type="submit" disabled={savingProfile} className="py-2.5 px-5 bg-slate-950 text-white font-bold rounded-xl shadow-md">
                   {savingProfile ? <Loader2 className="animate-spin" size={16} /> : 'Guardar Cambios'}
                 </button>
               </div>
@@ -1008,7 +1129,7 @@ export default function MiPerfilPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5" style={{ color: primaryColor }} />
-                <h3 className="font-black text-sm uppercase text-slate-900">Mis Direcciones Guardadas</h3>
+                <h3 className="font-bold text-sm uppercase text-slate-900">Mis Direcciones Guardadas</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
                 <XCircle size={20} />
@@ -1021,18 +1142,18 @@ export default function MiPerfilPage() {
                   <div key={addr.id} className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 flex items-start justify-between gap-3 text-xs">
                     <div className="space-y-1 flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-black text-slate-900 truncate">{addr.etiqueta || 'Dirección'}</span>
+                        <span className="font-bold text-slate-900 truncate">{addr.etiqueta || 'Dirección'}</span>
                         {addr.principal && (
                           <span 
                             style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
-                            className="px-2 py-0.5 text-[9px] font-black rounded-md uppercase shrink-0"
+                            className="px-2 py-0.5 text-xs font-bold rounded-md uppercase shrink-0"
                           >
                             Principal
                           </span>
                         )}
                       </div>
                       <p className="text-slate-600 font-medium leading-snug">{addr.direccion}</p>
-                      {addr.referencia && <p className="text-[10px] text-slate-400">Ref: {addr.referencia}</p>}
+                      {addr.referencia && <p className="text-xs text-slate-400">Ref: {addr.referencia}</p>}
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -1042,7 +1163,7 @@ export default function MiPerfilPage() {
                           handleConfirmLocationFromMap(addr.lat, addr.lng, addr.direccion, addr.referencia);
                           setActiveModal(null);
                         }}
-                        className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase rounded-xl shadow-xs cursor-pointer"
+                        className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-xl shadow-xs cursor-pointer"
                       >
                         Usar
                       </button>
@@ -1075,7 +1196,7 @@ export default function MiPerfilPage() {
                 setIsMapModalOpen(true);
               }}
               style={{ backgroundColor: `${primaryColor}15`, color: primaryColor, borderColor: `${primaryColor}30` }}
-              className="w-full py-3 font-black text-xs uppercase rounded-2xl border flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99]"
+              className="w-full py-3 font-bold text-xs uppercase rounded-2xl border flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99]"
             >
               <Plus size={16} /> Agregar Nueva Dirección desde Mapa
             </button>
@@ -1090,7 +1211,7 @@ export default function MiPerfilPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5" style={{ color: primaryColor }} />
-                <h3 className="font-black text-sm uppercase text-slate-900">Métodos de Pago</h3>
+                <h3 className="font-bold text-sm uppercase text-slate-900">Métodos de Pago</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
                 <XCircle size={20} />
@@ -1102,8 +1223,8 @@ export default function MiPerfilPage() {
                 <div className="flex items-center gap-3">
                   <span className="text-xl">💵</span>
                   <div>
-                    <span className="font-black text-slate-900 block">Efectivo al Recibir</span>
-                    <span className="text-[10px] text-slate-400 font-medium">Pago directo al repartidor o cajero</span>
+                    <span className="font-bold text-slate-900 block">Efectivo al Recibir</span>
+                    <span className="text-xs text-slate-400 font-medium">Pago directo al repartidor o cajero</span>
                   </div>
                 </div>
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
@@ -1113,43 +1234,228 @@ export default function MiPerfilPage() {
                 <div className="flex items-center gap-3">
                   <span className="text-xl">🏦</span>
                   <div>
-                    <span className="font-black text-slate-900 block">Transferencia Bancaria</span>
-                    <span className="text-[10px] text-slate-400 font-medium">Envío de comprobante por WhatsApp</span>
+                    <span className="font-bold text-slate-900 block">Transferencia Bancaria</span>
+                    <span className="text-xs text-slate-400 font-medium">Envío de comprobante por WhatsApp</span>
                   </div>
                 </div>
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
               </div>
             </div>
 
-            <p className="text-[10px] text-slate-400 italic text-center">
+            <p className="text-xs text-slate-400 text-center">
               🔒 Tus datos de pago están seguros mediante encriptación estándar del sistema.
             </p>
           </div>
         </div>
       )}
 
-      {/* ── MODAL 4: MIS FAVORITOS ── */}
+      {/* ── MODAL 4: MIS FAVORITOS (UNIVERSAL: PRODUCTOS, SERVICIOS, CANCHAS) ── */}
       {activeModal === 'favorites' && (
         <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200 text-center">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-left">
+          <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 border border-slate-200 text-left max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Header del Modal */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <Star className="w-5 h-5" style={{ color: primaryColor }} />
-                <h3 className="font-black text-sm uppercase text-slate-900">Mis Favoritos</h3>
+                <Heart className="w-5 h-5 fill-rose-500 text-rose-500" />
+                <div>
+                  <h3 className="font-bold text-sm uppercase text-slate-900 leading-tight">Mis Favoritos</h3>
+                  <span className="text-xs text-slate-400 font-bold">
+                    {scopedFavorites.length} {scopedFavorites.length === 1 ? 'artículo guardado' : 'artículos guardados'}
+                  </span>
+                </div>
               </div>
-              <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
-                <XCircle size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                {scopedFavorites.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('¿Deseas vaciar todos tus favoritos guardados en este negocio?')) {
+                        clearFavorites();
+                      }
+                    }}
+                    className="text-xs font-bold text-slate-400 hover:text-rose-600 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Vaciar lista
+                  </button>
+                )}
+                <button 
+                  type="button" 
+                  onClick={() => setActiveModal(null)} 
+                  className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
+                  <XCircle size={20} />
+                </button>
+              </div>
             </div>
 
-            <div className="py-8 space-y-3">
-              <div className="size-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner">
-                ⭐
-              </div>
-              <h4 className="text-sm font-black text-slate-900">Aún no tienes favoritos</h4>
-              <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto">
-                Guarda tus productos y artículos favoritos para encontrarlos y pedirlos rápidamente.
-              </p>
+            {/* Pestañas de Filtro (Todos / Productos / Servicios / Canchas) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+              <button
+                type="button"
+                onClick={() => setFavoriteTab('ALL')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer whitespace-nowrap ${
+ favoriteTab === 'ALL'
+ ? 'bg-slate-900 text-white shadow-xs'
+ : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+ }`}
+              >
+                Todos ({scopedFavorites.length})
+              </button>
+
+              {canShowProducts && (
+                <button
+                  type="button"
+                  onClick={() => setFavoriteTab('PRODUCTO')}
+                  className={`px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 ${
+ favoriteTab === 'PRODUCTO'
+ ? 'bg-cyan-600 text-white shadow-xs'
+ : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+ }`}
+                >
+                  <ShoppingBag size={12} />
+                  <span>Productos ({productosFavCount})</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setFavoriteTab('SERVICIO')}
+                className={`px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 ${
+ favoriteTab === 'SERVICIO'
+ ? 'bg-purple-600 text-white shadow-xs'
+ : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+ }`}
+              >
+                <Sparkles size={12} />
+                <span>Servicios ({serviciosFavCount})</span>
+              </button>
+
+              {(isCanchasBiz || canchasFavCount > 0) && (
+                <button
+                  type="button"
+                  onClick={() => setFavoriteTab('CANCHA')}
+                  className={`px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 ${
+ favoriteTab === 'CANCHA'
+ ? 'bg-emerald-600 text-white shadow-xs'
+ : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+ }`}
+                >
+                  <Trophy size={12} />
+                  <span>Canchas ({canchasFavCount})</span>
+                </button>
+              )}
+            </div>
+
+            {/* Listado de Favoritos */}
+            <div className="flex-1 overflow-y-auto space-y-2.5 max-h-[60vh] pr-1">
+              {filteredFavoritesList.length === 0 ? (
+                <div className="py-10 text-center space-y-3">
+                  <div className="size-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner">
+                    <Heart className="w-8 h-8 fill-rose-200 text-rose-400" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900">
+                    {favoriteTab === 'ALL'
+                      ? 'Aún no tienes favoritos'
+                      : favoriteTab === 'PRODUCTO'
+                      ? 'No tienes productos guardados'
+                      : favoriteTab === 'SERVICIO'
+                      ? 'No tienes servicios guardados'
+                      : 'No tienes canchas guardadas'}
+                  </h4>
+                  <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto">
+                    {isCanchasBiz
+                      ? 'Toca el corazón en cualquier cancha para guardarla y encontrarla rápidamente aquí.'
+                      : canShowProducts
+                      ? 'Toca el corazón en cualquier producto o servicio para guardarlo y encontrarlo rápidamente aquí.'
+                      : 'Toca el corazón en cualquier servicio para guardarlo y encontrarlo rápidamente aquí.'}
+                  </p>
+                </div>
+              ) : (
+                filteredFavoritesList.map((item: FavoriteItem) => {
+                  const badgeColor = 
+                    item.tipo === 'PRODUCTO' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' :
+                    item.tipo === 'SERVICIO' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                    'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+                  const badgeIcon = 
+                    item.tipo === 'PRODUCTO' ? <ShoppingBag size={10} /> :
+                    item.tipo === 'SERVICIO' ? <Sparkles size={10} /> :
+                    <Trophy size={10} />;
+
+                  const targetUrl = item.url || (
+                    item.tipo === 'PRODUCTO'
+                      ? `/${item.slug || slug}?view=tienda`
+                      : item.tipo === 'CANCHA'
+                      ? `/${item.slug || slug}/canchas`
+                      : `/${item.slug || slug}#servicios`
+                  );
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-3 bg-slate-50/80 hover:bg-slate-100/90 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-3 transition-all group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {item.imagenUrl ? (
+                          <img
+                            src={item.imagenUrl}
+                            alt={item.nombre}
+                            className="size-14 rounded-xl object-cover border border-slate-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="size-14 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400 shrink-0 text-xl font-bold">
+                            {badgeIcon}
+                          </div>
+                        )}
+
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border ${badgeColor}`}>
+                              {badgeIcon}
+                              <span>{item.tipo}</span>
+                            </span>
+                            {item.negocioNombre && (
+                              <span className="text-xs text-slate-400 font-bold truncate">
+                                • {item.negocioNombre}
+                              </span>
+                            )}
+                          </div>
+
+                          <h4 className="text-xs font-bold text-slate-900 truncate block">
+                            {item.nombre}
+                          </h4>
+
+                          {item.precio !== undefined && (
+                            <span className="text-xs font-extrabold text-slate-900 block font-mono">
+                              ${Number(item.precio).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Link
+                          href={targetUrl}
+                          onClick={() => setActiveModal(null)}
+                          className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                        >
+                          <span>Ver</span>
+                          <ChevronRight size={12} />
+                        </Link>
+
+                        <button
+                          type="button"
+                          onClick={() => removeFavorite(item.id)}
+                          className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          title="Quitar de favoritos"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -1162,7 +1468,7 @@ export default function MiPerfilPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Settings className="w-5 h-5" style={{ color: primaryColor }} />
-                <h3 className="font-black text-sm uppercase text-slate-900">Configuración</h3>
+                <h3 className="font-bold text-sm uppercase text-slate-900">Configuración</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
                 <XCircle size={20} />
@@ -1172,8 +1478,8 @@ export default function MiPerfilPage() {
             <div className="space-y-3 text-xs">
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl">
                 <div>
-                  <span className="font-black text-slate-900 block">Notificaciones de Pedido</span>
-                  <span className="text-[10px] text-slate-400">Avisos del estado de tu entrega</span>
+                  <span className="font-bold text-slate-900 block">Notificaciones de Pedido</span>
+                  <span className="text-xs text-slate-400">Avisos del estado de tu entrega</span>
                 </div>
                 <input 
                   type="checkbox" 
@@ -1185,8 +1491,8 @@ export default function MiPerfilPage() {
 
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl">
                 <div>
-                  <span className="font-black text-slate-900 block">Promociones y Ofertas</span>
-                  <span className="text-[10px] text-slate-400">Alertas de cupones exclusivos</span>
+                  <span className="font-bold text-slate-900 block">Promociones y Ofertas</span>
+                  <span className="text-xs text-slate-400">Alertas de cupones exclusivos</span>
                 </div>
                 <input 
                   type="checkbox" 
@@ -1199,7 +1505,7 @@ export default function MiPerfilPage() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-black text-xs uppercase rounded-2xl flex items-center justify-center gap-2 mt-4 cursor-pointer"
+                className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs uppercase rounded-2xl flex items-center justify-center gap-2 mt-4 cursor-pointer"
               >
                 <LogOut size={16} /> Cerrar Sesión
               </button>
@@ -1215,7 +1521,7 @@ export default function MiPerfilPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <HelpCircle className="w-5 h-5" style={{ color: primaryColor }} />
-                <h3 className="font-black text-sm uppercase text-slate-900">Ayuda y Soporte</h3>
+                <h3 className="font-bold text-sm uppercase text-slate-900">Ayuda y Soporte</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
                 <XCircle size={20} />
@@ -1229,7 +1535,7 @@ export default function MiPerfilPage() {
                 href={`https://wa.me/593959997521?text=Hola,%20necesito%20soporte%20con%20mi%20cuenta%20en%20Citiox`}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-md flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase rounded-2xl shadow-md flex items-center justify-center gap-2"
               >
                 <MessageSquare size={16} /> Contactar Soporte WhatsApp
               </a>
@@ -1245,13 +1551,13 @@ export default function MiPerfilPage() {
             type="button"
             onClick={() => router.push(`/${slug}/pedidos`)}
             style={{ backgroundColor: primaryColor }}
-            className="w-full py-3.5 px-5 hover:opacity-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-between cursor-pointer active:scale-95 transition-all"
+            className="w-full py-3.5 px-5 hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-between cursor-pointer active:scale-95 transition-all"
           >
             <div className="flex items-center gap-2.5">
               <ShoppingBag size={18} />
               <span>VER MI PEDIDO ({cartContext.totalItemsCount})</span>
             </div>
-            <span className="text-sm font-black font-mono">${cartContext.total.toFixed(2)}</span>
+            <span className="text-sm font-bold font-mono">${cartContext.total.toFixed(2)}</span>
           </button>
         </div>
       )}
@@ -1262,7 +1568,7 @@ export default function MiPerfilPage() {
           <button 
             type="button"
             onClick={() => router.push(`/${slug}`)} 
-            className="flex flex-col items-center gap-1 text-[10px] font-bold hover:text-white cursor-pointer"
+            className="flex flex-col items-center gap-1 text-xs font-bold hover:text-white cursor-pointer"
           >
             <Compass size={18} />
             <span>Inicio</span>
@@ -1271,7 +1577,7 @@ export default function MiPerfilPage() {
           <button 
             type="button"
             onClick={() => router.push(`/${slug}/promo`)} 
-            className="flex flex-col items-center gap-1 text-[10px] font-bold hover:text-white cursor-pointer"
+            className="flex flex-col items-center gap-1 text-xs font-bold hover:text-white cursor-pointer"
           >
             <Tag size={18} />
             <span>Ofertas</span>
@@ -1280,7 +1586,7 @@ export default function MiPerfilPage() {
           <button 
             type="button"
             onClick={() => router.push(`/${slug}/pedidos`)} 
-            className="flex flex-col items-center gap-1 text-[10px] font-bold hover:text-white cursor-pointer"
+            className="flex flex-col items-center gap-1 text-xs font-bold hover:text-white cursor-pointer"
           >
             <ShoppingBag size={18} />
             <span>Mis pedidos</span>
@@ -1289,7 +1595,7 @@ export default function MiPerfilPage() {
           <button 
             type="button"
             style={{ color: primaryColor }}
-            className="flex flex-col items-center gap-1 text-[10px] font-black cursor-pointer"
+            className="flex flex-col items-center gap-1 text-xs font-bold cursor-pointer"
           >
             <User size={18} />
             <span>Mi cuenta</span>

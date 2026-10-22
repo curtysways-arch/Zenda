@@ -32,3 +32,21 @@ Thumbs.db
 .wwebjs_cache
 **/wwebjs_auth/**
 **/wwebjs_cache/**
+
+# ── Basura local que nunca debe subirse ──
+_basura_revisar/
+scratch/
+Zenda/
+brain/
+snapshots/
+.env.save
+*.zip
+*.tar.gz
+*.tsbuildinfo
+*.bak
+*_snapshot*.json
+users_output.txt
+
+# Documentos privados de repartidores (no se suben al repositorio)
+storage/
+public/uploads/drivers/

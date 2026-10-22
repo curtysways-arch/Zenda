@@ -567,7 +567,7 @@ function StoreLandingContent({
               />
             ) : (
               <div
-                className="w-11 h-11 rounded-full text-white font-black flex items-center justify-center text-lg shrink-0 shadow-xs border-2 border-white"
+                className="w-11 h-11 rounded-full text-white font-bold flex items-center justify-center text-lg shrink-0 shadow-xs border-2 border-white"
                 style={{ backgroundColor: primaryColor }}
               >
                 C
@@ -575,12 +575,12 @@ function StoreLandingContent({
             )}
             <div className="min-w-0 text-left">
               <div className="flex items-center gap-1.5">
-                <h1 className="font-black text-sm sm:text-base text-slate-900 tracking-tight line-clamp-1">
+                <h1 className="font-bold text-sm sm:text-base text-slate-900 tracking-tight line-clamp-1">
                   {negocio?.nombre || 'Citiox Urban Store'}
                 </h1>
                 <CheckCircle2 className="w-4 h-4 text-cyan-500 fill-cyan-500 text-white shrink-0" />
               </div>
-              <p className="text-[11px] font-semibold text-slate-400 line-clamp-1">
+              <p className="text-xs font-semibold text-slate-400 line-clamp-1">
                 E-Commerce Oficial
               </p>
             </div>
@@ -602,12 +602,12 @@ function StoreLandingContent({
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2.5 sm:px-4 sm:py-2 rounded-2xl font-black text-xs text-slate-800 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 transition-all flex items-center gap-2 cursor-pointer"
+              className="relative p-2.5 sm:px-4 sm:py-2 rounded-2xl font-bold text-xs text-slate-800 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 transition-all flex items-center gap-2 cursor-pointer"
             >
               <ShoppingBag className="w-5 h-5 text-cyan-600" />
               <span className="hidden sm:inline font-extrabold text-cyan-900">Carrito</span>
               {totalItemsCount > 0 && (
-                <span className="size-5 rounded-full bg-cyan-500 text-white font-black text-[10px] flex items-center justify-center shadow-xs">
+                <span className="size-5 rounded-full bg-cyan-500 text-white font-bold text-xs flex items-center justify-center shadow-xs">
                   {totalItemsCount}
                 </span>
               )}
@@ -621,10 +621,10 @@ function StoreLandingContent({
         <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 animate-fadeIn">
           <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 p-6 sm:p-8 rounded-3xl text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-100 backdrop-blur-md">
+              <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wide text-amber-100 backdrop-blur-md">
                 🔥 Promociones & Descuentos
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mt-2">Ofertas Especiales</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-2">Ofertas Especiales</h2>
               <p className="text-xs sm:text-sm text-white/90 font-medium">Aprovecha los mejores precios y promociones exclusivas</p>
             </div>
             <button
@@ -635,21 +635,85 @@ function StoreLandingContent({
             </button>
           </div>
 
-          <div className="mt-8 bg-white border-2 border-dashed border-amber-200 p-8 rounded-3xl text-center space-y-3">
-            <div className="size-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto shadow-inner">
-              <Flame className="w-7 h-7 animate-bounce" />
+          {displayPromos.length > 0 ? (
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              {displayPromos.map((promo: any) => (
+                <div
+                  key={promo.id}
+                  onClick={() => promo.productToOpen && setSelectedProductForModal(promo.productToOpen)}
+                  className="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm hover:shadow-xl hover:border-amber-300 transition-all duration-300 cursor-pointer flex flex-col justify-between group text-left"
+                >
+                  <div className="space-y-3">
+                    <div className="relative h-44 w-full rounded-2xl overflow-hidden bg-slate-100">
+                      <img
+                        src={promo.imagenUrl}
+                        alt={promo.titulo}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <span className="absolute top-2.5 left-2.5 px-3 py-1 rounded-xl bg-slate-950/85 text-white font-extrabold text-xs uppercase tracking-wider backdrop-blur-md shadow-xs">
+                        {promo.badge}
+                      </span>
+                      <span className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-white/90 text-slate-800 font-bold text-xs backdrop-blur-md border border-slate-200/60 shadow-2xs flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-amber-500" /> Tiempo Limitado
+                      </span>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm sm:text-base leading-tight group-hover:text-amber-600 transition-colors line-clamp-2">
+                        {promo.titulo}
+                      </h4>
+                      <p className="text-slate-500 text-xs font-medium leading-relaxed line-clamp-2 mt-1">
+                        {promo.descripcion}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 mt-3 flex items-center justify-between">
+                    <div>
+                      <span className="text-base sm:text-lg font-bold text-slate-900 block leading-tight font-mono">
+                        ${Number(promo.precioPromo || 0).toFixed(2)}
+                      </span>
+                      {promo.precioAnterior && (
+                        <span className="text-xs text-slate-400 line-through font-bold">
+                          ${Number(promo.precioAnterior).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (promo.productToOpen) {
+                          setSelectedProductForModal(promo.productToOpen);
+                        }
+                      }}
+                      className="px-3.5 py-2 bg-slate-900 hover:bg-black text-white font-bold text-xs uppercase rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Ver Oferta</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <h3 className="text-base font-black text-slate-900 uppercase">Ofertas Exclusivas de la Tienda</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
-              ¡Disfruta de nuestros mejores precios directos en todo el catálogo de productos!
-            </p>
-            <button
-              onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
-              className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
-            >
-              Ver Productos Destacados
-            </button>
-          </div>
+          ) : (
+            <div className="mt-8 bg-white border-2 border-dashed border-amber-200 p-8 rounded-3xl text-center space-y-3">
+              <div className="size-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto shadow-inner">
+                <Flame className="w-7 h-7 animate-bounce" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 uppercase">Ofertas Exclusivas de la Tienda</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+                ¡Disfruta de nuestros mejores precios directos en todo el catálogo de productos!
+              </p>
+              <button
+                onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
+                className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                Ver Productos Destacados
+              </button>
+            </div>
+          )}
         </section>
       )}
 
@@ -658,16 +722,16 @@ function StoreLandingContent({
         <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 animate-fadeIn space-y-6">
           <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-6 sm:p-8 rounded-3xl text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-500/30">
+              <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-xs font-bold uppercase tracking-wide border border-indigo-500/30">
                 📦 Mis Pedidos & Rastreo
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mt-2">Seguimiento de Compras</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-2">Seguimiento de Compras</h2>
               <p className="text-xs sm:text-sm text-slate-300 font-medium">Consulta el estado de tus pedidos recientes y entregas</p>
             </div>
           </div>
 
           <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-2xs space-y-4">
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Tus Datos de Cliente</h3>
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Tus Datos de Cliente</h3>
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <input
                 type="tel"
@@ -692,21 +756,21 @@ function StoreLandingContent({
 
           {clientOrdersList.length > 0 ? (
             <div className="space-y-4">
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                 Tus Compras Recientes ({clientOrdersList.length})
               </h3>
               {clientOrdersList.map((order: any) => (
                 <div key={order.id} className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-2xs space-y-3 text-left">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-black uppercase text-slate-400 block tracking-wider">
+                      <span className="text-xs font-bold uppercase text-slate-400 block tracking-wider">
                         Pedido #{order.numeroPedido || (order.id ? order.id.substring(0, 8) : 'N/A')}
                       </span>
-                      <span className="text-base font-black text-slate-900">
+                      <span className="text-base font-bold text-slate-900">
                         ${Number(order.total || 0).toFixed(2)}
                       </span>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-50 text-cyan-700 border border-cyan-200">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-cyan-50 text-cyan-700 border border-cyan-200">
                       {order.estado || 'CONFIRMADO'}
                     </span>
                   </div>
@@ -716,7 +780,7 @@ function StoreLandingContent({
                       <div key={idx} className="flex justify-between items-center">
                         <span className="font-medium text-slate-700">
                           <strong className="text-slate-900">{it.cantidad}x</strong> {it.nombreProducto || it.nombre}
-                          {it.varianteNombre && <span className="text-[10px] text-slate-400 block">({it.varianteNombre})</span>}
+                          {it.varianteNombre && <span className="text-xs text-slate-400 block">({it.varianteNombre})</span>}
                         </span>
                         <span className="font-extrabold text-slate-900">
                           ${Number((it.precioUnitario || it.precio || 0) * (it.cantidad || 1)).toFixed(2)}
@@ -725,7 +789,7 @@ function StoreLandingContent({
                     ))}
                   </div>
 
-                  <div className="border-t border-slate-100 pt-2 flex items-center justify-between text-[11px] text-slate-400">
+                  <div className="border-t border-slate-100 pt-2 flex items-center justify-between text-xs text-slate-400">
                     <span>{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Reciente'}</span>
                     <span className="font-bold text-slate-700">{order.tipoEntrega || 'DOMICILIO'}</span>
                   </div>
@@ -737,14 +801,14 @@ function StoreLandingContent({
               <div className="size-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto shadow-inner">
                 <ShoppingBag className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-black text-slate-800 uppercase">Sin Pedidos Pendientes</h3>
+              <h3 className="text-base font-bold text-slate-800 uppercase">Sin Pedidos Pendientes</h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
                 Al realizar una compra en la tienda podrás hacerle seguimiento en tiempo real desde este panel.
               </p>
               <button
                 type="button"
                 onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
-                className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
+                className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
               >
                 Realizar una Compra
               </button>
@@ -762,16 +826,16 @@ function StoreLandingContent({
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 {/* Avatar circular con degradado e inicial */}
-                <div className="size-16 rounded-2xl bg-gradient-to-br from-cyan-600 via-sky-600 to-indigo-700 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-cyan-500/25 shrink-0 border-2 border-white">
+                <div className="size-16 rounded-2xl bg-gradient-to-br from-cyan-600 via-sky-600 to-indigo-700 text-white font-bold text-2xl flex items-center justify-center shadow-lg shadow-cyan-500/25 shrink-0 border-2 border-white">
                   {clientName ? clientName.trim().substring(0, 2).toUpperCase() : <User className="size-8" />}
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
                       {clientName || 'Cliente Citiox'}
                     </h2>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                       <ShieldCheck className="size-3 text-emerald-600" />
                       <span>{clientPhone ? 'Cliente Verificado' : 'Cuenta Local'}</span>
                     </span>
@@ -780,7 +844,7 @@ function StoreLandingContent({
                   <p className="text-xs font-bold text-slate-500 font-mono">
                     {clientPhone || 'Registra tu número para seguimiento de pedidos'}
                   </p>
-                  <p className="text-[11px] text-slate-400 font-medium">
+                  <p className="text-xs text-slate-400 font-medium">
                     {negocio?.nombre || 'CITIOX Urban Store'} • Miembro Club
                   </p>
                 </div>
@@ -816,10 +880,10 @@ function StoreLandingContent({
                   </span>
                   <ChevronRight className="size-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                 </div>
-                <span className="text-base sm:text-lg font-black text-slate-900 block leading-tight">
+                <span className="text-base sm:text-lg font-bold text-slate-900 block leading-tight">
                   {loadingOrders ? '...' : ordersCount}
                 </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Mis Pedidos
                 </span>
               </button>
@@ -830,14 +894,14 @@ function StoreLandingContent({
                   <span className="p-1.5 bg-amber-100/80 text-amber-700 rounded-xl">
                     <Star className="size-4 fill-amber-400 text-amber-500" />
                   </span>
-                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                  <span className="text-xs font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
                     VIP
                   </span>
                 </div>
-                <span className="text-base sm:text-lg font-black text-slate-900 block leading-tight">
+                <span className="text-base sm:text-lg font-bold text-slate-900 block leading-tight">
                   {(ordersCount * 50) + (clientPhone ? 100 : 25)}
                 </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Puntos Club
                 </span>
               </div>
@@ -852,19 +916,19 @@ function StoreLandingContent({
                     <Tag className="size-4" />
                   </span>
                   {cuponesCount > 0 ? (
-                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="text-xs font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                       Activo
                     </span>
                   ) : (
-                    <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+                    <span className="text-xs font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
                       0 Disp.
                     </span>
                   )}
                 </div>
-                <span className="text-base sm:text-lg font-black text-slate-900 block leading-tight">
+                <span className="text-base sm:text-lg font-bold text-slate-900 block leading-tight">
                   {cuponesCount}
                 </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Cupones
                 </span>
               </div>
@@ -881,14 +945,14 @@ function StoreLandingContent({
                     <MapPin className="size-5" />
                   </span>
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
+                    <span className="text-xs font-bold uppercase text-slate-400 tracking-wider block">
                       Dirección habitual de entrega
                     </span>
-                    <p className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                    <p className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
                       {clientAddress || 'No has configurado una dirección de entrega aún.'}
                     </p>
                     {clientReference && (
-                      <p className="text-[11px] text-slate-500 font-medium">
+                      <p className="text-xs text-slate-500 font-medium">
                         Ref: {clientReference}
                       </p>
                     )}
@@ -902,7 +966,7 @@ function StoreLandingContent({
                 className="w-full py-3 px-4 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-extrabold text-xs uppercase tracking-wider rounded-2xl border border-cyan-200/80 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs active:scale-98"
               >
                 <Compass className="size-4 text-cyan-600" />
-                <span>ACTUALIZAR UBICACIÓN EN EL MAPA</span>
+                <span>Actualizar ubicación en el mapa</span>
               </button>
             </div>
           </div>
@@ -910,17 +974,24 @@ function StoreLandingContent({
           {/* 4. BANNER INSTALAR APP OFICIAL (PWA) */}
           <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-cyan-950 rounded-3xl p-5 text-white shadow-xl space-y-3 relative overflow-hidden border border-cyan-900/40">
             <div className="flex items-center gap-3.5">
-              <div className="size-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-2xl shrink-0 shadow-inner">
-                📱
+              <div className="size-12 rounded-2xl bg-white p-1.5 border border-cyan-400/40 flex items-center justify-center shrink-0 shadow-md overflow-hidden">
+                <img
+                  src={negocio?.logoUrl || '/citiox-icon.png'}
+                  alt={negocio?.nombre || 'CitiOx'}
+                  className="w-full h-full object-contain rounded-xl"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/citiox-icon.png';
+                  }}
+                />
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-cyan-300 block">
+                <span className="text-xs font-bold uppercase tracking-wide text-cyan-300 block">
                   Aplicación Oficial
                 </span>
-                <h4 className="text-sm sm:text-base font-black text-white leading-tight">
+                <h4 className="text-sm sm:text-base font-bold text-white leading-tight">
                   Instala la App de {negocio?.nombre || 'CITIOX'}
                 </h4>
-                <p className="text-[11px] text-slate-300 font-medium leading-tight mt-0.5">
+                <p className="text-xs text-slate-300 font-medium leading-tight mt-0.5">
                   Compra en 1-clic desde tu pantalla de inicio, recibe avisos de entrega y cupones exclusivos.
                 </p>
               </div>
@@ -931,7 +1002,7 @@ function StoreLandingContent({
               onClick={() => {
                 alert(`Para instalar la App de ${negocio?.nombre || 'CITIOX'} en tu celular:\n\n📱 En Android: Abre el menú de tu navegador (⋮) y presiona "Instalar aplicación" o "Agregar a pantalla principal".\n\n📱 En iPhone (Safari): Presiona el botón Compartir y elige "Agregar al inicio".`);
               }}
-              className="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-98"
+              className="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-98"
             >
               <Smartphone className="size-4" />
               <span>Instalar App en mi Celular</span>
@@ -942,11 +1013,11 @@ function StoreLandingContent({
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <User className="size-4 text-cyan-600" />
                   <span>Información Personal Guardada</span>
                 </h3>
-                <span className="text-[11px] text-slate-400 font-medium">
+                <span className="text-xs text-slate-400 font-medium">
                   Tus datos se autocompletarán automáticamente en cada pedido
                 </span>
               </div>
@@ -954,7 +1025,7 @@ function StoreLandingContent({
 
             <div className="space-y-3.5">
               <div>
-                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
+                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
                   Nombre Completo
                 </label>
                 <div className="relative">
@@ -970,7 +1041,7 @@ function StoreLandingContent({
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
+                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
                   Teléfono / WhatsApp
                 </label>
                 <div className="relative">
@@ -986,7 +1057,7 @@ function StoreLandingContent({
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
+                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
                   Dirección Habitual de Entrega
                 </label>
                 <div className="relative">
@@ -1002,7 +1073,7 @@ function StoreLandingContent({
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
+                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
                   Referencia de Domicilio (opcional)
                 </label>
                 <div className="relative">
@@ -1020,21 +1091,21 @@ function StoreLandingContent({
               <button
                 type="button"
                 onClick={handleSaveCustomerData}
-                className={`w-full py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98 ${
-                  savedDataToast
-                    ? 'bg-emerald-600 text-white shadow-emerald-600/30'
-                    : 'bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/20'
-                }`}
+                className={`w-full py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wide shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98 ${
+ savedDataToast
+ ? 'bg-emerald-600 text-white shadow-emerald-600/30'
+ : 'bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/20'
+ }`}
               >
                 {savedDataToast ? (
                   <>
                     <CheckCircle2 className="size-4 text-white animate-in zoom-in" />
-                    <span>¡DATOS GUARDADOS CON ÉXITO!</span>
+                    <span>¡Datos guardados con éxito!</span>
                   </>
                 ) : (
                   <>
                     <Check className="size-4" />
-                    <span>GUARDAR MIS DATOS</span>
+                    <span>Guardar mis datos</span>
                   </>
                 )}
               </button>
@@ -1043,7 +1114,7 @@ function StoreLandingContent({
 
           {/* 6. ACCIONES RÁPIDAS & SOPORTE WHATSAPP */}
           <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-2xs space-y-2.5">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide px-1">
               Accesos Rápidos y Ayuda
             </h4>
 
@@ -1056,12 +1127,12 @@ function StoreLandingContent({
               className="w-full p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200/70 flex items-center justify-between text-left transition-all cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center font-black">
+                <div className="size-10 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center font-bold">
                   <PackageCheck className="size-5" />
                 </div>
                 <div>
-                  <span className="text-xs font-black text-slate-900 block">Mis Pedidos e Historial</span>
-                  <span className="text-[11px] text-slate-500 font-medium">Revisa tus compras realizadas y el rastreo de envíos</span>
+                  <span className="text-xs font-bold text-slate-900 block">Mis Pedidos e Historial</span>
+                  <span className="text-xs text-slate-500 font-medium">Revisa tus compras realizadas y el rastreo de envíos</span>
                 </div>
               </div>
               <ChevronRight className="size-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
@@ -1076,12 +1147,12 @@ function StoreLandingContent({
               className="w-full p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200/70 flex items-center justify-between text-left transition-all cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-black">
+                <div className="size-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
                   <ShoppingBag className="size-5" />
                 </div>
                 <div>
-                  <span className="text-xs font-black text-slate-900 block">Explorar Catálogo y Ofertas</span>
-                  <span className="text-[11px] text-slate-500 font-medium">Ver nuevos lanzamientos y promociones activas</span>
+                  <span className="text-xs font-bold text-slate-900 block">Explorar Catálogo y Ofertas</span>
+                  <span className="text-xs text-slate-500 font-medium">Ver nuevos lanzamientos y promociones activas</span>
                 </div>
               </div>
               <ChevronRight className="size-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
@@ -1094,12 +1165,12 @@ function StoreLandingContent({
               className="w-full p-3.5 bg-emerald-50 hover:bg-emerald-100/70 rounded-2xl border border-emerald-200/70 flex items-center justify-between text-left transition-all cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-sm">
+                <div className="size-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-sm">
                   <MessageSquare className="size-5" />
                 </div>
                 <div>
-                  <span className="text-xs font-black text-emerald-950 block">Atención al Cliente por WhatsApp</span>
-                  <span className="text-[11px] text-emerald-700 font-medium">¿Tienes dudas con un pedido o producto? Escríbenos</span>
+                  <span className="text-xs font-bold text-emerald-950 block">Atención al Cliente por WhatsApp</span>
+                  <span className="text-xs text-emerald-700 font-medium">¿Tienes dudas con un pedido o producto? Escríbenos</span>
                 </div>
               </div>
               <ExternalLink className="size-4 text-emerald-600 group-hover:translate-x-0.5 transition-transform" />
@@ -1131,14 +1202,14 @@ function StoreLandingContent({
         <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-cyan-50 border border-cyan-200/80 text-cyan-700 font-extrabold text-[10px] uppercase tracking-wider shadow-2xs flex items-center gap-1">
+              <span className="px-2.5 py-0.5 rounded-full bg-cyan-50 border border-cyan-200/80 text-cyan-700 font-extrabold text-xs uppercase tracking-wider shadow-2xs flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-cyan-500" /> OFERTAS DE TEMPORADA
               </span>
-              <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-tight">
                 Promociones & Combos
               </h3>
             </div>
-            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full flex items-center gap-1 border border-slate-200/60">
+            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full flex items-center gap-1 border border-slate-200/60">
               <Clock className="w-3 h-3 text-slate-400" /> Tiempo Limitado
             </span>
           </div>
@@ -1159,10 +1230,10 @@ function StoreLandingContent({
                       alt={promo.titulo}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-xl bg-slate-950/85 text-white font-extrabold text-[9px] uppercase tracking-wider backdrop-blur-md shadow-xs">
+                    <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-xl bg-slate-950/85 text-white font-extrabold text-xs uppercase tracking-wider backdrop-blur-md shadow-xs">
                       {promo.badge}
                     </span>
-                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-lg bg-white/90 text-slate-700 font-bold text-[9px] backdrop-blur-md border border-slate-200/60 shadow-2xs">
+                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-lg bg-white/90 text-slate-700 font-bold text-xs backdrop-blur-md border border-slate-200/60 shadow-2xs">
                       ⏱️ 12h restantes
                     </span>
                   </div>
@@ -1171,7 +1242,7 @@ function StoreLandingContent({
                     <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight line-clamp-1 group-hover:text-cyan-600 transition-colors">
                       {promo.titulo}
                     </h4>
-                    <p className="text-slate-500 text-[10px] font-medium leading-snug line-clamp-2 mt-0.5">
+                    <p className="text-slate-500 text-xs font-medium leading-snug line-clamp-2 mt-0.5">
                       {promo.descripcion}
                     </p>
                   </div>
@@ -1179,7 +1250,7 @@ function StoreLandingContent({
 
                 {/* Micro Barra de Disponibilidad */}
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[9px] font-bold">
+                  <div className="flex items-center justify-between text-xs font-bold">
                     <span className="text-cyan-600">⚡ Quedan pocas unidades</span>
                     <span className="text-slate-400">85% reservado</span>
                   </div>
@@ -1191,11 +1262,11 @@ function StoreLandingContent({
                 {/* Precios & Botón */}
                 <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                   <div>
-                    <span className="text-sm sm:text-base font-black text-slate-900 block leading-tight">
+                    <span className="text-sm sm:text-base font-bold text-slate-900 block leading-tight">
                       ${Number(promo.precioPromo).toFixed(2)}
                     </span>
                     {promo.precioAnterior && (
-                      <span className="text-[10px] text-slate-400 line-through font-bold">
+                      <span className="text-xs text-slate-400 line-through font-bold">
                         ${Number(promo.precioAnterior).toFixed(2)}
                       </span>
                     )}
@@ -1221,7 +1292,7 @@ function StoreLandingContent({
                         }
                       }
                     }}
-                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[10px] uppercase rounded-xl shadow-xs cursor-pointer transition-all active:scale-95 flex items-center gap-1 shrink-0"
+                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs uppercase rounded-xl shadow-xs cursor-pointer transition-all active:scale-95 flex items-center gap-1 shrink-0"
                   >
                     <ShoppingBag className="w-3 h-3 text-cyan-400" />
                     <span>Pedir Promo</span>
@@ -1272,11 +1343,11 @@ function StoreLandingContent({
           <button
             type="button"
             onClick={() => setSelectedCategoryId(null)}
-            className={`px-3.5 py-2 rounded-2xl font-black shrink-0 transition-all flex items-center gap-1.5 cursor-pointer text-[11px] ${
-              selectedCategoryId === null
-                ? 'bg-cyan-500 text-white shadow-md'
-                : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
-            }`}
+            className={`px-3.5 py-2 rounded-2xl font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+ selectedCategoryId === null
+ ? 'bg-cyan-500 text-white shadow-md'
+ : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
+ }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>Todos ({initialProducts.length})</span>
@@ -1294,11 +1365,11 @@ function StoreLandingContent({
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategoryId(isSelected ? null : cat.id)}
-                className={`px-3.5 py-2 rounded-2xl font-extrabold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer text-[11px] ${
-                  isSelected
-                    ? 'bg-cyan-500 text-white shadow-md'
-                    : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
-                }`}
+                className={`px-3.5 py-2 rounded-2xl font-extrabold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+ isSelected
+ ? 'bg-cyan-500 text-white shadow-md'
+ : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
+ }`}
               >
                 <CatIcon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
                 <span>{cat.nombre} ({count})</span>
@@ -1311,7 +1382,7 @@ function StoreLandingContent({
       {/* ── 5. SECCIÓN PRODUCTOS DESTACADOS ── */}
       <section id="productos" className="max-w-7xl mx-auto px-4 sm:px-6 mt-3">
         <div className="flex items-center justify-between mb-2.5">
-          <h2 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-1.5 tracking-tight">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-1.5 tracking-tight">
             <Sparkles className="w-4 h-4 text-cyan-500" />
             <span>
               {selectedCategoryId
@@ -1322,7 +1393,7 @@ function StoreLandingContent({
           <button
             type="button"
             onClick={() => setSelectedCategoryId(null)}
-            className="text-[11px] font-extrabold text-cyan-600 hover:text-cyan-700 cursor-pointer"
+            className="text-xs font-extrabold text-cyan-600 hover:text-cyan-700 cursor-pointer"
           >
             Ver todo
           </button>
@@ -1389,22 +1460,22 @@ function StoreLandingContent({
             type="button"
             onClick={() => setActiveTab('inicio')}
             className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
-              activeTab === 'inicio' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-            }`}
+ activeTab === 'inicio' ? 'text-cyan-600 font-bold' : 'text-slate-400 hover:text-slate-600 font-semibold'
+ }`}
           >
             <Home className="w-5 h-5" />
-            <span className="text-[10px]">Inicio</span>
+            <span className="text-xs">Inicio</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('pedidos')}
             className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
-              activeTab === 'pedidos' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-            }`}
+ activeTab === 'pedidos' ? 'text-cyan-600 font-bold' : 'text-slate-400 hover:text-slate-600 font-semibold'
+ }`}
           >
             <Box className="w-5 h-5" />
-            <span className="text-[10px]">Mis pedidos</span>
+            <span className="text-xs">Mis pedidos</span>
           </button>
 
           {/* Botón Central Destacado Catálogo */}
@@ -1425,22 +1496,22 @@ function StoreLandingContent({
             type="button"
             onClick={() => setActiveTab('ofertas')}
             className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
-              activeTab === 'ofertas' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-            }`}
+ activeTab === 'ofertas' ? 'text-cyan-600 font-bold' : 'text-slate-400 hover:text-slate-600 font-semibold'
+ }`}
           >
             <Gift className="w-5 h-5" />
-            <span className="text-[10px]">Premios</span>
+            <span className="text-xs">Premios</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('cuenta')}
             className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
-              activeTab === 'cuenta' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-            }`}
+ activeTab === 'cuenta' ? 'text-cyan-600 font-bold' : 'text-slate-400 hover:text-slate-600 font-semibold'
+ }`}
           >
             <User className="w-5 h-5" />
-            <span className="text-[10px]">Perfil</span>
+            <span className="text-xs">Perfil</span>
           </button>
         </div>
       )}
@@ -1505,7 +1576,6 @@ function ProductCardItem({
   const isOutOfStock = product.stock !== null && product.stock !== undefined && product.stock <= 0;
 
   const currentInCart = getItemQuantity(product.id);
-  const fakeRating = (4.7 + (product.nombre.length % 3) * 0.1).toFixed(1);
 
   return (
     <div
@@ -1527,15 +1597,15 @@ function ProductCardItem({
         {/* Badges superiores izquierda (NUEVO / DESCUENTO / AGOTADO) */}
         <div className="absolute top-3 left-3 z-20 flex flex-col gap-1">
           {isOutOfStock ? (
-            <span className="px-2.5 py-1 rounded-xl text-[9px] font-black bg-rose-600 text-white shadow-xs uppercase tracking-wider">
+            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-600 text-white shadow-xs uppercase tracking-wider">
               Agotado
             </span>
           ) : hasVariants ? (
-            <span className="px-2.5 py-1 rounded-xl text-[9px] font-black bg-cyan-500 text-white shadow-xs uppercase tracking-wider">
+            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-cyan-500 text-white shadow-xs uppercase tracking-wider">
               -20%
             </span>
           ) : (
-            <span className="px-2.5 py-1 rounded-xl text-[9px] font-black bg-slate-950 text-white shadow-xs uppercase tracking-wider">
+            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-950 text-white shadow-xs uppercase tracking-wider">
               NUEVO
             </span>
           )}
@@ -1552,7 +1622,7 @@ function ProductCardItem({
 
         {currentInCart > 0 && (
           <span
-            className="absolute bottom-3 right-3 z-20 px-2.5 py-1 rounded-full text-[10px] font-black text-white shadow-md animate-pulse"
+            className="absolute bottom-3 right-3 z-20 px-2.5 py-1 rounded-full text-xs font-bold text-white shadow-md animate-pulse"
             style={{ backgroundColor: primaryColor }}
           >
             {currentInCart} en carrito
@@ -1571,20 +1641,16 @@ function ProductCardItem({
         {/* Precio & Rating (Idéntico a la Captura) */}
         <div className="pt-1 flex items-center justify-between gap-2">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-sm sm:text-base font-black text-slate-900">
+            <span className="text-sm sm:text-base font-bold text-slate-900">
               ${(Number(product.precio) || 0).toFixed(2)}
             </span>
             {hasVariants && (
-              <span className="text-[10px] font-bold text-slate-400 line-through">
+              <span className="text-xs font-bold text-slate-400 line-through">
                 ${((Number(product.precio) || 0) * 1.25).toFixed(2)}
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-1 text-[11px] font-black text-slate-500 shrink-0">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span>{fakeRating}</span>
-          </div>
         </div>
       </div>
     </div>

@@ -127,13 +127,13 @@ export default function PushNotificationManager() {
         return (
             <div className="fixed bottom-24 md:bottom-4 left-4 right-4 md:right-auto z-[110] p-4 bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 max-w-sm flex items-center space-x-4 animate-in slide-in-from-bottom-5">
                 <div className="flex-1">
-                    <h4 className="font-black text-white text-sm">Notificaciones</h4>
-                    <p className="text-[10px] text-white/50 mt-0.5 leading-tight">Activa alertas para tus reservas</p>
+                    <h4 className="font-bold text-white text-sm">Notificaciones</h4>
+                    <p className="text-xs text-white/50 mt-0.5 leading-tight">Activa alertas para tus reservas</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setupFCM(true)}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-wide px-4 py-2 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
                     >
                         Activar
                     </button>

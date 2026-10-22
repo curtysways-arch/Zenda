@@ -1,4 +1,5 @@
 // src/app/api/[slug]/mesa-order/route.ts
+import { guardCustomerIntake } from '@/lib/subscription/receiveGuard';
 // API para crear un pedido de mesa desde el flujo QR
 // Usa el Order Runtime genérico (modelo Pedido) — no requiere lógica específica de restaurante
 
@@ -22,6 +23,8 @@ export async function POST(
 
   const negocio = await prisma.negocio.findUnique({ where: { slug } });
   if (!negocio) return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+  const intakeBlocked = await guardCustomerIntake(negocio.id);
+  if (intakeBlocked) return intakeBlocked;
 
   const cfg = (negocio.configuracion as any) || {};
   const channels = cfg.channels || {};

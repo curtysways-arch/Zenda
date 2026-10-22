@@ -79,15 +79,15 @@ export default function ReferralBanner({
 
                     {/* Texto */}
                     <div className="flex-1 min-w-0">
-                        <p className="text-white text-[11px] font-black uppercase tracking-widest flex items-center gap-1">
+                        <p className="text-white text-xs font-bold uppercase tracking-wide flex items-center gap-1">
                             <Sparkles size={10} className="text-yellow-300" />
                             Invitación especial
                         </p>
-                        <p className="text-white/95 text-[13px] font-semibold leading-tight mt-0.5 truncate">
-                            <span className="font-black">{referrerName}</span> te invitó a{' '}
-                            <span className="font-black">{negocioName}</span>
+                        <p className="text-white/95 text-sm font-semibold leading-tight mt-0.5 truncate">
+                            <span className="font-bold">{referrerName}</span> te invitó a{' '}
+                            <span className="font-bold">{negocioName}</span>
                         </p>
-                        <p className="text-white/70 text-[10px] mt-0.5">
+                        <p className="text-white/70 text-xs mt-0.5">
                             Reserva tu cita y disfruta el beneficio 🎁
                         </p>
                     </div>

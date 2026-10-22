@@ -1,14 +1,14 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const session = await getEffectiveAdminSession();
+        if (!session?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const negocioId = (session.user as any).negocioId;
+        if (!negocioId) return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 });
 
         const [clientesDb, pedidosDb] = await Promise.all([
             prisma.cliente.findMany({
@@ -84,6 +84,12 @@ export async function GET(req: Request) {
                 nombre: c.nombre || 'Cliente',
                 telefono: c.telefono || '',
                 email: c.email || '',
+                identificacion: c.identificacion || null,
+                tipoIdentificacion: c.tipoIdentificacion || 'CEDULA',
+                razonSocial: c.razonSocial || null,
+                direccionFacturacion: c.direccionFacturacion || null,
+                emailFacturacion: c.emailFacturacion || null,
+                telefonoFacturacion: c.telefonoFacturacion || null,
                 totalReservas: totalServiciosFinal,
                 totalGastado: totalGastadoFinal.toFixed(2),
                 ratingPromedio: c.ratingPromedio || 0,
@@ -100,6 +106,12 @@ export async function GET(req: Request) {
                     nombre: info.nombre || 'Cliente',
                     telefono: cleanTel,
                     email: '',
+                    identificacion: null,
+                    tipoIdentificacion: 'CEDULA',
+                    razonSocial: null,
+                    direccionFacturacion: null,
+                    emailFacturacion: null,
+                    telefonoFacturacion: null,
                     totalReservas: info.count,
                     totalGastado: info.total.toFixed(2),
                     ratingPromedio: 0,
@@ -120,3 +132,32 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: 'Error al obtener clientes' }, { status: 500 });
     }
 }
+
+export async function POST(req: Request) {
+    try {
+        const session = await getEffectiveAdminSession();
+        if (!session?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+        const negocioId = (session.user as any).negocioId;
+        if (!negocioId) return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 });
+
+        const body = await req.json().catch(() => ({}));
+        const { identificacion, tipoIdentificacion, razonSocial, nombre, telefono, email, direccionFacturacion } = body;
+
+        const { CustomerEngine } = await import('@/core/customers/CustomerEngine');
+        const cliente = await CustomerEngine.upsertCustomerTaxData(negocioId, {
+            identificacion: identificacion || body.cedula || '9999999999999',
+            tipoIdentificacion,
+            razonSocial: razonSocial || nombre || 'Cliente',
+            telefono,
+            email,
+            direccion: direccionFacturacion
+        });
+
+        return NextResponse.json({ success: true, cliente });
+    } catch (error: any) {
+        console.error('Error saving client:', error);
+        return NextResponse.json({ error: error.message || 'Error al guardar cliente' }, { status: 500 });
+    }
+}
+

@@ -1,15 +1,15 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { checkDemoRestriction } from '@/lib/demo-protection';
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const session = await getEffectiveAdminSession();
+        if (!session?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const negocioId = (session.user as any).negocioId;
+        if (!negocioId) return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 });
 
         const resultados = await prisma.resultado.findMany({
             where: {
@@ -66,8 +66,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const session = await getEffectiveAdminSession();
+        if (!session?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         // PROTECCIÓN MODO DEMO
         const demoCheck = await checkDemoRestriction();
@@ -76,6 +76,7 @@ export async function POST(req: Request) {
         }
 
         const negocioId = (session.user as any).negocioId;
+        if (!negocioId) return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 });
         const data = await req.json();
 
         const id = Math.random().toString(36).substring(2, 15);
@@ -123,8 +124,8 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const session = await getEffectiveAdminSession();
+        if (!session?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         // PROTECCIÓN MODO DEMO
         const demoCheck = await checkDemoRestriction();
@@ -138,6 +139,7 @@ export async function DELETE(req: Request) {
         if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
         const negocioId = (session.user as any).negocioId;
+        if (!negocioId) return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 });
 
         await prisma.resultado.deleteMany({
             where: {
@@ -155,8 +157,8 @@ export async function DELETE(req: Request) {
 
 export async function PATCH(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const session = await getEffectiveAdminSession();
+        if (!session?.user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         // PROTECCIÓN MODO DEMO
         const demoCheck = await checkDemoRestriction();
@@ -165,6 +167,7 @@ export async function PATCH(req: Request) {
         }
 
         const negocioId = (session.user as any).negocioId;
+        if (!negocioId) return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 });
         const data = await req.json();
         const { id, ...updates } = data;
 

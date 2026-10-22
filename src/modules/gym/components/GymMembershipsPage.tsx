@@ -134,7 +134,7 @@ export default function GymMembershipsPage() {
     <div className="w-full space-y-4 sm:space-y-5 pb-16">
       {/* ── CABECERA ────────────────────────────────────────── */}
       <div>
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
           Membresías &amp; Pagos
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
@@ -247,7 +247,7 @@ export default function GymMembershipsPage() {
                   {/* Encabezado socio + badges */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center font-black text-sm text-orange-600 shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center font-bold text-sm text-orange-600 shrink-0">
                         {m.cliente?.nombre?.charAt(0) || 'S'}
                       </div>
                       <div className="min-w-0">
@@ -258,10 +258,10 @@ export default function GymMembershipsPage() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusInfo.cls}`}>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${statusInfo.cls}`}>
                         {statusInfo.label}
                       </span>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${payInfo.cls}`}>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${payInfo.cls}`}>
                         {payInfo.label}
                       </span>
                     </div>
@@ -270,18 +270,18 @@ export default function GymMembershipsPage() {
                   {/* Resumen Plan y Vencimiento */}
                   <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-2.5 text-xs">
                     <div>
-                      <span className="text-slate-400 text-[10px] uppercase font-bold block">Plan Contratado</span>
+                      <span className="text-slate-400 text-xs uppercase font-bold block">Plan Contratado</span>
                       <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
                         {m.membershipPlan?.name || 'Personalizado'}
                       </span>
                       <span className="text-orange-600 font-bold">${m.price} {m.currency || 'USD'}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-slate-400 text-[10px] uppercase font-bold block">Vence</span>
+                      <span className="text-slate-400 text-xs uppercase font-bold block">Vence</span>
                       <span className="font-semibold text-slate-700 dark:text-slate-300 block">
                         {fmtDate(m.endAt)}
                       </span>
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-xs text-slate-400">
                         {!isExpired ? `${daysRemaining}d restantes` : 'Vencida'}
                       </span>
                     </div>
@@ -333,7 +333,7 @@ export default function GymMembershipsPage() {
           <div className="hidden md:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm">
-                <thead className="bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                <thead className="bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500">
                   <tr>
                     <th className="py-3.5 px-6">Socio</th>
                     <th className="py-3.5 px-4">Plan</th>
@@ -364,33 +364,33 @@ export default function GymMembershipsPage() {
                       >
                         <td className="py-3.5 px-6">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black text-xs text-slate-700 dark:text-slate-300 shrink-0">
+                            <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-slate-300 shrink-0">
                               {m.cliente?.nombre?.charAt(0) || 'S'}
                             </div>
                             <div>
                               <p className="font-bold text-slate-900 dark:text-white leading-tight">{m.cliente?.nombre || 'Socio'}</p>
-                              <p className="text-[11px] text-slate-400">{m.cliente?.telefono}</p>
+                              <p className="text-xs text-slate-400">{m.cliente?.telefono}</p>
                             </div>
                           </div>
                         </td>
                         <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-slate-200">
                           {m.membershipPlan?.name || 'Plan personalizado'}
-                          <span className="block text-[11px] text-slate-400 font-normal">${m.price} {m.currency || 'USD'}</span>
+                          <span className="block text-xs text-slate-400 font-normal">${m.price} {m.currency || 'USD'}</span>
                         </td>
                         <td className="py-3.5 px-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${statusInfo.cls}`}>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${statusInfo.cls}`}>
                             {statusInfo.label}
                           </span>
                         </td>
                         <td className="py-3.5 px-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${payInfo.cls}`}>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${payInfo.cls}`}>
                             {payInfo.icon}
                             {payInfo.label}
                           </span>
                         </td>
                         <td className="py-3.5 px-4">
                           <span className="font-medium text-slate-900 dark:text-slate-200 text-xs">{fmtDate(m.endAt)}</span>
-                          {!isExpired && <span className="block text-[11px] text-slate-400">{daysRemaining}d restantes</span>}
+                          {!isExpired && <span className="block text-xs text-slate-400">{daysRemaining}d restantes</span>}
                         </td>
                         <td className="py-3.5 px-4 text-right" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1.5 flex-wrap">
@@ -471,11 +471,11 @@ export default function GymMembershipsPage() {
                   <ArrowLeft size={18} />
                 </button>
                 <div>
-                  <h3 className="font-black text-base uppercase text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="font-bold text-base uppercase text-slate-900 dark:text-white flex items-center gap-2">
                     <Receipt className="text-orange-500" size={18} />
                     Detalle de Membresía
                   </h3>
-                  <span className="text-[11px] text-slate-400 font-mono">
+                  <span className="text-xs text-slate-400 font-mono">
                     ID: #{detailMembership.id.slice(-8).toUpperCase()}
                   </span>
                 </div>
@@ -494,11 +494,11 @@ export default function GymMembershipsPage() {
               {/* 1. Tarjeta del Socio */}
               <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-14 h-14 rounded-full bg-orange-500/10 border-2 border-orange-500/30 flex items-center justify-center font-black text-xl text-orange-600 shrink-0">
+                  <div className="w-14 h-14 rounded-full bg-orange-500/10 border-2 border-orange-500/30 flex items-center justify-center font-bold text-xl text-orange-600 shrink-0">
                     {detailMembership.cliente?.nombre?.charAt(0) || 'S'}
                   </div>
                   <div>
-                    <h4 className="font-black text-slate-900 dark:text-white text-base">
+                    <h4 className="font-bold text-slate-900 dark:text-white text-base">
                       {detailMembership.cliente?.nombre || 'Socio'}
                     </h4>
                     <p className="text-xs text-slate-400">{detailMembership.cliente?.telefono || 'Sin teléfono'}</p>
@@ -523,28 +523,28 @@ export default function GymMembershipsPage() {
 
               {/* 2. Resumen del Plan */}
               <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">Plan &amp; Vigencia</h4>
+                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Plan &amp; Vigencia</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 text-center">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Plan</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Plan</span>
                     <span className="font-bold text-slate-900 dark:text-white text-sm truncate block mt-0.5">
                       {detailMembership.membershipPlan?.name || 'Personalizado'}
                     </span>
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 text-center">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Importe</span>
-                    <span className="font-black text-orange-600 text-base block mt-0.5">
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Importe</span>
+                    <span className="font-bold text-orange-600 text-base block mt-0.5">
                       ${detailMembership.price} {detailMembership.currency || 'USD'}
                     </span>
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 text-center">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Inicio</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Inicio</span>
                     <span className="font-semibold text-slate-700 dark:text-slate-300 text-xs block mt-1">
                       {fmtDate(detailMembership.startAt)}
                     </span>
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 text-center">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Vencimiento</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Vencimiento</span>
                     <span className="font-semibold text-slate-700 dark:text-slate-300 text-xs block mt-1">
                       {fmtDate(detailMembership.endAt)}
                     </span>
@@ -568,11 +568,11 @@ export default function GymMembershipsPage() {
               {/* 3. HISTORIAL DE PAGOS & AUDITORÍA COMPLETA */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
                     <DollarSign size={14} className="text-emerald-500" />
                     Historial de Pago &amp; Transacción
                   </h4>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold border text-[11px] ${PAY_LABELS[detailMembership.paymentStatus]?.cls}`}>
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold border text-xs ${PAY_LABELS[detailMembership.paymentStatus]?.cls}`}>
                     {PAY_LABELS[detailMembership.paymentStatus]?.icon}
                     {PAY_LABELS[detailMembership.paymentStatus]?.label}
                   </span>
@@ -581,7 +581,7 @@ export default function GymMembershipsPage() {
                 <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 text-xs">
                   <div className="flex justify-between items-center py-1.5 border-b border-slate-200/60 dark:border-slate-800">
                     <span className="text-slate-500">Monto total registrado</span>
-                    <span className="font-black text-slate-900 dark:text-white text-sm">
+                    <span className="font-bold text-slate-900 dark:text-white text-sm">
                       ${detailMembership.price} {detailMembership.currency || 'USD'}
                     </span>
                   </div>
@@ -623,7 +623,7 @@ export default function GymMembershipsPage() {
                         <AlertTriangle size={15} />
                         <span>Pago pendiente de confirmación</span>
                       </div>
-                      <p className="text-[11px] text-yellow-600/90 dark:text-yellow-500">
+                      <p className="text-xs text-yellow-600/90 dark:text-yellow-500">
                         Verifica el cobro o transferencia antes de marcar esta membresía como pagada.
                       </p>
                       <button
@@ -644,7 +644,7 @@ export default function GymMembershipsPage() {
 
               {/* 4. ACCIONES OPERATIVAS */}
               <div className="space-y-2.5 pt-2">
-                <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">Acciones sobre la Membresía</h4>
+                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Acciones sobre la Membresía</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {detailMembership.status === 'ACTIVE' && new Date(detailMembership.endAt) > new Date() && (
                     <button
@@ -713,7 +713,7 @@ export default function GymMembershipsPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-black uppercase text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <ShieldCheck className="text-emerald-500" size={20} />
                 Confirmar Pago
               </h3>
@@ -779,7 +779,7 @@ export default function GymMembershipsPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-black uppercase text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Snowflake className="text-blue-500" size={20} />
                 Congelar Membresía
               </h3>
@@ -829,7 +829,7 @@ export default function GymMembershipsPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-black uppercase text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <RotateCw className="text-orange-500" size={20} />
                 Renovar Membresía
               </h3>

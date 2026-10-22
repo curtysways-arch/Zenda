@@ -404,12 +404,15 @@ export class BusinessMissionService {
       });
 
       if (!existing) {
+        // Si la misión necesita un premio del negocio, queda pendiente hasta que el
+        // dueño lo elija: nunca se le muestra al cliente un premio que el negocio no decidió.
+        const needsReward = Boolean(def.requiresBusinessReward);
         await prisma.businessMission.create({
           data: {
             negocioId,
             missionDefinitionId: def.id,
-            status: 'ACTIVE',
-            publishedAt: new Date()
+            status: needsReward ? 'PENDING_REWARD' : 'ACTIVE',
+            publishedAt: needsReward ? null : new Date()
           }
         });
       }

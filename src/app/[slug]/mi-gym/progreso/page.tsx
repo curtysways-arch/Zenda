@@ -121,7 +121,7 @@ export default function MiProgresoPage() {
       </div>
 
       <div>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
           <TrendingUp className="w-6 h-6 text-emerald-500" />
           Mi Progreso & Constancia
         </h1>
@@ -134,10 +134,10 @@ export default function MiProgresoPage() {
       <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <span className="text-[10px] uppercase font-black tracking-widest text-emerald-500">
+            <span className="text-xs uppercase font-bold tracking-wide text-emerald-500">
               Racha de Fuego
             </span>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               <Flame className="w-5 h-5 text-amber-500 fill-amber-500" />
               {stats.weeklyStreak} días esta semana
             </h3>
@@ -154,14 +154,14 @@ export default function MiProgresoPage() {
             const isCompleted = idx < activeDaysThisWeek;
             return (
               <div key={idx} className="flex flex-col items-center gap-1.5">
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-xs transition-all border ${
-                  isCompleted
-                    ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20'
-                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-400'
-                }`}>
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs transition-all border ${
+ isCompleted
+ ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20'
+ : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-400'
+ }`}>
                   {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : day}
                 </div>
-                <span className="text-[10px] text-slate-400 font-semibold">{day}</span>
+                <span className="text-xs text-slate-400 font-semibold">{day}</span>
               </div>
             );
           })}
@@ -175,10 +175,10 @@ export default function MiProgresoPage() {
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white">
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
               {stats.caloriesEstimated.toLocaleString('es-ES')} <span className="text-xs font-medium text-slate-400">kcal</span>
             </div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
               Gasto Calórico Estimado
             </span>
           </div>
@@ -189,10 +189,10 @@ export default function MiProgresoPage() {
             <Clock className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white">
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
               {Math.round(stats.totalMinutes / 60)} <span className="text-xs font-medium text-slate-400">horas</span>
             </div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
               Entrenamiento Acumulado
             </span>
           </div>
@@ -201,7 +201,7 @@ export default function MiProgresoPage() {
 
       {/* Logros & Insignias */}
       <div className="space-y-3">
-        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1 flex items-center gap-1.5">
+        <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400 px-1 flex items-center gap-1.5">
           <Trophy className="w-4 h-4 text-amber-500" />
           Logros Deportivos
         </h3>
@@ -224,15 +224,15 @@ export default function MiProgresoPage() {
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-black text-sm text-slate-900 dark:text-white truncate">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">
                     {ach.title}
                   </h4>
                   {ach.unlocked ? (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500 text-white">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold uppercase bg-emerald-500 text-white">
                       Desbloqueado
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-slate-200 dark:bg-slate-800 text-slate-400 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold uppercase bg-slate-200 dark:bg-slate-800 text-slate-400 flex items-center gap-1">
                       <Lock className="w-2.5 h-2.5" /> Bloqueado
                     </span>
                   )}

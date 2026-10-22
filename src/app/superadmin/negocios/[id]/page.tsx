@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getTeamContext, canAccessBusinessId } from "@/lib/admin/teamGuard";
 import { notFound } from "next/navigation";
 import BusinessDetailClient from "./BusinessDetailClient";
 import {
@@ -14,6 +15,8 @@ import Link from "next/link";
 
 export default async function BusinessDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
+    const ctx = await getTeamContext();
+    if (!ctx || !(await canAccessBusinessId(ctx, id))) notFound();
 
     const negocio = await (prisma.negocio as any).findUnique({
         where: { id },
@@ -75,16 +78,16 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
                     </Link>
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-widest rounded-md border border-indigo-100">
+                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wide rounded-md border border-indigo-100">
                                 Gestión de Negocio
                             </span>
                             {fullNegocio.Suscripcion?.estado === 'trial' && (
-                                <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest rounded-md border border-amber-100">
+                                <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-xs font-bold uppercase tracking-wide rounded-md border border-amber-100">
                                     Periodo de Prueba
                                 </span>
                             )}
                         </div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">
+                        <h2 className="text-3xl font-bold text-slate-900 tracking-tight leading-none ">
                             {fullNegocio.nombre}
                         </h2>
                     </div>
@@ -94,7 +97,7 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
                     <Link
                         href={`/${fullNegocio.slug}`}
                         target="_blank"
-                        className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
+                        className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-slate-600 font-bold text-xs uppercase tracking-wide hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
                     >
                         <LayoutDashboard size={16} />
                         Página Pública
@@ -104,36 +107,36 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
 
             {/* Quick Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-4 mb-3 text-indigo-600">
                         <Building2 size={24} className="opacity-50" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Servicios</span>
+                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400">Servicios</span>
                     </div>
-                    <div className="text-3xl font-black text-slate-900">{fullNegocio._count?.Service || 0}</div>
+                    <div className="text-3xl font-bold text-slate-900">{fullNegocio._count?.Service || 0}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-4 mb-3 text-emerald-600">
                         <Calendar size={24} className="opacity-50" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Citas</span>
+                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400">Citas</span>
                     </div>
-                    <div className="text-3xl font-black text-slate-900">{fullNegocio._count?.Appointment || 0}</div>
+                    <div className="text-3xl font-bold text-slate-900">{fullNegocio._count?.Appointment || 0}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-4 mb-3 text-amber-600">
                         <Users size={24} className="opacity-50" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Usuarios</span>
+                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400">Usuarios</span>
                     </div>
-                    <div className="text-3xl font-black text-slate-900">{fullNegocio._count?.Usuario || 0}</div>
+                    <div className="text-3xl font-bold text-slate-900">{fullNegocio._count?.Usuario || 0}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-4 mb-3 text-rose-600">
                         <MapPin size={24} className="opacity-50" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ubicaciones</span>
+                        <span className="text-xs font-bold uppercase tracking-wide text-slate-400">Ubicaciones</span>
                     </div>
-                    <div className="text-3xl font-black text-slate-900">{fullNegocio._count?.Ubicacion || 0}</div>
+                    <div className="text-3xl font-bold text-slate-900">{fullNegocio._count?.Ubicacion || 0}</div>
                 </div>
             </div>
 

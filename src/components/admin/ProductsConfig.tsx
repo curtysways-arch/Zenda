@@ -54,7 +54,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
     return (
         <div className="space-y-8 text-left max-w-4xl pb-10">
             <div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none italic uppercase">
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none ">
                     Configuración de Negocio
                 </h1>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">
@@ -67,14 +67,14 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                     message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'
                 }`}>
                     {message.type === 'success' ? <CheckCircle2 className="size-5" /> : <AlertCircle className="size-5" />}
-                    <span className="text-xs font-black uppercase tracking-wider">{message.text}</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">{message.text}</span>
                 </div>
             )}
 
             <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Logo Uploader */}
-                <div className="md:col-span-1 bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm space-y-4 h-fit">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Logo de la Marca</label>
+                <div className="md:col-span-1 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4 h-fit">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Logo de la Marca</label>
                     <ImageUploader
                         category="logo"
                         currentUrl={logoUrl}
@@ -88,11 +88,11 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                 {/* Formulario */}
                 <div className="md:col-span-2 space-y-6">
                     {/* Sección General */}
-                    <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm space-y-4">
-                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-3 mb-2">Información Básica</h3>
+                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
+                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b border-slate-100 pb-3 mb-2">Información Básica</h3>
                         
                         <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Nombre comercial</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nombre comercial</label>
                             <input
                                 type="text"
                                 required
@@ -104,7 +104,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">WhatsApp de pedidos</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">WhatsApp de pedidos</label>
                                 <input
                                     type="text"
                                     required
@@ -115,7 +115,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Dirección física</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Dirección física</label>
                                 <input
                                     type="text"
                                     required
@@ -128,12 +128,12 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                     </div>
 
                     {/* Parámetros Operativos */}
-                    <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm space-y-4">
-                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-3 mb-2">Parámetros de Entrega y Envíos</h3>
+                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
+                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b border-slate-100 pb-3 mb-2">Parámetros de Entrega y Envíos</h3>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Monto Mínimo de Pedido ($)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Monto Mínimo de Pedido ($)</label>
                                 <input
                                     type="number"
                                     required
@@ -145,7 +145,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Costo de Envío Base ($)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Costo de Envío Base ($)</label>
                                 <input
                                     type="number"
                                     required
@@ -157,7 +157,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Costo por Km Adicional ($)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Costo por Km Adicional ($)</label>
                                 <input
                                     type="number"
                                     required
@@ -172,7 +172,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Tiempo de Entrega Estimado</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Tiempo de Entrega Estimado</label>
                                 <input
                                     type="text"
                                     required
@@ -183,7 +183,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Horario de Atención</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Horario de Atención</label>
                                 <input
                                     type="text"
                                     required
@@ -196,7 +196,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                                 Ubicación Geográfica del Local (Mapa GPS)
                             </label>
                             <BusinessLocationPicker
@@ -216,7 +216,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                                 }}
                             />
                         </div>
-                        <div className="flex gap-2 bg-slate-50 p-4 rounded-xl border border-slate-100 text-[10px] text-slate-500 font-semibold leading-relaxed">
+                        <div className="flex gap-2 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs text-slate-500 font-semibold leading-relaxed">
                             <MapPin className="size-4 shrink-0 text-slate-400 mt-0.5" />
                             <span>
                                 Las coordenadas GPS se usan para calcular la distancia lineal exacta (Haversine) hasta el punto de entrega del cliente, cobrando automáticamente <strong>${parseFloat(costoEnvioPorKm).toFixed(2)} por cada kilómetro</strong> sobre el costo base de envío.
@@ -227,7 +227,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                     <button
                         type="submit"
                         disabled={saving}
-                        className="w-full py-4 bg-slate-900 hover:bg-slate-950 text-white rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-lg"
+                        className="w-full py-4 bg-slate-900 hover:bg-slate-950 text-white rounded-2xl text-xs font-bold uppercase tracking-wide active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-lg"
                     >
                         {saving ? (
                             <>

@@ -1,54 +1,72 @@
 import prisma from "@/lib/prisma";
+import { computePhase, canReceiveCustomers, type PhaseInfo } from "@/lib/subscription/lifecycle";
 
-export async function checkSubscriptionStatus(negocioId: string) {
+export type SubscriptionStatus = {
+    active: boolean;
+    /** OK | TRIAL | GRACE | EXPIRED (bloqueado) | SUSPENDED | DEFAULT_PLAN | NOT_FOUND | INVALID_ID */
+    reason: string | null;
+    phase?: PhaseInfo['phase'];
+    info?: PhaseInfo;
+    isDemo?: boolean;
+};
+
+/**
+ * Estado de la suscripción según el ciclo único (prueba → gracia → bloqueado).
+ * `active=false` solo cuando el negocio está BLOQUEADO o SUSPENDIDO.
+ */
+export async function checkSubscriptionStatus(negocioId: string): Promise<SubscriptionStatus> {
     if (!negocioId || typeof negocioId !== 'string') {
-        console.error('❌ checkSubscriptionStatus: negocioId no válido', negocioId);
         return { active: false, reason: 'INVALID_ID' };
     }
 
-    // Usar el nuevo sistema de suscripciones modular
     const negocio = await (prisma.negocio as any).findUnique({
         where: { id: negocioId },
         select: {
             id: true,
             estado: true,
+            isDemo: true,
             Suscripcion: {
                 select: {
                     estado: true,
-                    fechaFin: true
-                }
-            }
-        }
+                    fechaFin: true,
+                    Plan: { select: { isFree: true, price: true } },
+                },
+            },
+        },
     });
 
     if (!negocio) return { active: false, reason: 'NOT_FOUND' };
 
-    // Si el negocio está suspendido manualmente por super admin
-    if (negocio.estado === 'SUSPENDIDO') {
-        return { active: false, reason: 'SUSPENDED' };
-    }
-
     const sub = negocio.Suscripcion;
-    if (!sub) return { active: true, reason: 'DEFAULT_PLAN' };
+    const info = computePhase({
+        estado: sub?.estado,
+        fechaFin: sub?.fechaFin,
+        planIsFree: sub?.Plan?.isFree,
+        planPrice: sub?.Plan?.price,
+        negocioEstado: negocio.estado,
+    });
 
-    // Validar estado del plan
-    const { estado, fechaFin } = sub;
+    const isDemo = Boolean(negocio.isDemo);
+    if (info.phase === 'SUSPENDED') return { active: false, reason: 'SUSPENDED', phase: info.phase, info, isDemo };
+    if (!sub) return { active: true, reason: 'DEFAULT_PLAN', phase: info.phase, info, isDemo };
 
-    const now = new Date();
-    const isVencido = fechaFin && now > new Date(fechaFin);
+    const reasonByPhase: Record<string, string> = {
+        TRIAL: 'TRIAL',
+        ACTIVE: 'OK',
+        GRACE: 'GRACE',
+        BLOCKED: 'EXPIRED',
+        NONE: 'OK',
+    };
+    return {
+        active: canReceiveCustomers(info) || isDemo,
+        reason: isDemo ? 'OK' : reasonByPhase[info.phase] || 'OK',
+        phase: isDemo ? 'ACTIVE' : info.phase,
+        info,
+        isDemo,
+    };
+}
 
-    if (estado === 'expired' || estado === 'EXPIRED' || estado === 'VENCIDA' || estado === 'SUSPENDIDA' || isVencido) {
-        return { active: false, reason: 'EXPIRED' };
-    }
-
-    // Si es trial pero no ha vencido, es OK (por ahora activo total)
-    if (estado === 'trial' || estado === 'TRIAL' || estado === 'trial_pending' || estado === 'TRIAL_PENDING') {
-        return { active: true, reason: 'TRIAL' };
-    }
-
-    if (estado === 'pendiente' || estado === 'PENDIENTE') {
-        return { active: true, reason: 'PENDING' };
-    }
-
-    return { active: true, reason: 'OK' };
+/** El bloqueo por falta de pago se puede apagar en desarrollo con SUBSCRIPTION_ENFORCE=off. */
+export function subscriptionEnforced() {
+    return String(process.env.SUBSCRIPTION_ENFORCE || '').toLowerCase() !== 'off';
 }

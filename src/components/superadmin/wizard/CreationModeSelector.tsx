@@ -48,10 +48,10 @@ export default function CreationModeSelector({ selectedMode, onSelectMode, onNex
   return (
     <div className="space-y-6 text-left">
       <div className="text-center space-y-2 max-w-xl mx-auto">
-        <span className="text-[10px] font-black tracking-widest text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+        <span className="text-xs font-bold tracking-wide text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
           Paso 0 — Modo de Creación
         </span>
-        <h2 className="text-2xl font-black text-white italic">¿Cómo deseas crear el nuevo negocio?</h2>
+        <h2 className="text-2xl font-bold text-white ">¿Cómo deseas crear el nuevo negocio?</h2>
         <p className="text-xs text-slate-400">Selecciona el método de aprovisionamiento universal en Citiox Studio.</p>
       </div>
 
@@ -71,10 +71,10 @@ export default function CreationModeSelector({ selectedMode, onSelectMode, onNex
               }`}
             >
               <div className="flex items-center justify-between">
-                <div className={`p-3 rounded-2xl ${isSelected ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-900 text-slate-400'}`}>
+                <div className={`p-3 rounded-2xl ${isSelected ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400'}`}>
                   <Icon size={24} />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-xl">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-xl">
                   {mode.badge}
                 </span>
               </div>
@@ -92,7 +92,7 @@ export default function CreationModeSelector({ selectedMode, onSelectMode, onNex
         <button
           type="button"
           onClick={onNext}
-          className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest px-8 py-4 rounded-2xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+          className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wide px-8 py-4 rounded-2xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
         >
           Continuar
           <ArrowRight size={16} />

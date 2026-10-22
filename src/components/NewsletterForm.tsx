@@ -49,14 +49,14 @@ export default function NewsletterForm({ negocioId }: NewsletterFormProps) {
         return (
             <div className="flex flex-col items-center justify-center p-6 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-center animate-in fade-in zoom-in duration-300">
                 <CheckCircle2 className="text-emerald-500 mb-2" size={32} />
-                <p className="text-white font-bold text-sm uppercase tracking-widest">{message}</p>
+                <p className="text-white font-bold text-sm uppercase tracking-wide">{message}</p>
             </div>
         );
     }
 
     return (
         <div className="space-y-4">
-            <h5 className="text-white font-black uppercase text-[10px] tracking-widest mb-4">Boletín Pro</h5>
+            <h5 className="text-white font-bold uppercase text-xs tracking-wide mb-4">Boletín Pro</h5>
             <p className="text-xs font-medium opacity-60">Recibe ofertas exclusivas y novedades de tratamientos.</p>
             <form onSubmit={handleSubmit} className="flex gap-2">
                 <input
@@ -81,7 +81,7 @@ export default function NewsletterForm({ negocioId }: NewsletterFormProps) {
                 </button>
             </form>
             {status === 'error' && (
-                <p className="text-rose-500 text-[10px] font-bold uppercase tracking-widest mt-2">{message}</p>
+                <p className="text-rose-500 text-xs font-bold uppercase tracking-wide mt-2">{message}</p>
             )}
         </div>
     );

@@ -1,117 +1,61 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import prisma from '@/lib/prisma';
+import { inviteDriver, HttpError } from '@/lib/logistics/driverNetwork';
 
 export const dynamic = 'force-dynamic';
 
+/** Negocio de la sesión. Solo el superadmin puede consultar otro negocio. */
+async function resolveNegocio(req: Request, bodyNegocioId?: string) {
+  const session = await getEffectiveAdminSession();
+  const user = session?.user as any;
+  if (!user) return { error: NextResponse.json({ error: 'No autenticado' }, { status: 401 }) };
+  const isSuper = user.role === 'SUPERADMIN' || user.role === 'SUPER_ADMIN' || user.isAdminUser === true;
+  const { searchParams } = new URL(req.url);
+  const requested = bodyNegocioId || searchParams.get('businessId') || searchParams.get('negocioId');
+  const negocioId = isSuper && requested ? requested : user.negocioId;
+  if (!negocioId) return { error: NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 }) };
+  return { negocioId: negocioId as string };
+}
+
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const sessionNegocioId = (session?.user as any)?.negocioId;
-    const { searchParams } = new URL(req.url);
-    const negocioId = searchParams.get('businessId') || searchParams.get('negocioId') || sessionNegocioId;
-    const includeInactive = searchParams.get('includeInactive') === 'true';
+    const c = await resolveNegocio(req);
+    if ('error' in c) return c.error;
+    const includeInactive = new URL(req.url).searchParams.get('includeInactive') === 'true';
 
-    if (!negocioId) {
-      return NextResponse.json([]);
-    }
-
-    // 1. Buscar en OperableResource filtrando SOLO repartidores/conductores de este negocio
     const resources = await (prisma as any).operableResource.findMany({
       where: {
-        negocioId,
+        negocioId: c.negocioId,
+        category: 'DELIVERY_DRIVER',
         ...(includeInactive ? {} : { active: true }),
-        OR: [
-          { category: 'DELIVERY_DRIVER' },
-          { resourceType: { in: ['HUMAN', 'VEHICLE'] } }
-        ],
-        NOT: [
-          { name: { contains: 'Mesa', mode: 'insensitive' } },
-          { category: 'TABLE' },
-          { resourceType: 'INFRASTRUCTURE' }
-        ]
       },
-      include: {
-        profile: true
-      },
-      orderBy: { createdAt: 'desc' }
+      include: { profile: true },
+      orderBy: { createdAt: 'desc' },
     });
-
-    // 2. Buscar en Staff repartidores de este negocio
-    const staffDrivers = await (prisma as any).staff.findMany({
-      where: {
-        negocioId,
-        role: { in: ['REPARTIDOR', 'DRIVER', 'ENTREGA', 'DELIVERY'] }
-      }
-    });
-
-    const mappedStaff = staffDrivers.map((s: any) => ({
-      id: s.id,
-      name: s.name,
-      estado: s.active ? 'DISPONIBLE' : 'FUERA_DE_SERVICIO',
-      active: s.active,
-      tipoRecurso: 'VEHICULO',
-      profile: {
-        verificationStatus: 'APPROVED',
-        telefono: s.telefono || '0991234567',
-        vehiculo: 'Moto Honda Cargo 150cc',
-        tipoVehiculo: 'MOTO'
-      }
-    }));
-
-    // Combinar los repartidores
-    const allDrivers = [...resources, ...mappedStaff];
-
-    return NextResponse.json(allDrivers);
+    const visible = resources.filter((r: any) => !(r.metadata && (r.metadata as any).removedAt));
+    return NextResponse.json(visible);
   } catch (error: any) {
     console.error('[LOGISTICS/RESOURCES GET ERROR]', error);
     return NextResponse.json([]);
   }
 }
 
+/** Agregar repartidor = invitarlo (el registro y la aprobación siguen el flujo normal). */
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-
-    const negocioId = (session.user as any).negocioId;
-    if (!negocioId) return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 });
-
-    const body = await req.json();
-    const { name, telefono, tipoVehiculo = 'MOTO', placa, documento, estado = 'DISPONIBLE', autoApprove = true } = body;
-
-    if (!name || !name.trim()) {
-      return NextResponse.json({ error: 'El nombre del repartidor es requerido' }, { status: 400 });
-    }
-
-    const resource = await (prisma as any).operableResource.create({
-      data: {
-        negocioId,
-        name: name.trim(),
-        resourceType: 'HUMAN',
-        category: 'DELIVERY_DRIVER',
-        active: true,
-        estado,
-        profile: {
-          create: {
-            verificationStatus: autoApprove ? 'APPROVED' : 'INVITED',
-            telefono: telefono || '',
-            tipoVehiculo,
-            placa: placa || '',
-            documento: documento || '',
-            vehiculo: `${tipoVehiculo} ${placa ? `(${placa})` : ''}`.trim()
-          }
-        }
-      },
-      include: {
-        profile: true
-      }
+    const body = await req.json().catch(() => ({}));
+    const c = await resolveNegocio(req, body.negocioId || body.businessId);
+    if ('error' in c) return c.error;
+    const result = await inviteDriver(c.negocioId, {
+      nombre: body.name || body.nombre,
+      telefono: body.telefono || '',
+      tipoVehiculo: body.tipoVehiculo,
     });
-
-    return NextResponse.json({ success: true, resource }, { status: 201 });
+    return NextResponse.json({ success: true, ...result }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof HttpError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error('[LOGISTICS/RESOURCES POST ERROR]', error);
-    return NextResponse.json({ error: error.message || 'Error creando repartidor' }, { status: 500 });
+    return NextResponse.json({ error: 'Error creando repartidor' }, { status: 500 });
   }
 }

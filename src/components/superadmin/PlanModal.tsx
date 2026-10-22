@@ -210,29 +210,29 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Información Básica */}
                         <div className="space-y-4">
-                            <h4 className="text-sm font-black uppercase tracking-widest border-b border-slate-200 pb-2" style={{ color: '#000' }}>Información Básica</h4>
+                            <h4 className="text-sm font-bold uppercase tracking-wide border-b border-slate-200 pb-2" style={{ color: '#000' }}>Información Básica</h4>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-black ml-1" style={{ color: '#000' }}>Nombre del Plan</label>
+                                <label className="text-sm font-bold ml-1" style={{ color: '#000' }}>Nombre del Plan</label>
                                 <input
                                     required
                                     type="text"
                                     placeholder="Ej: Plan Pro, Plan Básico..."
                                     style={{ color: '#000', backgroundColor: '#fff' }}
-                                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all font-black placeholder:text-slate-500"
+                                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all font-bold placeholder:text-slate-500"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-black ml-1 flex items-center gap-2" style={{ color: '#000' }}>
+                                <label className="text-sm font-bold ml-1 flex items-center gap-2" style={{ color: '#000' }}>
                                     <Tags size={14} className="text-indigo-600" />
                                     Tipo de Negocio Asignado
                                 </label>
                                 <select
                                     style={{ color: '#000', backgroundColor: '#fff' }}
-                                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all font-black cursor-pointer"
+                                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all font-bold cursor-pointer"
                                     value={formData.tipo_negocio}
                                     onChange={(e) => {
                                         const newTipo = e.target.value;
@@ -263,7 +263,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-black ml-1 flex items-center gap-2" style={{ color: '#000' }}>
+                                <label className="text-sm font-bold ml-1 flex items-center gap-2" style={{ color: '#000' }}>
                                     <FileText size={14} className="text-slate-900" />
                                     Descripción
                                 </label>
@@ -279,19 +279,19 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
 
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-black ml-1" style={{ color: '#000' }}>Precio ($)</label>
+                                    <label className="text-sm font-bold ml-1" style={{ color: '#000' }}>Precio ($)</label>
                                     <input
                                         required
                                         type="number"
                                         step="0.01"
                                         style={{ color: '#4338ca', backgroundColor: '#fff' }}
-                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
+                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-bold"
                                         value={formData.price}
                                         onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-black ml-1 flex items-center gap-2" style={{ color: '#000' }}>
+                                    <label className="text-sm font-bold ml-1 flex items-center gap-2" style={{ color: '#000' }}>
                                         <Clock size={14} className="text-amber-700" />
                                         Días Trial
                                     </label>
@@ -299,13 +299,13 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         required
                                         type="number"
                                         style={{ color: '#000', backgroundColor: '#fff' }}
-                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
+                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-bold"
                                         value={formData.trial_days}
                                         onChange={(e) => setFormData({ ...formData, trial_days: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-black ml-1 flex items-center gap-2" style={{ color: '#000' }} title="Número de citas para empezar a correr la suscripción">
+                                    <label className="text-sm font-bold ml-1 flex items-center gap-2" style={{ color: '#000' }} title="Número de citas para empezar a correr la suscripción">
                                         <Star size={14} className="text-indigo-600" />
                                         Citas Inic.
                                     </label>
@@ -314,7 +314,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         type="number"
                                         min="1"
                                         style={{ color: '#000', backgroundColor: '#fff' }}
-                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
+                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-bold"
                                         value={formData.citas_activacion}
                                         onChange={(e) => setFormData({ ...formData, citas_activacion: e.target.value })}
                                     />
@@ -323,7 +323,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
 
                             {/* Control de WhatsApp */}
                             <div className="space-y-4 pt-4 border-t border-slate-100">
-                                <h4 className="text-sm font-black uppercase tracking-widest flex items-center gap-2" style={{ color: '#000' }}>
+                                <h4 className="text-sm font-bold uppercase tracking-wide flex items-center gap-2" style={{ color: '#000' }}>
                                     <MessageCircle size={16} className="text-indigo-600" />
                                     Control de WhatsApp
                                 </h4>
@@ -334,8 +334,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <MessageCircle size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Notificaciones de Citas</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Confirmaciones automáticas</p>
+                                            <p className="text-sm font-bold" style={{ color: '#000' }}>Notificaciones de Citas</p>
+                                            <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Confirmaciones automáticas</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -355,8 +355,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <Clock size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Recordatorios de Citas</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Recordatorio previo a la cita</p>
+                                            <p className="text-sm font-bold" style={{ color: '#000' }}>Recordatorios de Citas</p>
+                                            <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Recordatorio previo a la cita</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -376,8 +376,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <Zap size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Códigos OTP</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Validación por WhatsApp</p>
+                                            <p className="text-sm font-bold" style={{ color: '#000' }}>Códigos OTP</p>
+                                            <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Validación por WhatsApp</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -397,8 +397,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <Tags size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Campañas de Marketing</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Mensajes masivos/promociones</p>
+                                            <p className="text-sm font-bold" style={{ color: '#000' }}>Campañas de Marketing</p>
+                                            <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Mensajes masivos/promociones</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -416,17 +416,17 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
 
                         {/* Límites y Características */}
                         <div className="space-y-4">
-                            <h4 className="text-sm font-black uppercase tracking-widest border-b border-slate-200 pb-2" style={{ color: '#000' }}>Límites y Módulos</h4>
+                            <h4 className="text-sm font-bold uppercase tracking-wide border-b border-slate-200 pb-2" style={{ color: '#000' }}>Límites y Módulos</h4>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-black flex items-center gap-2 ml-1" style={{ color: '#000' }}>
+                                <label className="text-sm font-bold flex items-center gap-2 ml-1" style={{ color: '#000' }}>
                                     <Zap size={14} className="text-amber-700" />
                                     Citas Mensuales
                                 </label>
                                 <input
                                     type="number"
                                     style={{ color: '#000', backgroundColor: '#fff' }}
-                                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
+                                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-bold"
                                     value={formData.max_reservations_per_month}
                                     onChange={(e) => setFormData({ ...formData, max_reservations_per_month: e.target.value })}
                                 />
@@ -434,40 +434,40 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-black flex items-center gap-1.5 ml-1" style={{ color: '#000' }}>
+                                    <label className="text-sm font-bold flex items-center gap-1.5 ml-1" style={{ color: '#000' }}>
                                         <Users size={14} className="text-indigo-800" />
                                         Máx. Especialistas
                                     </label>
                                     <input
                                         type="number"
                                         style={{ color: '#000', backgroundColor: '#fff' }}
-                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
+                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-bold"
                                         value={formData.maxStaff}
                                         onChange={(e) => setFormData({ ...formData, maxStaff: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-black flex items-center gap-1.5 ml-1" style={{ color: '#000' }}>
+                                    <label className="text-sm font-bold flex items-center gap-1.5 ml-1" style={{ color: '#000' }}>
                                         <MapPin size={14} className="text-emerald-800" />
                                         Máx. Sucursales
                                     </label>
                                     <input
                                         type="number"
                                         style={{ color: '#000', backgroundColor: '#fff' }}
-                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
+                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-bold"
                                         value={formData.max_locations}
                                         onChange={(e) => setFormData({ ...formData, max_locations: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-black flex items-center gap-1.5 ml-1" style={{ color: '#000' }}>
+                                    <label className="text-sm font-bold flex items-center gap-1.5 ml-1" style={{ color: '#000' }}>
                                         <Package size={14} className="text-pink-800" />
                                         Máx. Servicios
                                     </label>
                                     <input
                                         type="number"
                                         style={{ color: '#000', backgroundColor: '#fff' }}
-                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
+                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-bold"
                                         value={formData.max_fields}
                                         onChange={(e) => setFormData({ ...formData, max_fields: e.target.value })}
                                     />
@@ -480,8 +480,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         <Star size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-black" style={{ color: '#000' }}>Portafolio de Trabajos</p>
-                                        <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar galería antes/después?</p>
+                                        <p className="text-sm font-bold" style={{ color: '#000' }}>Portafolio de Trabajos</p>
+                                        <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar galería antes/después?</p>
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -501,8 +501,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         <Tags size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-black" style={{ color: '#000' }}>Módulo de Promociones</p>
-                                        <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿HABILITAR MÓDULO DE PROMOCIONES?</p>
+                                        <p className="text-sm font-bold" style={{ color: '#000' }}>Módulo de Promociones</p>
+                                        <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar módulo de promociones?</p>
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -522,8 +522,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         <FileText size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-black" style={{ color: '#000' }}>Academia y Talleres</p>
-                                        <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar inscripciones a cursos?</p>
+                                        <p className="text-sm font-bold" style={{ color: '#000' }}>Academia y Talleres</p>
+                                        <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar inscripciones a cursos?</p>
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -542,8 +542,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         <MessageSquare size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-black" style={{ color: '#000' }}>Sistema de Comunicaciones</p>
-                                        <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar notificaciones y anuncios masivos (WhatsApp / Push)?</p>
+                                        <p className="text-sm font-bold" style={{ color: '#000' }}>Sistema de Comunicaciones</p>
+                                        <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar notificaciones y anuncios masivos (WhatsApp / Push)?</p>
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -562,8 +562,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         <Trophy size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-black" style={{ color: '#000' }}>Club de Fidelización</p>
-                                        <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar misiones, diamantes, niveles y premios?</p>
+                                        <p className="text-sm font-bold" style={{ color: '#000' }}>Club de Fidelización</p>
+                                        <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar misiones, diamantes, niveles y premios?</p>
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -582,8 +582,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         <Star size={18} fill="currentColor" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-black" style={{ color: '#000' }}>Recomendado</p>
-                                        <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e1b4b' }}>¿Destacar en la landing page?</p>
+                                        <p className="text-sm font-bold" style={{ color: '#000' }}>Recomendado</p>
+                                        <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e1b4b' }}>¿Destacar en la landing page?</p>
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -599,7 +599,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
 
                             {/* Branding y Marca */}
                             <div className="space-y-4 pt-4 border-t border-slate-100">
-                                <h4 className="text-sm font-black uppercase tracking-widest flex items-center gap-2" style={{ color: '#000' }}>
+                                <h4 className="text-sm font-bold uppercase tracking-wide flex items-center gap-2" style={{ color: '#000' }}>
                                     <Palette size={16} className="text-indigo-600" />
                                     Branding y Marca
                                 </h4>
@@ -610,8 +610,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <Star size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Quitar Marca CitiOx</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Remover marca "Powered by CitiOx"</p>
+                                            <p className="text-sm font-bold" style={{ color: '#000' }}>Quitar Marca CitiOx</p>
+                                            <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Remover marca "Powered by CitiOx"</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -631,8 +631,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <Palette size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Colores Personalizados</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Personalizar colores de la app</p>
+                                            <p className="text-sm font-bold" style={{ color: '#000' }}>Colores Personalizados</p>
+                                            <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Personalizar colores de la app</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -652,8 +652,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <Package size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Logo Personalizado</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Usar logotipo propio en el portal</p>
+                                            <p className="text-sm font-bold" style={{ color: '#000' }}>Logo Personalizado</p>
+                                            <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Usar logotipo propio en el portal</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -673,8 +673,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <FileText size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Frases Personalizadas</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Editar frases y mensajes del portal</p>
+                                            <p className="text-sm font-bold" style={{ color: '#000' }}>Frases Personalizadas</p>
+                                            <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Editar frases y mensajes del portal</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -694,8 +694,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <Users size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Reportes y Analíticas</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Reportes avanzados de uso</p>
+                                            <p className="text-sm font-bold" style={{ color: '#000' }}>Reportes y Analíticas</p>
+                                            <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Reportes avanzados de uso</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -715,8 +715,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <Zap size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Automatizaciones</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Campañas automáticas y seguimientos</p>
+                                            <p className="text-sm font-bold" style={{ color: '#000' }}>Automatizaciones</p>
+                                            <p className="text-xs font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Campañas automáticas y seguimientos</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">

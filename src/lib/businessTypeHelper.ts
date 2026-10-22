@@ -93,6 +93,56 @@ export function getBusinessVerticalSignals(negocio: BusinessLike | null | undefi
 }
 
 /**
+ * Tipos explícitos conocidos (tipoNegocio / blueprintId / configuracion.tipoNegocio).
+ * Si un negocio tiene uno de estos valores, su vertical se decide SOLO por ese valor
+ * y nunca por palabras sueltas del nombre o del slug.
+ */
+const EXPLICIT_TYPES: Record<string, string[]> = {
+    SHOE_CARE: ['LAVANDERIA', 'LAVANDERIAS', 'SHOE_CARE', 'ORDENES-SERVICIO', 'ORDENES_SERVICIO', 'LAVADO', 'SNEAKER_WASH', 'TINTORERIA'],
+    GYM: ['GIMNASIO', 'GYM', 'FITNESS'],
+    DENTAL: ['ODONTOLOGIA', 'DENTAL', 'DENTISTA', 'CLINICA_DENTAL'],
+    CAFETERIA: ['CAFETERIA', 'PANADERIA', 'PASTELERIA'],
+    RESTAURANT: ['RESTAURANTE', 'RESTAURANT', 'GASTRONOMIA', 'BAR', 'COMIDA', 'PIZZERIA', 'PINCHOS'],
+    COURTS: ['SPORTS_COURTS', 'CANCHAS', 'SPORTS', 'PADEL', 'FUTBOL'],
+    STORE: ['TIENDA', 'STORE', 'ECOMMERCE', 'E_COMMERCE', 'PRODUCTOS', 'PRODUCTO', 'TIENDA_ONLINE'],
+    SERVICES: ['SPA', 'BEAUTY_SPA', 'CENTRO_ESTETICA', 'PELUQUERIA', 'BARBERIA', 'SALON', 'UNAS']
+};
+
+const ALL_EXPLICIT = new Set(Object.values(EXPLICIT_TYPES).flat());
+
+/** true si el negocio declara un tipo explícito reconocido (no el genérico "RESERVA"). */
+export function hasExplicitBusinessType(negocio: BusinessLike | null | undefined): boolean {
+    const s = getBusinessVerticalSignals(negocio);
+    return [s.tipoUpper, s.blueprintId, s.configTipoUpper].some(v => v && ALL_EXPLICIT.has(v));
+}
+
+/**
+ * Coincidencia por PALABRA COMPLETA (o inicio de palabra) en nombre/slug.
+ * Evita falsos positivos como "ESPACIO" → SPA o "TACONES" → TACO.
+ * Cada patrón es el inicio de una palabra; añade "$" para exigir palabra exacta.
+ */
+function matchesWords(text: string, patterns: string[]): boolean {
+    if (!text) return false;
+    const words = text
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .toUpperCase()
+        .split(/[^A-Z0-9]+/)
+        .filter(Boolean);
+    return patterns.some(p => {
+        const exact = p.endsWith('$');
+        const stem = exact ? p.slice(0, -1) : p;
+        return words.some(w => (exact ? (w === stem || w === stem + 'S') : w.startsWith(stem)));
+    });
+}
+
+/** Fallback por nombre/slug: solo se usa si el negocio NO tiene un tipo explícito. */
+function keywordFallback(negocio: BusinessLike | null | undefined, patterns: string[]): boolean {
+    if (hasExplicitBusinessType(negocio)) return false;
+    const s = getBusinessVerticalSignals(negocio);
+    return matchesWords(s.slugUpper, patterns) || matchesWords(s.nameUpper, patterns);
+}
+
+/**
  * 1. LAVANDERÍA / CUIDADO DE CALZADO / SNEAKER WASH / ÓRDENES DE SERVICIO
  * Demo correspondiente: /demo-lavado, /lavado
  * Componente Landing: ShoeCareLanding
@@ -130,19 +180,9 @@ export function isLaundryOrShoeCareBusiness(negocio: BusinessLike | null | undef
 
     if (matchesType) return true;
 
-    // Búsqueda por palabras clave en slug o nombre
-    const hasKeywords = 
-        s.slugUpper.includes('LAVADO') ||
-        s.slugUpper.includes('LAVANDERIA') ||
-        s.slugUpper.includes('SNEAKER') ||
-        s.slugUpper.includes('WASH') ||
-        s.slugUpper.includes('BUBBLE') ||
-        s.nameUpper.includes('LAVANDERIA') ||
-        s.nameUpper.includes('SNEAKER') ||
-        s.nameUpper.includes('BUBBLE') ||
-        (s.nameUpper.includes('LAVADO') && !s.nameUpper.includes('CANCHA'));
-
-    return hasKeywords;
+    // Fallback por palabras completas en slug o nombre (solo sin tipo explícito)
+    if (matchesWords(s.nameUpper, ['CANCHA'])) return false;
+    return keywordFallback(negocio, ['LAVADO', 'LAVANDERIA', 'SNEAKER', 'WASH', 'BUBBLE', 'TINTORERIA']);
 }
 
 /**
@@ -169,14 +209,7 @@ export function isGymBusiness(negocio: BusinessLike | null | undefined): boolean
 
     if (matchesType) return true;
 
-    return (
-        s.slugUpper.includes('GYM') ||
-        s.slugUpper.includes('FITNESS') ||
-        s.slugUpper.includes('VORTEX') ||
-        s.nameUpper.includes('GYM') ||
-        s.nameUpper.includes('GIMNASIO') ||
-        s.nameUpper.includes('FITNESS')
-    );
+    return keywordFallback(negocio, ['GYM', 'GIMNASIO', 'FITNESS', 'VORTEX', 'CROSSFIT']);
 }
 
 /**
@@ -205,16 +238,7 @@ export function isDentalBusiness(negocio: BusinessLike | null | undefined): bool
 
     if (matchesType) return true;
 
-    return (
-        s.slugUpper.includes('DENTAL') ||
-        s.slugUpper.includes('ODONTOL') ||
-        s.slugUpper.includes('DENTISTA') ||
-        s.slugUpper.includes('DENTAR') ||
-        s.nameUpper.includes('DENTAL') ||
-        s.nameUpper.includes('ODONTOL') ||
-        s.nameUpper.includes('DENTISTA') ||
-        s.nameUpper.includes('DENTAR')
-    );
+    return keywordFallback(negocio, ['DENTAL', 'ODONTOL', 'DENTIST', 'DENTAR']);
 }
 
 /**
@@ -248,20 +272,7 @@ export function isRestaurantBusiness(negocio: BusinessLike | null | undefined): 
 
     if (matchesType) return true;
 
-    return (
-        s.slugUpper.includes('PARRILLA') ||
-        s.slugUpper.includes('RESTAURANT') ||
-        s.slugUpper.includes('GASTRO') ||
-        s.slugUpper.includes('BURGER') ||
-        s.slugUpper.includes('PIZZA') ||
-        s.slugUpper.includes('TACO') ||
-        s.nameUpper.includes('PARRILLA') ||
-        s.nameUpper.includes('RESTAURANTE') ||
-        s.nameUpper.includes('GASTRONOMIA') ||
-        s.nameUpper.includes('BURGER') ||
-        s.nameUpper.includes('PIZZA') ||
-        s.nameUpper.includes('TACO')
-    );
+    return keywordFallback(negocio, ['PARRILLA', 'RESTAURANT', 'GASTRO', 'BURGER', 'PIZZ', 'TACO$', 'TAQUERIA']);
 }
 
 /**
@@ -291,16 +302,30 @@ export function isSportsCourtsBusiness(negocio: BusinessLike | null | undefined)
 
     if (matchesType) return true;
 
-    return (
-        s.slugUpper.includes('CANCHA') ||
-        s.slugUpper.includes('CAMPEONES') ||
-        s.slugUpper.includes('PADEL') ||
-        s.nameUpper.includes('CANCHA') ||
-        s.nameUpper.includes('COMPLEJO') ||
-        s.nameUpper.includes('CAMPEONES') ||
-        s.nameUpper.includes('PADEL') ||
-        s.nameUpper.includes('SINTETICA')
-    );
+    // "COMPLEJO" solo cuenta si no es un complejo dental/médico
+    if (isDentalBusiness(negocio)) return false;
+    return keywordFallback(negocio, ['CANCHA', 'COMPLEJO', 'CAMPEONES', 'PADEL', 'SINTETICA', 'FUTBOL']);
+}
+
+/**
+ * 7. CAFETERÍA / PANADERÍA / PASTELERÍA (vertical con producción y costeo)
+ */
+export function isCafeteriaBusiness(negocio: BusinessLike | null | undefined): boolean {
+    const s = getBusinessVerticalSignals(negocio);
+    const types = EXPLICIT_TYPES.CAFETERIA;
+    if (types.includes(s.tipoUpper) || types.includes(s.blueprintId) || types.includes(s.configTipoUpper)) return true;
+    return keywordFallback(negocio, ['CAFE$', 'CAFETERIA', 'COFFEE', 'PANADERIA', 'PASTELERIA']);
+}
+
+/**
+ * 8. SERVICIOS CON CITA (spa, estética, peluquería, barbería, uñas, dental)
+ */
+export function isAppointmentServiceBusiness(negocio: BusinessLike | null | undefined): boolean {
+    if (isDentalBusiness(negocio)) return true;
+    const s = getBusinessVerticalSignals(negocio);
+    const types = [...EXPLICIT_TYPES.SERVICES, 'RESERVA'];
+    if (types.includes(s.tipoUpper) || EXPLICIT_TYPES.SERVICES.includes(s.blueprintId) || EXPLICIT_TYPES.SERVICES.includes(s.configTipoUpper)) return true;
+    return keywordFallback(negocio, ['SPA$', 'BARBER', 'NAILS$', 'UNAS$', 'ESTETICA', 'PELUQUERIA', 'CITAS$', 'SALON$', 'BEAUTY']);
 }
 
 /**

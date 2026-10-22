@@ -71,16 +71,16 @@ export default function NegocioConfigPage() {
         return (
             <div className="flex flex-col items-center justify-center py-20">
                 <Loader2 className="animate-spin text-emerald-600 mb-4" size={32} />
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando Información...</p>
+                <p className="text-gray-400 font-bold uppercase tracking-wide text-xs">Cargando Información...</p>
             </div>
         );
     }
 
     if (!negocio) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
                 <AlertCircle className="text-red-500 mb-4" size={32} />
-                <p className="text-gray-900 font-black uppercase tracking-widest text-sm">No se encontró información del negocio</p>
+                <p className="text-gray-900 font-bold uppercase tracking-wide text-sm">No se encontró información del negocio</p>
                 <p className="text-gray-400 text-xs mt-2">Por favor, contacta al soporte técnico.</p>
             </div>
         );
@@ -88,10 +88,10 @@ export default function NegocioConfigPage() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl mx-auto">
-            <DynamicFavicon negocio={negocio} defaultTitle="Perfil del Negocio" />
+            <DynamicFavicon negocio={negocio} defaultTitle="Datos del negocio" />
             <div>
-                <h1 className="text-3xl font-black text-gray-900 tracking-tight">Perfil del Negocio</h1>
-                <p className="text-gray-500 text-sm font-medium">Gestiona la identidad visual, logo, banners y horarios generales de tu negocio.</p>
+                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Datos del negocio</h1>
+                <p className="text-gray-500 text-sm font-medium">Logo, textos de tu página, horario y contacto.</p>
             </div>
 
             {/* Toast fijo en esquina inferior derecha — visible sin importar el scroll */}
@@ -106,7 +106,7 @@ export default function NegocioConfigPage() {
                     {message.type === 'success'
                         ? <CheckCircle2 size={22} />
                         : <AlertCircle size={22} />}
-                    <span className="text-sm font-black tracking-wide">{message.text}</span>
+                    <span className="text-sm font-bold tracking-wide">{message.text}</span>
                     <button
                         type="button"
                         onClick={() => setMessage(null)}
@@ -119,10 +119,10 @@ export default function NegocioConfigPage() {
 
             <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Identidad Visual */}
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-10">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/40 p-10">
                     <div className="flex flex-col md:flex-row gap-10 items-start w-full">
                         <div className="w-full md:w-1/3">
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2 mb-2 block">Logo del Negocio</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2 mb-2 block">Logo del Negocio</label>
                             <ImageUploader
                                 category="logo"
                                 currentUrl={negocio.logoUrl || ''}
@@ -134,7 +134,7 @@ export default function NegocioConfigPage() {
                         </div>
                         <div className="flex-1 space-y-6 w-full">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Nombre del Negocio</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">Nombre del Negocio</label>
                                 <div className="relative">
                                     <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
                                     <input
@@ -148,7 +148,7 @@ export default function NegocioConfigPage() {
                             </div>
 
                             <div className="space-y-4 pt-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Título Principal (Hero)</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">Título de tu página</label>
                                 <input
                                     type="text"
                                     placeholder="Ej: Tu lugar preferido para el deporte"
@@ -159,7 +159,7 @@ export default function NegocioConfigPage() {
                             </div>
 
                             <div className="space-y-4 pt-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Subtítulo (Frase destacada)</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">Frase debajo del título</label>
                                 <textarea
                                     placeholder='Ej: "Instalaciones de élite para jugadores que no aceptan menos."'
                                     className="w-full px-4 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-900 resize-none h-24"
@@ -170,7 +170,7 @@ export default function NegocioConfigPage() {
 
                             <FeatureGate feature="custom_phrases" fallbackMessage="Actualiza a PRO para personalizar los textos de bienvenida.">
                                 <div className="space-y-4 pt-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Mensaje de Bienvenida Personalizado (Subtítulo)</label>
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">Mensaje de Bienvenida Personalizado (Subtítulo)</label>
                                     <textarea
                                         placeholder='Ej: "¿Lista para tu ritual de cuidado personal?"'
                                         className="w-full px-4 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-900 resize-none h-24"
@@ -181,7 +181,7 @@ export default function NegocioConfigPage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Saludo Inicial</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">Saludo Inicial</label>
                                         <input
                                             type="text"
                                             placeholder="Ej: Hola"
@@ -191,7 +191,7 @@ export default function NegocioConfigPage() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Nombre Fallback (Si no hay cliente)</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">Nombre si no conocemos al cliente</label>
                                         <input
                                             type="text"
                                             placeholder="Ej: Radiante"
@@ -201,20 +201,20 @@ export default function NegocioConfigPage() {
                                         />
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-gray-400 px-2 font-medium">Ejemplo: "{negocio.saludoTitulo || 'Hola'}, {negocio.nombreFallback || 'Radiante'}"</p>
+                                <p className="text-xs text-gray-400 px-2 font-medium">Ejemplo: "{negocio.saludoTitulo || 'Hola'}, {negocio.nombreFallback || 'Radiante'}"</p>
                             </FeatureGate>
                         </div>
                     </div>
                 </div>
 
                 {/* Tarjeta de Personalización Cromática Independiente */}
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 md:p-10">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/40 p-8 md:p-10">
                     <div className="mb-6">
-                        <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                        <h3 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
                             <Sparkles size={20} className="text-pink-500" />
                             Diseño y Personalización Cromática
                         </h3>
-                        <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">
+                        <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wide">
                             Controla cada elemento visual de tu página pública en tiempo real
                         </p>
                     </div>
@@ -284,16 +284,16 @@ export default function NegocioConfigPage() {
 
                 {/* Datos de Contacto y Cobertura */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 space-y-6">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/40 p-8 space-y-6">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] flex items-center gap-2">
+                            <h3 className="font-bold text-gray-900 uppercase tracking-wide text-xs flex items-center gap-2">
                                 <Phone size={14} className="text-emerald-500" />
                                 Contacto y Ubicación
                             </h3>
                             <button
                                 type="button"
                                 onClick={() => setShowCoverageModal(true)}
-                                className="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl text-[10px] font-black uppercase tracking-wider transition border border-purple-200 flex items-center gap-1.5"
+                                className="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl text-xs font-bold uppercase tracking-wider transition border border-purple-200 flex items-center gap-1.5"
                             >
                                 <Layers size={12} />
                                 Cobertura (Polígono GPS)
@@ -301,21 +301,21 @@ export default function NegocioConfigPage() {
                         </div>
                         <div className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">WhatsApp Oficial</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">WhatsApp Oficial</label>
                                 <PhoneInput
                                     value={negocio.whatsapp || ''}
                                     onChange={(val) => setNegocio({ ...negocio, whatsapp: val })}
                                     placeholder="099 123 4567"
                                     darkMode={false}
                                 />
-                                <p className="text-[10px] text-gray-400 px-2 font-medium">
+                                <p className="text-xs text-gray-400 px-2 font-medium">
                                     Selecciona el código de tu país e ingresa el número de WhatsApp oficial del negocio.
                                 </p>
                             </div>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between px-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ubicaciones (Sedes)</label>
-                                    <Link href="/admin/config#ubicaciones-manager" className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-widest flex items-center gap-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Ubicaciones (Sedes)</label>
+                                    <Link href="/admin/config#ubicaciones-manager" className="text-xs font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wide flex items-center gap-1">
                                         Administrar <Settings size={10} />
                                     </Link>
                                 </div>
@@ -324,7 +324,7 @@ export default function NegocioConfigPage() {
                                         negocio.ubicaciones.map((ub: any) => (
                                             <div key={ub.id} className="flex flex-col gap-1 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-sm font-black text-gray-900 uppercase tracking-tight">{ub.nombre}</span>
+                                                    <span className="text-sm font-bold text-gray-900 uppercase tracking-tight">{ub.nombre}</span>
                                                     {ub.mapUrl && (
                                                         <a href={ub.mapUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600">
                                                             <ExternalLink size={14} />
@@ -347,7 +347,7 @@ export default function NegocioConfigPage() {
                                 </div>
                             </div>
                             <div className="space-y-2 pt-4 border-t border-gray-100">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Correo Electrónico (Contacto)</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">Correo Electrónico (Contacto)</label>
                                 <div className="relative">
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
                                     <input
@@ -362,15 +362,15 @@ export default function NegocioConfigPage() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 space-y-6">
-                        <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] flex items-center gap-2">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/40 p-8 space-y-6">
+                        <h3 className="font-bold text-gray-900 uppercase tracking-wide text-xs flex items-center gap-2">
                             <Clock size={14} className="text-blue-500" />
                             Horarios y Tarifas
                         </h3>
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Apertura</label>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide px-2">Apertura</label>
                                     <input
                                         type="time"
                                         className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-900"
@@ -379,7 +379,7 @@ export default function NegocioConfigPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Cierre</label>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide px-2">Cierre</label>
                                     <input
                                         type="time"
                                         className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-900"
@@ -391,7 +391,7 @@ export default function NegocioConfigPage() {
 
                             {/* DÍAS DE ATENCIÓN */}
                             <div className="space-y-3 pt-2 border-t border-gray-50">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 block">Días de Atención</label>
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wide px-2 block">Días de Atención</label>
                                 <div className="flex flex-wrap gap-2">
                                     {[
                                         { label: 'L', name: 'Lunes', value: 1 },
@@ -430,11 +430,11 @@ export default function NegocioConfigPage() {
                                                 key={day.value}
                                                 type="button"
                                                 onClick={handleToggleDay}
-                                                className={`w-10 h-10 rounded-full font-black text-xs transition-all border-2 flex items-center justify-center ${
-                                                    isSelected
-                                                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm'
-                                                        : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-gray-200'
-                                                }`}
+                                                className={`w-10 h-10 rounded-full font-bold text-xs transition-all border-2 flex items-center justify-center ${
+ isSelected
+ ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm'
+ : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-gray-200'
+ }`}
                                                 title={day.name}
                                             >
                                                 {day.label}
@@ -447,7 +447,7 @@ export default function NegocioConfigPage() {
                             {/* CONTROL DE DISPONIBILIDAD SIMPLIFICADO */}
                             <div className="pt-2">
                                 <div className="space-y-4">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Estado del Negocio</label>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide px-2">Estado del Negocio</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
                                             type="button"
@@ -459,7 +459,7 @@ export default function NegocioConfigPage() {
                                             }`}
                                         >
                                             <Clock size={18} />
-                                            <span className="text-[9px] font-black uppercase tracking-tight">Horario Automático</span>
+                                            <span className="text-xs font-bold uppercase tracking-tight">Horario Automático</span>
                                         </button>
                                         <button
                                             type="button"
@@ -471,10 +471,10 @@ export default function NegocioConfigPage() {
                                             }`}
                                         >
                                             <AlertCircle size={18} />
-                                            <span className="text-[9px] font-black uppercase tracking-tight">Cerrar Ahora (Manual)</span>
+                                            <span className="text-xs font-bold uppercase tracking-tight">Cerrar Ahora (Manual)</span>
                                         </button>
                                     </div>
-                                    <p className="text-[9px] text-gray-400 px-2 font-medium italic">
+                                    <p className="text-xs text-gray-400 px-2 font-medium ">
                                         {negocio.statusOverride === 'AUTO' ? "El local se rige por tu horario de apertura y cierre programado." : "Has cerrado el local manualmente. Los clientes verán que estás cerrado independientemente del horario."}
                                     </p>
 
@@ -483,7 +483,7 @@ export default function NegocioConfigPage() {
                                             <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm space-y-3">
                                                 <div className="flex items-center gap-2">
                                                     <MessageCircle size={14} className="text-gray-400" />
-                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">¿Por qué está cerrado? (Opcional)</span>
+                                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">¿Por qué está cerrado? (Opcional)</span>
                                                 </div>
                                                 <textarea
                                                     value={negocio.statusNote || ''}
@@ -501,8 +501,8 @@ export default function NegocioConfigPage() {
                             <div className="pt-4 border-t border-gray-50">
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 cursor-pointer" onClick={() => setNegocio({ ...negocio, mostrarPrecios: !negocio.mostrarPrecios })}>
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-black text-gray-900 uppercase tracking-widest">Mostrar Precios al Público</span>
-                                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">Si se desactiva, no se verán precios en el catálogo.</p>
+                                        <span className="text-xs font-bold text-gray-900 uppercase tracking-wide">Mostrar Precios al Público</span>
+                                        <p className="text-xs text-gray-400 font-bold mt-0.5">Si se desactiva, no se verán precios en el catálogo.</p>
                                     </div>
                                     <button
                                         type="button"
@@ -517,8 +517,8 @@ export default function NegocioConfigPage() {
                 </div>
 
                 {/* Redes y Enlaces */}
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-10">
-                    <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] flex items-center gap-2 mb-8">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/40 p-10">
+                    <h3 className="font-bold text-gray-900 uppercase tracking-wide text-xs flex items-center gap-2 mb-8">
                         <Link2 size={14} className="text-emerald-500" />
                         Redes Sociales y Enlaces del Footer
                     </h3>
@@ -526,7 +526,7 @@ export default function NegocioConfigPage() {
                         {/* Izquierda: Redes */}
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2 flex items-center gap-1.5"><Globe size={12} /> Sitio Web Oficial</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2 flex items-center gap-1.5"><Globe size={12} /> Sitio Web Oficial</label>
                                 <input
                                     type="url"
                                     placeholder="https://tu-pagina.com"
@@ -536,7 +536,7 @@ export default function NegocioConfigPage() {
                                 />
                             </div>
                             <div className="space-y-2 pt-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2 flex items-center gap-1.5"><Instagram size={12} /> Instagram URL</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2 flex items-center gap-1.5"><Instagram size={12} /> Instagram URL</label>
                                 <input
                                     type="url"
                                     placeholder="https://instagram.com/tu-perfil"
@@ -546,7 +546,7 @@ export default function NegocioConfigPage() {
                                 />
                             </div>
                             <div className="space-y-2 pt-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2 flex items-center gap-1.5"><Facebook size={12} /> Facebook URL</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2 flex items-center gap-1.5"><Facebook size={12} /> Facebook URL</label>
                                 <input
                                     type="url"
                                     placeholder="https://facebook.com/tu-pagina"
@@ -560,7 +560,7 @@ export default function NegocioConfigPage() {
                         {/* Derecha: Links Informativos */}
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Link F.A.Q</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">Link F.A.Q</label>
                                 <input
                                     type="url"
                                     placeholder="Link a preguntas frecuentes..."
@@ -570,7 +570,7 @@ export default function NegocioConfigPage() {
                                 />
                             </div>
                             <div className="space-y-2 pt-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Link Términos y Condiciones</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">Link Términos y Condiciones</label>
                                 <input
                                     type="url"
                                     placeholder="Link a términos..."
@@ -580,7 +580,7 @@ export default function NegocioConfigPage() {
                                 />
                             </div>
                             <div className="space-y-2 pt-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Link Privacidad</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide px-2">Link Privacidad</label>
                                 <input
                                     type="url"
                                     placeholder="Link a política de privacidad..."
@@ -597,7 +597,7 @@ export default function NegocioConfigPage() {
                     <button
                         type="submit"
                         disabled={saving}
-                        className="flex items-center gap-2 bg-emerald-600 text-white px-12 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition shadow-xl shadow-emerald-100 disabled:opacity-50"
+                        className="flex items-center gap-2 bg-emerald-600 text-white px-12 py-4 rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-emerald-700 transition shadow-xl shadow-emerald-100 disabled:opacity-50"
                     >
                         {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                         Guardar Todos los Cambios

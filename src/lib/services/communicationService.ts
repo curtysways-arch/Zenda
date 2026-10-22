@@ -161,7 +161,7 @@ export class CommunicationService {
     }
 
     if (filters.ciudad) {
-      whereNegocio.ciudad = { equals: filters.ciudad, mode: 'insensitive' };
+      whereNegocio.ciudad = { equals: filters.ciudad };
     }
 
     if (filters.planId) {

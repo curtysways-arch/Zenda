@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { 
     Sparkles, 
     Lock, 
@@ -13,6 +14,7 @@ import {
     CreditCard,
     Clock,
     AlertCircle,
+    MessageCircle,
     LucideIcon
 } from 'lucide-react';
 import AddonCheckoutModal from '@/components/admin/AddonCheckoutModal';
@@ -39,6 +41,7 @@ export interface ModuleUpsellGateProps {
     benefits?: BenefitItem[];
     stats?: StatItem[];
     recommendedPlanName?: string;
+    fallbackAddon?: any;
 }
 
 export default function ModuleUpsellGate({
@@ -51,8 +54,10 @@ export default function ModuleUpsellGate({
     icon: IconComponent,
     benefits = [],
     stats = [],
-    recommendedPlanName = 'Plan Pro'
+    recommendedPlanName = 'Plan Pro',
+    fallbackAddon
 }: ModuleUpsellGateProps) {
+    const { data: session } = useSession();
     const [loading, setLoading] = useState(true);
     const [isAllowed, setIsAllowed] = useState(false);
     const [addon, setAddon] = useState<any>(null);
@@ -63,6 +68,18 @@ export default function ModuleUpsellGate({
 
     const checkEntitlements = async () => {
         try {
+            const userObj = session?.user as any;
+            const isRealSuperAdmin = Boolean(
+                (userObj?.role === 'SUPERADMIN' || userObj?.role === 'SUPER_ADMIN' || userObj?.isAdminUser === true) &&
+                !userObj?.isDelegated
+            );
+
+            if (isRealSuperAdmin) {
+                setIsAllowed(true);
+                setLoading(false);
+                return;
+            }
+
             const [resEnt, resNeg, resAddons] = await Promise.all([
                 fetch('/api/admin/entitlements'),
                 fetch('/api/negocio'),
@@ -85,7 +102,7 @@ export default function ModuleUpsellGate({
                 
                 if (caps[targetKeyUpper] === true || caps[targetKeyLower] === true) {
                     allowed = true;
-                } else if (targetKeyUpper === 'COMMUNICATION_CENTER' && (caps.communications || caps.whatsapp_campaigns)) {
+                } else if (targetKeyUpper === 'COMMUNICATION_CENTER' && (caps.communications || caps.whatsapp_campaigns || caps.communication_center)) {
                     allowed = true;
                 } else if (targetKeyUpper === 'LOYALTY' && (caps.loyalty || caps.loyalty_module)) {
                     allowed = true;
@@ -100,37 +117,101 @@ export default function ModuleUpsellGate({
 
             setIsAllowed(allowed);
 
-            if (!allowed && resAddons.ok) {
-                const addonsData = await resAddons.json();
-                if (addonsData.success) {
-                    // Buscar add-on asociado
-                    const foundAddon = (addonsData.availableAddons || []).find((a: any) => 
-                        (addonCode && a.code === addonCode) || 
-                        (a.targetKey && a.targetKey.toUpperCase() === capabilityKey.toUpperCase())
-                    );
-                    
-                    if (foundAddon) {
-                        setAddon(foundAddon.addon || foundAddon);
-                        if (foundAddon.isPendingPayment) {
+            if (!allowed) {
+                const targetKeyUpper = capabilityKey.toUpperCase();
+                let foundAddon: any = null;
+
+                if (resAddons.ok) {
+                    const addonsData = await resAddons.json();
+                    if (addonsData.success) {
+                        foundAddon = (addonsData.availableAddons || []).find((a: any) => 
+                            (addonCode && a.code === addonCode) || 
+                            (a.targetKey && a.targetKey.toUpperCase() === targetKeyUpper)
+                        );
+                        
+                        if (foundAddon) {
+                            setAddon(foundAddon.addon || foundAddon);
+                            if (foundAddon.isPendingPayment) {
+                                setIsPendingPayment(true);
+                            }
+                        }
+
+                        // Verificar contratos activos o pendientes
+                        const pendingContract = (addonsData.activeSubscriptions || []).find((sa: any) => 
+                            (addonCode && sa.addon?.code === addonCode) ||
+                            (sa.addon?.targetKey && sa.addon.targetKey.toUpperCase() === targetKeyUpper)
+                        );
+
+                        if (pendingContract && pendingContract.status === 'PENDING') {
                             setIsPendingPayment(true);
                         }
+
+                        if (addonsData.pricingDetails) {
+                            setSubscriptionDates({
+                                startDate: addonsData.pricingDetails.startDate,
+                                endDate: addonsData.pricingDetails.endDate
+                            });
+                        }
                     }
+                }
 
-                    // Verificar contratos activos o pendientes
-                    const pendingContract = (addonsData.activeSubscriptions || []).find((sa: any) => 
-                        (addonCode && sa.addon?.code === addonCode) ||
-                        (sa.addon?.targetKey && sa.addon.targetKey.toUpperCase() === capabilityKey.toUpperCase())
-                    );
-
-                    if (pendingContract && pendingContract.status === 'PENDING') {
-                        setIsPendingPayment(true);
-                    }
-
-                    if (addonsData.pricingDetails) {
-                        setSubscriptionDates({
-                            startDate: addonsData.pricingDetails.startDate,
-                            endDate: addonsData.pricingDetails.endDate
-                        });
+                // Fallback inteligente si no está registrado aún en la base de datos local
+                if (!foundAddon) {
+                    if (fallbackAddon) {
+                        setAddon(fallbackAddon);
+                    } else {
+                        const fallbackCatalog: Record<string, any> = {
+                            LOYALTY: {
+                                code: 'ADDON_LOYALTY',
+                                name: 'Add-on Club de Beneficios & Fidelización',
+                                description: 'Niveles VIP, misiones por recompensas, catálogo de canjes y cashback para tus clientes',
+                                priceMonthly: 12.00,
+                                type: 'CAPABILITY',
+                                targetKey: 'LOYALTY'
+                            },
+                            COURSES: {
+                                code: 'ADDON_COURSES',
+                                name: 'Add-on Academia, Cursos & Talleres',
+                                description: 'Gestión de academias, talleres, masterclasses, alumnos, cupos y pase de asistencia',
+                                priceMonthly: 14.00,
+                                type: 'CAPABILITY',
+                                targetKey: 'COURSES'
+                            },
+                            COMMUNICATION_CENTER: {
+                                code: 'ADDON_COMMUNICATION_CENTER',
+                                name: 'Add-on Centro de Comunicaciones',
+                                description: 'Envío masivo de mensajes Push y WhatsApp segmentados a tus clientes',
+                                priceMonthly: 12.00,
+                                type: 'CAPABILITY',
+                                targetKey: 'COMMUNICATION_CENTER'
+                            },
+                            DELIVERY: {
+                                code: 'ADDON_DELIVERY',
+                                name: 'Add-on Delivery & Rastreo GPS',
+                                description: 'Activa la bolsa de repartidores y monitoreo en tiempo real',
+                                priceMonthly: 12.00,
+                                type: 'CAPABILITY',
+                                targetKey: 'DELIVERY'
+                            },
+                            KITCHEN: {
+                                code: 'ADDON_KITCHEN',
+                                name: 'Add-on Pantalla de Cocina (KDS)',
+                                description: 'Comandas digitales en tiempo real con tiempos de preparación y despacho',
+                                priceMonthly: 10.00,
+                                type: 'CAPABILITY',
+                                targetKey: 'KITCHEN'
+                            },
+                            PROMOTIONS: {
+                                code: 'ADDON_PROMOTIONS',
+                                name: 'Add-on Promociones & Descuentos',
+                                description: 'Activa cupones, combos y reglas de descuento automáticas',
+                                priceMonthly: 8.00,
+                                type: 'CAPABILITY',
+                                targetKey: 'PROMOTIONS'
+                            }
+                        };
+                        const fb = fallbackCatalog[targetKeyUpper];
+                        if (fb) setAddon(fb);
                     }
                 }
             }
@@ -143,13 +224,13 @@ export default function ModuleUpsellGate({
 
     useEffect(() => {
         checkEntitlements();
-    }, [capabilityKey, addonCode]);
+    }, [capabilityKey, addonCode, session]);
 
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
                 <Loader2 className="w-8 h-8 animate-spin" style={{ color: primaryColor }} />
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                     Comprobando permisos del módulo...
                 </p>
             </div>
@@ -174,7 +255,7 @@ export default function ModuleUpsellGate({
                 />
 
                 <div className="relative z-10 max-w-2xl space-y-4">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 text-white text-xs font-black uppercase tracking-wider shadow-sm">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold uppercase tracking-wider shadow-sm">
                         <Lock size={12} className="text-amber-400" />
                         <span>{badgeText}</span>
                     </div>
@@ -188,7 +269,7 @@ export default function ModuleUpsellGate({
                                 <IconComponent size={28} />
                             </div>
                         )}
-                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
                             {title}
                         </h1>
                     </div>
@@ -203,10 +284,10 @@ export default function ModuleUpsellGate({
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-slate-100">
                         {stats.map((st, idx) => (
                             <div key={idx} className="space-y-1">
-                                <span className="block text-2xl md:text-3xl font-black text-slate-900">
+                                <span className="block text-2xl md:text-3xl font-bold text-slate-900">
                                     {st.value}
                                 </span>
-                                <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
                                     {st.label}
                                 </span>
                             </div>
@@ -219,7 +300,7 @@ export default function ModuleUpsellGate({
             {benefits.length > 0 && (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400 flex items-center gap-2">
                             <Sparkles size={16} style={{ color: primaryColor }} /> 
                             Qué puedes hacer con esta integración
                         </h2>
@@ -240,7 +321,7 @@ export default function ModuleUpsellGate({
                                         <BenefitIcon size={20} />
                                     </div>
                                     <div className="space-y-1">
-                                        <h3 className="text-sm font-black text-slate-900">
+                                        <h3 className="text-sm font-bold text-slate-900">
                                             {b.title}
                                         </h3>
                                         <p className="text-xs text-slate-500 font-medium leading-relaxed">
@@ -257,11 +338,11 @@ export default function ModuleUpsellGate({
             {/* Caja de Activación In-situ (Focus a la Integración) */}
             <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white rounded-3xl p-8 md:p-10 shadow-2xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="space-y-3 max-w-xl text-center md:text-left">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xs">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
                         <Zap size={14} className="text-amber-400" />
                         Activación Rápida
                     </div>
-                    <h3 className="text-2xl font-black tracking-tight text-white">
+                    <h3 className="text-2xl font-bold tracking-tight text-white">
                         Habilita {title} en tu negocio
                     </h3>
                     <p className="text-xs text-slate-300 font-medium leading-relaxed">
@@ -274,14 +355,14 @@ export default function ModuleUpsellGate({
                         <div className="w-full sm:w-auto px-6 py-4 bg-amber-500/20 border border-amber-400/40 rounded-2xl flex items-center gap-3 text-amber-300">
                             <Clock className="w-5 h-5 animate-pulse shrink-0" />
                             <div className="text-left">
-                                <span className="block text-xs font-black uppercase tracking-wider">Pago en Revisión</span>
-                                <span className="block text-[11px] text-amber-200/80">Se activará tras confirmar tu transferencia.</span>
+                                <span className="block text-xs font-bold uppercase tracking-wider">Pago en Revisión</span>
+                                <span className="block text-xs text-amber-200/80">Se activará tras confirmar tu transferencia.</span>
                             </div>
                         </div>
                     ) : addon ? (
                         <button
                             onClick={() => setIsCheckoutOpen(true)}
-                            className="w-full sm:w-auto px-8 py-4 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                            className="w-full sm:w-auto px-8 py-4 text-white font-bold text-xs uppercase tracking-wide rounded-2xl transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                             style={{ 
                                 backgroundColor: primaryColor,
                                 boxShadow: `0 10px 25px -5px color-mix(in srgb, ${primaryColor} 40%, transparent)`
@@ -294,11 +375,21 @@ export default function ModuleUpsellGate({
 
                     <Link
                         href="/admin/plan"
-                        className="w-full sm:w-auto px-6 py-4 bg-white/10 hover:bg-white/20 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center gap-2 text-center"
+                        className="w-full sm:w-auto px-6 py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wide rounded-2xl transition-all flex items-center justify-center gap-2 text-center"
                     >
                         <span>Ver Todos los Planes</span>
                         <ArrowRight size={14} />
                     </Link>
+
+                    <a
+                        href={`https://wa.me/593968118444?text=${encodeURIComponent(`Hola CitiOx, quisiera habilitar el módulo de ${title} para mi negocio.`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full sm:w-auto px-6 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/10 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all flex items-center justify-center gap-2 text-center"
+                    >
+                        <MessageCircle size={14} className="text-emerald-400" />
+                        <span>Hablar con Asesor</span>
+                    </a>
                 </div>
             </div>
 

@@ -92,7 +92,7 @@ export default function NewsletterPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">Boletín Pro</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight ">Boletín Pro</h1>
                     <p className="text-gray-500 font-medium">Gestiona tu lista de correos y envía campañas de marketing.</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -125,7 +125,7 @@ export default function NewsletterPage() {
             {showSendModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !sending && setShowSendModal(false)} />
-                     <div className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-white/20 overflow-hidden animate-in zoom-in duration-300">
+                     <div className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-in zoom-in duration-300">
                         <div className="p-8 text-white" style={{ backgroundColor: 'var(--primary-color)' }}>
                             <div className="flex justify-between items-center mb-2">
                                 <Trophy size={24} className="opacity-50" />
@@ -133,14 +133,14 @@ export default function NewsletterPage() {
                                     <X size={24} />
                                 </button>
                             </div>
-                             <h3 className="text-2xl font-black uppercase tracking-tight italic">Crear Nueva Campaña</h3>
+                             <h3 className="text-2xl font-bold tracking-tight ">Crear Nueva Campaña</h3>
                             <p className="text-white/80 text-sm">Enviando a {subscribers.length} suscriptores registrados.</p>
                         </div>
 
                         <form onSubmit={handleSendMail} className="p-8 space-y-6">
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Asunto del Correo</label>
+                                    <label className="text-xs font-bold uppercase tracking-wide text-gray-400 ml-1">Asunto del Correo</label>
                                      <input
                                         required
                                         type="text"
@@ -161,7 +161,7 @@ export default function NewsletterPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Mensaje de tu Boletín</label>
+                                    <label className="text-xs font-bold uppercase tracking-wide text-gray-400 ml-1">Mensaje de tu Boletín</label>
                                     <WysiwygEditor
                                         value={mailForm.message}
                                         onChange={(content) => setMailForm({ ...mailForm, message: content })}
@@ -172,7 +172,7 @@ export default function NewsletterPage() {
                             <div className="flex flex-col sm:flex-row gap-4 pt-2">
                                  <button
                                     type="submit"
-                                    className="flex-1 text-white font-black py-4 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-3 uppercase text-xs tracking-widest active:scale-95"
+                                    className="flex-1 text-white font-bold py-4 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-3 uppercase text-xs tracking-wide active:scale-95"
                                     style={{ backgroundColor: 'var(--primary-color)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--primary-color), transparent 80%)' }}
                                     onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
                                     onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
@@ -184,7 +184,7 @@ export default function NewsletterPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowSendModal(false)}
-                                    className="px-8 py-4 text-gray-400 hover:text-gray-600 font-black uppercase text-xs tracking-widest transition-colors text-center"
+                                    className="px-8 py-4 text-gray-400 hover:text-gray-600 font-bold uppercase text-xs tracking-wide transition-colors text-center"
                                 >
                                     Cancelar
                                 </button>
@@ -195,7 +195,7 @@ export default function NewsletterPage() {
             )}
 
             {/* Content Card */}
-            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-50 flex items-center gap-4">
                     <div className="relative flex-1">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -221,9 +221,9 @@ export default function NewsletterPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50">
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Suscriptor</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Fecha de Registro</th>
-                                <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-gray-400">Acciones</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-400">Suscriptor</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-400">Fecha de Registro</th>
+                                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wide text-gray-400">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -274,7 +274,7 @@ export default function NewsletterPage() {
                                         <div className="flex flex-col items-center gap-4">
                                             <Mail size={48} className="text-gray-200" />
                                             <div>
-                                                <p className="font-black text-gray-900 uppercase tracking-tight">No hay suscriptores aún</p>
+                                                <p className="font-bold text-gray-900 uppercase tracking-tight">No hay suscriptores aún</p>
                                                 <p className="text-gray-500 text-sm">Los correos que se registren en tu boletín aparecerán aquí.</p>
                                             </div>
                                         </div>
@@ -288,22 +288,22 @@ export default function NewsletterPage() {
 
             {/* Marketing Tips Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 <div className="rounded-[2.5rem] p-8 text-white relative overflow-hidden group" style={{ backgroundColor: 'var(--primary-color)' }}>
+                 <div className="rounded-2xl p-8 text-white relative overflow-hidden group" style={{ backgroundColor: 'var(--primary-color)' }}>
                     <div className="absolute -top-10 -right-10 size-40 bg-white/10 rounded-full group-hover:scale-110 transition-transform duration-700" />
-                    <h4 className="text-xl font-black uppercase tracking-tighter mb-4 italic">Tip de Marketing</h4>
+                    <h4 className="text-xl font-bold tracking-tight mb-4 ">Tip de Marketing</h4>
                     <p className="text-white/80 font-medium text-sm leading-relaxed">
                         Envía novedades sobre los próximos torneos para aumentar la participación y retención.
                     </p>
                 </div>
-                <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
+                <div className="bg-slate-900 rounded-2xl p-8 text-white relative overflow-hidden group">
                     <div className="absolute -bottom-10 -left-10 size-32 bg-emerald-500/20 rounded-full group-hover:scale-110 transition-transform duration-700" />
-                    <h4 className="text-xl font-black uppercase tracking-tighter mb-4 italic">Ofertas Flash</h4>
+                    <h4 className="text-xl font-bold tracking-tight mb-4 ">Ofertas Flash</h4>
                     <p className="text-slate-300 font-medium text-sm leading-relaxed">
                         Aprovecha los horarios de baja demanda enviando cupones descuento exclusivos a tu lista de suscriptores.
                     </p>
                 </div>
-                <div className="bg-gray-100 rounded-[2.5rem] p-8 text-gray-900 relative overflow-hidden group border border-gray-200">
-                    <h4 className="text-xl font-black uppercase tracking-tighter mb-4 italic">Privacidad</h4>
+                <div className="bg-gray-100 rounded-2xl p-8 text-gray-900 relative overflow-hidden group border border-gray-200">
+                    <h4 className="text-xl font-bold tracking-tight mb-4 ">Privacidad</h4>
                     <p className="text-gray-500 font-medium text-sm leading-relaxed">
                         Recuerda siempre respetar los datos de tus clientes y usar esta lista solo para fines comunicativos del negocio.
                     </p>

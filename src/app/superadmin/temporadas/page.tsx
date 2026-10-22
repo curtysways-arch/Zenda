@@ -175,7 +175,7 @@ export default function SuperAdminTemporadasPage() {
         </div>
         <button 
           onClick={openCreateModal}
-          className="flex items-center gap-2 px-6 py-3.5 bg-cyan-500 hover:bg-cyan-400 active:scale-[0.98] transition-all text-slate-950 font-black rounded-2xl shadow-lg shadow-cyan-500/20 border-none relative z-10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-3.5 bg-cyan-500 hover:bg-cyan-400 active:scale-[0.98] transition-all text-slate-950 font-bold rounded-2xl shadow-lg shadow-cyan-500/20 border-none relative z-10 cursor-pointer"
         >
           <Plus size={20} />
           Nueva Temporada
@@ -198,7 +198,7 @@ export default function SuperAdminTemporadasPage() {
           </p>
           <button 
             onClick={openCreateModal}
-            className="px-5 py-2.5 bg-cyan-500 text-slate-950 font-black rounded-xl hover:bg-cyan-400 border-none cursor-pointer"
+            className="px-5 py-2.5 bg-cyan-500 text-slate-950 font-bold rounded-xl hover:bg-cyan-400 border-none cursor-pointer"
           >
             Crear Primera Temporada
           </button>
@@ -234,11 +234,11 @@ export default function SuperAdminTemporadasPage() {
                       <StatusIcon size={20} />
                     </div>
                     <div>
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Código {season.codigo} · v{season.version}</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Código {season.codigo} · v{season.version}</span>
                       <h3 className="font-extrabold text-slate-800 text-lg leading-tight">{season.nombre}</h3>
                     </div>
                   </div>
-                  <span className={cn("px-2.5 py-1 text-[9px] font-bold rounded-full uppercase tracking-wider border", statusConfig.bg, statusConfig.text, statusConfig.border)}>
+                  <span className={cn("px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wider border", statusConfig.bg, statusConfig.text, statusConfig.border)}>
                     {statusConfig.label}
                   </span>
                 </div>
@@ -248,29 +248,29 @@ export default function SuperAdminTemporadasPage() {
                   {/* Timeline Row */}
                   <div className="flex items-center gap-4 text-xs font-bold text-slate-600 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
                     <div className="flex flex-col">
-                      <span className="text-[9px] uppercase text-slate-400 tracking-wider">Fecha Inicio</span>
+                      <span className="text-xs uppercase text-slate-400 tracking-wider">Fecha Inicio</span>
                       <span>{initDate}</span>
                     </div>
                     <ArrowRight size={16} className="text-slate-400" />
                     <div className="flex flex-col">
-                      <span className="text-[9px] uppercase text-slate-400 tracking-wider">Fecha Término</span>
+                      <span className="text-xs uppercase text-slate-400 tracking-wider">Fecha Término</span>
                       <span>{endDate}</span>
                     </div>
                   </div>
 
                   {season.descripcion && (
-                    <p className="text-xs text-slate-500 italic">"{season.descripcion}"</p>
+                    <p className="text-xs text-slate-500 ">"{season.descripcion}"</p>
                   )}
 
                   {/* Config Snapshot */}
                   {season.config && Object.keys(season.config).length > 0 && (
                     <div className="pt-3 border-t border-slate-100 space-y-2">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Parámetros Estacionales</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Parámetros Estacionales</span>
                       <div className="grid grid-cols-2 gap-2">
                         {Object.entries(season.config).map(([key, val]: any) => (
                           <div key={key} className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 text-center">
-                            <span className="text-[8px] text-slate-400 uppercase tracking-wider block font-bold">{key}</span>
-                            <span className="text-sm font-black text-slate-700">{typeof val === 'object' ? JSON.stringify(val) : String(val)}</span>
+                            <span className="text-xs text-slate-400 uppercase tracking-wider block font-bold">{key}</span>
+                            <span className="text-sm font-bold text-slate-700">{typeof val === 'object' ? JSON.stringify(val) : String(val)}</span>
                           </div>
                         ))}
                       </div>
@@ -320,7 +320,7 @@ export default function SuperAdminTemporadasPage() {
             <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-8 space-y-5 bg-white dark:bg-slate-900">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Código de Temporada</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Código de Temporada</label>
                   <input 
                     type="text" 
                     value={codigo} 
@@ -331,7 +331,7 @@ export default function SuperAdminTemporadasPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Nombre de Temporada</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Nombre de Temporada</label>
                   <input 
                     type="text" 
                     value={nombre} 
@@ -344,7 +344,7 @@ export default function SuperAdminTemporadasPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Descripción</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Descripción</label>
                 <textarea 
                   value={descripcion} 
                   onChange={e => setDescripcion(e.target.value)} 
@@ -355,7 +355,7 @@ export default function SuperAdminTemporadasPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Fecha Inicio</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Fecha Inicio</label>
                   <input 
                     type="date" 
                     value={fechaInicio} 
@@ -365,7 +365,7 @@ export default function SuperAdminTemporadasPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Fecha Término</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Fecha Término</label>
                   <input 
                     type="date" 
                     value={fechaFin} 
@@ -378,7 +378,7 @@ export default function SuperAdminTemporadasPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Estado de Temporada</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Estado de Temporada</label>
                   <select 
                     value={status} 
                     onChange={e => setStatus(e.target.value)}
@@ -391,7 +391,7 @@ export default function SuperAdminTemporadasPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Versión de Reglas</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Versión de Reglas</label>
                   <input 
                     type="text" 
                     value={version} 
@@ -403,9 +403,9 @@ export default function SuperAdminTemporadasPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2 flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2 flex items-center justify-between">
                   <span>Configuraciones Estacionales (JSON)</span>
-                  <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 capitalize">Formato estructurado</span>
+                  <span className="text-xs font-medium text-slate-400 dark:text-slate-500 capitalize">Formato estructurado</span>
                 </label>
                 <textarea 
                   value={configStr} 
@@ -427,7 +427,7 @@ export default function SuperAdminTemporadasPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-cyan-500 text-slate-950 font-black text-sm rounded-xl hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/10 border-none cursor-pointer disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-cyan-500 text-slate-950 font-bold text-sm rounded-xl hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/10 border-none cursor-pointer disabled:opacity-50"
                 >
                   {saving ? (
                     <Loader2 className="animate-spin" size={16} />

@@ -132,10 +132,10 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                         <div className="size-12 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30">
                             <User size={24} />
                         </div>
-                        <h2 className="text-xl font-black uppercase tracking-tight leading-tight">
+                        <h2 className="text-xl font-bold tracking-tight leading-tight">
                             {isEdit ? "Editar Permisos" : "Nuevo Colaborador"}
                         </h2>
-                        <p className="text-slate-400 font-medium text-[11px] leading-relaxed">
+                        <p className="text-slate-400 font-medium text-xs leading-relaxed">
                             {isEdit ? "Actualiza los roles y accesos asignados." : "Asigna roles de acceso para tu equipo de trabajo."}
                         </p>
                     </div>
@@ -147,7 +147,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                     <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
                         {/* Header Fijo */}
                         <div className="shrink-0 px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">
                                 {isEdit ? "Editar Permisos" : "Nuevo Colaborador"}
                             </h3>
                             <button 
@@ -163,7 +163,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 custom-scrollbar">
                             {/* Nombre Completo */}
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                                <label className="text-xs font-bold uppercase tracking-wide text-slate-500 pl-1">
                                     Nombre Completo
                                 </label>
                                 <div className="relative flex items-center">
@@ -185,7 +185,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                             {/* Teléfono & Email */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500 pl-1">
                                         Teléfono
                                     </label>
                                     <div className="relative flex items-center">
@@ -204,7 +204,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500 pl-1">
                                         Email (Opcional)
                                     </label>
                                     <div className="relative flex items-center">
@@ -225,7 +225,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
 
                             {/* Selector de Roles y Permisos */}
                             <div className="space-y-1.5 pt-0.5">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1 flex items-center gap-1.5">
+                                <label className="text-xs font-bold uppercase tracking-wide text-slate-500 pl-1 flex items-center gap-1.5">
                                     <Shield size={13} className="text-indigo-600" /> Selección de Rol y Permisos
                                 </label>
                                 <div className="grid grid-cols-1 gap-2">
@@ -252,7 +252,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                                                         {roleName === 'ADMIN' ? <Shield size={15} /> : roleName === 'STAFF' ? <Scissors size={15} /> : <CalendarCheck size={15} />}
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-black uppercase tracking-tight text-[11px] leading-none">{role.label || roleName}</h4>
+                                                        <h4 className="font-bold uppercase tracking-tight text-xs leading-none">{role.label || roleName}</h4>
                                                         <p className="text-[9.5px] font-medium text-slate-500 leading-tight mt-0.5">{role.desc || role.description || `Permiso de tipo ${roleName}`}</p>
                                                     </div>
                                                 </div>
@@ -274,14 +274,14 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                             <button 
                                 type="button" 
                                 onClick={onClose}
-                                className="px-3 py-2.5 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-colors"
+                                className="px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-slate-500 hover:text-slate-900 transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button 
                                 type="submit"
                                 disabled={loading}
-                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs active:scale-95 disabled:opacity-50"
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-xs active:scale-95 disabled:opacity-50"
                             >
                                 {loading ? <Loader2 className="animate-spin" size={15} /> : <><Save size={15} /> {isEdit ? "Guardar Permisos" : "Crear / Promover Usuario"}</>}
                             </button>

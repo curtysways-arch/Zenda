@@ -534,8 +534,8 @@ export default function AdminMesasPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">Salón & Mesas</h1>
-              <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 text-[10px] font-black rounded-md uppercase tracking-wider">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Salón & Mesas</h1>
+              <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 text-xs font-bold rounded-md uppercase tracking-wider">
                 Control Operativo
               </span>
             </div>
@@ -578,7 +578,7 @@ export default function AdminMesasPage() {
               setTableAllowOrders(true);
               setIsCreateModalOpen(true);
             }}
-            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-black uppercase rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer ml-auto sm:ml-0"
+            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-bold uppercase rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer ml-auto sm:ml-0"
           >
             <Plus className="w-4 h-4" />
             <span>Nueva Mesa</span>
@@ -589,37 +589,37 @@ export default function AdminMesasPage() {
       {/* ── KPI METRICS DEL SALÓN ── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Mesas</span>
-          <p className="text-2xl font-black text-slate-900 mt-1">{totalTablesCount}</p>
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Mesas</span>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{totalTablesCount}</p>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             Libres
           </span>
-          <p className="text-2xl font-black text-emerald-700 mt-1">{libresCount}</p>
+          <p className="text-2xl font-bold text-emerald-700 mt-1">{libresCount}</p>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-xs font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-amber-500"></span>
             Ocupadas
           </span>
-          <p className="text-2xl font-black text-amber-700 mt-1">{ocupadasCount}</p>
+          <p className="text-2xl font-bold text-amber-700 mt-1">{ocupadasCount}</p>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-xs font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-rose-500"></span>
             Cuenta / Alerta
           </span>
-          <p className="text-2xl font-black text-rose-700 mt-1">{cuentaSolicitadaCount}</p>
+          <p className="text-2xl font-bold text-rose-700 mt-1">{cuentaSolicitadaCount}</p>
         </div>
 
         <div className="bg-slate-900 p-4 rounded-2xl text-white shadow-sm col-span-2 md:col-span-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Venta Activa</span>
-          <p className="text-2xl font-black text-amber-400 mt-1">${totalSalonRevenue.toFixed(2)}</p>
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Venta Activa</span>
+          <p className="text-2xl font-bold text-amber-400 mt-1">${totalSalonRevenue.toFixed(2)}</p>
         </div>
       </div>
 
@@ -628,9 +628,9 @@ export default function AdminMesasPage() {
         <button
           type="button"
           onClick={() => setActiveTab('mesas')}
-          className={`px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
-            activeTab === 'mesas' ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
-          }`}
+          className={`px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
+ activeTab === 'mesas' ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
+ }`}
         >
           <Layout className="w-4 h-4" />
           <span>Salón ({mesas.length})</span>
@@ -639,14 +639,14 @@ export default function AdminMesasPage() {
         <button
           type="button"
           onClick={() => setActiveTab('solicitudes')}
-          className={`px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 relative ${
-            activeTab === 'solicitudes' ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
-          }`}
+          className={`px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 relative ${
+ activeTab === 'solicitudes' ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
+ }`}
         >
           <Utensils className="w-4 h-4" />
           <span>Solicitudes QR</span>
           {pendingRequestsCount > 0 && (
-            <span className="px-2 py-0.5 bg-amber-500 text-slate-950 text-[10px] font-black rounded-full">
+            <span className="px-2 py-0.5 bg-amber-500 text-slate-950 text-xs font-bold rounded-full">
               {pendingRequestsCount}
             </span>
           )}
@@ -655,14 +655,14 @@ export default function AdminMesasPage() {
         <button
           type="button"
           onClick={() => setActiveTab('llamadas')}
-          className={`px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 relative ${
-            activeTab === 'llamadas' ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
-          }`}
+          className={`px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 relative ${
+ activeTab === 'llamadas' ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
+ }`}
         >
           <Bell className="w-4 h-4" />
           <span>Llamadas Mesero</span>
           {pendingCallsCount > 0 && (
-            <span className="px-2 py-0.5 bg-rose-600 text-white text-[10px] font-black rounded-full">
+            <span className="px-2 py-0.5 bg-rose-600 text-white text-xs font-bold rounded-full">
               {pendingCallsCount}
             </span>
           )}
@@ -671,9 +671,9 @@ export default function AdminMesasPage() {
         <button
           type="button"
           onClick={() => setActiveTab('configuracion')}
-          className={`px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
-            activeTab === 'configuracion' ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
-          }`}
+          className={`px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
+ activeTab === 'configuracion' ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'
+ }`}
         >
           <Settings className="w-4 h-4" />
           <span>Configuración Salón</span>
@@ -710,7 +710,7 @@ export default function AdminMesasPage() {
           {filteredMesas.length === 0 ? (
             <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center space-y-3">
               <Layout className="w-12 h-12 text-slate-300 mx-auto" />
-              <h3 className="text-base font-black text-slate-800 uppercase">Sin mesas con este filtro</h3>
+              <h3 className="text-base font-bold text-slate-800 uppercase">Sin mesas con este filtro</h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
                 No hay mesas que coincidan con la selección actual.
               </p>
@@ -727,7 +727,7 @@ export default function AdminMesasPage() {
 
                 let borderClass = 'border-slate-200 hover:border-slate-300 bg-white';
                 let headerBadge = (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
                     🟢 Libre
                   </span>
                 );
@@ -735,14 +735,14 @@ export default function AdminMesasPage() {
                 if (isBillRequested) {
                   borderClass = 'border-amber-400 bg-amber-50/40 shadow-sm';
                   headerBadge = (
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-400 text-slate-950 animate-pulse">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-amber-400 text-slate-950 animate-pulse">
                       🔔 Cuenta Solicitada
                     </span>
                   );
                 } else if (isOccupied) {
                   borderClass = 'border-indigo-200 bg-white shadow-sm';
                   headerBadge = (
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-100 text-indigo-800 border border-indigo-200">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-indigo-100 text-indigo-800 border border-indigo-200">
                       🟠 Ocupada
                     </span>
                   );
@@ -757,13 +757,13 @@ export default function AdminMesasPage() {
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+                          <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             {table.nombre}
                             {table.numero && (
                               <span className="text-xs text-slate-400 font-mono">#{table.numero}</span>
                             )}
                           </h3>
-                          <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                          <p className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
                             <span>🪑 {table.capacidad || 4} puestos</span>
                             <span className="text-slate-300">·</span>
                             <span>{table.permitePedidos ? 'QR habilitado' : 'Solo lectura'}</span>
@@ -780,7 +780,7 @@ export default function AdminMesasPage() {
                               <Utensils className="w-3.5 h-3.5 text-indigo-600" />
                               Orden #{table.activeOrder.numeroPedido}
                             </span>
-                            <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
+                            <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
                               <Clock className="w-3 h-3 text-slate-400" />
                               {table.activeOrder.durationMinutes} min
                             </span>
@@ -791,11 +791,11 @@ export default function AdminMesasPage() {
                               {table.activeOrder.itemsCount} producto{table.activeOrder.itemsCount !== 1 ? 's' : ''}
                             </span>
                             {table.activeOrder.isLocked ? (
-                              <span className="text-xs font-black text-amber-600 flex items-center gap-1">
+                              <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
                                 🔒 Plan Free
                               </span>
                             ) : (
-                              <span className="text-base font-black text-slate-950">
+                              <span className="text-base font-bold text-slate-950">
                                 ${(table.activeOrder.total || 0).toFixed(2)}
                               </span>
                             )}
@@ -804,8 +804,8 @@ export default function AdminMesasPage() {
                       ) : (
                         <div className="p-4 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center space-y-1 py-5">
                           <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                          <span className="text-xs font-black text-slate-700 uppercase tracking-tight">Mesa Libre</span>
-                          <span className="text-[10px] text-slate-400">Lista para recibir clientes</span>
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">Mesa Libre</span>
+                          <span className="text-xs text-slate-400">Lista para recibir clientes</span>
                         </div>
                       )}
                     </div>
@@ -817,7 +817,7 @@ export default function AdminMesasPage() {
                           <button
                             type="button"
                             onClick={() => setSelectedTableForDetails(table)}
-                            className="py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-[11px] uppercase rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                            className="py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                           >
                             <Eye className="w-3.5 h-3.5 text-amber-400" />
                             <span>Ver Cuenta</span>
@@ -829,7 +829,7 @@ export default function AdminMesasPage() {
                               setSelectedTableForClose(table);
                               setPayCashReceived('');
                             }}
-                            className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] uppercase rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                            className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                           >
                             <CreditCard className="w-3.5 h-3.5" />
                             <span>Cobrar</span>
@@ -842,7 +842,7 @@ export default function AdminMesasPage() {
                             setSelectedTableForAddOrder(table);
                             setOrderItemsCart([]);
                           }}
-                          className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-[11px] uppercase rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                          className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Abrir Comanda</span>
@@ -854,7 +854,7 @@ export default function AdminMesasPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedTableForQRView(table)}
-                          className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl cursor-pointer transition-colors flex items-center gap-1 text-[11px] font-bold"
+                          className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl cursor-pointer transition-colors flex items-center gap-1 text-xs font-bold"
                           title="Ver y Compartir QR Permanente"
                         >
                           <QrCode className="w-4 h-4 text-slate-700" />
@@ -911,7 +911,7 @@ export default function AdminMesasPage() {
       {activeTab === 'solicitudes' && (
         <div className="space-y-4">
           <div className="bg-white p-5 rounded-3xl border border-slate-200">
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">
               Bandeja de Solicitudes QR en Salón
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -922,7 +922,7 @@ export default function AdminMesasPage() {
           {requests.length === 0 ? (
             <div className="bg-white p-12 text-center rounded-3xl border border-slate-200 space-y-2">
               <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-              <h4 className="text-sm font-black text-slate-800 uppercase">Sin solicitudes pendientes</h4>
+              <h4 className="text-sm font-bold text-slate-800 uppercase">Sin solicitudes pendientes</h4>
               <p className="text-xs text-slate-500">Todas las comandas de clientes han sido atendidas.</p>
             </div>
           ) : (
@@ -938,12 +938,12 @@ export default function AdminMesasPage() {
                   >
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 bg-slate-900 text-amber-400 font-black text-xs rounded-lg uppercase">
+                        <span className="px-2.5 py-0.5 bg-slate-900 text-amber-400 font-bold text-xs rounded-lg uppercase">
                           {req.table?.nombre || 'Mesa'}
                         </span>
-                        <span className={`px-2 py-0.5 text-[10px] font-black rounded-md uppercase ${
-                          isPending ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-600'
-                        }`}>
+                        <span className={`px-2 py-0.5 text-xs font-bold rounded-md uppercase ${
+ isPending ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-600'
+ }`}>
                           {isPending ? 'Pendiente Aprobación' : req.estado}
                         </span>
                       </div>
@@ -952,7 +952,7 @@ export default function AdminMesasPage() {
                       </p>
                       <div className="text-xs text-slate-700">
                         {Array.isArray(req.items) && req.items.map((it: any, i: number) => (
-                          <span key={i} className="inline-block bg-slate-100 px-2 py-0.5 rounded mr-1.5 mt-1 font-mono text-[11px]">
+                          <span key={i} className="inline-block bg-slate-100 px-2 py-0.5 rounded mr-1.5 mt-1 font-mono text-xs">
                             {it.cantidad || 1}x {it.nombre || it.nombreProducto} (${Number(it.precioUnitario || it.precio || 0).toFixed(2)})
                           </span>
                         ))}
@@ -961,8 +961,8 @@ export default function AdminMesasPage() {
 
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right mr-2">
-                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Total Comanda</span>
-                        <span className="text-lg font-black text-slate-900">${(req.total || 0).toFixed(2)}</span>
+                        <span className="text-xs text-slate-400 uppercase font-bold block">Total Comanda</span>
+                        <span className="text-lg font-bold text-slate-900">${(req.total || 0).toFixed(2)}</span>
                       </div>
 
                       {isPending && (
@@ -971,7 +971,7 @@ export default function AdminMesasPage() {
                             type="button"
                             disabled={processingId === req.id}
                             onClick={() => handleConfirmRequest(req.id)}
-                            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-50"
                           >
                             {processingId === req.id ? 'Aprobando...' : 'Confirmar & Enviar Cocina'}
                           </button>
@@ -999,7 +999,7 @@ export default function AdminMesasPage() {
       {activeTab === 'llamadas' && (
         <div className="space-y-4">
           <div className="bg-white p-5 rounded-3xl border border-slate-200">
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">
               Llamadas de Asistencia y Solicitud de Cuenta
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -1010,7 +1010,7 @@ export default function AdminMesasPage() {
           {waiterCalls.length === 0 ? (
             <div className="bg-white p-12 text-center rounded-3xl border border-slate-200 space-y-2">
               <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-              <h4 className="text-sm font-black text-slate-800 uppercase">Sin llamadas pendientes</h4>
+              <h4 className="text-sm font-bold text-slate-800 uppercase">Sin llamadas pendientes</h4>
               <p className="text-xs text-slate-500">Todo el salón se encuentra atendido.</p>
             </div>
           ) : (
@@ -1031,10 +1031,10 @@ export default function AdminMesasPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-black text-slate-900 uppercase">{call.table?.nombre || 'Mesa'}</h4>
-                          <span className={`px-2 py-0.5 text-[10px] font-black rounded-md uppercase ${
-                            isBill ? 'bg-amber-400 text-slate-950' : 'bg-rose-600 text-white'
-                          }`}>
+                          <h4 className="text-sm font-bold text-slate-900 uppercase">{call.table?.nombre || 'Mesa'}</h4>
+                          <span className={`px-2 py-0.5 text-xs font-bold rounded-md uppercase ${
+ isBill ? 'bg-amber-400 text-slate-950' : 'bg-rose-600 text-white'
+ }`}>
                             {isBill ? '💳 Solicita Cuenta' : '🛎️ Mesero'}
                           </span>
                         </div>
@@ -1048,7 +1048,7 @@ export default function AdminMesasPage() {
                       <button
                         type="button"
                         onClick={() => handleResolveWaiterCall(call.id)}
-                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase rounded-xl transition-all cursor-pointer shadow-2xs"
+                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-xl transition-all cursor-pointer shadow-2xs"
                       >
                         Atendido ✓
                       </button>
@@ -1065,7 +1065,7 @@ export default function AdminMesasPage() {
       {activeTab === 'configuracion' && (
         <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 max-w-2xl space-y-6">
           <div>
-            <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">
+            <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight">
               Parámetros Operativos del Salón
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -1077,7 +1077,7 @@ export default function AdminMesasPage() {
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
               <div>
                 <label className="font-bold text-slate-900 block">Permitir pedidos desde QR en mesas</label>
-                <span className="text-[11px] text-slate-500 font-normal">
+                <span className="text-xs text-slate-500 font-normal">
                   Los comensales podrán añadir productos y enviar comandas directamente desde su móvil.
                 </span>
               </div>
@@ -1097,7 +1097,7 @@ export default function AdminMesasPage() {
                 onChange={e => setConfig({ ...config, mesaRadioPermitido: parseInt(e.target.value, 10) || 50 })}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono"
               />
-              <span className="text-[11px] text-slate-400 font-normal">
+              <span className="text-xs text-slate-400 font-normal">
                 Distancia máxima alrededor del negocio para validar que el cliente está físicamente en el local.
               </span>
             </div>
@@ -1106,7 +1106,7 @@ export default function AdminMesasPage() {
               <button
                 type="submit"
                 disabled={savingConfig}
-                className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase rounded-xl shadow-md cursor-pointer disabled:opacity-50"
+                className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-xl shadow-md cursor-pointer disabled:opacity-50"
               >
                 {savingConfig ? 'Guardando...' : 'Guardar Parámetros'}
               </button>
@@ -1124,10 +1124,10 @@ export default function AdminMesasPage() {
               <div className="flex items-start justify-between border-b border-slate-100 pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">
+                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">
                       {selectedTableForDetails.nombre}
                     </h3>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-100 text-indigo-800">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-indigo-100 text-indigo-800">
                       {selectedTableForDetails.estado}
                     </span>
                   </div>
@@ -1149,11 +1149,11 @@ export default function AdminMesasPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200/80 text-xs">
                     <div>
-                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Orden Activa</span>
+                      <span className="text-xs text-slate-400 uppercase font-bold block">Orden Activa</span>
                       <strong className="text-slate-900">Pedido #{selectedTableForDetails.activeOrder.numeroPedido}</strong>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Tiempo Abierta</span>
+                      <span className="text-xs text-slate-400 uppercase font-bold block">Tiempo Abierta</span>
                       <span className="font-bold text-slate-700 flex items-center gap-1 justify-end">
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
                         {selectedTableForDetails.activeOrder.durationMinutes} minutos
@@ -1163,19 +1163,19 @@ export default function AdminMesasPage() {
 
                   {/* Lista de Productos Consumidos */}
                   <div className="space-y-2">
-                    <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Productos en Comanda ({selectedTableForDetails.activeOrder.itemsCount})
                     </h4>
                     <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
                       {selectedTableForDetails.activeOrder.items.map((item, idx) => (
                         <div key={idx} className="p-3 flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-lg bg-slate-200 text-slate-800 font-bold flex items-center justify-center text-[11px]">
+                            <span className="w-6 h-6 rounded-lg bg-slate-200 text-slate-800 font-bold flex items-center justify-center text-xs">
                               {item.cantidad}x
                             </span>
                             <span className="font-bold text-slate-800">{item.nombreProducto}</span>
                           </div>
-                          <span className="font-black text-slate-900 font-mono">
+                          <span className="font-bold text-slate-900 font-mono">
                             ${((item.precioUnitario || 0) * (item.cantidad || 1)).toFixed(2)}
                           </span>
                         </div>
@@ -1189,7 +1189,7 @@ export default function AdminMesasPage() {
                       <span>Subtotal Consumo:</span>
                       <span>${(selectedTableForDetails.activeOrder.subtotal || 0).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-base font-black text-amber-400 pt-1 border-t border-slate-800">
+                    <div className="flex justify-between text-base font-bold text-amber-400 pt-1 border-t border-slate-800">
                       <span>Total a Cobrar:</span>
                       <span>${(selectedTableForDetails.activeOrder.total || 0).toFixed(2)}</span>
                     </div>
@@ -1198,7 +1198,7 @@ export default function AdminMesasPage() {
               ) : (
                 <div className="py-8 text-center space-y-2">
                   <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-                  <h4 className="text-sm font-black text-slate-800 uppercase">Mesa Libre</h4>
+                  <h4 className="text-sm font-bold text-slate-800 uppercase">Mesa Libre</h4>
                   <p className="text-xs text-slate-500">No hay comanda abierta en este momento.</p>
                 </div>
               )}
@@ -1213,7 +1213,7 @@ export default function AdminMesasPage() {
                   setOrderItemsCart([]);
                   setSelectedTableForDetails(null);
                 }}
-                className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs uppercase rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <Plus className="w-4 h-4" />
                 <span>+ Agregar Productos</span>
@@ -1226,7 +1226,7 @@ export default function AdminMesasPage() {
                     setSelectedTableForClose(selectedTableForDetails);
                     setSelectedTableForDetails(null);
                   }}
-                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <CreditCard className="w-4 h-4" />
                   <span>Cobrar & Cerrar</span>
@@ -1245,7 +1245,7 @@ export default function AdminMesasPage() {
               {/* Encabezado */}
               <div className="flex items-start justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     <Utensils className="w-5 h-5 text-indigo-600" />
                     Tomar Pedido: {selectedTableForAddOrder.nombre}
                   </h3>
@@ -1286,16 +1286,16 @@ export default function AdminMesasPage() {
                     className="p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-between gap-2 cursor-pointer"
                   >
                     <div>
-                      <h5 className="text-xs font-black text-slate-900">{prod.nombre}</h5>
-                      <span className="text-[10px] text-slate-500">
+                      <h5 className="text-xs font-bold text-slate-900">{prod.nombre}</h5>
+                      <span className="text-xs text-slate-500">
                         {prod.categoria?.nombre || 'General'}
                       </span>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="text-xs font-black text-slate-950 font-mono block">
+                      <span className="text-xs font-bold text-slate-950 font-mono block">
                         ${Number(prod.precio || 0).toFixed(2)}
                       </span>
-                      <span className="text-[10px] font-bold text-indigo-600 uppercase">+ Añadir</span>
+                      <span className="text-xs font-bold text-indigo-600 uppercase">+ Añadir</span>
                     </div>
                   </div>
                 ))}
@@ -1304,14 +1304,14 @@ export default function AdminMesasPage() {
               {/* Canasta de la Comanda a Enviar */}
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black text-slate-900 uppercase">
+                  <h4 className="text-xs font-bold text-slate-900 uppercase">
                     Productos Seleccionados ({orderItemsCart.reduce((s, it) => s + it.cantidad, 0)})
                   </h4>
                   {orderItemsCart.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setOrderItemsCart([])}
-                      className="text-[10px] font-bold text-rose-600 hover:underline cursor-pointer"
+                      className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
                     >
                       Vaciar lista
                     </button>
@@ -1319,7 +1319,7 @@ export default function AdminMesasPage() {
                 </div>
 
                 {orderItemsCart.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <p className="text-xs text-slate-400 text-center py-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                     Toca los productos arriba para agregarlos a la comanda.
                   </p>
                 ) : (
@@ -1331,22 +1331,22 @@ export default function AdminMesasPage() {
                       >
                         <span className="font-bold text-slate-800">{item.nombreProducto}</span>
                         <div className="flex items-center gap-3">
-                          <span className="font-black text-slate-900 font-mono">
+                          <span className="font-bold text-slate-900 font-mono">
                             ${(item.precioUnitario * item.cantidad).toFixed(2)}
                           </span>
                           <div className="flex items-center gap-1 bg-white border border-slate-300 rounded-lg px-1">
                             <button
                               type="button"
                               onClick={() => handleUpdateCartQuantity(item.productoId, -1)}
-                              className="px-1.5 py-0.5 font-black text-slate-600 hover:text-slate-900 cursor-pointer"
+                              className="px-1.5 py-0.5 font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
                             >
                               -
                             </button>
-                            <span className="px-1 font-bold text-[11px]">{item.cantidad}</span>
+                            <span className="px-1 font-bold text-xs">{item.cantidad}</span>
                             <button
                               type="button"
                               onClick={() => handleUpdateCartQuantity(item.productoId, 1)}
-                              className="px-1.5 py-0.5 font-black text-slate-600 hover:text-slate-900 cursor-pointer"
+                              className="px-1.5 py-0.5 font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
                             >
                               +
                             </button>
@@ -1362,15 +1362,15 @@ export default function AdminMesasPage() {
             {/* Botón de Enviar a Cocina */}
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-4">
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-bold block">Total a Agregar</span>
-                <span className="text-lg font-black text-slate-900 font-mono">${cartSubtotal.toFixed(2)}</span>
+                <span className="text-xs text-slate-400 uppercase font-bold block">Total a Agregar</span>
+                <span className="text-lg font-bold text-slate-900 font-mono">${cartSubtotal.toFixed(2)}</span>
               </div>
 
               <button
                 type="button"
                 disabled={submittingOrder || orderItemsCart.length === 0}
                 onClick={handleSubmitOrderToTable}
-                className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-xs uppercase rounded-xl flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
+                className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs uppercase rounded-xl flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
               >
                 <ChefHat className="w-4 h-4" />
                 <span>{submittingOrder ? 'Enviando...' : 'Confirmar & Enviar a Cocina'}</span>
@@ -1386,7 +1386,7 @@ export default function AdminMesasPage() {
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-100">
             <div className="flex items-start justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   <CreditCard className="w-5 h-5 text-emerald-600" />
                   Cobro de Mesa: {selectedTableForClose.nombre}
                 </h3>
@@ -1406,14 +1406,14 @@ export default function AdminMesasPage() {
             {/* Total */}
             <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-1">
               <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Total a Cobrar</span>
-              <p className="text-3xl font-black text-emerald-950 font-mono">
+              <p className="text-3xl font-bold text-emerald-950 font-mono">
                 ${(selectedTableForClose.activeOrder?.total || 0).toFixed(2)}
               </p>
             </div>
 
             {/* Método de Pago */}
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider block">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                 Método de Pago
               </label>
               <div className="grid grid-cols-2 gap-2 text-xs font-bold">
@@ -1442,7 +1442,7 @@ export default function AdminMesasPage() {
             {/* Monto Recibido si es Efectivo */}
             {payMethod === 'EFECTIVO' && (
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-slate-700 uppercase tracking-wider block">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                   Monto Recibido en Efectivo
                 </label>
                 <input
@@ -1454,7 +1454,7 @@ export default function AdminMesasPage() {
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold font-mono focus:outline-hidden focus:border-slate-400"
                 />
                 {payCashReceived && parseFloat(payCashReceived) >= (selectedTableForClose.activeOrder?.total || 0) && (
-                  <p className="text-xs font-black text-emerald-700 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+                  <p className="text-xs font-bold text-emerald-700 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
                     Cambio / Vuelto: ${(parseFloat(payCashReceived) - (selectedTableForClose.activeOrder?.total || 0)).toFixed(2)}
                   </p>
                 )}
@@ -1475,7 +1475,7 @@ export default function AdminMesasPage() {
                 type="button"
                 disabled={closingTable}
                 onClick={handleCloseTable}
-                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase rounded-xl shadow-md cursor-pointer disabled:opacity-50"
+                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase rounded-xl shadow-md cursor-pointer disabled:opacity-50"
               >
                 {closingTable ? 'Cerrando...' : 'Confirmar Cobro & Liberar'}
               </button>
@@ -1489,7 +1489,7 @@ export default function AdminMesasPage() {
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-100 text-center">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h3 className="text-base font-black text-slate-900 uppercase">
+              <h3 className="text-base font-bold text-slate-900 uppercase">
                 QR Permanente: {selectedTableForQRView.nombre}
               </h3>
               <button
@@ -1514,7 +1514,7 @@ export default function AdminMesasPage() {
                     <img src={qrUrl} alt={selectedTableForQRView.nombre} className="w-48 h-48 object-contain rounded-xl mx-auto" />
                   </div>
 
-                  <p className="text-[11px] text-slate-500 font-mono break-all bg-slate-50 p-2 rounded-xl border border-slate-100">
+                  <p className="text-xs text-slate-500 font-mono break-all bg-slate-50 p-2 rounded-xl border border-slate-100">
                     {tableUrl}
                   </p>
 
@@ -1553,7 +1553,7 @@ export default function AdminMesasPage() {
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-100">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h3 className="text-base font-black text-slate-900 uppercase">
+              <h3 className="text-base font-bold text-slate-900 uppercase">
                 {editingTable ? 'Editar Mesa' : 'Nueva Mesa de Salón'}
               </h3>
               <button
@@ -1605,7 +1605,7 @@ export default function AdminMesasPage() {
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
                 <div>
                   <span className="font-bold text-slate-800 block">Habilitar pedidos QR en mesa</span>
-                  <span className="text-[10px] text-slate-500 font-normal">Los clientes podrán auto-ordenar</span>
+                  <span className="text-xs text-slate-500 font-normal">Los clientes podrán auto-ordenar</span>
                 </div>
                 <input
                   type="checkbox"
@@ -1627,7 +1627,7 @@ export default function AdminMesasPage() {
                 <button
                   type="submit"
                   disabled={savingTable}
-                  className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black uppercase rounded-xl shadow-md cursor-pointer disabled:opacity-50"
+                  className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold uppercase rounded-xl shadow-md cursor-pointer disabled:opacity-50"
                 >
                   {savingTable ? 'Guardando...' : (editingTable ? 'Actualizar' : 'Crear Mesa')}
                 </button>

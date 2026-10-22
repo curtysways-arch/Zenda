@@ -1,427 +1,62 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { 
-    MessageSquare, Send, Bell, Gift, Trophy, Calendar,
-    Sparkles, Loader2, BarChart2, Link2, X, ChevronDown,
-    ExternalLink, Check, Lock, Zap, ShieldCheck, ArrowRight
+import {
+    MessageSquare, Send, Bell, Loader2, Check, Lock, Zap, ShieldCheck, ArrowRight,
+    Users, Search, X, Clock, CalendarClock, Smartphone, AlertTriangle, CheckCircle2,
+    ChevronDown, RefreshCw, Sparkles,
 } from 'lucide-react';
 import { useConfirm } from '@/components/admin/ConfirmContext';
 import { getFcmToken } from '@/lib/firebase';
 import AddonCheckoutModal from '@/components/admin/AddonCheckoutModal';
 
-// ─── Selector de Link (igual al de páginas/contenido) ─────────────────────────
-interface LinkOption {
-    label: string;
-    value: string;
-    group?: string;
-    isCustom?: boolean;
+// ── Tipos ──────────────────────────────────────────────────────────────
+type Segment = 'ALL' | 'VIP' | 'INACTIVE' | 'NEW_CLIENTS' | 'BIRTHDAY' | 'USER';
+type Channel = 'APP' | 'WHATSAPP';
+
+const SEGMENTS: { id: Segment; label: string; hint: string }[] = [
+    { id: 'ALL', label: 'Todos', hint: 'Toda tu lista de clientes' },
+    { id: 'VIP', label: 'Frecuentes', hint: '5 visitas o más' },
+    { id: 'INACTIVE', label: 'Te extrañan', hint: 'Sin visitas hace 60 días' },
+    { id: 'NEW_CLIENTS', label: 'Nuevos', hint: 'Llegaron este mes' },
+    { id: 'BIRTHDAY', label: 'Cumpleañeros', hint: 'Cumplen años este mes' },
+    { id: 'USER', label: 'Elegir clientes', hint: 'Tú eliges a quién' },
+];
+
+const SEGMENT_LABEL: Record<string, string> = {
+    ALL: 'Todos', VIP: 'Frecuentes', INACTIVE: 'Te extrañan', NEW_CLIENTS: 'Nuevos', BIRTHDAY: 'Cumpleañeros', USER: 'Elegidos',
+};
+
+const TEMPLATES: { label: string; categoria: string; titulo: string; mensaje: string; link: string; segmento?: Segment }[] = [
+    { label: 'Promoción', categoria: 'PROMOCIONES', titulo: '🎁 Promoción solo esta semana', mensaje: 'Reserva esta semana y recibe un 15% de descuento en tu próximo servicio. ¡Cupos limitados!', link: '/promociones' },
+    { label: 'Te extrañamos', categoria: 'CAMPANAS', titulo: '💛 ¡Te extrañamos!', mensaje: 'Hace tiempo no te vemos. Vuelve esta semana y te damos un detalle especial en tu visita.', link: '/servicios', segmento: 'INACTIVE' },
+    { label: 'Cumpleaños', categoria: 'PREMIOS', titulo: '🎂 ¡Feliz cumpleaños!', mensaje: 'Este mes es especial: tienes un regalo esperándote en tu próxima visita. Reserva cuando quieras.', link: '/servicios', segmento: 'BIRTHDAY' },
+    { label: 'Horarios libres', categoria: 'RECORDATORIOS', titulo: '📅 Tenemos horarios libres hoy', mensaje: 'Aún quedan espacios disponibles para hoy y mañana. Reserva en un minuto desde tu celular.', link: '/servicios' },
+    { label: 'Novedad', categoria: 'NOTICIAS', titulo: '✨ Tenemos algo nuevo para ti', mensaje: 'Estrenamos un nuevo servicio que te va a encantar. Entra y conócelo.', link: '/servicios' },
+];
+
+const LINKS: { label: string; value: string }[] = [
+    { label: 'Inicio de mi página', value: '' },
+    { label: 'Reservar (servicios)', value: '/servicios' },
+    { label: 'Promociones', value: '/promociones' },
+    { label: 'Club: misiones', value: '/misiones' },
+    { label: 'Mis premios', value: '/mis-premios' },
+    { label: 'Mis reservas', value: '/mis-reservas' },
+    { label: 'Invita a un amigo', value: '/referidos' },
+];
+
+interface Audience { total: number; conApp: number; conPush: number; conWhatsApp: number }
+
+function formatDate(d: string | Date) {
+    return new Date(d).toLocaleString('es-EC', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-function LinkSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-    const [open, setOpen] = useState(false);
-    const [customUrl, setCustomUrl] = useState('');
-    const [showCustom, setShowCustom] = useState(false);
-    const [services, setServices] = useState<any[]>([]);
-    const [promotions, setPromotions] = useState<any[]>([]);
-    const ref = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [sRes, pRes] = await Promise.all([
-                    fetch('/api/services'),
-                    fetch('/api/admin/loyalty/rewards')
-                ]);
-                if (sRes.ok) setServices(await sRes.json());
-                if (pRes.ok) {
-                    const pData = await pRes.json();
-                    setPromotions(pData?.rewards || []);
-                }
-            } catch {}
-        };
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, []);
-
-    const staticOptions: LinkOption[] = [
-        { label: 'Sin enlace de destino', value: '', group: 'General' },
-        { label: 'Página de Inicio', value: '/', group: 'General' },
-        { label: 'Mis Reservas', value: '/mis-reservas', group: 'General' },
-        { label: 'Mi Perfil y Puntos', value: '/perfil', group: 'General' },
-        { label: 'Mis Referidos y Premios', value: '/referidos', group: 'General' },
-        { label: 'Sección Servicios', value: '/servicios', group: 'General' },
-        { label: 'Mis Notificaciones', value: '/notificaciones', group: 'General' },
-    ];
-
-    const allOptions = [
-        ...staticOptions,
-        ...services.map((s: any) => ({ label: s.nombre, value: `/servicio/${s.id}`, group: 'Servicios' })),
-        ...promotions.map((p: any) => ({ label: p.nombre || p.titulo, value: `/promo/${p.id}`, group: 'Premios' })),
-        { label: 'Escribir URL personalizada...', value: '__custom__', group: 'Personalizado', isCustom: true }
-    ];
-
-    const grouped = allOptions.reduce((acc: Record<string, LinkOption[]>, opt) => {
-        const g = opt.group || 'General';
-        if (!acc[g]) acc[g] = [];
-        acc[g].push(opt);
-        return acc;
-    }, {});
-
-    const selectedLabel = allOptions.find(o => o.value === value)?.label || (value ? value : 'Sin enlace');
-
-    const handleSelect = (opt: LinkOption) => {
-        if (opt.isCustom) {
-            setShowCustom(true);
-            setOpen(false);
-        } else {
-            onChange(opt.value);
-            setShowCustom(false);
-            setOpen(false);
-        }
-    };
-
-    const handleCustomConfirm = () => {
-        onChange(customUrl);
-        setShowCustom(false);
-    };
-
-    return (
-        <div ref={ref} className="relative">
-            <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1 block">
-                Botón de Acción / Enlace de Destino (Opcional)
-            </label>
-            <button
-                type="button"
-                onClick={() => setOpen(!open)}
-                className="w-full flex items-center justify-between bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-semibold focus:outline-none hover:border-slate-200 transition-colors"
-            >
-                <span className="flex items-center gap-2 text-slate-700 truncate">
-                    <Link2 size={13} className="text-slate-400 shrink-0" />
-                    {value ? selectedLabel : <span className="text-slate-400">Sin enlace de destino</span>}
-                </span>
-                <ChevronDown size={14} className={`text-slate-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Dropdown */}
-            {open && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden">
-                    <div className="max-h-60 overflow-y-auto py-2">
-                        {Object.entries(grouped).map(([group, opts]) => (
-                            <div key={group}>
-                                <div className="px-4 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">
-                                    {group}
-                                </div>
-                                {opts.map(opt => (
-                                    <button
-                                        key={opt.value}
-                                        type="button"
-                                        onClick={() => handleSelect(opt)}
-                                        className={`w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 flex items-center justify-between transition-colors ${opt.isCustom ? 'text-blue-600' : 'text-slate-700'}`}
-                                    >
-                                        <span>{opt.label}</span>
-                                        {value === opt.value && <Check size={12} className="text-emerald-500" />}
-                                    </button>
-                                ))}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Input personalizado */}
-            {showCustom && (
-                <div className="mt-2 flex gap-2">
-                    <input
-                        type="url"
-                        placeholder="https://..."
-                        value={customUrl}
-                        onChange={(e) => setCustomUrl(e.target.value)}
-                        className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:border-slate-300"
-                    />
-                    <button
-                        type="button"
-                        onClick={handleCustomConfirm}
-                        className="px-3 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl text-xs font-black transition-colors hover:bg-emerald-100"
-                    >
-                        OK
-                    </button>
-                    <button type="button" onClick={() => setShowCustom(false)} className="p-2 text-slate-400 hover:text-slate-600">
-                        <X size={14} />
-                    </button>
-                </div>
-            )}
-
-            {/* Mostrar link seleccionado */}
-            {value && (
-                <div className="mt-1.5 flex items-center gap-1.5 pl-1">
-                    <ExternalLink size={10} className="text-slate-400" />
-                    <span className="text-[10px] text-slate-400 font-semibold truncate">{value}</span>
-                    <button type="button" onClick={() => onChange('')} className="text-slate-300 hover:text-red-400 ml-auto">
-                        <X size={10} />
-                    </button>
-                </div>
-            )}
-        </div>
-    );
-}
-
-// ─── Página Principal ──────────────────────────────────────────────────────────
-
+// ── Página ─────────────────────────────────────────────────────────────
 export default function ComunicacionAdminPage() {
     const { confirm } = useConfirm();
-    const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
 
-    // Diagnóstico Push
-    const [testPushState, setTestPushState] = useState<{
-        permission: string;
-        token: string;
-        loadingToken: boolean;
-        copied: boolean;
-        sendingTest: boolean;
-        statusMessage: { text: string; type: 'success' | 'error' } | null;
-    }>({
-        permission: 'default',
-        token: '',
-        loadingToken: false,
-        copied: false,
-        sendingTest: false,
-        statusMessage: null
-    });
-
-    const loadDeviceToken = async () => {
-        setTestPushState(prev => ({ ...prev, loadingToken: true, statusMessage: null }));
-        try {
-            const token = await getFcmToken();
-            setTestPushState(prev => ({ ...prev, token: token || '', loadingToken: false }));
-        } catch (err: any) {
-            console.error('[PUSH TEST] Error:', err);
-            setTestPushState(prev => ({ 
-                ...prev, 
-                loadingToken: false,
-                statusMessage: { text: `Error al generar token: ${err.message || err}`, type: 'error' }
-            }));
-        }
-    };
-
-    const handleRequestPermission = async () => {
-        if (typeof window === 'undefined') return;
-        if (!('Notification' in window)) {
-            setTestPushState(prev => ({
-                ...prev,
-                statusMessage: { text: "Las notificaciones push no están soportadas en este navegador o dispositivo.", type: 'error' }
-            }));
-            return;
-        }
-        try {
-            const perm = await Notification.requestPermission();
-            setTestPushState(prev => ({ ...prev, permission: perm }));
-            if (perm === 'granted') {
-                await loadDeviceToken();
-            } else if (perm === 'denied') {
-                setTestPushState(prev => ({
-                    ...prev,
-                    statusMessage: { text: "Permisos denegados. Debes habilitarlos en la configuración de tu navegador.", type: 'error' }
-                }));
-            }
-        } catch (err: any) {
-            setTestPushState(prev => ({
-                ...prev,
-                statusMessage: { text: `Error al solicitar permisos: ${err.message || err}`, type: 'error' }
-            }));
-        }
-    };
-
-    const handleCopyToken = () => {
-        if (!testPushState.token) return;
-        navigator.clipboard.writeText(testPushState.token);
-        setTestPushState(prev => ({ ...prev, copied: true }));
-        setTimeout(() => setTestPushState(prev => ({ ...prev, copied: false })), 2000);
-    };
-
-    const handleRegenerateToken = async () => {
-        await handleRequestPermission();
-    };
-
-    const handleSendTestPush = async () => {
-        if (!testPushState.token) return;
-        setTestPushState(prev => ({ ...prev, sendingTest: true, statusMessage: null }));
-        try {
-            const res = await fetch('/api/admin/notifications/test-push', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: testPushState.token })
-            });
-            const data = await res.json();
-            if (res.ok && data.success) {
-                setTestPushState(prev => ({
-                    ...prev,
-                    sendingTest: false,
-                    statusMessage: { text: "¡Notificación de prueba enviada! Debería llegarte en unos segundos.", type: 'success' }
-                }));
-            } else {
-                setTestPushState(prev => ({
-                    ...prev,
-                    sendingTest: false,
-                    statusMessage: { text: `Error del servidor: ${data.error || 'Código ' + res.status}`, type: 'error' }
-                }));
-            }
-        } catch (err: any) {
-            setTestPushState(prev => ({
-                ...prev,
-                sendingTest: false,
-                statusMessage: { text: `Error de red: ${err.message || err}`, type: 'error' }
-            }));
-        }
-    };
-
-    useEffect(() => {
-        if (typeof window !== 'undefined' && 'Notification' in window) {
-            const perm = Notification.permission;
-            setTestPushState(prev => ({ ...prev, permission: perm }));
-            if (perm === 'granted') {
-                loadDeviceToken();
-            }
-        }
-    }, []);
-
-    // Formulario
-    const [titulo, setTitulo] = useState('');
-    const [descripcion, setDescripcion] = useState('');
-    const [categoria, setCategoria] = useState('NOTICIAS');
-    const [tipo, setTipo] = useState('NOTICIA');
-    const [icono, setIcono] = useState('Bell');
-    const [prioridad, setPrioridad] = useState('INFO');
-    const [recipientType, setRecipientType] = useState('ALL');
-    const [channels, setChannels] = useState<string[]>(['APP']);
-    const [scheduledFor, setScheduledFor] = useState('');
-    const [specificUserId, setSpecificUserId] = useState('');
-    const [actionUrl, setActionUrl] = useState(''); // Link de destino
-
-    // Datos auxiliares
-    const [clientes, setClientes] = useState<any[]>([]);
-    const [history, setHistory] = useState<any[]>([]);
-    const [loadingClients, setLoadingClients] = useState(false);
-    const [loadingHistory, setLoadingHistory] = useState(true);
-    const [sending, setSending] = useState(false);
-
-    useEffect(() => {
-        const fetchNegocio = async () => {
-            try {
-                const res = await fetch('/api/negocio');
-                if (res.ok) {
-                    const data = await res.json();
-                    setPrimaryColor(data.colorPrimario || '#0ea5e9');
-                }
-            } catch {}
-        };
-        fetchNegocio();
-    }, []);
-
-    const fetchHistory = async () => {
-        setLoadingHistory(true);
-        try {
-            const res = await fetch('/api/admin/notifications?limit=15');
-            if (res.ok) {
-                const data = await res.json();
-                setHistory(data.items || []);
-            }
-        } catch {}
-        finally { setLoadingHistory(false); }
-    };
-
-    const fetchClients = async () => {
-        setLoadingClients(true);
-        try {
-            const res = await fetch('/api/clientes');
-            if (res.ok) setClientes((await res.json()) || []);
-        } catch {}
-        finally { setLoadingClients(false); }
-    };
-
-    useEffect(() => { fetchHistory(); }, []);
-    useEffect(() => { if (recipientType === 'USER') fetchClients(); }, [recipientType]);
-
-    // Calcular actionType y actionPayload según link seleccionado
-    const buildAction = () => {
-        if (!actionUrl) return { actionType: 'VER_PERFIL', actionPayload: { screen: 'home' } };
-        if (actionUrl.startsWith('/servicio/')) return { actionType: 'ABRIR_URL', actionPayload: { url: actionUrl, screen: 'service' } };
-        if (actionUrl.startsWith('/referidos')) return { actionType: 'VER_CAMPANA', actionPayload: { screen: 'campaign' } };
-        if (actionUrl.startsWith('/mis-reservas')) return { actionType: 'VER_RESERVA', actionPayload: { screen: 'appointment' } };
-        if (actionUrl.startsWith('/notificaciones')) return { actionType: 'VER_PERFIL', actionPayload: { screen: 'notifications' } };
-        return { actionType: 'ABRIR_URL', actionPayload: { url: actionUrl } };
-    };
-
-    const handleSend = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!titulo || !descripcion) return;
-
-        const isOk = await confirm(
-            scheduledFor
-                ? `¿Deseas programar este mensaje para el ${new Date(scheduledFor).toLocaleString()}?`
-                : '¿Deseas enviar esta notificación ahora mismo a todos los destinatarios seleccionados?',
-            {
-                title: scheduledFor ? 'Programar Notificación' : 'Enviar Notificación',
-                confirmText: scheduledFor ? 'Programar' : 'Enviar Ahora',
-                type: 'info'
-            }
-        );
-        if (!isOk) return;
-
-        setSending(true);
-        try {
-            const { actionType, actionPayload } = buildAction();
-            const payload: any = {
-                tipo,
-                categoria,
-                titulo,
-                descripcion,
-                icono,
-                prioridad,
-                recipientType,
-                channels,
-                scheduledFor: scheduledFor || undefined,
-                actionType,
-                actionPayload
-            };
-
-            if (recipientType === 'USER' && specificUserId) {
-                payload.userIds = [specificUserId];
-            }
-
-            const res = await fetch('/api/admin/notifications', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                setTitulo('');
-                setDescripcion('');
-                setScheduledFor('');
-                setSpecificUserId('');
-                setActionUrl('');
-                fetchHistory();
-                alert(scheduledFor ? 'Notificación programada con éxito' : 'Notificación enviada con éxito');
-            } else {
-                const errData = await res.json();
-                alert(`Error: ${errData.error || 'No se pudo enviar'}`);
-            }
-        } catch (err) {
-            console.error("Error sending notification:", err);
-        } finally {
-            setSending(false);
-        }
-    };
-
+    // Plan / add-on
     const [planFeatures, setPlanFeatures] = useState<any>(null);
     const [loadingFeatures, setLoadingFeatures] = useState(true);
     const [commAddon, setCommAddon] = useState<any>(null);
@@ -429,80 +64,210 @@ export default function ComunicacionAdminPage() {
     const [isPendingApproval, setIsPendingApproval] = useState(false);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
+    // Estado del centro
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    // Formulario
+    const [segmento, setSegmento] = useState<Segment>('ALL');
+    const [clienteIds, setClienteIds] = useState<string[]>([]);
+    const [canales, setCanales] = useState<Channel[]>(['APP']);
+    const [categoria, setCategoria] = useState('NOTICIAS');
+    const [titulo, setTitulo] = useState('');
+    const [mensaje, setMensaje] = useState('');
+    const [link, setLink] = useState('/servicios');
+    const [customLink, setCustomLink] = useState('');
+    const [cuando, setCuando] = useState<'AHORA' | 'PROGRAMAR'>('AHORA');
+    const [scheduledFor, setScheduledFor] = useState('');
+
+    const [audience, setAudience] = useState<Audience | null>(null);
+    const [loadingAudience, setLoadingAudience] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [testing, setTesting] = useState(false);
+    const [flash, setFlash] = useState<{ type: 'ok' | 'error'; text: string } | null>(null);
+
+    // Clientes para "Elegir clientes"
+    const [clientes, setClientes] = useState<any[]>([]);
+    const [clientQuery, setClientQuery] = useState('');
+    const [services, setServices] = useState<any[]>([]);
+
+    const negocio = data?.negocio;
+    const primary = negocio?.colorPrimario || '#0ea5e9';
+    const pushReady = Boolean(data?.canales?.push?.configurado);
+    const wa = data?.canales?.whatsapp;
+    const finalLink = link === '__custom__' ? customLink.trim() : link;
+
+    // ── Carga ──
+    const load = useCallback(async () => {
+        try {
+            const res = await fetch('/api/admin/comunicacion', { cache: 'no-store' });
+            if (res.ok) setData(await res.json());
+        } catch { /* sin conexión */ }
+        finally { setLoading(false); }
+    }, []);
+
     useEffect(() => {
-        const fetchFeatures = async () => {
+        load();
+        (async () => {
             try {
-                const [resFeat, resAddons] = await Promise.all([
+                const [resFeat, resAddons, resServices] = await Promise.all([
                     fetch('/api/features'),
-                    fetch('/api/admin/addons')
+                    fetch('/api/admin/addons'),
+                    fetch('/api/services'),
                 ]);
-                if (resFeat.ok) {
-                    const data = await resFeat.json();
-                    setPlanFeatures(data);
+                if (resFeat.ok) setPlanFeatures(await resFeat.json());
+                if (resServices.ok) {
+                    const s = await resServices.json();
+                    setServices(Array.isArray(s) ? s : s?.services || []);
                 }
                 if (resAddons.ok) {
                     const addData = await resAddons.json();
                     if (addData.success) {
-                        const found = (addData.availableAddons || []).find((a: any) => 
-                            a.code === 'ADDON_COMMUNICATION_CENTER' || 
-                            a.targetKey === 'COMMUNICATION_CENTER'
-                        );
+                        const found = (addData.availableAddons || []).find((a: any) => a.code === 'ADDON_COMMUNICATION_CENTER' || a.targetKey === 'COMMUNICATION_CENTER');
                         if (found) {
                             setCommAddon(found.addon || found);
                             if (found.isPendingPayment) setIsPendingApproval(true);
                         }
-                        const pendingSub = (addData.activeSubscriptions || []).find((s: any) => 
-                            s.addon?.code === 'ADDON_COMMUNICATION_CENTER' || s.addonCode === 'ADDON_COMMUNICATION_CENTER'
-                        );
-                        if (pendingSub && pendingSub.status === 'PENDING') {
-                            setIsPendingApproval(true);
-                        }
-                        if (addData.pricingDetails) {
-                            setSubscriptionDates({
-                                startDate: addData.pricingDetails.startDate,
-                                endDate: addData.pricingDetails.endDate
-                            });
-                        }
+                        const pendingSub = (addData.activeSubscriptions || []).find((s: any) => s.addon?.code === 'ADDON_COMMUNICATION_CENTER' || s.addonCode === 'ADDON_COMMUNICATION_CENTER');
+                        if (pendingSub && pendingSub.status === 'PENDING') setIsPendingApproval(true);
+                        if (addData.pricingDetails) setSubscriptionDates({ startDate: addData.pricingDetails.startDate, endDate: addData.pricingDetails.endDate });
                     }
                 }
-            } catch (err) {
-                console.error("Error fetching features:", err);
-            } finally {
-                setLoadingFeatures(false);
-            }
-        };
-        fetchFeatures();
-    }, []);
+            } catch { /* ignore */ }
+            finally { setLoadingFeatures(false); }
+        })();
+    }, [load]);
 
-    const toggleChannel = (channel: string) => {
-        setChannels(prev =>
-            prev.includes(channel) ? prev.filter(c => c !== channel) : [...prev, channel]
-        );
+    // Mientras haya campañas enviándose, refrescar resultados
+    const sendingNow = (data?.historial || []).some((h: any) => h.stats?.estado === 'ENVIANDO');
+    useEffect(() => {
+        if (!sendingNow) return;
+        const t = setInterval(load, 5000);
+        return () => clearInterval(t);
+    }, [sendingNow, load]);
+
+    // Audiencia
+    useEffect(() => {
+        if (segmento === 'USER' && clienteIds.length === 0) { setAudience({ total: 0, conApp: 0, conPush: 0, conWhatsApp: 0 }); return; }
+        let cancelled = false;
+        setLoadingAudience(true);
+        const t = setTimeout(async () => {
+            try {
+                const q = new URLSearchParams({ segmento });
+                if (segmento === 'USER') q.set('ids', clienteIds.join(','));
+                const res = await fetch(`/api/admin/comunicacion/audiencia?${q}`);
+                if (res.ok && !cancelled) setAudience(await res.json());
+            } catch { /* ignore */ }
+            finally { if (!cancelled) setLoadingAudience(false); }
+        }, 250);
+        return () => { cancelled = true; clearTimeout(t); };
+    }, [segmento, clienteIds]);
+
+    useEffect(() => {
+        if (segmento !== 'USER' || clientes.length) return;
+        fetch('/api/clientes').then((r) => (r.ok ? r.json() : [])).then((d) => setClientes(Array.isArray(d) ? d : d?.clientes || [])).catch(() => {});
+    }, [segmento, clientes.length]);
+
+    const filteredClients = useMemo(() => {
+        const q = clientQuery.trim().toLowerCase();
+        const list = q ? clientes.filter((c) => `${c.nombre} ${c.telefono}`.toLowerCase().includes(q)) : clientes;
+        return list.slice(0, 60);
+    }, [clientes, clientQuery]);
+
+    const recipients = useMemo(() => {
+        if (!audience) return 0;
+        const app = canales.includes('APP') ? audience.conApp : 0;
+        const whats = canales.includes('WHATSAPP') ? audience.conWhatsApp : 0;
+        return canales.includes('WHATSAPP') ? Math.max(whats, app) : app;
+    }, [audience, canales]);
+
+    const toggleCanal = (c: Channel) => setCanales((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+
+    const applyTemplate = (t: typeof TEMPLATES[number]) => {
+        setTitulo(t.titulo);
+        setMensaje(t.mensaje);
+        setCategoria(t.categoria);
+        setLink(t.link);
+        if (t.segmento) setSegmento(t.segmento);
     };
 
-    if (loadingFeatures) {
-        return (
-            <div className="min-h-[400px] flex items-center justify-center">
-                <Loader2 className="animate-spin text-indigo-600" size={32} />
-            </div>
+    // ── Enviar ──
+    const handleSend = async () => {
+        setFlash(null);
+        if (!titulo.trim() || !mensaje.trim()) { setFlash({ type: 'error', text: 'Escribe un título y un mensaje.' }); return; }
+        if (!canales.length) { setFlash({ type: 'error', text: 'Elige por dónde enviarlo: App, WhatsApp o ambos.' }); return; }
+        if (cuando === 'PROGRAMAR' && !scheduledFor) { setFlash({ type: 'error', text: 'Elige la fecha y hora del envío.' }); return; }
+        if (!recipients) { setFlash({ type: 'error', text: 'Nadie de este grupo puede recibir el mensaje por los canales elegidos.' }); return; }
+
+        const ok = await confirm(
+            cuando === 'PROGRAMAR'
+                ? `Se enviará el ${new Date(scheduledFor).toLocaleString('es-EC')} a ${recipients} clientes.`
+                : `Se enviará ahora a ${recipients} clientes. Esto no se puede deshacer.`,
+            { title: cuando === 'PROGRAMAR' ? '¿Programar mensaje?' : '¿Enviar mensaje?', confirmText: cuando === 'PROGRAMAR' ? 'Programar' : 'Enviar', type: 'info' },
         );
+        if (!ok) return;
+
+        setSending(true);
+        try {
+            const res = await fetch('/api/admin/comunicacion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    titulo, mensaje, categoria, segmento, clienteIds, canales, link: finalLink,
+                    scheduledFor: cuando === 'PROGRAMAR' ? new Date(scheduledFor).toISOString() : null,
+                }),
+            });
+            const d = await res.json();
+            if (!res.ok) throw new Error(d.error || 'No se pudo enviar');
+            setFlash({ type: 'ok', text: d.programada ? 'Mensaje programado. Lo verás en el historial.' : 'Enviando… Los resultados aparecen abajo en unos segundos.' });
+            setTitulo(''); setMensaje(''); setScheduledFor(''); setCuando('AHORA');
+            await load();
+        } catch (e: any) {
+            setFlash({ type: 'error', text: e.message });
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleTestWhatsApp = async () => {
+        setFlash(null);
+        setTesting(true);
+        try {
+            const res = await fetch('/api/admin/comunicacion/prueba', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ titulo: titulo || undefined, mensaje: mensaje || undefined, link: finalLink }),
+            });
+            const d = await res.json();
+            if (!res.ok) throw new Error(d.error);
+            setFlash({ type: 'ok', text: `Prueba enviada a tu WhatsApp (${d.enviadoA}).` });
+        } catch (e: any) {
+            setFlash({ type: 'error', text: e.message || 'No se pudo enviar la prueba.' });
+        } finally {
+            setTesting(false);
+        }
+    };
+
+    // ── Plan ──
+    if (loadingFeatures || loading) {
+        return <div className="min-h-[400px] flex items-center justify-center"><Loader2 className="animate-spin text-slate-400" size={28} /></div>;
     }
 
     if (planFeatures && planFeatures.communications_module === false) {
         const addonPrice = commAddon ? Number(commAddon.priceMonthly || 12).toFixed(2) : '12.00';
         return (
             <div className="max-w-4xl mx-auto py-12 px-6">
-                <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] p-10 md:p-16 text-white shadow-2xl relative overflow-hidden border border-indigo-500/20 text-center space-y-8">
+                <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-10 md:p-16 text-white shadow-2xl relative overflow-hidden border border-indigo-500/20 text-center space-y-8">
                     
                     {/* Background glow */}
                     <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-48 -mt-48 pointer-events-none" />
 
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full text-xs font-black uppercase tracking-widest shadow-inner">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full text-xs font-bold uppercase tracking-wide shadow-inner">
                         <Lock size={14} className="text-indigo-400" /> Módulo de Plan Superior / Add-on
                     </div>
 
                     <div className="space-y-4 max-w-2xl mx-auto">
-                        <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-tight italic text-white">
+                        <h2 className="text-3xl md:text-3xl font-bold tracking-tight leading-tight text-white">
                             <span className="text-white block">Sistema de Comunicaciones</span>
                             <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300 bg-clip-text text-transparent not-italic font-extrabold block mt-1">
                                 Notificaciones Masivas
@@ -518,15 +283,15 @@ export default function ComunicacionAdminPage() {
                         <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/15">
                             <Zap size={20} className="text-amber-400 shrink-0" />
                             <div>
-                                <p className="text-xs font-black text-white">Notificaciones Push Instantáneas</p>
-                                <p className="text-[10px] text-slate-300 font-semibold">Directo a la pantalla de tus clientes</p>
+                                <p className="text-xs font-bold text-white">Notificaciones Push Instantáneas</p>
+                                <p className="text-xs text-slate-300 font-semibold">Directo a la pantalla de tus clientes</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/15">
                             <ShieldCheck size={20} className="text-emerald-400 shrink-0" />
                             <div>
-                                <p className="text-xs font-black text-white">Segmentación Inteligente</p>
-                                <p className="text-[10px] text-slate-300 font-semibold">Todos, VIPs o Inactivos</p>
+                                <p className="text-xs font-bold text-white">Segmentación Inteligente</p>
+                                <p className="text-xs text-slate-300 font-semibold">Todos, VIPs o Inactivos</p>
                             </div>
                         </div>
                     </div>
@@ -537,14 +302,14 @@ export default function ComunicacionAdminPage() {
                             <div className="px-6 py-4 bg-amber-500/20 border border-amber-400/40 rounded-2xl flex items-center gap-3 text-amber-300">
                                 <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
                                 <div className="text-left">
-                                    <span className="block text-xs font-black uppercase tracking-wider">Pago en Revisión</span>
-                                    <span className="block text-[11px] text-amber-200/80">Se activará tras confirmar tu transferencia.</span>
+                                    <span className="block text-xs font-bold uppercase tracking-wider">Pago en Revisión</span>
+                                    <span className="block text-xs text-amber-200/80">Se activará tras confirmar tu transferencia.</span>
                                 </div>
                             </div>
                         ) : (
                             <button
                                 onClick={() => setIsCheckoutOpen(true)}
-                                className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-emerald-900/40 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-xl shadow-emerald-900/40 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
                             >
                                 <Zap size={16} />
                                 Activar Add-on (${addonPrice}/mes)
@@ -552,7 +317,7 @@ export default function ComunicacionAdminPage() {
                         )}
                         <Link
                             href="/admin/plan"
-                            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:brightness-110 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-900/50 flex items-center justify-center gap-2 active:scale-95"
+                            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:brightness-110 text-white px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-xl shadow-indigo-900/50 flex items-center justify-center gap-2 active:scale-95"
                         >
                             Ver Planes Completos
                             <ArrowRight size={16} />
@@ -561,7 +326,7 @@ export default function ComunicacionAdminPage() {
                             href="https://wa.me/593968118444?text=Hola%20CitiOx,%20quisiera%20habilitar%20el%20módulo%20de%20comunicaciones%20para%20mi%20negocio"
                             target="_blank"
                             rel="noreferrer"
-                            className="bg-white/10 hover:bg-white/20 text-white border border-white/10 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                            className="bg-white/10 hover:bg-white/20 text-white border border-white/10 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-2"
                         >
                             Hablar con Asesor
                         </a>
@@ -590,404 +355,401 @@ export default function ComunicacionAdminPage() {
         );
     }
 
+    const previewName = negocio?.nombre || 'Tu negocio';
+    const previewTitle = titulo || 'Título de tu mensaje';
+    const previewBody = (mensaje || 'Aquí va el texto que leerán tus clientes.').replace(/\{nombre\}/gi, 'Ana');
+
     return (
-        <div className="space-y-8 pb-20">
+        <div className="max-w-6xl space-y-5 pb-16">
             {/* Encabezado */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                 <div>
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Canales y Mensajería</span>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight mt-1 flex items-center gap-2">
-                        <MessageSquare className="text-pink-500" />
-                        Centro de Comunicación
+                    <h1 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
+                        <span className="size-8 rounded-lg text-white flex items-center justify-center" style={{ backgroundColor: primary }}><MessageSquare size={17} /></span>
+                        Mensajes a clientes
                     </h1>
+                    <p className="text-sm text-slate-500 mt-1">Envía promociones y avisos por la app (notificación push) y por WhatsApp.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <StatusChip ok={pushReady} label={pushReady ? 'Push listo' : 'Push sin configurar'} />
+                    <StatusChip ok={Boolean(wa?.conectado)} label={wa?.conectado ? `WhatsApp conectado · ${wa.enviadosHoy || 0}/${wa.limiteDiario} hoy` : 'WhatsApp desconectado'} />
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* ── Formulario ─────────────────────────────────────────────── */}
-                <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
-                    <h3 className="text-base font-black text-slate-900 uppercase tracking-tight flex items-center gap-2 border-b border-slate-50 pb-4">
-                        <Sparkles size={18} className="text-amber-500" />
-                        Redactar Nueva Campaña de Notificación
-                    </h3>
-
-                    <form onSubmit={handleSend} className="space-y-5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {/* Categoría */}
-                            <div className="flex flex-col">
-                                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Categoría</label>
-                                <select
-                                    value={categoria}
-                                    onChange={(e) => {
-                                        setCategoria(e.target.value);
-                                        if (e.target.value === 'PREMIOS') { setTipo('PREMIO'); setIcono('Gift'); }
-                                        else if (e.target.value === 'CAMPANAS') { setTipo('CAMPANA'); setIcono('Trophy'); }
-                                        else if (e.target.value === 'RESERVAS') { setTipo('RESERVA'); setIcono('Calendar'); }
-                                        else { setTipo('NOTICIA'); setIcono('Bell'); }
-                                    }}
-                                    className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs font-semibold focus:outline-none focus:border-slate-200"
-                                >
-                                    <option value="NOTICIAS">Noticias y Anuncios</option>
-                                    <option value="PROMOCIONES">Promoción de Servicio</option>
-                                    <option value="CAMPANAS">Campaña / Desafío</option>
-                                    <option value="PREMIOS">Premio / Recompensa</option>
-                                    <option value="SISTEMA">Aviso de Sistema</option>
-                                </select>
-                            </div>
-
-                            {/* Prioridad */}
-                            <div className="flex flex-col">
-                                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Prioridad / Enfoque</label>
-                                <select
-                                    value={prioridad}
-                                    onChange={(e) => setPrioridad(e.target.value)}
-                                    className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs font-semibold focus:outline-none focus:border-slate-200"
-                                >
-                                    <option value="INFO">Información (Azul)</option>
-                                    <option value="SUCCESS">Éxito / Premio (Verde)</option>
-                                    <option value="WARNING">Advertencia / Alerta (Naranja)</option>
-                                    <option value="ERROR">Urgente / Cancelación (Rojo)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Destinatarios */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div className="flex flex-col">
-                                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Destinatarios Segmentados</label>
-                                <select
-                                    value={recipientType}
-                                    onChange={(e) => setRecipientType(e.target.value)}
-                                    className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs font-semibold focus:outline-none focus:border-slate-200"
-                                >
-                                    <option value="ALL">Todos los Clientes</option>
-                                    <option value="VIP">Clientes VIP (Más de 5 citas)</option>
-                                    <option value="INACTIVE">Clientes Inactivos (Sin citas hace 60 días)</option>
-                                    <option value="NEW_CLIENTS">Nuevos Clientes (Últimos 30 días)</option>
-                                    <option value="USER">Cliente Específico (Seleccionar)</option>
-                                </select>
-                            </div>
-
-                            {recipientType === 'USER' && (
-                                <div className="flex flex-col">
-                                    <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Seleccionar Cliente</label>
-                                    {loadingClients ? (
-                                        <div className="p-3 bg-slate-50 rounded-2xl flex items-center justify-center">
-                                            <Loader2 className="animate-spin text-slate-400" size={16} />
-                                        </div>
-                                    ) : (
-                                        <select
-                                            value={specificUserId}
-                                            onChange={(e) => setSpecificUserId(e.target.value)}
-                                            className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs font-semibold focus:outline-none focus:border-slate-200"
-                                        >
-                                            <option value="">Selecciona un cliente...</option>
-                                            {clientes.map(c => (
-                                                <option key={c.id} value={c.usuarioId || c.id}>{c.nombre} ({c.telefono})</option>
-                                            ))}
-                                        </select>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Canales */}
-                        <div className="flex flex-col">
-                            <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2.5 pl-1">Canales de Comunicación</label>
-                            <div className="flex gap-3 flex-wrap">
-                                <button
-                                    type="button"
-                                    onClick={() => toggleChannel('APP')}
-                                    className="px-4 py-3 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95"
-                                    style={channels.includes('APP') ? {
-                                        backgroundColor: `${primaryColor}15`,
-                                        borderColor: primaryColor,
-                                        color: primaryColor
-                                    } : { backgroundColor: '#f8fafc', borderColor: '#e2e8f0', color: '#64748b' }}
-                                >
-                                    <Bell size={14} />
-                                    App + Push
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => toggleChannel('WHATSAPP')}
-                                    className="px-4 py-3 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95"
-                                    style={channels.includes('WHATSAPP') ? {
-                                        backgroundColor: '#e8f5e9',
-                                        borderColor: '#2e7d32',
-                                        color: '#2e7d32'
-                                    } : { backgroundColor: '#f8fafc', borderColor: '#e2e8f0', color: '#64748b' }}
-                                >
-                                    <MessageSquare size={14} />
-                                    WhatsApp Oficial
-                                </button>
-                            </div>
-                            <p className="text-[9px] text-slate-400 font-medium pl-1 mt-2">
-                                "App + Push" envía al Centro de Actividad y dispara la notificación push en el celular del cliente.
-                            </p>
-                        </div>
-
-                        {/* Título */}
-                        <div className="flex flex-col">
-                            <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Título del Mensaje</label>
-                            <input
-                                type="text"
-                                placeholder="Ej: 🎉 ¡Feliz Cumpleaños! Reclama tu regalo..."
-                                value={titulo}
-                                onChange={(e) => setTitulo(e.target.value)}
-                                className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs font-semibold focus:outline-none focus:border-slate-200"
-                                maxLength={60}
-                                required
-                            />
-                        </div>
-
-                        {/* Descripción */}
-                        <div className="flex flex-col">
-                            <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Contenido / Descripción</label>
-                            <textarea
-                                placeholder="Escribe el cuerpo del mensaje. Puedes usar emojis."
-                                value={descripcion}
-                                onChange={(e) => setDescripcion(e.target.value)}
-                                className="bg-slate-50 border border-slate-100 rounded-3xl p-4 text-xs font-semibold focus:outline-none focus:border-slate-200 h-28 resize-none"
-                                maxLength={250}
-                                required
-                            />
-                        </div>
-
-                        {/* ── SELECTOR DE LINK ───────────────────────────────── */}
-                        <LinkSelector value={actionUrl} onChange={setActionUrl} />
-
-                        {/* Programar */}
-                        <div className="flex flex-col">
-                            <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Programar Envío (Opcional)</label>
-                            <input
-                                type="datetime-local"
-                                value={scheduledFor}
-                                onChange={(e) => setScheduledFor(e.target.value)}
-                                className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs font-semibold focus:outline-none focus:border-slate-200"
-                            />
-                            <span className="text-[9px] text-slate-400 font-medium pl-1 mt-1">Déjalo en blanco para enviar de forma inmediata.</span>
-                        </div>
-
-                        {/* Botón Enviar */}
-                        <button
-                            type="submit"
-                            disabled={sending}
-                            className="w-full py-4 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-md hover:opacity-95 transition-opacity active:scale-99 flex items-center justify-center gap-2"
-                            style={{ backgroundColor: primaryColor }}
-                        >
-                            {sending ? (
-                                <Loader2 className="animate-spin" size={14} />
-                            ) : (
-                                <>
-                                    <Send size={14} />
-                                    {scheduledFor ? 'Programar Notificación' : 'Despachar Notificación Ahora'}
-                                </>
-                            )}
-                        </button>
-                    </form>
+            {flash && (
+                <div className={`rounded-lg px-3 py-2.5 text-sm flex items-start gap-2 border ${flash.type === 'ok' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-800'}`}>
+                    {flash.type === 'ok' ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : <AlertTriangle size={16} className="mt-0.5 shrink-0" />}
+                    <span className="flex-1">{flash.text}</span>
+                    <button type="button" onClick={() => setFlash(null)} className="opacity-60 hover:opacity-100"><X size={15} /></button>
                 </div>
+            )}
 
-                {/* ── Previsualización ─────────────────────────────────────── */}
-                <div className="bg-slate-900 rounded-[2.5rem] p-6 text-white h-fit shadow-xl border border-slate-800 space-y-5 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl" />
-                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-4">
-                        📱 Vista Previa en Móvil
-                    </h3>
-
-                    <div className="bg-slate-850 rounded-[2rem] p-4 border border-slate-800 flex flex-col gap-3">
-                        <div className="flex items-center justify-between border-b border-slate-800/50 pb-2">
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Hoy</span>
-                            <span className="text-[8px] text-slate-500 font-bold">Ahora</span>
-                        </div>
-                        <div className="flex gap-3">
-                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
-                                {categoria === 'PREMIOS' ? <Gift size={16} className="text-emerald-400" /> :
-                                    categoria === 'CAMPANAS' ? <Trophy size={16} className="text-amber-400" /> :
-                                        categoria === 'RESERVAS' ? <Calendar size={16} className="text-sky-400" /> :
-                                            <Bell size={16} className="text-slate-300" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <span className="text-[8px] font-black uppercase tracking-wider text-pink-400 block mb-0.5">{categoria}</span>
-                                <h4 className="text-xs font-bold text-white uppercase tracking-tight truncate leading-none">
-                                    {titulo || 'Escribe un Título...'}
-                                </h4>
-                                <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mt-1.5 break-words">
-                                    {descripcion || 'Escribe el Contenido...'}
-                                </p>
-                            </div>
-                        </div>
-                        {actionUrl && (
-                            <div className="border-t border-slate-800/50 pt-2.5 flex items-center justify-end gap-1.5">
-                                <ExternalLink size={9} className="text-slate-500" />
-                                <span className="text-[8px] font-bold text-slate-500 truncate">{actionUrl}</span>
-                                <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 bg-slate-800 text-white rounded-lg border border-slate-700 ml-auto">
-                                    Ir Ahora →
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Diagnóstico Push de este dispositivo ────────────────────────────── */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
-                <h3 className="text-base font-black text-slate-900 uppercase tracking-tight flex items-center gap-2 pb-2">
-                    <Sparkles size={18} className="text-emerald-500" />
-                    Diagnóstico de Notificaciones Push de este Celular / Navegador
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-semibold">
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col gap-1.5">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Permiso del Navegador</span>
-                        <span className="text-slate-800 flex items-center gap-2 font-bold uppercase">
-                            <span className={`w-2.5 h-2.5 rounded-full ${
-                                testPushState.permission === 'granted' ? 'bg-emerald-500' : testPushState.permission === 'denied' ? 'bg-rose-500' : 'bg-amber-500'
-                            }`} />
-                            {testPushState.permission}
-                        </span>
-                        {testPushState.permission === 'denied' && (
-                            <p className="text-[10px] text-rose-500 font-semibold mt-1 leading-normal">
-                                Has bloqueado las notificaciones. Habilítalas presionando el candado de la barra de direcciones del navegador.
-                            </p>
-                        )}
-                        {testPushState.permission === 'default' && (
-                            <button 
-                                onClick={handleRequestPermission}
-                                className="mt-2 text-[10px] font-black uppercase text-emerald-600 bg-emerald-55/20 py-1.5 px-3 rounded-lg hover:bg-emerald-55/35 transition-colors self-start"
-                            >
-                                Solicitar Permisos
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col gap-1.5 md:col-span-2">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Token de Notificación (FCM) de este Dispositivo</span>
-                        <div className="flex gap-2 items-center min-w-0">
-                            {testPushState.loadingToken ? (
-                                <Loader2 className="animate-spin text-slate-400" size={16} />
-                            ) : testPushState.token ? (
-                                <>
-                                    <span className="text-slate-700 font-mono truncate flex-1 bg-white border border-slate-100 px-2 py-1.5 rounded-md text-[10px]">
-                                        {testPushState.token}
-                                    </span>
-                                    <button 
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+                {/* ── Redactar ── */}
+                <section className="lg:col-span-3 bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
+                    {/* 1. A quién */}
+                    <Step n={1} title="¿A quién?">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {SEGMENTS.map((s) => {
+                                const active = segmento === s.id;
+                                return (
+                                    <button
+                                        key={s.id}
                                         type="button"
-                                        onClick={handleCopyToken}
-                                        className="text-[9px] font-black uppercase px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg whitespace-nowrap"
+                                        onClick={() => setSegmento(s.id)}
+                                        className={`text-left px-3 py-2 rounded-lg border transition ${active ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-800'}`}
                                     >
-                                        {testPushState.copied ? 'Copiado ✓' : 'Copiar'}
+                                        <span className="block text-sm font-semibold leading-tight">{s.label}</span>
+                                        <span className={`block text-xs leading-tight mt-0.5 ${active ? 'text-white/70' : 'text-slate-500'}`}>{s.hint}</span>
                                     </button>
-                                </>
-                            ) : (
-                                <span className="text-slate-400">No generado</span>
-                            )}
+                                );
+                            })}
                         </div>
-                        
-                        <div className="flex gap-2 mt-2">
-                            <button
-                                type="button"
-                                onClick={handleRegenerateToken}
-                                className="text-[9px] font-black uppercase text-slate-700 bg-white border border-slate-200 py-1.5 px-3 rounded-lg hover:bg-slate-50 transition-colors"
-                            >
-                                Activar / Re-registrar este dispositivo
-                            </button>
-                            
-                            {testPushState.token && (
-                                <button
-                                    type="button"
-                                    onClick={handleSendTestPush}
-                                    disabled={testPushState.sendingTest}
-                                    className="text-[9px] font-black uppercase text-white bg-emerald-500 py-1.5 px-4 rounded-lg hover:bg-emerald-600 disabled:opacity-50 transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
-                                >
-                                    {testPushState.sendingTest ? <Loader2 className="animate-spin" size={12} /> : null}
-                                    Probar Push Aquí
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
 
-                {testPushState.statusMessage && (
-                    <div className={`p-3.5 rounded-xl text-[10px] font-bold ${
-                        testPushState.statusMessage.type === 'success' ? 'bg-emerald-55/10 border border-emerald-250/20 text-emerald-800' : 'bg-rose-55/10 border border-rose-250/20 text-rose-800'
-                    }`}>
-                        {testPushState.statusMessage.text}
+                        {segmento === 'USER' && (
+                            <div className="mt-3 border border-slate-200 rounded-lg">
+                                <label className="relative block border-b border-slate-100">
+                                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input value={clientQuery} onChange={(e) => setClientQuery(e.target.value)} placeholder="Buscar por nombre o teléfono" className="w-full !border-0 !pl-9 !py-2 !text-sm outline-none !rounded-t-lg" />
+                                </label>
+                                <ul className="max-h-48 overflow-y-auto divide-y divide-slate-50">
+                                    {filteredClients.length === 0 ? (
+                                        <li className="px-3 py-4 text-sm text-slate-500 text-center">No hay clientes con esa búsqueda.</li>
+                                    ) : filteredClients.map((c) => {
+                                        const on = clienteIds.includes(c.id);
+                                        return (
+                                            <li key={c.id}>
+                                                <button type="button" onClick={() => setClienteIds((p) => (on ? p.filter((x) => x !== c.id) : [...p, c.id]))} className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-50">
+                                                    <span className={`size-4 rounded border flex items-center justify-center shrink-0 ${on ? 'bg-slate-900 border-slate-900 text-white' : 'border-slate-300'}`}>{on && <Check size={11} />}</span>
+                                                    <span className="text-sm text-slate-800 truncate flex-1">{c.nombre}</span>
+                                                    <span className="text-xs text-slate-500 shrink-0">{c.telefono}</span>
+                                                </button>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                                {clienteIds.length > 0 && (
+                                    <div className="px-3 py-1.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                                        <span>{clienteIds.length} elegidos</span>
+                                        <button type="button" onClick={() => setClienteIds([])} className="font-semibold hover:underline">Quitar todos</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
+                            <Users size={15} className="text-slate-400" />
+                            {loadingAudience || !audience ? (
+                                <span className="text-slate-400">Calculando…</span>
+                            ) : (
+                                <span>
+                                    <strong className="text-slate-900">{audience.total}</strong> clientes ·{' '}
+                                    {audience.conApp} con cuenta en tu app · {audience.conPush} con notificaciones activas · {audience.conWhatsApp} con WhatsApp
+                                </span>
+                            )}
+                        </div>
+                    </Step>
+
+                    {/* 2. Por dónde */}
+                    <Step n={2} title="¿Por dónde?">
+                        <div className="grid sm:grid-cols-2 gap-2">
+                            <ChannelCard
+                                active={canales.includes('APP')}
+                                onClick={() => toggleCanal('APP')}
+                                icon={<Bell size={16} />}
+                                title="App y notificación push"
+                                text={`Llega al centro de avisos de tu app${pushReady ? ' y como notificación al celular' : ''}. ${audience ? `${audience.conApp} clientes.` : ''}`}
+                                warn={!pushReady ? 'Las notificaciones push aún no están configuradas en Citiox: solo llegará al centro de avisos de la app.' : undefined}
+                            />
+                            <ChannelCard
+                                active={canales.includes('WHATSAPP')}
+                                onClick={() => toggleCanal('WHATSAPP')}
+                                icon={<MessageSquare size={16} />}
+                                title="WhatsApp"
+                                text={`Llega a todos los que tienen teléfono. Se envía poco a poco (máx. ${wa?.limiteDiario || 200} al día). ${audience ? `${audience.conWhatsApp} clientes.` : ''}`}
+                                warn={!wa?.conectado ? 'El WhatsApp de Citiox está desconectado ahora: los mensajes no saldrán hasta que se reconecte.' : undefined}
+                                tone="green"
+                            />
+                        </div>
+                    </Step>
+
+                    {/* 3. Mensaje */}
+                    <Step n={3} title="Mensaje">
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                            <span className="text-xs text-slate-500 self-center mr-1">Ideas:</span>
+                            {TEMPLATES.map((t) => (
+                                <button key={t.label} type="button" onClick={() => applyTemplate(t)} className="px-2.5 py-1 rounded-full border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="space-y-3">
+                            <Field label="Título" count={`${titulo.length}/65`}>
+                                <input value={titulo} onChange={(e) => setTitulo(e.target.value.slice(0, 65))} placeholder="Ej: 🎁 2x1 en masajes este viernes" className="w-full !px-3 !py-2 !text-sm !rounded-lg !border !border-slate-200 !bg-white" />
+                            </Field>
+                            <Field label="Texto" count={`${mensaje.length}/500`}>
+                                <textarea value={mensaje} onChange={(e) => setMensaje(e.target.value.slice(0, 500))} rows={4} placeholder="Cuéntales qué hay de nuevo. En WhatsApp puedes escribir {nombre} y se cambia por el nombre de cada cliente." className="w-full !px-3 !py-2 !text-sm !rounded-lg !border !border-slate-200 !bg-white resize-none" />
+                            </Field>
+                            <div className="grid sm:grid-cols-2 gap-3">
+                                <Field label="Al tocar el mensaje, abrir">
+                                    <div className="relative">
+                                        <select value={link} onChange={(e) => setLink(e.target.value)} className="w-full appearance-none !px-3 !py-2 !pr-8 !text-sm !rounded-lg !border !border-slate-200 !bg-white">
+                                            {LINKS.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
+                                            {services.length > 0 && (
+                                                <optgroup label="Un servicio">
+                                                    {services.slice(0, 50).map((s: any) => <option key={s.id} value={`/servicio/${s.id}`}>{s.nombre}</option>)}
+                                                </optgroup>
+                                            )}
+                                            <option value="__custom__">Otro enlace…</option>
+                                        </select>
+                                        <ChevronDown size={15} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    </div>
+                                    {link === '__custom__' && (
+                                        <input value={customLink} onChange={(e) => setCustomLink(e.target.value)} placeholder="https://… o /pagina" className="mt-2 w-full !px-3 !py-2 !text-sm !rounded-lg !border !border-slate-200 !bg-white" />
+                                    )}
+                                </Field>
+                                <Field label="Tipo de mensaje">
+                                    <div className="relative">
+                                        <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="w-full appearance-none !px-3 !py-2 !pr-8 !text-sm !rounded-lg !border !border-slate-200 !bg-white">
+                                            <option value="NOTICIAS">Novedad</option>
+                                            <option value="PROMOCIONES">Promoción</option>
+                                            <option value="PREMIOS">Premio o regalo</option>
+                                            <option value="CAMPANAS">Campaña</option>
+                                            <option value="RECORDATORIOS">Recordatorio</option>
+                                        </select>
+                                        <ChevronDown size={15} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </Field>
+                            </div>
+                        </div>
+                    </Step>
+
+                    {/* 4. Cuándo */}
+                    <Step n={4} title="¿Cuándo?">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {(['AHORA', 'PROGRAMAR'] as const).map((c) => (
+                                <button key={c} type="button" onClick={() => setCuando(c)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium ${cuando === c ? 'bg-slate-900 border-slate-900 text-white' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                                    {c === 'AHORA' ? <Send size={14} /> : <CalendarClock size={14} />}
+                                    {c === 'AHORA' ? 'Ahora' : 'Programar'}
+                                </button>
+                            ))}
+                            {cuando === 'PROGRAMAR' && (
+                                <input type="datetime-local" value={scheduledFor} onChange={(e) => setScheduledFor(e.target.value)} className="!px-3 !py-1.5 !text-sm !rounded-lg !border !border-slate-200 !bg-white" />
+                            )}
+                        </div>
+                    </Step>
+
+                    {/* Acciones */}
+                    <div className="p-4 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between bg-slate-50/60 rounded-b-xl">
+                        <button type="button" onClick={handleTestWhatsApp} disabled={testing || !wa?.conectado} className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50" title={!wa?.conectado ? 'WhatsApp desconectado' : 'Te llega a tu WhatsApp para ver cómo se ve'}>
+                            {testing ? <Loader2 size={14} className="animate-spin" /> : <Smartphone size={14} />}
+                            Enviarme una prueba
+                        </button>
+                        <button type="button" onClick={handleSend} disabled={sending} className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-semibold hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: primary }}>
+                            {sending ? <Loader2 size={15} className="animate-spin" /> : cuando === 'PROGRAMAR' ? <CalendarClock size={15} /> : <Send size={15} />}
+                            {cuando === 'PROGRAMAR' ? 'Programar' : 'Enviar'} {recipients ? `a ${recipients} ${recipients === 1 ? 'cliente' : 'clientes'}` : ''}
+                        </button>
                     </div>
-                )}
+                </section>
+
+                {/* ── Vista previa ── */}
+                <aside className="lg:col-span-2 space-y-4 lg:sticky lg:top-0">
+                    <div className="bg-white border border-slate-200 rounded-xl p-4">
+                        <p className="text-sm font-semibold text-slate-900 mb-3">Así lo verán</p>
+
+                        {canales.includes('APP') && (
+                            <div className="mb-4">
+                                <p className="text-xs text-slate-500 mb-1.5">Notificación en el celular</p>
+                                <div className="rounded-2xl bg-slate-100 p-3">
+                                    <div className="bg-white/90 rounded-xl p-3 shadow-sm flex gap-2.5">
+                                        <div className="size-9 rounded-lg overflow-hidden bg-slate-200 shrink-0">
+                                            {negocio?.logoUrl ? <img src={negocio.logoUrl} alt="" className="w-full h-full object-cover" /> : <span className="w-full h-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: primary }}>{previewName.charAt(0)}</span>}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-xs text-slate-500 truncate">{previewName}</span>
+                                                <span className="text-xs text-slate-400 shrink-0">ahora</span>
+                                            </div>
+                                            <p className="text-sm font-semibold text-slate-900 leading-tight truncate">{previewTitle}</p>
+                                            <p className="text-xs text-slate-600 leading-snug line-clamp-3">{previewBody}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {canales.includes('WHATSAPP') && (
+                            <div>
+                                <p className="text-xs text-slate-500 mb-1.5">WhatsApp</p>
+                                <div className="rounded-2xl p-3" style={{ backgroundColor: '#e7ded4' }}>
+                                    <div className="bg-white rounded-lg rounded-tl-none p-2.5 shadow-sm max-w-[92%] text-[13px] text-slate-800 leading-snug whitespace-pre-line">
+                                        {'Hola Ana 👋\n\n'}
+                                        <strong>{previewTitle}</strong>
+                                        {`\n\n${previewBody}\n\n👉 `}
+                                        <span className="text-sky-700 break-all">citiox.com/{negocio?.slug || 'tu-negocio'}{finalLink && !finalLink.startsWith('http') ? finalLink : ''}</span>
+                                        {`\n\n— ${previewName}`}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {canales.length === 0 && <p className="text-sm text-slate-500">Elige un canal para ver la vista previa.</p>}
+                    </div>
+
+                    <PushHelp pushReady={pushReady} />
+                </aside>
             </div>
 
-            {/* ── Historial ──────────────────────────────────────────────────── */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
-                <h3 className="text-base font-black text-slate-900 uppercase tracking-tight flex items-center gap-2 pb-2">
-                    <BarChart2 size={18} className="text-slate-700" />
-                    Historial & Tasa de Apertura
-                </h3>
-
-                {loadingHistory ? (
-                    <div className="py-12 flex flex-col items-center justify-center gap-3">
-                        <Loader2 className="animate-spin text-slate-400" size={24} style={{ color: primaryColor }} />
-                    </div>
-                ) : history.length === 0 ? (
-                    <div className="text-center py-10 border border-dashed border-slate-100 rounded-3xl">
-                        <p className="text-xs text-slate-400 font-semibold">No se han registrado envíos todavía.</p>
+            {/* ── Historial ── */}
+            <section className="bg-white border border-slate-200 rounded-xl">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <h2 className="text-sm font-semibold text-slate-900">Mensajes enviados</h2>
+                    <button type="button" onClick={load} className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900"><RefreshCw size={13} /> Actualizar</button>
+                </div>
+                {(data?.historial || []).length === 0 ? (
+                    <div className="px-4 py-10 text-center">
+                        <Sparkles className="mx-auto text-slate-300" size={24} />
+                        <p className="text-sm text-slate-600 mt-2">Aún no has enviado mensajes. Empieza con una de las ideas de arriba.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs border-collapse">
-                            <thead>
-                                <tr className="border-b border-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                                    <th className="py-3 px-4">Fecha</th>
-                                    <th className="py-3 px-4">Mensaje</th>
-                                    <th className="py-3 px-4">Segmento</th>
-                                    <th className="py-3 px-4">Enviadas</th>
-                                    <th className="py-3 px-4">Vistas</th>
-                                    <th className="py-3 px-4">Clics</th>
-                                    <th className="py-3 px-4">Apertura</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {history.map((n) => {
-                                    const ctr = n.metricas.enviadas > 0 ? (n.metricas.vistas / n.metricas.enviadas * 100).toFixed(1) : '0.0';
-                                    return (
-                                        <tr key={n.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                                            <td className="py-3.5 px-4 font-semibold text-slate-500 whitespace-nowrap">
-                                                {new Date(n.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                            </td>
-                                            <td className="py-3.5 px-4 max-w-xs">
-                                                <div className="font-black text-slate-900 uppercase tracking-tight truncate">{n.titulo}</div>
-                                                <div className="text-[10px] text-slate-450 truncate font-semibold mt-0.5">{n.descripcion}</div>
-                                            </td>
-                                            <td className="py-3.5 px-4">
-                                                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md">
-                                                    {n.recipientType}
-                                                </span>
-                                            </td>
-                                            <td className="py-3.5 px-4 font-bold text-slate-700">{n.metricas.enviadas}</td>
-                                            <td className="py-3.5 px-4 font-bold text-slate-700">{n.metricas.vistas}</td>
-                                            <td className="py-3.5 px-4 font-bold text-slate-700">{n.metricas.clics}</td>
-                                            <td className="py-3.5 px-4">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-black text-slate-900">{ctr}%</span>
-                                                    <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden shrink-0">
-                                                        <div
-                                                            className="h-full rounded-full"
-                                                            style={{
-                                                                width: `${Math.min(100, parseFloat(ctr))}%`,
-                                                                backgroundColor: parseFloat(ctr) > 40 ? '#10b981' : parseFloat(ctr) > 15 ? primaryColor : '#f59e0b'
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                    <ul className="divide-y divide-slate-100">
+                        {data.historial.map((h: any) => <HistoryRow key={h.id} h={h} />)}
+                    </ul>
+                )}
+            </section>
+        </div>
+    );
+}
+
+// ── Componentes pequeños ────────────────────────────────────────────────
+
+function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+    return (
+        <div className="p-4">
+            <h3 className="text-sm font-semibold text-slate-900 mb-2.5 flex items-center gap-2">
+                <span className="size-5 rounded-full bg-slate-100 text-slate-600 text-xs flex items-center justify-center">{n}</span>
+                {title}
+            </h3>
+            {children}
+        </div>
+    );
+}
+
+function Field({ label, count, children }: { label: string; count?: string; children: React.ReactNode }) {
+    return (
+        <label className="block">
+            <span className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-1">
+                {label}
+                {count && <span className="font-normal text-slate-400">{count}</span>}
+            </span>
+            {children}
+        </label>
+    );
+}
+
+function StatusChip({ ok, label }: { ok: boolean; label: string }) {
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${ok ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+            <span className={`size-1.5 rounded-full ${ok ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            {label}
+        </span>
+    );
+}
+
+function ChannelCard({ active, onClick, icon, title, text, warn, tone }: { active: boolean; onClick: () => void; icon: React.ReactNode; title: string; text: string; warn?: string; tone?: 'green' }) {
+    const accent = tone === 'green' ? '#16a34a' : '#0f172a';
+    return (
+        <button type="button" onClick={onClick} className="text-left p-3 rounded-lg border-2 transition" style={{ borderColor: active ? accent : '#e2e8f0', backgroundColor: active ? (tone === 'green' ? '#f0fdf4' : '#f8fafc') : '#fff' }}>
+            <span className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                    <span style={{ color: accent }}>{icon}</span>{title}
+                </span>
+                <span className={`size-4 rounded border flex items-center justify-center ${active ? 'text-white' : 'border-slate-300'}`} style={active ? { backgroundColor: accent, borderColor: accent } : undefined}>{active && <Check size={11} />}</span>
+            </span>
+            <span className="block text-xs text-slate-600 mt-1 leading-snug">{text}</span>
+            {warn && active && <span className="block text-xs text-amber-700 mt-1.5 leading-snug">{warn}</span>}
+        </button>
+    );
+}
+
+function HistoryRow({ h }: { h: any }) {
+    const s = h.stats || {};
+    const estado = s.estado;
+    const badge =
+        estado === 'PROGRAMADA' ? { t: `Programado · ${h.scheduledFor ? formatDate(h.scheduledFor) : ''}`, c: 'bg-sky-50 text-sky-700' } :
+        estado === 'ENVIANDO' ? { t: 'Enviando…', c: 'bg-amber-50 text-amber-700' } :
+        estado === 'ERROR' ? { t: 'Error', c: 'bg-rose-50 text-rose-700' } :
+        { t: 'Enviado', c: 'bg-emerald-50 text-emerald-700' };
+    const waEstado: Record<string, string> = {
+        SIN_CONEXION: 'no salió: WhatsApp desconectado',
+        LIMITE: 'no salió: límite diario alcanzado',
+        PENDIENTE: 'en espera',
+        ENVIANDO: 'enviando…',
+    };
+
+    return (
+        <li className="px-4 py-3 flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+            <div className="md:w-28 shrink-0 text-xs text-slate-500">{formatDate(h.createdAt)}</div>
+            <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-slate-900 truncate">{h.titulo}</p>
+                <p className="text-xs text-slate-500 truncate">{h.mensaje}</p>
+            </div>
+            <div className="text-xs text-slate-600 md:w-72 shrink-0 space-y-0.5">
+                <p><Users size={12} className="inline -mt-0.5 mr-1 text-slate-400" />{SEGMENT_LABEL[s.segmento] || 'Clientes'} · {s.audiencia ?? '—'} clientes</p>
+                {s.canales?.includes('APP') && (
+                    <p><Bell size={12} className="inline -mt-0.5 mr-1 text-slate-400" />App: {s.app?.enviadas || 0} recibidos · {h.leidas} leídos · {s.app?.push || 0} push{s.app?.pushSinConfigurar ? ' (push sin configurar)' : ''}</p>
+                )}
+                {s.canales?.includes('WHATSAPP') && (
+                    <p><MessageSquare size={12} className="inline -mt-0.5 mr-1 text-slate-400" />WhatsApp: {s.whatsapp?.enviados || 0} de {s.whatsapp?.total || 0}{s.whatsapp?.fallidos ? ` · ${s.whatsapp.fallidos} fallidos` : ''}{waEstado[s.whatsapp?.estado] ? ` · ${waEstado[s.whatsapp.estado]}` : ''}</p>
                 )}
             </div>
+            <span className={`self-start md:self-center text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${badge.c}`}>{badge.t}</span>
+        </li>
+    );
+}
+
+/** Ayuda para probar las notificaciones push en el propio celular del dueño. */
+function PushHelp({ pushReady }: { pushReady: boolean }) {
+    const [open, setOpen] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+    const test = async () => {
+        setBusy(true);
+        setMsg(null);
+        try {
+            if (!('Notification' in window)) throw new Error('Este navegador no permite notificaciones. En iPhone, primero agrega la app a tu pantalla de inicio.');
+            const perm = await Notification.requestPermission();
+            if (perm !== 'granted') throw new Error('Permite las notificaciones en el candado de la barra de direcciones y vuelve a intentar.');
+            const token = await getFcmToken();
+            if (!token) throw new Error('No se pudo activar este celular para notificaciones.');
+            const res = await fetch('/api/admin/notifications/test-push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok || !d.success) throw new Error(d.error || 'El servidor no pudo enviar la notificación.');
+            setMsg({ ok: true, text: 'Enviada. Debe llegarte en unos segundos.' });
+        } catch (e: any) {
+            setMsg({ ok: false, text: e.message || String(e) });
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <div className="bg-white border border-slate-200 rounded-xl">
+            <button type="button" onClick={() => setOpen((v) => !v)} className="w-full px-4 py-3 flex items-center justify-between text-sm font-semibold text-slate-800">
+                <span className="flex items-center gap-2"><Smartphone size={15} className="text-slate-400" /> Probar notificaciones en mi celular</span>
+                <ChevronDown size={15} className={`text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+            </button>
+            {open && (
+                <div className="px-4 pb-4 space-y-2.5 text-sm text-slate-600">
+                    {!pushReady && <p className="text-amber-700 text-xs">El envío push aún no está configurado en Citiox (faltan las credenciales de Firebase del servidor).</p>}
+                    <p className="text-xs">Te llegará una notificación de prueba a este navegador o celular.</p>
+                    <button type="button" onClick={test} disabled={busy} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold disabled:opacity-60">
+                        {busy ? <Loader2 size={13} className="animate-spin" /> : <Bell size={13} />} Enviar prueba aquí
+                    </button>
+                    {msg && <p className={`text-xs ${msg.ok ? 'text-emerald-700' : 'text-rose-700'}`}>{msg.text}</p>}
+                </div>
+            )}
         </div>
     );
 }

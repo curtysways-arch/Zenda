@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { GlobalMissionEngine } from '@/lib/growth/globalMissionEngine';
 
 /**
@@ -9,20 +8,23 @@ import { GlobalMissionEngine } from '@/lib/growth/globalMissionEngine';
  */
 export async function GET() {
     try {
-        const session = await getServerSession(authOptions);
-        const userId = (session?.user as any)?.id;
-
-        if (!userId) {
+        const session = await getEffectiveAdminSession();
+        if (!session?.user) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        // Obtener el negocio asociado al administrador logueado
-        const user = await prisma.usuario.findUnique({
-            where: { id: userId },
-            select: { negocioId: true }
-        });
+        const sessionUser = session.user as any;
+        let negocioId = sessionUser.negocioId;
 
-        const negocioId = user?.negocioId;
+        // Fallback si no viene directo en la sesión
+        if (!negocioId && sessionUser.id) {
+            const user = await prisma.usuario.findUnique({
+                where: { id: sessionUser.id },
+                select: { negocioId: true }
+            });
+            negocioId = user?.negocioId;
+        }
+
         if (!negocioId) {
             return NextResponse.json({ error: 'Negocio no configurado para este usuario' }, { status: 400 });
         }

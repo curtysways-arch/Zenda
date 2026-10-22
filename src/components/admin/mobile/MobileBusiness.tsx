@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { DEFAULT_CONFIGS, DEFAULT_CONFIGS_GYM, DEFAULT_CONFIGS_DENTAL } from '@/lib/constants/defaultConfigs';
+import { DEFAULT_CONFIGS, DEFAULT_CONFIGS_GYM, DEFAULT_CONFIGS_DENTAL, DEFAULT_CONFIGS_LAUNDRY } from '@/lib/constants/defaultConfigs';
 import ColorPaletteEditor from '@/components/admin/ColorPaletteEditor';
 import ImageUploader from '@/components/ui/ImageUploader';
 
@@ -46,6 +46,7 @@ interface MobileBusinessProps {
     saving: string | null;
     isGym?: boolean;
     isDental?: boolean;
+    isShoeCareOrLaundry?: boolean;
 }
 
 export default function MobileBusiness({ 
@@ -62,12 +63,19 @@ export default function MobileBusiness({
     onNewUbicacion,
     saving,
     isGym = false,
-    isDental = false
+    isDental = false,
+    isShoeCareOrLaundry = false
 }: MobileBusinessProps) {
     const [activeTab, setActiveTab] = useState('MESSAGES'); // MESSAGES, CATALOG, BRANDING, BRANCHES, DISCOUNTS, FLOW
     const [localNegocio, setLocalNegocio] = useState<any>(negocio);
 
-    const currentDefaults = isGym ? DEFAULT_CONFIGS_GYM : isDental ? DEFAULT_CONFIGS_DENTAL : DEFAULT_CONFIGS;
+    const currentDefaults = isGym 
+        ? DEFAULT_CONFIGS_GYM 
+        : isDental 
+            ? DEFAULT_CONFIGS_DENTAL 
+            : isShoeCareOrLaundry 
+                ? DEFAULT_CONFIGS_LAUNDRY 
+                : DEFAULT_CONFIGS;
 
     const getResolvedValue = (clave: string): string => {
         const val = configs[clave];
@@ -92,6 +100,23 @@ export default function MobileBusiness({
             if (!val) return (DEFAULT_CONFIGS_DENTAL as any)[clave] || '';
             if (clave === 'CONFIRMATION_MSG' && val.includes('💆')) {
                 return DEFAULT_CONFIGS_DENTAL.CONFIRMATION_MSG;
+            }
+            return val;
+        }
+        if (isShoeCareOrLaundry) {
+            if (!val) return (DEFAULT_CONFIGS_LAUNDRY as any)[clave] || '';
+            const lower = val.toLowerCase();
+            if (clave === 'PENDING_MSG' && (lower.includes('solicitud de cita') || lower.includes('cita en') || lower.includes('solicita una reserva'))) {
+                return DEFAULT_CONFIGS_LAUNDRY.PENDING_MSG;
+            }
+            if (clave === 'CONFIRMATION_MSG' && (lower.includes('cita en') || val.includes('💆') || lower.includes('tu cita'))) {
+                return DEFAULT_CONFIGS_LAUNDRY.CONFIRMATION_MSG;
+            }
+            if (clave === 'REMINDER_DAY_MSG' && (lower.includes('tienes una cita') || lower.includes('cita en'))) {
+                return DEFAULT_CONFIGS_LAUNDRY.REMINDER_DAY_MSG;
+            }
+            if (clave === 'REMINDER_2H_MSG' && (lower.includes('es tu cita') || lower.includes('cita en'))) {
+                return DEFAULT_CONFIGS_LAUNDRY.REMINDER_2H_MSG;
             }
             return val;
         }
@@ -145,7 +170,7 @@ export default function MobileBusiness({
         <div className="flex flex-col bg-slate-50 min-h-screen animate-in fade-in duration-500 pb-32">
             {/* Header / Tabs */}
             <div className="sticky top-0 z-30 bg-white border-b border-slate-100 p-5 space-y-5">
-                <h2 className="text-xl font-black uppercase italic tracking-tighter text-slate-900">
+                <h2 className="text-xl font-bold tracking-tight text-slate-900">
                     Mi <span style={{ color: primaryColor }}>Negocio</span>
                 </h2>
 
@@ -162,7 +187,7 @@ export default function MobileBusiness({
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={cn(
-                                "flex items-center gap-2 px-5 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                                "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wide transition-all whitespace-nowrap",
                                 activeTab === tab.id ? "text-white shadow-lg" : "bg-slate-50 text-slate-400 border border-slate-100"
                             )}
                             style={activeTab === tab.id ? { backgroundColor: primaryColor } : {}}
@@ -188,7 +213,7 @@ export default function MobileBusiness({
                 {activeTab === 'BRANDING' && localNegocio && (
                     <div className="space-y-6">
                         {/* Colores unificados con ColorPaletteEditor */}
-                        <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                             {(() => {
                                 const configObj = localNegocio.configuracion 
                                     ? (typeof localNegocio.configuracion === 'string' ? JSON.parse(localNegocio.configuracion) : localNegocio.configuracion) 
@@ -233,14 +258,14 @@ export default function MobileBusiness({
                         </div>
 
                         {/* Textos y Títulos */}
-                        <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
-                            <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
+                            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
                                 <Scissors size={14} style={{ color: primaryColor }} /> Textos y Branding
                             </h4>
 
                             <div className="space-y-5">
                                 <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Nombre Fallback (No logueado)</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Nombre Fallback (No logueado)</label>
                                     <input 
                                         type="text" 
                                         value={localNegocio.nombreFallback || ''}
@@ -250,7 +275,7 @@ export default function MobileBusiness({
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Título de Saludo</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Título de Saludo</label>
                                     <input 
                                         type="text" 
                                         value={localNegocio.saludoTitulo || ''}
@@ -260,7 +285,7 @@ export default function MobileBusiness({
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Mensaje de Bienvenida (Home)</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Mensaje de Bienvenida (Home)</label>
                                     <textarea 
                                         value={localNegocio.mensajeBienvenida || ''}
                                         onChange={(e) => handleLocalNegocioChange('mensajeBienvenida', e.target.value)}
@@ -269,7 +294,7 @@ export default function MobileBusiness({
                                     />
                                 </div>
                                 <div className="border-t border-slate-50 pt-5">
-                                    <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Título Hero (Principal)</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Título Hero (Principal)</label>
                                     <input 
                                         type="text" 
                                         value={localNegocio.heroTitulo || ''}
@@ -279,7 +304,7 @@ export default function MobileBusiness({
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Hero Subtítulo</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Hero Subtítulo</label>
                                     <input 
                                         type="text" 
                                         value={localNegocio.heroSubtitulo || ''}
@@ -289,7 +314,7 @@ export default function MobileBusiness({
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Logo del Negocio</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Logo del Negocio</label>
                                     <div className="space-y-4">
                                         <div className="max-w-[200px]">
                                             <ImageUploader
@@ -302,7 +327,7 @@ export default function MobileBusiness({
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[8px] font-black text-slate-400 uppercase mb-1.5 block">O pegar enlace directo (URL)</label>
+                                            <label className="text-xs font-bold text-slate-400 uppercase mb-1.5 block">O pegar enlace directo (URL)</label>
                                             <input 
                                                 type="text" 
                                                 value={localNegocio.logoUrl || ''}
@@ -325,7 +350,7 @@ export default function MobileBusiness({
                                     logoUrl: localNegocio.logoUrl 
                                 })}
                                 disabled={saving === 'NEGOCIO'}
-                                className="w-full py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg"
+                                className="w-full py-4 rounded-2xl text-white text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg"
                                 style={{ backgroundColor: primaryColor }}
                             >
                                 {saving === 'NEGOCIO' ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -337,7 +362,15 @@ export default function MobileBusiness({
                 {activeTab === 'MESSAGES' && (
                     <div className="space-y-6">
                         <MessageItem 
-                            title={isGym ? "Bienvenida al Socio (Registro)" : isDental ? "Consulta Solicitada" : "Reserva Pendiente"}
+                            title={
+                                isShoeCareOrLaundry 
+                                    ? "Orden Recibida (Retiro / Recepción)" 
+                                    : isGym 
+                                    ? "Bienvenida al Socio (Registro)" 
+                                    : isDental 
+                                    ? "Consulta Solicitada" 
+                                    : "Reserva Pendiente"
+                            }
                             clave="PENDING_MSG"
                             value={getResolvedValue('PENDING_MSG')}
                             onChange={(val) => onConfigChange('PENDING_MSG', val)}
@@ -347,7 +380,15 @@ export default function MobileBusiness({
                             primaryColor={primaryColor}
                         />
                         <MessageItem 
-                            title={isGym ? "Membresía Activada / Confirmada" : isDental ? "Consulta Confirmada" : "Confirmación"}
+                            title={
+                                isShoeCareOrLaundry 
+                                    ? "Orden Confirmada / En Proceso" 
+                                    : isGym 
+                                    ? "Membresía Activada / Confirmada" 
+                                    : isDental 
+                                    ? "Consulta Confirmada" 
+                                    : "Confirmación"
+                            }
                             clave="CONFIRMATION_MSG"
                             value={getResolvedValue('CONFIRMATION_MSG')}
                             onChange={(val) => onConfigChange('CONFIRMATION_MSG', val)}
@@ -359,12 +400,18 @@ export default function MobileBusiness({
 
                         {/* --- RECORDATORIOS --- */}
                         <div className="space-y-4">
-                            <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest pl-4">
-                                {isGym ? "Recordatorios de Clases y Entrenamientos" : isDental ? "Recordatorios de Citas Odontológicas" : "Recordatorios Automáticos"}
+                            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide pl-4">
+                                {isShoeCareOrLaundry 
+                                    ? "Recordatorios de Retiro y Entrega" 
+                                    : isGym 
+                                    ? "Recordatorios de Clases y Entrenamientos" 
+                                    : isDental 
+                                    ? "Recordatorios de Citas Odontológicas" 
+                                    : "Recordatorios Automáticos"}
                             </h4>
 
                             {/* Recordatorio del Día */}
-                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                                 <div 
                                     onClick={() => setExpandedDay(!expandedDay)}
                                     className="p-6 flex items-center justify-between"
@@ -374,14 +421,18 @@ export default function MobileBusiness({
                                             <MessageSquare size={18} />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">
-                                                {isGym ? "Recordatorio de la Mañana (Clases)" : "Recordatorio del Día"}
+                                            <h4 className="text-sm font-bold text-slate-900 uppercase leading-none">
+                                                {isShoeCareOrLaundry 
+                                                    ? "Aviso del Día (Retiro / Entrega)" 
+                                                    : isGym 
+                                                    ? "Recordatorio de la Mañana (Clases)" 
+                                                    : "Recordatorio del Día"}
                                             </h4>
-                                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Toque para {expandedDay ? 'cerrar' : 'editar'}</p>
+                                            <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wide">Toque para {expandedDay ? 'cerrar' : 'editar'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className={`px-2.5 py-1 rounded-full text-[8px] font-bold ${configs.REMINDER_DAY_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${configs.REMINDER_DAY_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
                                             {configs.REMINDER_DAY_ENABLED === '0' ? 'OFF' : 'ON'}
                                         </span>
                                         <ChevronRight size={18} className={cn("text-slate-300 transition-transform", expandedDay && "rotate-90")} />
@@ -391,17 +442,17 @@ export default function MobileBusiness({
                                 {expandedDay && (
                                     <div className="px-6 pb-6 space-y-4 animate-in slide-in-from-top-2">
                                         <div className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                            <span className="text-[9px] font-black uppercase text-slate-500">¿Habilitar Recordatorio?</span>
+                                            <span className="text-xs font-bold uppercase text-slate-500">¿Habilitar Recordatorio?</span>
                                             <button 
                                                 onClick={() => onConfigChange('REMINDER_DAY_ENABLED', configs.REMINDER_DAY_ENABLED === '0' ? '1' : '0')}
-                                                className={`px-3 py-1 rounded-full text-[9px] font-bold transition-all ${configs.REMINDER_DAY_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}
+                                                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${configs.REMINDER_DAY_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}
                                             >
                                                 {configs.REMINDER_DAY_ENABLED === '0' ? 'Desactivado' : 'Activado'}
                                             </button>
                                         </div>
                                         <div className={`space-y-4 transition-opacity duration-300 ${configs.REMINDER_DAY_ENABLED === '0' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                                             <div>
-                                                <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Hora de envío</label>
+                                                <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Hora de envío</label>
                                                 <input
                                                     type="time"
                                                     value={configs.REMINDER_DAY_TIME || currentDefaults.REMINDER_DAY_TIME}
@@ -419,7 +470,7 @@ export default function MobileBusiness({
                                             <button 
                                                 onClick={() => { onSaveConfig('REMINDER_DAY_ENABLED'); onSaveConfig('REMINDER_DAY_TIME'); onSaveConfig('REMINDER_DAY_MSG'); }}
                                                 disabled={saving !== null}
-                                                className="w-full py-3 rounded-xl text-white text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-md"
+                                                className="w-full py-3 rounded-xl text-white text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 shadow-md"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 Guardar Día
@@ -430,7 +481,7 @@ export default function MobileBusiness({
                             </div>
 
                             {/* Recordatorio 2 Horas */}
-                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                                 <div 
                                     onClick={() => setExpanded2H(!expanded2H)}
                                     className="p-6 flex items-center justify-between"
@@ -440,14 +491,18 @@ export default function MobileBusiness({
                                             <MessageSquare size={18} />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">
-                                                {isGym ? "Recordatorio 2 Horas Antes de la Clase" : "Recordatorio 2 Horas"}
+                                            <h4 className="text-sm font-bold text-slate-900 uppercase leading-none">
+                                                {isShoeCareOrLaundry 
+                                                    ? "Aviso Próximo de Retiro (2 Horas)" 
+                                                    : isGym 
+                                                    ? "Recordatorio 2 Horas Antes de la Clase" 
+                                                    : "Recordatorio 2 Horas"}
                                             </h4>
-                                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Toque para {expanded2H ? 'cerrar' : 'editar'}</p>
+                                            <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wide">Toque para {expanded2H ? 'cerrar' : 'editar'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className={`px-2.5 py-1 rounded-full text-[8px] font-bold ${configs.REMINDER_2H_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${configs.REMINDER_2H_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
                                             {configs.REMINDER_2H_ENABLED === '0' ? 'OFF' : 'ON'}
                                         </span>
                                         <ChevronRight size={18} className={cn("text-slate-300 transition-transform", expanded2H && "rotate-90")} />
@@ -457,17 +512,21 @@ export default function MobileBusiness({
                                 {expanded2H && (
                                     <div className="px-6 pb-6 space-y-4 animate-in slide-in-from-top-2">
                                         <div className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                            <span className="text-[9px] font-black uppercase text-slate-500">¿Habilitar Recordatorio?</span>
+                                            <span className="text-xs font-bold uppercase text-slate-500">¿Habilitar Recordatorio?</span>
                                             <button 
                                                 onClick={() => onConfigChange('REMINDER_2H_ENABLED', configs.REMINDER_2H_ENABLED === '0' ? '1' : '0')}
-                                                className={`px-3 py-1 rounded-full text-[9px] font-bold transition-all ${configs.REMINDER_2H_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}
+                                                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${configs.REMINDER_2H_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}
                                             >
                                                 {configs.REMINDER_2H_ENABLED === '0' ? 'Desactivado' : 'Activado'}
                                             </button>
                                         </div>
                                         <div className={`space-y-4 transition-opacity duration-300 ${configs.REMINDER_2H_ENABLED === '0' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                                            <p className="text-[10px] font-bold text-slate-400 italic">
-                                                {isGym ? "Se envía 2 horas antes de iniciar la clase" : "Se envía 2 horas antes de la cita"}
+                                            <p className="text-xs font-bold text-slate-400 ">
+                                                {isShoeCareOrLaundry 
+                                                    ? "Se envía 2 horas antes de la recolección o entrega a domicilio" 
+                                                    : isGym 
+                                                    ? "Se envía 2 horas antes de iniciar la clase" 
+                                                    : "Se envía 2 horas antes de la cita"}
                                             </p>
                                             <textarea
                                                 value={getResolvedValue('REMINDER_2H_MSG')}
@@ -478,7 +537,7 @@ export default function MobileBusiness({
                                             <button 
                                                 onClick={() => { onSaveConfig('REMINDER_2H_ENABLED'); onSaveConfig('REMINDER_2H_MSG'); }}
                                                 disabled={saving !== null}
-                                                className="w-full py-3 rounded-xl text-white text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-md"
+                                                className="w-full py-3 rounded-xl text-white text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 shadow-md"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 Guardar 2 Horas
@@ -488,13 +547,13 @@ export default function MobileBusiness({
                                 )}
                             </div>
                         </div>
-                        <div className="bg-blue-50 p-6 rounded-[2rem] border border-blue-100">
-                            <h4 className="flex items-center gap-2 text-[10px] font-black text-blue-700 uppercase tracking-[0.2em] mb-4">
+                        <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                            <h4 className="flex items-center gap-2 text-xs font-bold text-blue-700 uppercase tracking-wide mb-4">
                                 <Info size={14} /> Guía Rápida
                             </h4>
                             <div className="flex flex-wrap gap-2">
                                 {['nombre', 'fecha', 'hora', 'negocio'].map(v => (
-                                    <span key={v} className="bg-white px-3 py-1.5 rounded-xl text-[10px] font-black text-blue-600 border border-blue-200 shadow-sm">
+                                    <span key={v} className="bg-white px-3 py-1.5 rounded-xl text-xs font-bold text-blue-600 border border-blue-200 shadow-sm">
                                         {"{{"}{v}{"}}"}
                                     </span>
                                 ))}
@@ -553,10 +612,10 @@ export default function MobileBusiness({
                 {activeTab === 'BRANCHES' && (
                     <div className="space-y-4">
                         {branchForm ? (
-                            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6 animate-in zoom-in-95 duration-200">
+                            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6 animate-in zoom-in-95 duration-200">
                                 <div className="space-y-1 flex justify-between items-start">
                                     <div>
-                                        <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
                                             <MapPin size={14} style={{ color: primaryColor }} /> {branchForm.id ? 'Editar' : 'Nueva'} Sucursal
                                         </h4>
                                     </div>
@@ -564,21 +623,21 @@ export default function MobileBusiness({
                                 </div>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Nombre *</label>
+                                        <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Nombre *</label>
                                         <input type="text" value={branchForm.nombre} onChange={e => setBranchForm({...branchForm, nombre: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold" placeholder="Ej: Sede Norte" />
                                     </div>
                                     <div>
-                                        <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Dirección</label>
+                                        <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Dirección</label>
                                         <input type="text" value={branchForm.direccion} onChange={e => setBranchForm({...branchForm, direccion: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold" placeholder="Ej: Av. Principal 123" />
                                     </div>
                                     <div>
-                                        <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">URL Google Maps (Opcional)</label>
+                                        <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">URL Google Maps (Opcional)</label>
                                         <input type="text" value={branchForm.mapUrl} onChange={e => setBranchForm({...branchForm, mapUrl: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold" placeholder="https://maps.app.goo.gl/..." />
                                     </div>
                                     <button 
                                         onClick={handleSaveBranch}
                                         disabled={isSavingBranch || !branchForm.nombre.trim()}
-                                        className="w-full py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 mt-4"
+                                        className="w-full py-4 rounded-2xl text-white text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 mt-4"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         {isSavingBranch ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -589,15 +648,15 @@ export default function MobileBusiness({
                         ) : (
                             <>
                                 {ubicaciones.map((u) => (
-                                    <div key={u.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+                                    <div key={u.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <div className="size-10 rounded-2xl flex items-center justify-center text-white font-black" style={{ backgroundColor: primaryColor }}>
+                                                <div className="size-10 rounded-2xl flex items-center justify-center text-white font-bold" style={{ backgroundColor: primaryColor }}>
                                                     {u.nombre.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">{u.nombre}</h4>
-                                                    <p className="text-[10px] font-bold text-slate-400 mt-1">{u.direccion || 'Sin dirección'}</p>
+                                                    <h4 className="text-sm font-bold text-slate-900 uppercase leading-none">{u.nombre}</h4>
+                                                    <p className="text-xs font-bold text-slate-400 mt-1">{u.direccion || 'Sin dirección'}</p>
                                                 </div>
                                             </div>
                                             <div className="flex gap-1">
@@ -614,7 +673,7 @@ export default function MobileBusiness({
                                                 href={u.mapUrl} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer"
-                                                className="flex items-center justify-center gap-2 py-3 bg-slate-50 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-600 border border-slate-100"
+                                                className="flex items-center justify-center gap-2 py-3 bg-slate-50 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-600 border border-slate-100"
                                             >
                                                 <MapPin size={12} /> Ver Ubicación <ExternalLink size={10} />
                                             </a>
@@ -623,7 +682,7 @@ export default function MobileBusiness({
                                 ))}
                                 <button 
                                     onClick={() => setBranchForm({ nombre: '', direccion: '', mapUrl: '' })}
-                                    className="w-full py-5 border-2 border-dashed border-slate-200 rounded-[2rem] text-slate-400 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest active:bg-slate-100 transition-colors"
+                                    className="w-full py-5 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wide active:bg-slate-100 transition-colors"
                                 >
                                     <Plus size={16} /> Agregar Nueva Sucursal
                                 </button>
@@ -633,17 +692,17 @@ export default function MobileBusiness({
                 )}
 
                 {activeTab === 'FLOW' && (
-                    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
                         <div className="space-y-6">
                             {/* Autoconfirmación Switch */}
                             <div className="flex justify-between items-center bg-slate-50 p-4 rounded-3xl border border-slate-100">
                                 <div>
-                                    <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Autoconfirmar Reservas</h4>
-                                    <p className="text-[9px] text-slate-400 font-bold mt-1">Confirmar citas directamente</p>
+                                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Autoconfirmar Reservas</h4>
+                                    <p className="text-xs text-slate-400 font-bold mt-1">Confirmar citas directamente</p>
                                 </div>
                                 <button 
                                     onClick={() => onConfigChange('BOOKING_TIMEOUT', configs.BOOKING_TIMEOUT === '0' ? '15' : '0')}
-                                    className={`px-3.5 py-1.5 rounded-full text-[9px] font-bold transition-all shadow-sm ${configs.BOOKING_TIMEOUT === '0' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
+                                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm ${configs.BOOKING_TIMEOUT === '0' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
                                 >
                                     {configs.BOOKING_TIMEOUT === '0' ? 'Activado' : 'Desactivado'}
                                 </button>
@@ -653,10 +712,10 @@ export default function MobileBusiness({
                             <div className={`space-y-4 transition-all duration-300 ${configs.BOOKING_TIMEOUT === '0' ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
                                 <div className="flex justify-between items-end">
                                     <div>
-                                        <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Tiempo de Espera</h4>
-                                        <p className="text-[9px] text-slate-400 font-bold mt-1">Confirmación máxima (minutos)</p>
+                                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Tiempo de Espera</h4>
+                                        <p className="text-xs text-slate-400 font-bold mt-1">Confirmación máxima (minutos)</p>
                                     </div>
-                                    <span className="text-2xl font-black italic" style={{ color: primaryColor }}>
+                                    <span className="text-2xl font-bold " style={{ color: primaryColor }}>
                                         {configs.BOOKING_TIMEOUT === '0' ? '--' : (configs.BOOKING_TIMEOUT || 10)}
                                     </span>
                                 </div>
@@ -673,7 +732,7 @@ export default function MobileBusiness({
                             </div>
 
                             {configs.BOOKING_TIMEOUT === '0' && (
-                                <p className="text-[9px] text-slate-400 font-bold text-center italic">
+                                <p className="text-xs text-slate-400 font-bold text-center ">
                                     * Las reservas pasarán directamente a confirmadas sin tiempo de espera.
                                 </p>
                             )}
@@ -682,7 +741,7 @@ export default function MobileBusiness({
                                 <button 
                                     onClick={() => onSaveConfig('BOOKING_TIMEOUT')}
                                     disabled={saving === 'BOOKING_TIMEOUT'}
-                                    className="w-full py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                                    className="w-full py-4 rounded-2xl text-white text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     {saving === 'BOOKING_TIMEOUT' ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -703,7 +762,7 @@ function CatalogLink({ href, label, desc, icon, color }: any) {
     return (
         <Link 
             href={href}
-            className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm active:scale-[0.98] transition-all group"
+            className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-2xl shadow-sm active:scale-[0.98] transition-all group"
         >
             <div className="flex items-center gap-4">
                 <div 
@@ -713,8 +772,8 @@ function CatalogLink({ href, label, desc, icon, color }: any) {
                     {icon}
                 </div>
                 <div>
-                    <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">{label}</h4>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1">{desc}</p>
+                    <h4 className="text-sm font-bold text-slate-900 uppercase leading-none">{label}</h4>
+                    <p className="text-xs font-bold text-slate-400 mt-1">{desc}</p>
                 </div>
             </div>
             <ChevronRight size={18} className="text-slate-200 group-hover:text-slate-900 transition-colors" />
@@ -726,7 +785,7 @@ function MessageItem({ title, value, onChange, onSave, onReset, isSaving, primar
     const [expanded, setExpanded] = useState(false);
 
     return (
-        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div 
                 onClick={() => setExpanded(!expanded)}
                 className="p-6 flex items-center justify-between"
@@ -736,8 +795,8 @@ function MessageItem({ title, value, onChange, onSave, onReset, isSaving, primar
                         <MessageSquare size={18} />
                     </div>
                     <div>
-                        <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">{title}</h4>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Toque para {expanded ? 'cerrar' : 'editar'}</p>
+                        <h4 className="text-sm font-bold text-slate-900 uppercase leading-none">{title}</h4>
+                        <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wide">Toque para {expanded ? 'cerrar' : 'editar'}</p>
                     </div>
                 </div>
                 <ChevronRight size={18} className={cn("text-slate-300 transition-transform", expanded && "rotate-90")} />
@@ -755,7 +814,7 @@ function MessageItem({ title, value, onChange, onSave, onReset, isSaving, primar
                         <button 
                             onClick={onSave}
                             disabled={isSaving}
-                            className="flex-1 py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                            className="flex-1 py-4 rounded-2xl text-white text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
                             style={{ backgroundColor: primaryColor }}
                         >
                             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -778,31 +837,31 @@ function WhatsAppTab({ negocio, primaryColor, onSave, onChange, saving }: any) {
     return (
         <div className="space-y-6 animate-in slide-in-from-bottom-5 duration-700">
             {/* Canal de WhatsApp */}
-            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
                 <div className="space-y-1">
-                    <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
                         <MessageSquare size={14} style={{ color: primaryColor }} /> Canal de Comunicación
                     </h4>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight italic">Configura el número oficial para recibir y enviar mensajes</p>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-tight ">Configura el número oficial para recibir y enviar mensajes</p>
                 </div>
 
                 <div className="space-y-5">
                     <div>
-                        <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Número de WhatsApp (con código de país)</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Número de WhatsApp (con código de país)</label>
                         <div className="relative">
                             <input 
                                 type="text" 
                                 value={negocio.whatsapp || ''}
                                 onChange={(e) => onChange('whatsapp', e.target.value)}
                                 placeholder="Ej: 593959997521"
-                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-black tracking-widest"
+                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold tracking-wide"
                             />
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-1 bg-green-50 text-green-600 rounded-lg">
                                 <CheckCircle2 size={10} />
-                                <span className="text-[8px] font-black uppercase">Sincronizado</span>
+                                <span className="text-xs font-bold uppercase">Sincronizado</span>
                             </div>
                         </div>
-                        <p className="text-[8px] text-slate-400 font-bold mt-2 uppercase tracking-tight">Incluye código de país sin el signo +</p>
+                        <p className="text-xs text-slate-400 font-bold mt-2 uppercase tracking-tight">Incluye código de país sin el signo +</p>
                     </div>
                 </div>
 
@@ -811,7 +870,7 @@ function WhatsAppTab({ negocio, primaryColor, onSave, onChange, saving }: any) {
                         whatsapp: negocio.whatsapp
                     })}
                     disabled={saving}
-                    className="w-full py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full py-4 rounded-2xl text-white text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg"
                     style={{ backgroundColor: primaryColor }}
                 >
                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}

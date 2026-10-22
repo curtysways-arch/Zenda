@@ -68,7 +68,7 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
                 <div className="size-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center text-slate-300">
                     <ImageIcon size={32} />
                 </div>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No hay trabajos publicados aún.</p>
+                <p className="text-slate-500 font-bold uppercase tracking-wide text-xs">No hay trabajos publicados aún.</p>
             </div>
         );
     }
@@ -76,7 +76,7 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
     return (
         <div className="max-w-xl mx-auto space-y-6 pb-20">
             {items.map((item) => (
-                <div key={item.id} id={`trabajo-${item.id}`} className="bg-white border border-slate-100 sm:rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200/40 group">
+                <div key={item.id} id={`trabajo-${item.id}`} className="bg-white border border-slate-100 sm:rounded-3xl overflow-hidden shadow-xl shadow-slate-200/40 group">
                     {/* Header Premium */}
                     <div className="px-5 py-4 flex items-center justify-between bg-white border-b border-slate-50">
                         <div className="flex items-center gap-3">
@@ -86,17 +86,17 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
                                     : <User size={18} />}
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-900 leading-none uppercase italic">{item.staff?.name || 'Profesional'}</span>
+                                <span className="text-sm font-bold text-slate-900 leading-none uppercase ">{item.staff?.name || 'Profesional'}</span>
                                 {item.service?.nombre && (
-                                    <span className="text-[9px] font-bold mt-0.5 uppercase tracking-widest flex items-center gap-1" style={{ color: primaryColor }}>
+                                    <span className="text-xs font-bold mt-0.5 uppercase tracking-wide flex items-center gap-1" style={{ color: primaryColor }}>
                                         <Sparkles size={8} /> {item.service.nombre}
                                     </span>
                                 )}
                             </div>
                         </div>
                         <div className="flex flex-col items-end">
-                            <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Publicado</span>
-                            <span className="text-[11px] font-bold text-slate-900 uppercase italic leading-none mt-0.5">
+                            <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">Publicado</span>
+                            <span className="text-xs font-bold text-slate-900 uppercase leading-none mt-0.5">
                                 {format(new Date(item.createdAt), "dd MMM, yyyy", { locale: es })}
                             </span>
                         </div>
@@ -114,7 +114,7 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
                                     ], 0, item.title)}
                                 >
                                     <img src={item.beforeImage} className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-500 group-hover/img:scale-105" alt="Antes" />
-                                    <div className="absolute top-3 left-3 px-2 py-1 bg-black/40 backdrop-blur-md text-[8px] font-black text-white uppercase tracking-widest rounded border border-white/10 flex items-center gap-1">
+                                    <div className="absolute top-3 left-3 px-2 py-1 bg-black/40 backdrop-blur-md text-xs font-bold text-white uppercase tracking-wide rounded border border-white/10 flex items-center gap-1">
                                         <ZoomIn size={10} /> Antes
                                     </div>
                                 </div>
@@ -126,7 +126,7 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
                                     ], 1, item.title)}
                                 >
                                     <img src={item.afterImage} className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105" alt="Después" />
-                                    <div className="absolute top-3 right-3 px-2 py-1 bg-white/90 backdrop-blur-md text-[8px] font-black text-slate-900 uppercase tracking-widest rounded shadow-md flex items-center gap-1">
+                                    <div className="absolute top-3 right-3 px-2 py-1 bg-white/90 backdrop-blur-md text-xs font-bold text-slate-900 uppercase tracking-wide rounded shadow-md flex items-center gap-1">
                                         <ZoomIn size={10} /> Después
                                     </div>
                                 </div>
@@ -153,7 +153,7 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
                                     ))}
                                 </div>
                                 {(item.gallery || []).length > 1 && (
-                                    <div className="absolute top-3 right-3 px-3 py-1.5 bg-black/40 backdrop-blur-md text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 border border-white/10 shadow-md pointer-events-none">
+                                    <div className="absolute top-3 right-3 px-3 py-1.5 bg-black/40 backdrop-blur-md text-white rounded-lg text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 border border-white/10 shadow-md pointer-events-none">
                                         <ImageIcon size={12} /> {item.gallery.length} Fotos
                                     </div>
                                 )}
@@ -165,11 +165,11 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
                     <div className="p-5">
                         <div className="flex items-start justify-between gap-3 mb-4">
                             <div>
-                                <h3 className="text-xl font-black text-slate-900 leading-tight mb-1 uppercase tracking-tighter italic">{item.title}</h3>
+                                <h3 className="text-xl font-bold text-slate-900 leading-tight mb-1 tracking-tight ">{item.title}</h3>
                                 {item.clientName && (
                                     <div className="flex items-center gap-1.5 text-slate-400">
                                         <User size={12} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Para: {item.clientName}</span>
+                                        <span className="text-xs font-bold uppercase tracking-wide">Para: {item.clientName}</span>
                                     </div>
                                 )}
                             </div>
@@ -183,7 +183,7 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
 
                         {item.description && (
                             <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 relative">
-                                <p className="text-sm font-medium text-slate-600 leading-snug italic">
+                                <p className="text-sm font-medium text-slate-600 leading-snug ">
                                     "{item.description}"
                                 </p>
                             </div>

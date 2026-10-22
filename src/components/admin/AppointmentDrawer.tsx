@@ -254,21 +254,21 @@ export default function AppointmentDrawer({
   const renderStatusBadge = () => {
     switch (appointment.status) {
       case 'pending':
-        return <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-[11px] font-black uppercase rounded-lg">🟡 Pendiente</span>;
+        return <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-bold uppercase rounded-lg">🟡 Pendiente</span>;
       case 'confirmed':
-        return <span className="px-2.5 py-1 bg-sky-100 text-sky-800 text-[11px] font-black uppercase rounded-lg">🔵 Confirmada</span>;
+        return <span className="px-2.5 py-1 bg-sky-100 text-sky-800 text-xs font-bold uppercase rounded-lg">🔵 Confirmada</span>;
       case 'client_checked_in':
-        return <span className="px-2.5 py-1 bg-indigo-100 text-indigo-800 text-[11px] font-black uppercase rounded-lg">🙋 Llegó a Cancha</span>;
+        return <span className="px-2.5 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold uppercase rounded-lg">🙋 Llegó a Cancha</span>;
       case 'in_progress':
-        return <span className="px-2.5 py-1 bg-emerald-500 text-white text-[11px] font-black uppercase rounded-lg animate-pulse">🟢 En Juego</span>;
+        return <span className="px-2.5 py-1 bg-emerald-500 text-white text-xs font-bold uppercase rounded-lg animate-pulse">🟢 En Juego</span>;
       case 'completed':
-        return <span className="px-2.5 py-1 bg-slate-200 text-slate-800 text-[11px] font-black uppercase rounded-lg">🏁 Finalizada</span>;
+        return <span className="px-2.5 py-1 bg-slate-200 text-slate-800 text-xs font-bold uppercase rounded-lg">🏁 Finalizada</span>;
       case 'cancelled':
-        return <span className="px-2.5 py-1 bg-rose-100 text-rose-800 text-[11px] font-black uppercase rounded-lg">❌ Cancelada</span>;
+        return <span className="px-2.5 py-1 bg-rose-100 text-rose-800 text-xs font-bold uppercase rounded-lg">❌ Cancelada</span>;
       case 'no_show':
-        return <span className="px-2.5 py-1 bg-purple-100 text-purple-800 text-[11px] font-black uppercase rounded-lg">⚠️ No Show</span>;
+        return <span className="px-2.5 py-1 bg-purple-100 text-purple-800 text-xs font-bold uppercase rounded-lg">⚠️ No Show</span>;
       default:
-        return <span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-[11px] font-bold rounded-lg">{appointment.status}</span>;
+        return <span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">{appointment.status}</span>;
     }
   };
 
@@ -288,7 +288,7 @@ export default function AppointmentDrawer({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-black text-slate-900 text-base uppercase tracking-tight">
+                <h2 className="font-bold text-slate-900 text-base uppercase tracking-tight">
                   {isBlock ? 'Bloqueo Operativo' : 'Centro de Cancha'}
                 </h2>
                 {!isBlock && renderStatusBadge()}
@@ -312,7 +312,7 @@ export default function AppointmentDrawer({
             /* CASO BLOQUEO */
             <div className="space-y-4">
               <div className="p-4 bg-slate-900 text-white rounded-2xl space-y-2 shadow-sm">
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                <span className="text-xs font-bold uppercase tracking-wide text-emerald-400">
                   Motivo de Inhabilitación
                 </span>
                 <p className="text-sm font-semibold">{appointment.motivo || 'Mantenimiento preventivo'}</p>
@@ -334,7 +334,7 @@ export default function AppointmentDrawer({
               <button
                 onClick={handleRemoveBlock}
                 disabled={loading}
-                className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
               >
                 <Trash2 size={16} /> Desbloquear Horario
               </button>
@@ -346,7 +346,7 @@ export default function AppointmentDrawer({
               {activeSubView === 'extend' && (
                 <div className="p-4 bg-emerald-50 border-2 border-emerald-500/30 rounded-2xl space-y-3 animate-in fade-in">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-emerald-900 uppercase flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-emerald-900 uppercase flex items-center gap-1.5">
                       <Plus size={14} className="text-emerald-600" /> Extender Tiempo de Juego
                     </h4>
                     <button onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -360,18 +360,18 @@ export default function AppointmentDrawer({
                     <button
                       type="button"
                       onClick={() => setExtendMinutes(30)}
-                      className={`py-2 px-3 rounded-xl text-xs font-black border transition-all ${
-                        extendMinutes === 30 ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-emerald-800 border-emerald-200'
-                      }`}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
+ extendMinutes === 30 ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-emerald-800 border-emerald-200'
+ }`}
                     >
                       +30 minutos
                     </button>
                     <button
                       type="button"
                       onClick={() => setExtendMinutes(60)}
-                      className={`py-2 px-3 rounded-xl text-xs font-black border transition-all ${
-                        extendMinutes === 60 ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-emerald-800 border-emerald-200'
-                      }`}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
+ extendMinutes === 60 ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-emerald-800 border-emerald-200'
+ }`}
                     >
                       +60 minutos
                     </button>
@@ -379,7 +379,7 @@ export default function AppointmentDrawer({
                   <button
                     onClick={() => executeAction('EXTEND', { additionalMinutes: extendMinutes })}
                     disabled={loading}
-                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs"
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs"
                   >
                     {loading ? <Loader2 size={14} className="animate-spin" /> : 'Confirmar Extensión'}
                   </button>
@@ -389,7 +389,7 @@ export default function AppointmentDrawer({
               {activeSubView === 'change_court' && (
                 <div className="p-4 bg-sky-50 border-2 border-sky-500/30 rounded-2xl space-y-3 animate-in fade-in">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-sky-900 uppercase flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-sky-900 uppercase flex items-center gap-1.5">
                       <ArrowRightLeft size={14} className="text-sky-600" /> Reasignar Cancha
                     </h4>
                     <button onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -404,7 +404,7 @@ export default function AppointmentDrawer({
                       <Loader2 size={14} className="animate-spin" /> Consultando disponibilidad...
                     </div>
                   ) : alternativeCourts.length === 0 ? (
-                    <div className="text-xs text-slate-500 italic py-2">No hay otras canchas configuradas.</div>
+                    <div className="text-xs text-slate-500 py-2">No hay otras canchas configuradas.</div>
                   ) : (
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {alternativeCourts.map((c) => (
@@ -421,19 +421,19 @@ export default function AppointmentDrawer({
                         >
                           <div>
                             <span className="font-bold block">{c.nombre}</span>
-                            <span className={`text-[10px] ${selectedNewCourtId === c.id ? 'text-sky-100' : 'text-slate-500'}`}>
+                            <span className={`text-xs ${selectedNewCourtId === c.id ? 'text-sky-100' : 'text-slate-500'}`}>
                               Tarifa: ${c.precio.toLocaleString()} /h
                             </span>
                           </div>
                           <div>
                             {c.disponible ? (
-                              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
-                                selectedNewCourtId === c.id ? 'bg-white text-sky-700' : 'bg-emerald-100 text-emerald-800'
-                              }`}>
+                              <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${
+ selectedNewCourtId === c.id ? 'bg-white text-sky-700' : 'bg-emerald-100 text-emerald-800'
+ }`}>
                                 Disponible
                               </span>
                             ) : (
-                              <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">
+                              <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">
                                 {c.motivo || 'Ocupada'}
                               </span>
                             )}
@@ -445,7 +445,7 @@ export default function AppointmentDrawer({
                   <button
                     onClick={() => executeAction('CHANGE_COURT', { newCanchaId: selectedNewCourtId, newCourtId: selectedNewCourtId })}
                     disabled={loading || !selectedNewCourtId}
-                    className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
+                    className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
                   >
                     {loading ? <Loader2 size={14} className="animate-spin" /> : 'Confirmar Cambio de Cancha'}
                   </button>
@@ -455,7 +455,7 @@ export default function AppointmentDrawer({
               {activeSubView === 'change_time' && (
                 <div className="p-4 bg-indigo-50 border-2 border-indigo-500/30 rounded-2xl space-y-3 animate-in fade-in">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-indigo-900 uppercase flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-indigo-900 uppercase flex items-center gap-1.5">
                       <Clock size={14} className="text-indigo-600" /> Modificar Horario
                     </h4>
                     <button onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -464,7 +464,7 @@ export default function AppointmentDrawer({
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-bold text-indigo-950 uppercase block mb-1">Hora Inicio</label>
+                      <label className="text-xs font-bold text-indigo-950 uppercase block mb-1">Hora Inicio</label>
                       <input
                         type="time"
                         value={newStartTime}
@@ -473,7 +473,7 @@ export default function AppointmentDrawer({
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-indigo-950 uppercase block mb-1">Hora Fin</label>
+                      <label className="text-xs font-bold text-indigo-950 uppercase block mb-1">Hora Fin</label>
                       <input
                         type="time"
                         value={newEndTime}
@@ -485,7 +485,7 @@ export default function AppointmentDrawer({
                   <button
                     onClick={() => executeAction('CHANGE_TIME', { newStartTime, newEndTime })}
                     disabled={loading || !newStartTime || !newEndTime}
-                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
                   >
                     {loading ? <Loader2 size={14} className="animate-spin" /> : 'Guardar Nuevo Horario'}
                   </button>
@@ -495,7 +495,7 @@ export default function AppointmentDrawer({
               {activeSubView === 'payment' && (
                 <form onSubmit={handleRegisterPayment} className="p-4 bg-emerald-50 border-2 border-emerald-500/30 rounded-2xl space-y-3 animate-in fade-in">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-emerald-900 uppercase flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-emerald-900 uppercase flex items-center gap-1.5">
                       <CreditCard size={14} className="text-emerald-600" /> Registrar Cobro / Pago
                     </h4>
                     <button type="button" onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -504,7 +504,7 @@ export default function AppointmentDrawer({
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-bold text-emerald-950 uppercase block mb-1">Monto ($)</label>
+                      <label className="text-xs font-bold text-emerald-950 uppercase block mb-1">Monto ($)</label>
                       <input
                         type="number"
                         min="1"
@@ -516,7 +516,7 @@ export default function AppointmentDrawer({
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-emerald-950 uppercase block mb-1">Método</label>
+                      <label className="text-xs font-bold text-emerald-950 uppercase block mb-1">Método</label>
                       <select
                         value={paymentMethod}
                         onChange={(e) => setPaymentMethod(e.target.value)}
@@ -541,7 +541,7 @@ export default function AppointmentDrawer({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs"
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs"
                   >
                     {loading ? <Loader2 size={14} className="animate-spin" /> : 'Confirmar Pago'}
                   </button>
@@ -551,7 +551,7 @@ export default function AppointmentDrawer({
               {activeSubView === 'notes' && (
                 <div className="p-4 bg-slate-50 border-2 border-slate-300 rounded-2xl space-y-3 animate-in fade-in">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-slate-800 uppercase flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
                       <Edit3 size={14} /> Notas Operativas
                     </h4>
                     <button onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -568,7 +568,7 @@ export default function AppointmentDrawer({
                   <button
                     onClick={() => executeAction('UPDATE_NOTES', { notes: notesText })}
                     disabled={loading}
-                    className="w-full py-2.5 bg-slate-800 hover:bg-black text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs"
+                    className="w-full py-2.5 bg-slate-800 hover:bg-black text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs"
                   >
                     {loading ? <Loader2 size={14} className="animate-spin" /> : 'Guardar Notas'}
                   </button>
@@ -578,7 +578,7 @@ export default function AppointmentDrawer({
               {activeSubView === 'cancel' && (
                 <div className="p-4 bg-rose-50 border-2 border-rose-300 rounded-2xl space-y-3 animate-in fade-in">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-rose-900 uppercase flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-rose-900 uppercase flex items-center gap-1.5">
                       <AlertTriangle size={14} className="text-rose-600" /> Cancelar Reserva
                     </h4>
                     <button onClick={() => setActiveSubView('none')} className="text-slate-400 hover:text-slate-600">
@@ -598,7 +598,7 @@ export default function AppointmentDrawer({
                   <button
                     onClick={() => executeAction('CANCEL', { reason: cancelReason })}
                     disabled={loading}
-                    className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs"
+                    className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-xs"
                   >
                     {loading ? <Loader2 size={14} className="animate-spin" /> : 'Confirmar Cancelación'}
                   </button>
@@ -609,11 +609,11 @@ export default function AppointmentDrawer({
               <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-black text-sm uppercase shadow-xs">
+                    <div className="size-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-sm uppercase shadow-xs">
                       {appointment.clientName.slice(0, 2)}
                     </div>
                     <div>
-                      <h3 className="font-black text-slate-900 text-sm">{appointment.clientName}</h3>
+                      <h3 className="font-bold text-slate-900 text-sm">{appointment.clientName}</h3>
                       <p className="text-xs text-slate-500 flex items-center gap-1 font-mono">
                         <Phone size={12} /> {appointment.clientPhone || 'Sin teléfono'}
                       </p>
@@ -625,7 +625,7 @@ export default function AppointmentDrawer({
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center gap-1 text-[11px] font-bold shadow-xs transition-all"
+                      className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center gap-1 text-xs font-bold shadow-xs transition-all"
                     >
                       <Send size={13} /> WhatsApp
                     </a>
@@ -633,7 +633,7 @@ export default function AppointmentDrawer({
                 </div>
 
                 {appointment.comentarios && (
-                  <div className="pt-2 border-t border-slate-200 text-xs text-slate-600 italic bg-white/60 p-2 rounded-xl">
+                  <div className="pt-2 border-t border-slate-200 text-xs text-slate-600 bg-white/60 p-2 rounded-xl">
                     "{appointment.comentarios}"
                   </div>
                 )}
@@ -642,24 +642,24 @@ export default function AppointmentDrawer({
               {/* HORARIO PROGRAMADO & CANCHA */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
-                  <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-400 uppercase font-bold tracking-wider block mb-0.5">
                     Horario Turno
                   </span>
-                  <span className="text-sm font-mono font-black text-slate-900 block">
+                  <span className="text-sm font-mono font-bold text-slate-900 block">
                     {appointment.startTime} – {appointment.endTime}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-medium">
+                  <span className="text-xs text-slate-500 font-medium">
                     {appointment.duracion ? `${appointment.duracion} min` : '60 min'}
                   </span>
                 </div>
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
-                  <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider block mb-0.5">
+                  <span className="text-xs text-slate-400 uppercase font-bold tracking-wider block mb-0.5">
                     Recurso Cancha
                   </span>
                   <span className="text-sm font-bold text-slate-900 truncate block">
                     {appointment.canchaNombre || 'Cancha'}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-medium">
+                  <span className="text-xs text-slate-500 font-medium">
                     Fecha: {appointment.fecha || 'Hoy'}
                   </span>
                 </div>
@@ -667,24 +667,24 @@ export default function AppointmentDrawer({
 
               {/* TIEMPOS DE USO REAL */}
               <div className="p-3.5 bg-slate-900 text-white rounded-2xl space-y-2 shadow-xs">
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block">
+                <span className="text-xs font-bold uppercase tracking-wide text-emerald-400 block">
                   Seguimiento Operativo en Cancha
                 </span>
                 <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800 text-center">
                   <div>
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Llegada</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Llegada</span>
                     <span className="text-xs font-mono font-bold text-emerald-300">
                       {appointment.checkedInAt ? new Date(appointment.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Inicio Real</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Inicio Real</span>
                     <span className="text-xs font-mono font-bold text-sky-300">
                       {appointment.startedAt ? new Date(appointment.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Fin Real</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Fin Real</span>
                     <span className="text-xs font-mono font-bold text-amber-300">
                       {appointment.completedAt ? new Date(appointment.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                     </span>
@@ -695,28 +695,28 @@ export default function AppointmentDrawer({
               {/* FINANZAS Y PAGOS */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Estado de Cuenta
                   </span>
-                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-lg ${
-                    isPaid ? 'bg-emerald-100 text-emerald-800' : saldoPendiente < total ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
-                  }`}>
+                  <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-lg ${
+ isPaid ? 'bg-emerald-100 text-emerald-800' : saldoPendiente < total ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+ }`}>
                     {isPaid ? 'Pagado Completo' : saldoPendiente < total ? 'Abono Parcial' : 'Pendiente de Pago'}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-center bg-white p-2.5 rounded-xl border border-slate-200/60">
                   <div>
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Total</span>
-                    <span className="text-xs font-mono font-black text-slate-900">${total.toLocaleString()}</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Total</span>
+                    <span className="text-xs font-mono font-bold text-slate-900">${total.toLocaleString()}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Pagado</span>
-                    <span className="text-xs font-mono font-black text-emerald-600">${pagado.toLocaleString()}</span>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Pagado</span>
+                    <span className="text-xs font-mono font-bold text-emerald-600">${pagado.toLocaleString()}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Saldo</span>
-                    <span className={`text-xs font-mono font-black ${saldoPendiente > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
+                    <span className="text-xs text-slate-400 uppercase font-bold block">Saldo</span>
+                    <span className={`text-xs font-mono font-bold ${saldoPendiente > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
                       ${saldoPendiente.toLocaleString()}
                     </span>
                   </div>
@@ -725,13 +725,13 @@ export default function AppointmentDrawer({
                 {/* Historial de pagos si existen */}
                 {paymentsList.length > 0 && (
                   <div className="space-y-1.5 pt-1">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Pagos Registrados:</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Pagos Registrados:</span>
                     {paymentsList.map((p) => (
-                      <div key={p.id} className="flex items-center justify-between text-[11px] bg-white p-2 rounded-lg border border-slate-200/60">
+                      <div key={p.id} className="flex items-center justify-between text-xs bg-white p-2 rounded-lg border border-slate-200/60">
                         <div className="flex items-center gap-1.5">
                           <Receipt size={12} className="text-emerald-600" />
                           <span className="font-bold text-slate-700">{p.metodo}</span>
-                          {p.referencia && <span className="text-[9px] text-slate-400 font-mono">({p.referencia})</span>}
+                          {p.referencia && <span className="text-xs text-slate-400 font-mono">({p.referencia})</span>}
                         </div>
                         <span className="font-mono font-bold text-slate-900">+${p.monto.toLocaleString()}</span>
                       </div>
@@ -749,7 +749,7 @@ export default function AppointmentDrawer({
 
               {/* ACCIÓN PRINCIPAL CONTEXTUAL DEL PARTIDO */}
               <div className="space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Acción Operativa Recomendada
                 </span>
 
@@ -757,7 +757,7 @@ export default function AppointmentDrawer({
                   <button
                     onClick={() => executeAction('CONFIRM')}
                     disabled={loading}
-                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
                   >
                     {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                     Confirmar Reserva
@@ -768,7 +768,7 @@ export default function AppointmentDrawer({
                   <button
                     onClick={() => executeAction('CHECK_IN')}
                     disabled={loading}
-                    className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                    className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
                   >
                     {loading ? <Loader2 size={16} className="animate-spin" /> : <UserCheck size={16} />}
                     Registrar Llegada del Jugador
@@ -779,7 +779,7 @@ export default function AppointmentDrawer({
                   <button
                     onClick={() => executeAction('START_MATCH')}
                     disabled={loading}
-                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer animate-bounce-subtle"
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer animate-bounce-subtle"
                   >
                     {loading ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
                     Iniciar Partido (Entrada a Cancha)
@@ -791,14 +791,14 @@ export default function AppointmentDrawer({
                     <button
                       onClick={() => executeAction('FINISH_MATCH')}
                       disabled={loading}
-                      className="py-3.5 bg-slate-900 hover:bg-black text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                      className="py-3.5 bg-slate-900 hover:bg-black text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
                     >
                       {loading ? <Loader2 size={16} className="animate-spin" /> : <Flag size={16} />}
                       Finalizar Partido
                     </button>
                     <button
                       onClick={() => setActiveSubView('extend')}
-                      className="py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                      className="py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
                     >
                       <Plus size={16} /> + Extender Tiempo
                     </button>
@@ -823,7 +823,7 @@ export default function AppointmentDrawer({
                 <button
                   type="button"
                   onClick={() => setShowMoreActions(!showMoreActions)}
-                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <MoreVertical size={14} /> Más Acciones Operativas
                 </button>
@@ -885,12 +885,12 @@ export default function AppointmentDrawer({
 
         {/* Bottom Footer */}
         <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex items-center justify-between">
-          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
+          <span className="text-xs font-mono font-bold text-slate-400 uppercase">
             REF: {appointment.id.slice(0, 8)}
           </span>
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+            className="px-5 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
           >
             Cerrar
           </button>

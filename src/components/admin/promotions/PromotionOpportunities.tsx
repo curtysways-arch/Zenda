@@ -261,16 +261,16 @@ export default function PromotionOpportunities({
         <div className="space-y-1 max-w-xl">
           <div className="flex items-center gap-2">
             <Sparkles className="size-5 text-amber-200" />
-            <span className="text-xs font-black uppercase tracking-widest text-amber-200">Centro de Oportunidades & Crecimiento</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-amber-200">Centro de Oportunidades & Crecimiento</span>
           </div>
-          <h2 className="text-2xl font-black italic uppercase tracking-tight">Recomendaciones Basadas en Tus Datos</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Recomendaciones Basadas en Tus Datos</h2>
           <p className="text-amber-100/90 text-xs font-medium leading-relaxed">
             Identificamos patrones en tu restaurante para ayudarte a pasar de “Quiero vender más” a una promoción real precargada en 1 solo clic.
           </p>
         </div>
         <div className="bg-white/15 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/20 text-center shrink-0">
-          <span className="text-2xl font-black block">4</span>
-          <span className="text-[10px] font-black uppercase tracking-wider text-amber-100">Oportunidades Hoy</span>
+          <span className="text-2xl font-bold block">4</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-100">Oportunidades Hoy</span>
         </div>
       </div>
 
@@ -288,7 +288,7 @@ export default function PromotionOpportunities({
                     <div className="size-9 rounded-2xl bg-white p-2 text-slate-800 shadow-xs flex items-center justify-center">
                       <IconComp className="size-5 text-amber-600" />
                     </div>
-                    <span className="text-xs font-black uppercase tracking-wider">{opp.badge}</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">{opp.badge}</span>
                   </div>
                 </div>
                 <h3 className="font-extrabold text-slate-900 text-base leading-snug">{opp.title}</h3>
@@ -298,7 +298,7 @@ export default function PromotionOpportunities({
               <button
                 type="button"
                 onClick={() => onSelectOpportunity(opp.presetData)}
-                className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
               >
                 <Zap className="size-4 text-amber-400 fill-amber-400" />
                 <span>Crear Promoción Precargada</span>

@@ -106,13 +106,13 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
     return (
         <div className="space-y-6 text-slate-900">
             {/* Create Form */}
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm text-left">
-                <h3 className="text-sm font-black text-gray-900 uppercase mb-4 flex items-center gap-2">
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-left">
+                <h3 className="text-sm font-bold text-gray-900 uppercase mb-4 flex items-center gap-2">
                     <Plus size={16} className="text-emerald-500" /> Nueva Clase
                 </h3>
                 <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div className="md:col-span-1">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Título</label>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Título</label>
                         <input
                             required
                             type="text"
@@ -123,7 +123,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                         />
                     </div>
                     <div className="md:col-span-1">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Fecha y Hora</label>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Fecha y Hora</label>
                         <input
                             required
                             type="datetime-local"
@@ -133,7 +133,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                         />
                     </div>
                     <div className="md:col-span-1">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Descripción (Opcional)</label>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Descripción (Opcional)</label>
                         <input
                             type="text"
                             placeholder="Tema de la clase..."
@@ -146,7 +146,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                         <button
                             type="submit"
                             disabled={isCreating}
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
                         >
                             {isCreating ? <Loader2 size={16} className="animate-spin" /> : 'Añadir'}
                         </button>
@@ -156,9 +156,9 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
 
             {/* List */}
             {classes.length === 0 ? (
-                <div className="bg-white rounded-[2rem] border-2 border-dashed border-gray-100 p-16 text-center">
+                <div className="bg-white rounded-2xl border-2 border-dashed border-gray-100 p-16 text-center">
                     <Calendar size={40} className="text-gray-200 mx-auto mb-4" />
-                    <p className="font-black text-gray-400 uppercase">Aún no hay clases registradas</p>
+                    <p className="font-bold text-gray-400 uppercase">Aún no hay clases registradas</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
@@ -167,16 +167,16 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
 
                         if (isEditing) {
                             return (
-                                <div key={c.id} className="bg-white p-5 rounded-[2rem] border-2 border-emerald-500 shadow-lg flex flex-col justify-between pt-6">
+                                <div key={c.id} className="bg-white p-5 rounded-2xl border-2 border-emerald-500 shadow-lg flex flex-col justify-between pt-6">
                                     <form onSubmit={handleUpdate} className="space-y-4">
                                         <div className="flex justify-between items-center mb-2">
-                                            <h4 className="font-black text-emerald-600 uppercase text-sm">Editar Clase</h4>
+                                            <h4 className="font-bold text-emerald-600 uppercase text-sm">Editar Clase</h4>
                                             <button type="button" onClick={() => setEditingClass(null)} className="text-gray-400 hover:text-gray-600 bg-gray-50 p-1.5 rounded-full">
                                                 <X size={16} />
                                             </button>
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Título</label>
+                                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Título</label>
                                             <input
                                                 required
                                                 type="text"
@@ -186,7 +186,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Fecha y Hora</label>
+                                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Fecha y Hora</label>
                                             <input
                                                 required
                                                 type="datetime-local"
@@ -196,7 +196,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Descripción</label>
+                                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Descripción</label>
                                             <input
                                                 type="text"
                                                 className="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500"
@@ -208,7 +208,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                                             <button
                                                 type="submit"
                                                 disabled={isUpdating}
-                                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
+                                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
                                             >
                                                 {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                                                 Guardar Cambios
@@ -220,11 +220,11 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                         }
 
                         return (
-                            <div key={c.id} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-between pt-6 group transition-all hover:shadow-md">
+                            <div key={c.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between pt-6 group transition-all hover:shadow-md">
                                 <div>
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h4 className="font-black text-gray-900 uppercase text-lg">{c.title}</h4>
+                                            <h4 className="font-bold text-gray-900 text-lg">{c.title}</h4>
                                             {c.description && <p className="text-sm font-medium text-gray-500 mt-1">{c.description}</p>}
                                         </div>
                                         <div className="flex bg-gray-50 rounded-lg p-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -261,7 +261,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                                 <div className="mt-5 pt-4 border-t border-gray-50">
                                     <Link
                                         href={`/admin/cursos/${courseId}/clases/${c.id}`}
-                                        className="block w-full text-center bg-white border border-gray-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 text-slate-700 px-4 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all"
+                                        className="block w-full text-center bg-white border border-gray-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wide transition-all"
                                     >
                                         Gestionar Asistencia &rarr;
                                     </Link>

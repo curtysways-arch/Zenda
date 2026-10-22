@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import WysiwygEditor from '@/components/admin/WysiwygEditor';
-import { ChevronLeft, Save, Globe, EyeOff, Loader2, Sparkles, FileText, Trash2, Upload, ImagePlus, Link2, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Save, Globe, EyeOff, Loader2, Sparkles, FileText, Trash2, Upload, ImagePlus, Link2, ChevronDown, Layout } from 'lucide-react';
 import Link from 'next/link';
 import ImageUploader from '@/components/ui/ImageUploader';
 
@@ -17,6 +17,8 @@ export default function PaginaEdicion() {
     const [featuredImage, setFeaturedImage] = useState<string | null>(null);
     const [imageMediaId, setImageMediaId] = useState<string | null>(null);
     const [status, setStatus] = useState<'draft' | 'published'>('draft');
+    const [posicion, setPosicion] = useState<'top' | 'bottom'>('top');
+    const [orden, setOrden] = useState<number>(1);
     const [buttonText, setButtonText] = useState('');
     const [buttonUrl, setButtonUrl] = useState('');
     const [availableLinks, setAvailableLinks] = useState<{ canchas: any[], promociones: any[], cursos: any[] }>({ canchas: [], promociones: [], cursos: [] });
@@ -39,6 +41,8 @@ export default function PaginaEdicion() {
                     setTitle(data.title);
                     setContent(data.contentHtml);
                     setStatus(data.status);
+                    setPosicion(data.posicion || (data.slug === 'como-funciona' ? 'top' : 'bottom'));
+                    setOrden(data.orden ?? 1);
                     setFeaturedImage(data.imageMedia?.url || data.featuredImage);
                     setImageMediaId(data.imageMediaId || null);
                     setButtonText(data.buttonText || '');
@@ -79,7 +83,17 @@ export default function PaginaEdicion() {
             const res = await fetch(`/api/admin/pages/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, contentHtml: content, status, featuredImage, imageMediaId, buttonText, buttonUrl })
+                body: JSON.stringify({ 
+                    title, 
+                    contentHtml: content, 
+                    status, 
+                    posicion, 
+                    orden: Number(orden) || 1, 
+                    featuredImage, 
+                    imageMediaId, 
+                    buttonText, 
+                    buttonUrl 
+                })
             });
             if (res.ok) {
                 router.push('/admin/paginas');
@@ -102,16 +116,16 @@ export default function PaginaEdicion() {
                         <ChevronLeft size={18} />
                     </Link>
                     <div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">Editar Página</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight ">Editar Página</h1>
                         <p className="text-gray-500 font-medium">Define el título y contenido enriquecido.</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="flex bg-white p-1.5 border border-gray-100 rounded-2xl shadow-sm">
-                        <button type="button" onClick={() => setStatus('draft')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${status === 'draft' ? 'bg-orange-50 text-orange-600' : 'text-gray-400'}`}>Borrador</button>
-                        <button type="button" onClick={() => setStatus('published')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${status === 'published' ? '' : 'text-gray-400'}`} style={status === 'published' ? { backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' } : {}}>Publicada</button>
+                        <button type="button" onClick={() => setStatus('draft')} className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${status === 'draft' ? 'bg-orange-50 text-orange-600' : 'text-gray-400'}`}>Borrador</button>
+                        <button type="button" onClick={() => setStatus('published')} className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${status === 'published' ? '' : 'text-gray-400'}`} style={status === 'published' ? { backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' } : {}}>Publicada</button>
                     </div>
-                    <button type="submit" form="page-form" disabled={loading} className="px-8 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg" style={{ backgroundColor: 'var(--primary-color)' }}>
+                    <button type="submit" form="page-form" disabled={loading} className="px-8 py-3.5 text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg" style={{ backgroundColor: 'var(--primary-color)' }}>
                         {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Actualizar
                     </button>
                 </div>
@@ -119,9 +133,9 @@ export default function PaginaEdicion() {
 
             <form id="page-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 p-8 space-y-6">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-50 p-8 space-y-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Título de la Página</label>
+                            <label className="text-xs font-bold uppercase tracking-wide text-slate-400 ml-1">Título de la Página</label>
                             <div className="relative group">
                                 <input
                                     type="text"
@@ -137,14 +151,14 @@ export default function PaginaEdicion() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Cuerpo del contenido</label>
+                            <label className="text-xs font-bold uppercase tracking-wide text-gray-400 ml-1">Cuerpo del contenido</label>
                             <WysiwygEditor value={content} onChange={setContent} />
                         </div>
                     </div>
                 </div>
                 <div className="space-y-6">
-                    <div className="bg-white rounded-[2.5rem] p-8 space-y-4 border border-gray-100">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Imagen de Portada</label>
+                    <div className="bg-white rounded-2xl p-8 space-y-4 border border-gray-100">
+                        <label className="text-xs font-bold uppercase tracking-wide text-gray-400 ml-1">Imagen de Portada</label>
                         <ImageUploader
                             category="page"
                             currentUrl={featuredImage || ''}
@@ -161,20 +175,84 @@ export default function PaginaEdicion() {
                         />
                     </div>
 
-                    <div className="bg-white rounded-[2.5rem] p-8 space-y-6 border border-gray-100">
+                    {/* Ubicación en la Landing */}
+                    <div className="bg-white rounded-2xl p-8 space-y-5 border border-gray-100">
+                        <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-4">
+                            <div className="size-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                                <Layout size={14} />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold uppercase text-slate-900 tracking-wide">Ubicación en la Landing</h3>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wide mt-0.5">Controla la posición de esta sección</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setPosicion('top')}
+                                className={`p-4 rounded-2xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
+                                    posicion === 'top'
+                                        ? 'border-purple-600 bg-purple-50/60 shadow-sm'
+                                        : 'border-slate-100 bg-slate-50 hover:bg-slate-100/60'
+                                }`}
+                            >
+                                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                    ⬆️ Zona Superior
+                                </span>
+                                <span className="text-xs text-slate-500 font-medium leading-relaxed">
+                                    Arriba, justo debajo del banner (Ideal para "Cómo funciona")
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setPosicion('bottom')}
+                                className={`p-4 rounded-2xl border text-left transition-all flex flex-col gap-1.5 cursor-pointer ${
+                                    posicion === 'bottom'
+                                        ? 'border-purple-600 bg-purple-50/60 shadow-sm'
+                                        : 'border-slate-100 bg-slate-50 hover:bg-slate-100/60'
+                                }`}
+                            >
+                                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                    ⬇️ Zona Inferior
+                                </span>
+                                <span className="text-xs text-slate-500 font-medium leading-relaxed">
+                                    Abajo, después del catálogo (Ideal para "Resultados y Garantías")
+                                </span>
+                            </button>
+                        </div>
+
+                        <div className="pt-2 border-t border-gray-50 flex items-center justify-between gap-4">
+                            <div className="space-y-0.5">
+                                <label className="text-xs font-bold uppercase tracking-wide text-slate-700">Orden numérico</label>
+                                <p className="text-xs text-slate-400 font-medium">Prioridad si hay varias en la misma zona</p>
+                            </div>
+                            <input
+                                type="number"
+                                min={1}
+                                max={99}
+                                value={orden}
+                                onChange={(e) => setOrden(parseInt(e.target.value) || 1)}
+                                className="w-20 bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-center text-sm font-bold text-slate-900 outline-none focus:border-purple-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-8 space-y-6 border border-gray-100">
                         <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-4">
                             <div className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
                                 <Link2 size={14} />
                             </div>
                             <div>
-                                <h3 className="text-sm font-black uppercase text-slate-900 tracking-widest">Botón de Acción</h3>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Call to Action al final</p>
+                                <h3 className="text-sm font-bold uppercase text-slate-900 tracking-wide">Botón de Acción</h3>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wide mt-0.5">Call to Action al final</p>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Texto del Botón</label>
+                                <label className="text-xs font-bold uppercase tracking-wide text-slate-400 ml-1">Texto del Botón</label>
                                 <input
                                     type="text"
                                     placeholder="Ej: Agendar Sesión"
@@ -184,7 +262,7 @@ export default function PaginaEdicion() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Destino del Botón</label>
+                                <label className="text-xs font-bold uppercase tracking-wide text-slate-400 ml-1">Destino del Botón</label>
                                 <div className="relative">
                                     <select
                                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 text-sm font-bold outline-none appearance-none pr-10"
@@ -219,7 +297,7 @@ export default function PaginaEdicion() {
 
                         {(buttonUrl === 'CUSTOM' || (!buttonUrl.startsWith('/') && buttonUrl !== '')) && (
                             <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">URL Personalizada</label>
+                                <label className="text-xs font-bold uppercase tracking-wide text-slate-400 ml-1">URL Personalizada</label>
                                 <input
                                     type="text"
                                     placeholder="https://..."

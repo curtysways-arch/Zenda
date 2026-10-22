@@ -112,7 +112,7 @@ export default function TempGalleryUploader({ images, onAdd, onRemove }: TempGal
                             <div className="size-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:text-violet-500">
                                 <Plus size={16} />
                             </div>
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">
                                 {images.length === 0 ? 'Añadir foto' : 'Más fotos'}
                             </span>
                         </>
@@ -121,11 +121,11 @@ export default function TempGalleryUploader({ images, onAdd, onRemove }: TempGal
             </div>
 
             {error && (
-                <p className="text-[10px] text-rose-600 font-bold px-1">{error}</p>
+                <p className="text-xs text-rose-600 font-bold px-1">{error}</p>
             )}
 
             {images.length === 0 && (
-                <p className="text-[10px] text-gray-400 font-medium px-1">
+                <p className="text-xs text-gray-400 font-medium px-1">
                     Opcional · Puedes añadir fotos de galería para este servicio
                 </p>
             )}

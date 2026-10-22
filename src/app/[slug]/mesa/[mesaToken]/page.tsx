@@ -373,7 +373,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4 text-white">
         <Loader2 className="animate-spin text-amber-400" size={44} />
         <div className="text-center space-y-1">
-          <span className="text-sm font-black uppercase tracking-widest text-white">Cargando Menú de Mesa</span>
+          <span className="text-sm font-bold uppercase tracking-wide text-white">Cargando Menú de Mesa</span>
           <p className="text-xs text-slate-400">Sincronizando con el restaurante...</p>
         </div>
       </div>
@@ -386,13 +386,13 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
         <div className="size-16 rounded-3xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center mx-auto text-3xl">
           <XCircle size={36} />
         </div>
-        <h2 className="text-xl font-black text-white uppercase">Mesa No Disponible</h2>
+        <h2 className="text-xl font-bold text-white ">Mesa No Disponible</h2>
         <p className="text-xs text-slate-400 max-w-sm font-medium leading-relaxed">{error}</p>
         <button
           type="button"
           onClick={() => router.push(`/${slug}`)}
           style={{ backgroundColor: cp }}
-          className="px-6 py-3 text-white font-black text-xs uppercase rounded-2xl shadow-lg cursor-pointer"
+          className="px-6 py-3 text-white font-bold text-xs uppercase rounded-2xl shadow-lg cursor-pointer"
         >
           Ver Menú General
         </button>
@@ -420,18 +420,18 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
             ) : (
               <div
                 style={{ backgroundColor: cp }}
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center text-white font-black text-lg shrink-0 shadow-xs"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-xs"
               >
                 🍽️
               </div>
             )}
 
             <div className="min-w-0">
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-400 truncate block leading-none">
+              <span className="text-xs sm:text-xs font-bold uppercase tracking-wider text-slate-400 truncate block leading-none">
                 {negocio?.nombre || 'Restaurante'}
               </span>
               <div className="flex items-center gap-2 mt-1">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs sm:text-sm font-black tracking-tight">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs sm:text-sm font-bold tracking-tight">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
                   <span>🍽️ {mesa.nombre}</span>
                 </span>
@@ -448,11 +448,11 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                   type="button"
                   onClick={() => handleCallWaiter('MESERO')}
                   disabled={waiterCooldown > 0 || callingWaiter}
-                  className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl font-black text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 ${
-                    waiterCooldown > 0
-                      ? 'bg-slate-800 text-slate-400 border border-slate-700'
-                      : 'bg-rose-600 hover:bg-rose-500 text-white'
-                  }`}
+                  className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 ${
+ waiterCooldown > 0
+ ? 'bg-slate-800 text-slate-400 border border-slate-700'
+ : 'bg-rose-600 hover:bg-rose-500 text-white'
+ }`}
                   title="Llamar al mesero a la mesa"
                 >
                   <Bell className={`w-4 h-4 ${callingWaiter ? 'animate-spin' : ''}`} />
@@ -466,7 +466,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                   type="button"
                   onClick={() => handleCallWaiter('CUENTA')}
                   disabled={waiterCooldown > 0 || callingWaiter}
-                  className="hidden md:flex px-3.5 py-2.5 rounded-2xl font-black text-xs items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 bg-amber-500 hover:bg-amber-400 text-slate-950"
+                  className="hidden md:flex px-3.5 py-2.5 rounded-2xl font-bold text-xs items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 bg-amber-500 hover:bg-amber-400 text-slate-950"
                   title="Pedir la pre-cuenta a la mesa"
                 >
                   <CreditCard className="w-4 h-4" />
@@ -480,15 +480,15 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 type="button"
                 onClick={() => setShowOrderDrawer(true)}
                 style={{ backgroundColor: cp, color: '#ffffff' }}
-                className="relative px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl font-black text-xs flex items-center gap-2 cursor-pointer shadow-md active:scale-95 transition-all text-white"
+                className="relative px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 cursor-pointer shadow-md active:scale-95 transition-all text-white"
                 title="Ver comanda / carrito"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span className="hidden sm:inline text-xs font-black">
+                <span className="hidden sm:inline text-xs font-bold">
                   {totalItemsCount > 0 ? `$${total.toFixed(2)}` : 'Comanda'}
                 </span>
                 {totalItemsCount > 0 && (
-                  <span className="bg-slate-950 text-white px-2 py-0.5 rounded-full text-[10px] font-black ml-0.5 shadow-xs">
+                  <span className="bg-slate-950 text-white px-2 py-0.5 rounded-full text-xs font-bold ml-0.5 shadow-xs">
                     {totalItemsCount}
                   </span>
                 )}
@@ -500,7 +500,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
 
       {/* ── TOAST DE ALERTA DE MESERO ── */}
       {waiterToast && (
-        <div className="bg-emerald-600 text-white px-4 py-3 text-center text-xs font-black uppercase tracking-wider shadow-md animate-in slide-in-from-top duration-300 flex items-center justify-center gap-2">
+        <div className="bg-emerald-600 text-white px-4 py-3 text-center text-xs font-bold uppercase tracking-wider shadow-md animate-in slide-in-from-top duration-300 flex items-center justify-center gap-2">
           <CheckCircle2 className="w-4 h-4" />
           <span>{waiterToast}</span>
         </div>
@@ -541,21 +541,21 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 {activeSlide.priceLabel && (
                   <div
                     style={{ backgroundColor: cp, color: '#ffffff' }}
-                    className="absolute top-3 right-3 sm:top-5 sm:right-5 z-20 w-12 h-12 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
+                    className="absolute top-3 right-3 sm:top-5 sm:right-5 z-20 w-12 h-12 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center text-white font-bold shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
                   >
-                    <span className="text-[8px] sm:text-[10px] uppercase tracking-tighter leading-tight opacity-90">DESDE</span>
-                    <span className="text-xs sm:text-base font-black leading-none">
+                    <span className="text-xs sm:text-xs uppercase tracking-tight leading-tight opacity-90">Desde</span>
+                    <span className="text-xs sm:text-base font-bold leading-none">
                       {activeSlide.priceLabel.replace(/^Desde\s+/i, '')}
                     </span>
                   </div>
                 )}
 
                 <div className="relative z-10 w-4/5 sm:w-2/3 p-5 sm:p-8 space-y-2 flex flex-col justify-center">
-                  <span style={{ color: cp }} className="text-[9px] sm:text-xs font-black uppercase tracking-widest block">
+                  <span style={{ color: cp }} className="text-xs sm:text-xs font-bold uppercase tracking-wide block">
                     {activeSlide.tagText || 'RECOMENDADO DEL CHEF'}
                   </span>
 
-                  <h2 className="text-white text-xl sm:text-2xl md:text-3xl font-black tracking-tight leading-tight">
+                  <h2 className="text-white text-xl sm:text-2xl md:text-3xl font-bold tracking-tight leading-tight">
                     {activeSlide.title}
                   </h2>
 
@@ -579,7 +579,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                           }
                         }}
                         style={{ backgroundColor: cp, color: '#ffffff' }}
-                        className="px-5 py-2.5 rounded-full text-xs font-black text-white shadow-lg flex items-center gap-1.5 hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                        className="px-5 py-2.5 rounded-full text-xs font-bold text-white shadow-lg flex items-center gap-1.5 hover:opacity-90 active:scale-95 transition-all cursor-pointer"
                       >
                         <span>Pedir a la Mesa</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -616,10 +616,10 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Flame style={{ color: cp }} className="w-5 h-5" />
-                    <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900">
+                    <h3 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
                       Promociones Especiales
                     </h3>
-                    <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] font-black uppercase tracking-wider">
+                    <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-xs font-bold uppercase tracking-wider">
                       Salón
                     </span>
                   </div>
@@ -667,29 +667,29 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                         />
                         <div
                           style={{ backgroundColor: cp }}
-                          className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs"
+                          className="absolute top-1 left-1 text-xs font-bold text-white px-1.5 py-0.5 rounded-md shadow-xs"
                         >
                           {promo.badge || 'PROMO'}
                         </div>
                       </div>
 
                       <div className="min-w-0 flex-1 space-y-1">
-                        <h5 className="text-xs sm:text-sm font-black truncate text-slate-900 group-hover:text-amber-600 transition-colors">
+                        <h5 className="text-xs sm:text-sm font-bold truncate text-slate-900 group-hover:text-amber-600 transition-colors">
                           {promo.title}
                         </h5>
-                        <p className="text-[10px] sm:text-xs font-medium line-clamp-1 text-slate-500">
+                        <p className="text-xs sm:text-xs font-medium line-clamp-1 text-slate-500">
                           {promo.description}
                         </p>
 
                         <div className="flex items-center justify-between pt-1">
                           <div className="flex items-baseline gap-1.5">
                             {promo.price && (
-                              <span style={{ color: cp }} className="text-xs sm:text-sm font-black font-mono">
+                              <span style={{ color: cp }} className="text-xs sm:text-sm font-bold font-mono">
                                 ${Number(promo.price).toFixed(2)}
                               </span>
                             )}
                             {promo.originalPrice && (
-                              <span className="text-[10px] font-bold line-through text-slate-400 font-mono">
+                              <span className="text-xs font-bold line-through text-slate-400 font-mono">
                                 ${Number(promo.originalPrice).toFixed(2)}
                               </span>
                             )}
@@ -704,13 +704,13 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                                 if (found) addToCart(found);
                               }}
                               style={{ backgroundColor: cp, color: '#ffffff' }}
-                              className="px-3 py-1 rounded-xl font-black text-[11px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
+                              className="px-3 py-1 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
                             >
                               <Plus className="w-3 h-3 text-white" />
                               <span>Agregar</span>
                             </button>
                           ) : (
-                            <span className="text-[10px] font-black text-slate-400">Ver</span>
+                            <span className="text-xs font-bold text-slate-400">Ver</span>
                           )}
                         </div>
                       </div>
@@ -755,8 +755,8 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                     backgroundColor: '#ffffff'
                   }}
                   className={`px-4 py-2.5 rounded-2xl border flex items-center gap-1.5 shrink-0 transition-all shadow-2xs cursor-pointer ${
-                    selectedCategoryId === 'TODOS' ? 'shadow-md border-2 font-black' : 'font-bold'
-                  }`}
+ selectedCategoryId === 'TODOS' ? 'shadow-md border-2 font-bold' : 'font-bold'
+ }`}
                 >
                   <span>🍽️</span>
                   <span className="text-xs">Todos ({products.length})</span>
@@ -777,13 +777,13 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                         backgroundColor: '#ffffff'
                       }}
                       className={`px-4 py-2.5 rounded-2xl border flex items-center gap-1.5 shrink-0 transition-all shadow-2xs cursor-pointer ${
-                        isActive ? 'shadow-md border-2 font-black' : 'font-bold'
-                      }`}
+ isActive ? 'shadow-md border-2 font-bold' : 'font-bold'
+ }`}
                     >
                       <span>{cat.icono || '🍲'}</span>
                       <span className="text-xs">{cat.nombre}</span>
                       {countInCat > 0 && (
-                        <span className="text-[10px] text-slate-400 font-mono">({countInCat})</span>
+                        <span className="text-xs text-slate-400 font-mono">({countInCat})</span>
                       )}
                     </button>
                   );
@@ -794,7 +794,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
             {/* ── 5. GRID DE PLATILLOS / CARTA DEL RESTAURANTE ── */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900">
+                <h3 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
                   {selectedCategoryId === 'TODOS' ? 'Carta de Platillos' : 'Platillos en esta Categoría'}
                 </h3>
                 <span className="text-xs text-slate-500 font-bold font-mono">
@@ -805,7 +805,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
               {filteredProducts.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-2">
                   <Utensils className="w-10 h-10 text-slate-300 mx-auto" />
-                  <h4 className="text-sm font-black text-slate-800 uppercase">Sin platillos disponibles</h4>
+                  <h4 className="text-sm font-bold text-slate-800 uppercase">Sin platillos disponibles</h4>
                   <p className="text-xs text-slate-500 max-w-xs mx-auto">
                     No se encontraron productos con la búsqueda o categoría seleccionada.
                   </p>
@@ -849,7 +849,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                           {prod.precioAnterior && prod.precioAnterior > prod.precio && (
                             <div
                               style={{ backgroundColor: cp }}
-                              className="absolute bottom-2 left-2 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs uppercase tracking-tight"
+                              className="absolute bottom-2 left-2 text-xs font-bold text-white px-1.5 py-0.5 rounded-md shadow-xs uppercase tracking-tight"
                             >
                               Oferta
                             </div>
@@ -862,7 +862,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                               {prod.nombre}
                             </h4>
                             {cleanDesc && (
-                              <p className="text-[10px] sm:text-xs text-slate-500 font-medium line-clamp-2 mt-0.5">
+                              <p className="text-xs sm:text-xs text-slate-500 font-medium line-clamp-2 mt-0.5">
                                 {cleanDesc}
                               </p>
                             )}
@@ -870,11 +870,11 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
 
                           <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                             <div className="flex flex-col">
-                              <span style={{ color: cp }} className="font-black text-xs sm:text-sm font-mono">
+                              <span style={{ color: cp }} className="font-bold text-xs sm:text-sm font-mono">
                                 ${Number(prod.precio || 0).toFixed(2)}
                               </span>
                               {prod.precioAnterior && (
-                                <span className="text-[9px] text-slate-400 line-through font-mono">
+                                <span className="text-xs text-slate-400 line-through font-mono">
                                   ${Number(prod.precioAnterior).toFixed(2)}
                                 </span>
                               )}
@@ -889,18 +889,18 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                                   <button
                                     type="button"
                                     onClick={() => decrementQuantity(prod.id)}
-                                    className="w-5 h-5 bg-white text-slate-700 rounded-lg font-black text-xs flex items-center justify-center shadow-2xs hover:bg-slate-200 cursor-pointer"
+                                    className="w-5 h-5 bg-white text-slate-700 rounded-lg font-bold text-xs flex items-center justify-center shadow-2xs hover:bg-slate-200 cursor-pointer"
                                   >
                                     -
                                   </button>
-                                  <span className="text-[11px] font-black px-1.5 text-slate-900">
+                                  <span className="text-xs font-bold px-1.5 text-slate-900">
                                     {qtyInCart}
                                   </span>
                                   <button
                                     type="button"
                                     onClick={() => addToCart(prod)}
                                     style={{ backgroundColor: cp, color: '#ffffff' }}
-                                    className="w-5 h-5 rounded-lg font-black text-xs flex items-center justify-center shadow-2xs text-white cursor-pointer"
+                                    className="w-5 h-5 rounded-lg font-bold text-xs flex items-center justify-center shadow-2xs text-white cursor-pointer"
                                   >
                                     +
                                   </button>
@@ -920,7 +920,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                                 </button>
                               )
                             ) : (
-                              <span className="text-[10px] font-extrabold text-slate-400">Ver</span>
+                              <span className="text-xs font-extrabold text-slate-400">Ver</span>
                             )}
                           </div>
                         </div>
@@ -946,13 +946,13 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 <div className="flex items-center gap-2">
                   <div
                     style={{ backgroundColor: cp }}
-                    className="w-9 h-9 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-xs"
+                    className="w-9 h-9 rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-xs"
                   >
                     <ShoppingBag className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Tu Comanda</h4>
-                    <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                    <h4 className="text-sm font-bold text-slate-900 uppercase tracking-tight">Tu Comanda</h4>
+                    <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                       Mesa: {mesa.nombre}
                     </span>
@@ -960,7 +960,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 </div>
 
                 {totalItemsCount > 0 && (
-                  <span className="px-2.5 py-0.5 bg-slate-100 rounded-full text-xs font-black text-slate-800 font-mono">
+                  <span className="px-2.5 py-0.5 bg-slate-100 rounded-full text-xs font-bold text-slate-800 font-mono">
                     {totalItemsCount} {totalItemsCount === 1 ? 'ítem' : 'ítems'}
                   </span>
                 )}
@@ -996,8 +996,8 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 cart.length === 0 ? (
                   <div className="p-6 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200 text-center space-y-2">
                     <Utensils className="w-8 h-8 text-slate-300 mx-auto" />
-                    <span className="text-xs font-black text-slate-700 uppercase block">Comanda Vacía</span>
-                    <p className="text-[11px] text-slate-400 max-w-[200px] mx-auto">
+                    <span className="text-xs font-bold text-slate-700 uppercase block">Comanda Vacía</span>
+                    <p className="text-xs text-slate-400 max-w-[200px] mx-auto">
                       Agrega platillos del menú tocando el botón "+" en tus favoritos.
                     </p>
                   </div>
@@ -1010,30 +1010,32 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                             <span className="font-extrabold text-slate-900 block truncate">
                               {item.product.nombre}
                             </span>
-                            <span className="text-[10px] text-slate-400 font-mono">
+                            <span className="text-xs text-slate-400 font-mono">
                               ${item.product.precio.toFixed(2)} c/u
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
-                            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1">
+                            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 shadow-2xs">
                               <button
                                 type="button"
                                 onClick={() => decrementQuantity(item.product.id)}
-                                className="px-1.5 py-0.5 font-black text-slate-600 hover:text-slate-900 cursor-pointer"
+                                className="w-5 h-5 font-bold text-slate-700 hover:text-black flex items-center justify-center cursor-pointer text-xs active:scale-95"
                               >
                                 -
                               </button>
-                              <span className="px-1 font-bold text-[11px]">{item.quantity}</span>
+                              <span style={{ color: '#0f172a' }} className="px-1.5 font-bold text-xs text-slate-900 min-w-[20px] text-center inline-block">
+                                {item.quantity}
+                              </span>
                               <button
                                 type="button"
                                 onClick={() => addToCart(item.product)}
-                                className="px-1.5 py-0.5 font-black text-slate-600 hover:text-slate-900 cursor-pointer"
+                                className="w-5 h-5 font-bold text-slate-700 hover:text-black flex items-center justify-center cursor-pointer text-xs active:scale-95"
                               >
                                 +
                               </button>
                             </div>
-                            <span className="font-black text-slate-900 font-mono w-14 text-right">
+                            <span className="font-bold text-slate-900 font-mono w-14 text-right">
                               ${(item.product.precio * item.quantity).toFixed(2)}
                             </span>
                           </div>
@@ -1057,9 +1059,9 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                     <div className="p-3.5 bg-slate-950 rounded-2xl text-white space-y-2">
                       <div className="flex justify-between items-baseline">
                         <span className="text-xs text-slate-400 font-bold uppercase">Total a Pedir</span>
-                        <span className="text-xl font-black text-amber-400 font-mono">${total.toFixed(2)}</span>
+                        <span className="text-xl font-bold text-amber-400 font-mono">${total.toFixed(2)}</span>
                       </div>
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-xs text-slate-400">
                         El pago se realiza directamente en mesa con tu mesero.
                       </p>
                     </div>
@@ -1067,7 +1069,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                     {geoErrorMessage && (
                       <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-1.5">
                         <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                        <span className="text-[11px]">{geoErrorMessage}</span>
+                        <span className="text-xs">{geoErrorMessage}</span>
                       </div>
                     )}
 
@@ -1076,7 +1078,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                       disabled={requestingOrder || cart.length === 0}
                       onClick={handleSubmitTableOrder}
                       style={{ backgroundColor: cp, color: '#ffffff' }}
-                      className="w-full py-3 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50 text-white hover:opacity-90 active:scale-95 transition-all"
+                      className="w-full py-3 rounded-2xl font-bold text-xs uppercase flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50 text-white hover:opacity-90 active:scale-95 transition-all"
                     >
                       {requestingOrder ? (
                         <>
@@ -1094,8 +1096,8 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 )
               ) : (
                 <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-1">
-                  <span className="font-black uppercase block">Modo Menú Digital</span>
-                  <p className="text-[11px] text-amber-800">
+                  <span className="font-bold uppercase block">Modo Menú Digital</span>
+                  <p className="text-xs text-amber-800">
                     Las comandas son tomadas por el mesero. Utiliza el botón "Llamar Mesero" para pedir tus platillos.
                   </p>
                 </div>
@@ -1113,15 +1115,15 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
             <div className="flex items-center gap-2.5 pl-1">
               <div
                 style={{ backgroundColor: cp }}
-                className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black shrink-0 shadow-xs"
+                className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold shrink-0 shadow-xs"
               >
                 <ShoppingBag className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-bold block leading-none">
+                <span className="text-xs text-slate-400 uppercase font-bold block leading-none">
                   {totalItemsCount} platillo{totalItemsCount !== 1 ? 's' : ''} en mesa
                 </span>
-                <span className="text-base font-black text-amber-400 font-mono leading-tight">
+                <span className="text-base font-bold text-amber-400 font-mono leading-tight">
                   ${total.toFixed(2)}
                 </span>
               </div>
@@ -1131,7 +1133,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
               type="button"
               onClick={() => setShowOrderDrawer(true)}
               style={{ backgroundColor: cp, color: '#ffffff' }}
-              className="px-5 py-2.5 rounded-2xl font-black text-xs uppercase flex items-center gap-1.5 shadow-lg active:scale-95 transition-all text-white cursor-pointer"
+              className="px-5 py-2.5 rounded-2xl font-bold text-xs uppercase flex items-center gap-1.5 shadow-lg active:scale-95 transition-all text-white cursor-pointer"
             >
               <span>Ver Pedido</span>
               <ChevronRight className="w-4 h-4" />
@@ -1147,7 +1149,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Bell className="w-5 h-5 text-rose-600" />
-                <h3 className="text-base font-black uppercase text-slate-900">Atención en Mesa</h3>
+                <h3 className="text-base font-bold uppercase text-slate-900">Atención en Mesa</h3>
               </div>
               <button
                 type="button"
@@ -1174,7 +1176,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 </div>
                 <div>
                   <span className="font-extrabold text-xs block text-slate-900">Llamar al Mesero</span>
-                  <span className="text-[10px] text-slate-500 font-medium">Asistencia, preguntas o pedir más servilletas</span>
+                  <span className="text-xs text-slate-500 font-medium">Asistencia, preguntas o pedir más servilletas</span>
                 </div>
               </button>
 
@@ -1189,7 +1191,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 </div>
                 <div>
                   <span className="font-extrabold text-xs block text-slate-900">Pedir la Cuenta</span>
-                  <span className="text-[10px] text-slate-500 font-medium">Solicitar pre-cuenta para pagar en la mesa</span>
+                  <span className="text-xs text-slate-500 font-medium">Solicitar pre-cuenta para pagar en la mesa</span>
                 </div>
               </button>
             </div>
@@ -1214,11 +1216,11 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
               {/* Encabezado */}
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     <Utensils className="w-5 h-5 text-amber-500" />
                     Comanda para {mesa.nombre}
                   </h3>
-                  <span className="text-[11px] text-slate-500 font-medium">
+                  <span className="text-xs text-slate-500 font-medium">
                     Revisa tus platillos antes de enviarlos a cocina
                   </span>
                 </div>
@@ -1233,7 +1235,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
 
               {/* Lista de Platillos en el Pedido */}
               <div className="space-y-2">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-600 block">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
                   Platillos Seleccionados ({totalItemsCount})
                 </span>
 
@@ -1244,28 +1246,30 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                         <span className="font-extrabold text-slate-900 block truncate">
                           {item.product.nombre}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-mono">
+                        <span className="text-xs text-slate-400 font-mono">
                           ${item.product.precio.toFixed(2)} c/u
                         </span>
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="font-black text-slate-900 font-mono">
+                        <span className="font-bold text-slate-900 font-mono">
                           ${(item.product.precio * item.quantity).toFixed(2)}
                         </span>
-                        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1">
+                        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => decrementQuantity(item.product.id)}
-                            className="px-1.5 py-0.5 font-black text-slate-600 hover:text-slate-900 cursor-pointer"
+                            className="w-5 h-5 font-bold text-slate-700 hover:text-black flex items-center justify-center cursor-pointer text-xs active:scale-95"
                           >
                             -
                           </button>
-                          <span className="px-1 font-bold text-[11px]">{item.quantity}</span>
+                          <span style={{ color: '#0f172a' }} className="px-1.5 font-bold text-xs text-slate-900 min-w-[20px] text-center inline-block">
+                            {item.quantity}
+                          </span>
                           <button
                             type="button"
                             onClick={() => addToCart(item.product)}
-                            className="px-1.5 py-0.5 font-black text-slate-600 hover:text-slate-900 cursor-pointer"
+                            className="w-5 h-5 font-bold text-slate-700 hover:text-black flex items-center justify-center cursor-pointer text-xs active:scale-95"
                           >
                             +
                           </button>
@@ -1324,10 +1328,10 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
               {/* Resumen Total */}
               <div className="p-4 bg-slate-950 rounded-2xl text-white flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Total a Comandar</span>
-                  <span className="text-xl font-black text-amber-400 font-mono">${total.toFixed(2)}</span>
+                  <span className="text-xs text-slate-400 uppercase font-bold block">Total a Comandar</span>
+                  <span className="text-xl font-bold text-amber-400 font-mono">${total.toFixed(2)}</span>
                 </div>
-                <div className="text-right text-[10px] text-slate-400 font-medium">
+                <div className="text-right text-xs text-slate-400 font-medium">
                   <span>Pago se realiza en mesa</span>
                   <span className="block text-white font-bold">Mesa: {mesa.nombre}</span>
                 </div>
@@ -1349,7 +1353,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 disabled={requestingOrder || cart.length === 0}
                 onClick={handleSubmitTableOrder}
                 style={{ backgroundColor: cp, color: '#ffffff' }}
-                className="flex-1 py-3.5 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50 text-white"
+                className="flex-1 py-3.5 rounded-2xl font-bold text-xs uppercase flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50 text-white"
               >
                 {requestingOrder ? (
                   <>
@@ -1375,17 +1379,17 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
             <div className="size-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-3xl shadow-inner">
               <CheckCircle2 size={36} />
             </div>
-            <h2 className="text-xl font-black text-slate-900 uppercase">¡Pedido Enviado a Cocina!</h2>
+            <h2 className="text-xl font-bold text-slate-900 ">¡Pedido Enviado a Cocina!</h2>
             <p className="text-xs text-slate-600 font-medium leading-relaxed">
               Tu comanda para <strong className="text-slate-900">{mesa.nombre}</strong> fue recibida con éxito. Nuestro equipo de cocina ya está preparándola.
             </p>
-            <div className="p-3 bg-emerald-50 rounded-2xl text-[11px] text-emerald-800 font-bold flex items-center justify-center gap-2">
+            <div className="p-3 bg-emerald-50 rounded-2xl text-xs text-emerald-800 font-bold flex items-center justify-center gap-2">
               <ShieldCheck size={16} /> Ubicación validada en restaurante
             </div>
             <button
               type="button"
               onClick={() => setOrderSentSuccess(false)}
-              className="w-full py-3.5 bg-slate-900 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer"
+              className="w-full py-3.5 bg-slate-900 text-white font-bold text-xs uppercase rounded-2xl shadow-md cursor-pointer"
             >
               Seguir Viendo el Menú
             </button>

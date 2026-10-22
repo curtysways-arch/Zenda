@@ -367,7 +367,7 @@ export default function ProductVariantManager({ productId, productName, basePric
         <div className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
           <div className="bg-slate-950 border border-cyan-500/40 w-full max-w-4xl rounded-2xl p-5 text-white space-y-4 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between border-b border-cyan-800 pb-3">
-              <span className="font-black text-xs sm:text-sm uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+              <span className="font-bold text-xs sm:text-sm uppercase tracking-wider text-cyan-400 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300" /> GENERADOR MULTIDIMENSIONAL DE VARIANTES
               </span>
               <div className="flex items-center gap-2">
@@ -385,7 +385,7 @@ export default function ProductVariantManager({ productId, productName, basePric
                   <div key={dim.id} className="bg-cyan-950/60 p-4 rounded-2xl border border-cyan-800/80 space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs items-center">
                       <div className="sm:col-span-3">
-                        <label className="block text-cyan-200 font-bold mb-1 text-[11px]">Tipo de Variante</label>
+                        <label className="block text-cyan-200 font-bold mb-1 text-xs">Tipo de Variante</label>
                         <select
                           value={dim.tipo || 'PERSONALIZADO'}
                           onChange={e => {
@@ -417,7 +417,7 @@ export default function ProductVariantManager({ productId, productName, basePric
                         </select>
                       </div>
                       <div className="sm:col-span-4">
-                        <label className="block text-cyan-200 font-bold mb-1 text-[11px]">Nombre Dimensión {index + 1}</label>
+                        <label className="block text-cyan-200 font-bold mb-1 text-xs">Nombre Dimensión {index + 1}</label>
                         <input
                           type="text"
                           value={dim.name}
@@ -430,7 +430,7 @@ export default function ProductVariantManager({ productId, productName, basePric
                         />
                       </div>
                       <div className="sm:col-span-4">
-                        <label className="block text-cyan-200 font-bold mb-1 text-[11px]">Valores (separados por coma)</label>
+                        <label className="block text-cyan-200 font-bold mb-1 text-xs">Valores (separados por coma)</label>
                         <input
                           type="text"
                           value={dim.valuesStr}
@@ -459,10 +459,10 @@ export default function ProductVariantManager({ productId, productName, basePric
                     {dim.tipo === 'COLOR' && (
                       <div className="bg-slate-900/80 rounded-xl p-3 border border-cyan-800/60 space-y-2.5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-[10px] font-black uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
+                          <span className="text-xs font-bold uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
                             <Palette className="w-3.5 h-3.5 text-cyan-400" /> Selección de Colores HEX
                           </span>
-                          <span className="text-[10px] text-cyan-400/70">Haz clic en el círculo de color para elegir tono</span>
+                          <span className="text-xs text-cyan-400/70">Haz clic en el círculo de color para elegir tono</span>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                           {COLOR_PRESETS.map(cp => (
@@ -470,7 +470,7 @@ export default function ProductVariantManager({ productId, productName, basePric
                               key={cp.name}
                               type="button"
                               onClick={() => appendPresetValue(dim.id, cp.name, cp.hex)}
-                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-cyan-800/70 hover:border-cyan-400 rounded-lg text-[10px] font-bold text-cyan-200 transition-all flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-cyan-800/70 hover:border-cyan-400 rounded-lg text-xs font-bold text-cyan-200 transition-all flex items-center gap-1 cursor-pointer"
                             >
                               <span className="size-2.5 rounded-full border border-white/20" style={{ backgroundColor: cp.hex }} />
                               {cp.name}
@@ -493,8 +493,8 @@ export default function ProductVariantManager({ productId, productName, basePric
                                       />
                                     </label>
                                     <div className="overflow-hidden">
-                                      <span className="text-white font-black text-xs block truncate">{valName}</span>
-                                      <span className="text-[9px] text-cyan-400 font-mono uppercase block leading-none">{currentHex}</span>
+                                      <span className="text-white font-bold text-xs block truncate">{valName}</span>
+                                      <span className="text-xs text-cyan-400 font-mono uppercase block leading-none">{currentHex}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -507,62 +507,62 @@ export default function ProductVariantManager({ productId, productName, basePric
 
                     {dim.tipo === 'PESO' && (
                       <div className="bg-slate-900/80 rounded-xl p-3 border border-cyan-800/60 space-y-2">
-                        <span className="text-[10px] font-black uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
+                        <span className="text-xs font-bold uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
                           <Scale className="w-3.5 h-3.5 text-cyan-400" /> Presets de Peso
                         </span>
                         <div className="flex flex-wrap gap-1.5">
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['250g', '500g', '1kg'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">⚖️ 250g, 500g, 1kg</button>
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['1kg', '2kg', '5kg', '10kg'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">⚖️ 1kg, 2kg, 5kg, 10kg</button>
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['0.5 lb', '1 lb', '2 lb', '5 lb'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">⚖️ 0.5 lb, 1 lb, 2 lb, 5 lb</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['250g', '500g', '1kg'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">⚖️ 250g, 500g, 1kg</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['1kg', '2kg', '5kg', '10kg'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">⚖️ 1kg, 2kg, 5kg, 10kg</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['0.5 lb', '1 lb', '2 lb', '5 lb'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">⚖️ 0.5 lb, 1 lb, 2 lb, 5 lb</button>
                         </div>
                       </div>
                     )}
 
                     {dim.tipo === 'TALLA' && (
                       <div className="bg-slate-900/80 rounded-xl p-3 border border-cyan-800/60 space-y-2">
-                        <span className="text-[10px] font-black uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
+                        <span className="text-xs font-bold uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
                           <Ruler className="w-3.5 h-3.5 text-cyan-400" /> Presets de Talla
                         </span>
                         <div className="flex flex-wrap gap-1.5">
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['S', 'M', 'L', 'XL', 'XXL'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">👕 Ropa: S, M, L, XL, XXL</button>
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['28', '30', '32', '34', '36'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">👖 Pantalón: 28, 30, 32, 34, 36</button>
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['38', '39', '40', '41', '42', '43'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">👟 Calzado: 38, 39, 40, 41, 42, 43</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['S', 'M', 'L', 'XL', 'XXL'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">👕 Ropa: S, M, L, XL, XXL</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['28', '30', '32', '34', '36'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">👖 Pantalón: 28, 30, 32, 34, 36</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['38', '39', '40', '41', '42', '43'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">👟 Calzado: 38, 39, 40, 41, 42, 43</button>
                         </div>
                       </div>
                     )}
 
                     {dim.tipo === 'TAMANO' && (
                       <div className="bg-slate-900/80 rounded-xl p-3 border border-cyan-800/60 space-y-2">
-                        <span className="text-[10px] font-black uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
+                        <span className="text-xs font-bold uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
                           <Tag className="w-3.5 h-3.5 text-cyan-400" /> Presets de Tamaño
                         </span>
                         <div className="flex flex-wrap gap-1.5">
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['Pequeño', 'Mediano', 'Grande'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">📏 Pequeño, Mediano, Grande</button>
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['10x10 cm', '20x20 cm', '30x30 cm'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">📐 10x10 cm, 20x20 cm, 30x30 cm</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['Pequeño', 'Mediano', 'Grande'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">📏 Pequeño, Mediano, Grande</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['10x10 cm', '20x20 cm', '30x30 cm'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">📐 10x10 cm, 20x20 cm, 30x30 cm</button>
                         </div>
                       </div>
                     )}
 
                     {dim.tipo === 'SABOR' && (
                       <div className="bg-slate-900/80 rounded-xl p-3 border border-cyan-800/60 space-y-2">
-                        <span className="text-[10px] font-black uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
+                        <span className="text-xs font-bold uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
                           <Coffee className="w-3.5 h-3.5 text-cyan-400" /> Presets de Sabor
                         </span>
                         <div className="flex flex-wrap gap-1.5">
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['Vainilla', 'Chocolate', 'Fresa'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">🍦 Vainilla, Chocolate, Fresa</button>
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['Cookies & Cream', 'Dulce de Leche', 'Frutos Rojos'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">🧁 Cookies & Cream, Dulce de Leche, Frutos Rojos</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['Vainilla', 'Chocolate', 'Fresa'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">🍦 Vainilla, Chocolate, Fresa</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['Cookies & Cream', 'Dulce de Leche', 'Frutos Rojos'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">🧁 Cookies & Cream, Dulce de Leche, Frutos Rojos</button>
                         </div>
                       </div>
                     )}
 
                     {dim.tipo === 'MATERIAL' && (
                       <div className="bg-slate-900/80 rounded-xl p-3 border border-cyan-800/60 space-y-2">
-                        <span className="text-[10px] font-black uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
+                        <span className="text-xs font-bold uppercase text-cyan-300 tracking-wider flex items-center gap-1.5">
                           <Scissors className="w-3.5 h-3.5 text-cyan-400" /> Presets de Material
                         </span>
                         <div className="flex flex-wrap gap-1.5">
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['Algodón', 'Poliéster', 'Lino'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">🧵 Algodón, Poliéster, Lino</button>
-                          <button type="button" onClick={() => setPresetValues(dim.id, ['Acero Inoxidable', 'Plata 925', 'Oro 18K', 'Cuero'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-[10px] font-bold text-cyan-200 transition-all cursor-pointer">💍 Acero, Plata 925, Oro 18K, Cuero</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['Algodón', 'Poliéster', 'Lino'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">🧵 Algodón, Poliéster, Lino</button>
+                          <button type="button" onClick={() => setPresetValues(dim.id, ['Acero Inoxidable', 'Plata 925', 'Oro 18K', 'Cuero'])} className="px-2.5 py-1 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-700 rounded-lg text-xs font-bold text-cyan-200 transition-all cursor-pointer">💍 Acero, Plata 925, Oro 18K, Cuero</button>
                         </div>
                       </div>
                     )}
@@ -587,7 +587,7 @@ export default function ProductVariantManager({ productId, productName, basePric
                 type="button"
                 disabled={saving}
                 onClick={handleGenerateMatrix}
-                className="px-6 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="px-6 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 Generar Variantes ({totalCombinations})
@@ -683,7 +683,7 @@ export default function ProductVariantManager({ productId, productName, basePric
         <div className="text-center py-8 bg-white rounded-xl border border-dashed border-slate-300 text-slate-400">
           <AlertCircle className="w-8 h-8 mx-auto mb-2 text-slate-300" />
           <p className="text-xs font-semibold text-slate-600">Este producto aún no tiene variantes registradas.</p>
-          <p className="text-[11px] text-slate-400">Agrega variantes manualmente o usa el Generador Automático arriba.</p>
+          <p className="text-xs text-slate-400">Agrega variantes manualmente o usa el Generador Automático arriba.</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -704,13 +704,13 @@ export default function ProductVariantManager({ productId, productName, basePric
                   <td className="p-3 font-bold text-slate-900">
                     {v.nombre}
                     {v.atributos && (
-                      <div className="text-[10px] text-slate-400 font-normal">
+                      <div className="text-xs text-slate-400 font-normal">
                         {Object.entries(v.atributos).map(([k, val]) => `${k}: ${val}`).join(' | ')}
                       </div>
                     )}
                   </td>
                   <td className="p-3 font-mono font-medium text-slate-600">{v.sku || 'Sin SKU'}</td>
-                  <td className="p-3 text-right font-black text-slate-900">${v.precio.toFixed(2)}</td>
+                  <td className="p-3 text-right font-bold text-slate-900">${v.precio.toFixed(2)}</td>
                   <td className="p-3 text-center font-bold">
                     <span className={`px-2 py-0.5 rounded-full ${v.stock === 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-800'}`}>
                       {v.stock}
@@ -718,11 +718,11 @@ export default function ProductVariantManager({ productId, productName, basePric
                   </td>
                   <td className="p-3 text-center">
                     {v.stock === 0 ? (
-                      <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full text-[10px] uppercase border border-rose-200">
+                      <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full text-xs uppercase border border-rose-200">
                         AGOTADO
                       </span>
                     ) : (
-                      <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] uppercase border border-emerald-200">
+                      <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full text-xs uppercase border border-emerald-200">
                         ACTIVO
                       </span>
                     )}

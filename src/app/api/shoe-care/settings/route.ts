@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireBusinessAccess } from '@/lib/auth/requireBusinessAccess';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,10 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { negocioId = 'demo-canchas', ...settings } = body;
+    const { negocioId, ...settings } = body || {};
+    if (!negocioId) return NextResponse.json({ error: 'Falta el negocio.' }, { status: 400 });
+    const access = await requireBusinessAccess(negocioId);
+    if (!access.ok) return access.response;
 
     await prisma.configuracion.upsert({
       where: {

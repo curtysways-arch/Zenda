@@ -115,8 +115,8 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
 
     return (
         <>
-            <div className="sticky top-0 left-0 right-0 z-[90] h-20 bg-white/95 backdrop-blur-2xl border-b border-slate-100/50 flex items-center justify-between px-4">
-                <div className="flex items-center gap-2.5 min-w-0">
+            <div className="sticky top-0 left-0 right-0 z-[90] h-16 bg-white/95 backdrop-blur-2xl border-b border-slate-100 flex items-center justify-between gap-2 px-4">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <button 
                         onClick={() => {
                             if (typeof window !== 'undefined') {
@@ -130,10 +130,8 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
                         <Menu size={20} strokeWidth={2.5} />
                     </button>
                     <div className="min-w-0">
-                        <h2 className="font-bold text-slate-800 text-xs tracking-widest leading-none uppercase truncate max-w-[110px]">{title}</h2>
-                        <span className="text-[9px] font-black uppercase tracking-wider leading-none text-slate-400 mt-1 block truncate max-w-[110px]">
-                            {negocioNombre || "CITIOX"}
-                        </span>
+                        <p className="text-sm font-semibold text-slate-900 leading-tight truncate">{negocioNombre || 'Citiox'}</p>
+                        <p className="text-xs text-slate-500 leading-tight truncate">Panel</p>
                     </div>
                 </div>
  
@@ -144,12 +142,11 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
                             href={shareUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="h-8.5 px-2.5 flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 rounded-full text-emerald-800 transition-all active:scale-95 shadow-2xs group"
-                            title="Ver mi Landing en una nueva pestaña"
+                            className="size-9 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full transition-all active:scale-90"
+                            title="Ver mi página"
+                            aria-label="Ver mi página"
                         >
-                            <Globe size={13} className="text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform" />
-                            <span className="text-[10px] font-black uppercase tracking-wider">Ver Web</span>
-                            <ExternalLink size={10} className="text-emerald-600/70 shrink-0" />
+                            <Globe size={16} style={{ color: primaryColor }} />
                         </a>
                     )}
 
@@ -158,17 +155,10 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
                         onClick={() => setShowShare(true)}
                         className="size-9 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative"
                         title="QR y Compartir"
+                        aria-label="Compartir mi página"
                     >
                         <QrCode size={16} />
                     </button>
- 
-                    <Link 
-                        href="/admin/comunicacion"
-                        className="size-9 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative"
-                        title="Comunicación"
-                    >
-                        <MessageSquare size={16} style={{ color: primaryColor }} />
-                    </Link>
  
                     <Link 
                         href="/admin/notificaciones"
@@ -177,7 +167,7 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
                     >
                         <Bell size={16} />
                         {unreadNotifications > 0 && (
-                            <span className="absolute -top-1 -right-1 size-4 bg-pink-500 rounded-full border border-white text-[7px] font-black text-white flex items-center justify-center animate-pulse">
+                            <span className="absolute -top-1 -right-1 size-4 bg-pink-500 rounded-full border border-white text-xs font-bold text-white flex items-center justify-center animate-pulse">
                                 {unreadNotifications}
                             </span>
                         )}
@@ -201,14 +191,14 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
                         <div className="fixed inset-0 z-[-1]" onClick={() => setShowMenu(false)} />
                         <div className="absolute top-[4.5rem] right-4 w-56 bg-white rounded-3xl shadow-2xl border border-slate-100 p-3 animate-in fade-in zoom-in-95 duration-200">
                             <div className="px-4 py-3 mb-2 border-b border-slate-50">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Conectado como</p>
-                                <p className="text-xs font-black text-slate-900 truncate">{session?.user?.name || 'Administrador'}</p>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Conectado como</p>
+                                <p className="text-xs font-bold text-slate-900 truncate">{session?.user?.name || 'Administrador'}</p>
                             </div>
                             
                             <Link 
                                 href="/admin/perfil"
                                 onClick={() => setShowMenu(false)}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest mb-1"
+                                className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-50 rounded-2xl transition-all font-bold text-xs uppercase tracking-wide mb-1"
                             >
                                 <User size={16} />
                                 Mi Perfil
@@ -216,7 +206,7 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
 
                             <button 
                                 onClick={handleLogout}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-50 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest"
+                                className="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-50 rounded-2xl transition-all font-bold text-xs uppercase tracking-wide"
                             >
                                 <LogOut size={16} />
                                 Cerrar Sesión
@@ -233,11 +223,11 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowShare(false)} />
                     
                     {/* Drawer */}
-                    <div className="relative bg-white rounded-t-[2rem] p-6 space-y-5 animate-in slide-in-from-bottom-4 duration-300 z-10">
+                    <div className="relative bg-white rounded-t-2xl p-6 space-y-5 animate-in slide-in-from-bottom-4 duration-300 z-10">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-sm">Comparte tu Spa</h3>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Código QR y enlace de reservas</p>
+                                <h3 className="font-bold text-slate-900 uppercase tracking-wide text-sm">Comparte tu Spa</h3>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wide mt-0.5">Código QR y enlace de reservas</p>
                             </div>
                             <button onClick={() => setShowShare(false)} className="size-10 flex items-center justify-center bg-slate-100 rounded-2xl text-slate-500">
                                 <X size={18} />
@@ -282,7 +272,7 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
                         <Link
                             href={waUrl}
                             target="_blank"
-                            className="w-full flex items-center justify-center gap-2 py-4 bg-[#25D366] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-green-500/20 active:scale-95 transition-all"
+                            className="w-full flex items-center justify-center gap-2 py-4 bg-[#25D366] text-white rounded-2xl font-bold text-xs uppercase tracking-wide shadow-lg shadow-green-500/20 active:scale-95 transition-all"
                         >
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
                             Compartir por WhatsApp

@@ -51,8 +51,8 @@ export default function MobilePromotions({
             <div className="sticky top-0 z-30 bg-white border-b border-slate-100 p-6 space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">Promociones</h2>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Impulsa tus ventas</p>
+                        <h2 className="text-2xl font-bold text-slate-900 tracking-tight ">Promociones</h2>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide ">Impulsa tus ventas</p>
                     </div>
                     <button 
                         onClick={onNew}
@@ -70,7 +70,7 @@ export default function MobilePromotions({
                         placeholder="BUSCAR PROMOCIÓN..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 transition-all shadow-inner"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-xs font-bold uppercase tracking-wide focus:outline-none focus:ring-2 transition-all shadow-inner"
                         style={{ '--tw-ring-color': primaryColor } as any}
                     />
                 </div>
@@ -81,7 +81,7 @@ export default function MobilePromotions({
                 {filteredPromotions.length > 0 ? filteredPromotions.map((promo) => (
                     <div 
                         key={promo.id}
-                        className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm active:scale-[0.99] transition-all group relative flex flex-col"
+                        className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm active:scale-[0.99] transition-all group relative flex flex-col"
                     >
                         {/* Image Header */}
                         <div className="h-44 bg-slate-50 relative overflow-hidden">
@@ -97,7 +97,7 @@ export default function MobilePromotions({
                                 <button 
                                     onClick={() => onToggleStatus(promo)}
                                     className={cn(
-                                        "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-xl backdrop-blur-md transition-all",
+                                        "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-xl backdrop-blur-md transition-all",
                                         (promo.estado === 'activa' || promo.isActive) ? "bg-white text-emerald-600" : "bg-slate-900/40 text-white"
                                     )}
                                     style={(promo.estado === 'activa' || promo.isActive) ? { color: primaryColor } : {}}
@@ -108,7 +108,7 @@ export default function MobilePromotions({
 
                             <div className="absolute bottom-4 left-4 bg-slate-900/60 backdrop-blur-md px-3 py-1.5 rounded-xl flex items-center gap-2">
                                 <Share2 size={12} className="text-emerald-400" />
-                                <span className="text-[9px] font-black text-white uppercase tracking-widest">{promo.shareCount || promo.usageCount || 0} compartidos</span>
+                                <span className="text-xs font-bold text-white uppercase tracking-wide">{promo.shareCount || promo.usageCount || 0} compartidos</span>
                             </div>
                         </div>
 
@@ -116,10 +116,10 @@ export default function MobilePromotions({
                         <div className="p-6 space-y-4">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h3 className="text-lg font-black text-slate-900 uppercase italic leading-tight">
+                                    <h3 className="text-lg font-bold text-slate-900 leading-tight">
                                         {promo.titulo || promo.title || 'Promoción'}
                                     </h3>
-                                    <p className="text-[10px] font-bold text-slate-400 mt-1 line-clamp-1">{promo.descripcion || promo.description || ''}</p>
+                                    <p className="text-xs font-bold text-slate-400 mt-1 line-clamp-1">{promo.descripcion || promo.description || ''}</p>
                                 </div>
                                 <button onClick={() => onEdit(promo)} className="size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
                                     <Edit size={16} />
@@ -128,9 +128,9 @@ export default function MobilePromotions({
 
                             <div className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                 <div className="flex flex-col">
-                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1 italic">Precio Oferta</span>
+                                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wide mb-1 ">Precio Oferta</span>
                                     <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-black italic tracking-tighter" style={{ color: primaryColor }}>
+                                        <span className="text-2xl font-bold tracking-tight" style={{ color: primaryColor }}>
                                             ${promo.precioPromo || promo.promoPrice || promo.discountValue || '0'}
                                         </span>
                                         {(promo.precioAnterior || promo.previousPrice) && (
@@ -142,7 +142,7 @@ export default function MobilePromotions({
                                 </div>
                                 <button 
                                     onClick={() => onShare(promo)}
-                                    className="px-6 py-3 bg-[#25D366] text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-100 active:scale-95 transition-all"
+                                    className="px-6 py-3 bg-[#25D366] text-white rounded-xl text-xs font-bold uppercase tracking-wide flex items-center gap-2 shadow-lg shadow-emerald-100 active:scale-95 transition-all"
                                 >
                                     <Share2 size={14} />
                                     WhatsApp
@@ -154,7 +154,7 @@ export default function MobilePromotions({
                                     <div className="size-6 rounded-lg bg-slate-100 flex items-center justify-center">
                                         <Calendar size={12} className="text-slate-400" />
                                     </div>
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">
                                         {promo.fechaFin ? (
                                             (() => {
                                                 const diff = Math.ceil((new Date(promo.fechaFin).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
@@ -165,7 +165,7 @@ export default function MobilePromotions({
                                 </div>
                                 <button 
                                     onClick={() => onDelete(promo.id)}
-                                    className="text-[9px] font-black text-rose-400 uppercase tracking-widest italic"
+                                    className="text-xs font-bold text-rose-400 uppercase tracking-wide "
                                 >
                                     Eliminar Promo
                                 </button>
@@ -177,7 +177,7 @@ export default function MobilePromotions({
                         <div className="size-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
                             <Tags size={32} />
                         </div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">No hay promociones activas</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide ">No hay promociones activas</p>
                     </div>
                 )}
             </div>

@@ -18,7 +18,7 @@ export default function ReferralCampaignForm() {
     const [referidosRequeridos, setReferidosRequeridos] = useState(5);
     const [limitePremios, setLimitePremios] = useState<string>('');
     const [isIlimitado, setIsIlimitado] = useState(true);
-    const [fechaInicio, setFechaInicio] = useState(new Date().toISOString().split('T')[0]);
+    const [fechaInicio, setFechaInicio] = useState(new Date().toLocaleDateString('en-CA'));
     const [fechaFin, setFechaFin] = useState('');
     const [rankingActivo, setRankingActivo] = useState(false);
     
@@ -62,7 +62,7 @@ export default function ReferralCampaignForm() {
                 setTipoRecompensa(data.tipoRecompensa || 'SERVICIO_GRATIS');
                 setValorRecompensa(data.valorRecompensa || '');
                 setReferidosRequeridos(data.referidosRequeridos || 5);
-                setFechaInicio(data.fechaInicio ? new Date(data.fechaInicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+                setFechaInicio(data.fechaInicio ? new Date(data.fechaInicio).toISOString().split('T')[0] : new Date().toLocaleDateString('en-CA'));
                 setFechaFin(data.fechaFin ? new Date(data.fechaFin).toISOString().split('T')[0] : '');
                 setRankingActivo(data.rankingActivo || false);
 
@@ -157,7 +157,7 @@ export default function ReferralCampaignForm() {
         return (
             <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh] text-slate-400">
                 <Loader2 className="animate-spin mb-4" size={32} style={{ color: primaryColor }} />
-                <span className="text-[10px] font-black uppercase tracking-widest">Cargando detalles...</span>
+                <span className="text-xs font-bold uppercase tracking-wide">Cargando detalles...</span>
             </div>
         );
     }
@@ -173,7 +173,7 @@ export default function ReferralCampaignForm() {
                     <ArrowLeft size={16} />
                 </Link>
                 <div>
-                    <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
+                    <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                         <Gift style={{ color: primaryColor }} size={22} />
                         {editId ? 'Editar Campaña de Referidos' : 'Nueva Campaña de Referidos'}
                     </h1>
@@ -184,15 +184,15 @@ export default function ReferralCampaignForm() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="max-w-3xl bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight pb-3 border-b border-slate-100 flex items-center gap-2">
+            <form onSubmit={handleSubmit} className="max-w-3xl bg-white border border-slate-100 rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight pb-3 border-b border-slate-100 flex items-center gap-2">
                     <Sparkles size={16} style={{ color: primaryColor }} />
                     Datos generales y Meta
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Campaña *</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Tipo de Campaña *</label>
                         <select
                             value={tipoCampana}
                             onChange={(e) => setTipoCampana(e.target.value)}
@@ -213,7 +213,7 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Estado de la Campaña *</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Estado de la Campaña *</label>
                         <select
                             value={estado}
                             onChange={(e) => setEstado(e.target.value)}
@@ -228,7 +228,7 @@ export default function ReferralCampaignForm() {
 
                     {tipoCampana === 'CLIENTES_INACTIVOS' && (
                         <div className="md:col-span-2 animate-in slide-in-from-top-2 duration-300">
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Días de inactividad requeridos *</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Días de inactividad requeridos *</label>
                             <input
                                 type="number"
                                 required
@@ -243,7 +243,7 @@ export default function ReferralCampaignForm() {
                     )}
 
                     <div className="md:col-span-2">
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre de la campaña *</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Nombre de la campaña *</label>
                         <input
                             type="text"
                             required
@@ -256,7 +256,7 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div className="md:col-span-2">
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Descripción (opcional)</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Descripción (opcional)</label>
                         <textarea
                             value={descripcion}
                             onChange={(e) => setDescripcion(e.target.value)}
@@ -267,18 +267,18 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div className="md:col-span-2">
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Imagen de la Campaña (Opcional)</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Imagen de la Campaña (Opcional)</label>
                         <ImageUploader 
                             category="promotion"
                             currentUrl={imagenUrl}
                             onUploadSuccess={(media) => setImagenUrl(media.url)}
                             onRemove={() => setImagenUrl('')}
                         />
-                        <span className="text-[9px] text-slate-400 font-medium pl-1 mt-1 block">Esta imagen se mostrará en la tarjeta de la campaña y en su página de detalles de lujo.</span>
+                        <span className="text-xs text-slate-400 font-medium pl-1 mt-1 block">Esta imagen se mostrará en la tarjeta de la campaña y en su página de detalles de lujo.</span>
                     </div>
 
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
                             {tipoCampana === 'COMPLETAR_RESERVAS' ? 'Reservas requeridas *' :
                              tipoCampana === 'GASTAR_DOLARES' ? 'Monto de gasto requerido ($) *' :
                              tipoCampana === 'CLIENTES_NUEVOS' || tipoCampana === 'CLIENTES_EXISTENTES' || tipoCampana === 'CLIENTES_INACTIVOS' ? 'Referidos requeridos *' :
@@ -301,7 +301,7 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Recompensa (Referidor) *</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Tipo de Recompensa (Referidor) *</label>
                         <select
                             value={tipoRecompensa}
                             onChange={(e) => setTipoRecompensa(e.target.value)}
@@ -319,7 +319,7 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div className="md:col-span-2">
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor de la Recompensa (Referidor) *</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Valor de la Recompensa (Referidor) *</label>
                         <input
                             type="text"
                             required
@@ -336,10 +336,10 @@ export default function ReferralCampaignForm() {
                 <div className="pt-4 space-y-4 border-t border-slate-100">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight flex items-center gap-2">
                                 Incentive de bienvenida (Doble Nivel)
                             </h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">
                                 Otorga un beneficio al amigo invitado para incentivar su primera reserva
                             </p>
                         </div>
@@ -356,7 +356,7 @@ export default function ReferralCampaignForm() {
                     {hasIncentivo && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-slate-50 rounded-3xl border border-slate-150 animate-in slide-in-from-top-4 duration-300">
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Incentivo (Invitado)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Tipo de Incentivo (Invitado)</label>
                                 <select
                                     value={tipoIncentivo}
                                     onChange={(e) => setTipoIncentivo(e.target.value)}
@@ -372,7 +372,7 @@ export default function ReferralCampaignForm() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor del Incentivo (Invitado)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Valor del Incentivo (Invitado)</label>
                                 <input
                                     type="text"
                                     required={hasIncentivo}
@@ -395,13 +395,13 @@ export default function ReferralCampaignForm() {
                 </div>
 
                 {/* LIMITACIONES Y VIGENCIA */}
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight pt-4 pb-3 border-b border-slate-100">
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight pt-4 pb-3 border-b border-slate-100">
                     Vigencia y Límites
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Fecha Inicio</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Fecha Inicio</label>
                         <input
                             type="date"
                             value={fechaInicio}
@@ -412,7 +412,7 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Fecha Fin (opcional)</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Fecha Fin (opcional)</label>
                         <input
                             type="date"
                             value={fechaFin}
@@ -423,7 +423,7 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Límite Total de Premios (Todos los clientes)</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Límite Total de Premios (Todos los clientes)</label>
                         <div className="flex items-center gap-4">
                             <input
                                 type="number"
@@ -452,7 +452,7 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Máximo Premios por Cliente</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Máximo Premios por Cliente</label>
                         <input
                             type="number"
                             value={maxPremiosPorCliente}
@@ -464,7 +464,7 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Prioridad de Ejecución</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Prioridad de Ejecución</label>
                         <input
                             type="number"
                             value={prioridad}
@@ -486,7 +486,7 @@ export default function ReferralCampaignForm() {
                         />
                         <div>
                             <label htmlFor="permitirRepetir" className="text-xs font-bold text-slate-800 cursor-pointer select-none">Permitir repetir campaña</label>
-                            <span className="text-[10px] text-slate-400 block font-semibold leading-none mt-1">El cliente puede completar la meta más de una vez</span>
+                            <span className="text-xs text-slate-400 block font-semibold leading-none mt-1">El cliente puede completar la meta más de una vez</span>
                         </div>
                     </div>
 
@@ -501,7 +501,7 @@ export default function ReferralCampaignForm() {
                         />
                         <div>
                             <label htmlFor="combinable" className="text-xs font-bold text-slate-800 cursor-pointer select-none">Campaña Combinable</label>
-                            <span className="text-[10px] text-slate-400 block font-semibold leading-none mt-1">Se puede ganar junto con otras campañas activas</span>
+                            <span className="text-xs text-slate-400 block font-semibold leading-none mt-1">Se puede ganar junto con otras campañas activas</span>
                         </div>
                     </div>
 
@@ -516,7 +516,7 @@ export default function ReferralCampaignForm() {
                         />
                         <div>
                             <label htmlFor="rankingActivo" className="text-xs font-bold text-slate-800 cursor-pointer select-none">Mostrar Ranking (Top Embajadores)</label>
-                            <span className="text-[10px] text-slate-400 block font-semibold leading-none mt-1">Permite a los clientes ver el top del negocio</span>
+                            <span className="text-xs text-slate-400 block font-semibold leading-none mt-1">Permite a los clientes ver el top del negocio</span>
                         </div>
                     </div>
                 </div>
@@ -525,14 +525,14 @@ export default function ReferralCampaignForm() {
                 <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
                     <Link
                         href="/admin/referidos"
-                        className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-transform active:scale-95"
+                        className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wide rounded-2xl transition-transform active:scale-95"
                     >
                         Cancelar
                     </Link>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="flex items-center gap-2 px-6 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                        className="flex items-center gap-2 px-6 py-4 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
                         style={{
                             backgroundColor: primaryColor,
                             boxShadow: `0 10px 15px -3px ${primaryColor}33`

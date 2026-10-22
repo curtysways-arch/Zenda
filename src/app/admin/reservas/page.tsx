@@ -81,7 +81,7 @@ export default function ReservasAdminPage() {
     });
 
     const StatCard = ({ label, value, icon: Icon, color, trend }: any) => (
-        <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 group relative overflow-hidden transition-all hover:border-emerald-500/20 shadow-sm hover:shadow-xl">
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 group relative overflow-hidden transition-all hover:border-emerald-500/20 shadow-sm hover:shadow-xl">
             <div className="relative z-10 flex items-center justify-between">
                 <div className="space-y-4">
                     <div className={clsx(
@@ -94,12 +94,12 @@ export default function ReservasAdminPage() {
                         <Icon size={24} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">{label}</p>
-                        <h4 className="text-3xl font-black text-slate-900 italic tracking-tighter uppercase">{value}</h4>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+                        <h4 className="text-3xl font-bold text-slate-900 tracking-tight ">{value}</h4>
                     </div>
                     {trend && (
                         <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 rounded-full w-fit border border-slate-100">
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{trend}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">{trend}</span>
                         </div>
                     )}
                 </div>
@@ -110,7 +110,7 @@ export default function ReservasAdminPage() {
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-40">
             <Loader2 className="w-16 h-16 text-emerald-500 animate-spin" />
-            <p className="mt-8 text-slate-400 font-black uppercase tracking-[0.5em] text-[10px] italic">Accediendo a la base...</p>
+            <p className="mt-8 text-slate-400 font-bold uppercase tracking-wide text-xs ">Accediendo a la base...</p>
         </div>
     );
 
@@ -121,9 +121,9 @@ export default function ReservasAdminPage() {
                     <div className="space-y-4">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-full">
                             <Zap size={12} className="text-emerald-600 animate-pulse" />
-                            <span className="text-[9px] font-black text-emerald-700 uppercase tracking-[0.2em]">Caja Operativa</span>
+                            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide">Caja Operativa</span>
                         </div>
-                        <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter uppercase italic leading-[0.9]">
+                        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-[0.9]">
                             Central <br /> <span className="text-emerald-600">Reservas</span>
                         </h1>
                     </div>
@@ -135,13 +135,13 @@ export default function ReservasAdminPage() {
                                 placeholder="CLIENTE O TELÉFONO..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="bg-white border border-slate-200 text-slate-900 text-base py-4 pl-14 pr-8 w-full sm:w-80 rounded-3xl focus:outline-none focus:border-emerald-500 transition-all shadow-sm placeholder:text-slate-300 italic font-black uppercase"
+                                className="bg-white border border-slate-200 text-slate-900 text-base py-4 pl-14 pr-8 w-full sm:w-80 rounded-3xl focus:outline-none focus:border-emerald-500 transition-all shadow-sm placeholder:text-slate-300 font-bold uppercase"
                             />
                         </div>
                         <div className="flex bg-white p-2 rounded-3xl border border-slate-200 shadow-sm gap-1">
                             {['all', 'pending', 'confirmed'].map((id) => (
                                 <button key={id} onClick={() => setFilterStatus(id)}
-                                    className={clsx("px-5 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all",
+                                    className={clsx("px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wide transition-all",
                                         filterStatus === id ? "bg-slate-900 text-white shadow-md" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50")}>
                                     {id === 'all' ? 'Ver Todo' : id === 'pending' ? 'Pendientes' : 'Aprobadas'}
                                 </button>
@@ -161,7 +161,7 @@ export default function ReservasAdminPage() {
             <div className="flex items-center justify-between mx-2">
                 <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 italic">{filteredReservas.length} Reservas listadas</span>
+                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400 ">{filteredReservas.length} Reservas listadas</span>
                 </div>
                 <div className="flex bg-white p-1.5 rounded-2xl border border-slate-200 gap-1 shadow-sm">
                     <button onClick={() => setViewMode('table')} className={clsx("p-2.5 rounded-xl transition-all", viewMode === 'table' ? "bg-emerald-600 text-white shadow-sm" : "text-slate-300 hover:text-slate-600 hover:bg-slate-50")}>
@@ -174,33 +174,33 @@ export default function ReservasAdminPage() {
             </div>
 
             {filteredReservas.length > 0 ? (
-                <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden p-6">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse min-w-[700px]">
                             <thead>
                                 <tr className="border-b border-slate-100 pb-4">
-                                    <th className="pb-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 italic">Identidad</th>
-                                    <th className="pb-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 italic">Cancha & Horario</th>
-                                    <th className="pb-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 italic">Monto</th>
-                                    <th className="pb-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 italic">Estado</th>
+                                    <th className="pb-4 text-xs font-bold uppercase tracking-wide text-slate-400 ">Identidad</th>
+                                    <th className="pb-4 text-xs font-bold uppercase tracking-wide text-slate-400 ">Cancha & Horario</th>
+                                    <th className="pb-4 text-xs font-bold uppercase tracking-wide text-slate-400 ">Monto</th>
+                                    <th className="pb-4 text-xs font-bold uppercase tracking-wide text-slate-400 ">Estado</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {filteredReservas.map((reserva) => (
                                     <tr key={reserva.id} className="hover:bg-slate-50 transition-all">
-                                        <td className="py-5 font-black text-slate-900 uppercase italic">
+                                        <td className="py-5 font-bold text-slate-900 uppercase ">
                                             {reserva.cliente.nombre}
-                                            <span className="block text-[10px] font-bold text-slate-400">{reserva.cliente.telefono}</span>
+                                            <span className="block text-xs font-bold text-slate-400">{reserva.cliente.telefono}</span>
                                         </td>
                                         <td className="py-5">
                                             <div className="font-bold text-xs text-slate-800 uppercase">{reserva.cancha.nombre}</div>
-                                            <div className="text-[10px] font-black text-emerald-600">{reserva.horaInicio} - {reserva.horaFin}</div>
+                                            <div className="text-xs font-bold text-emerald-600">{reserva.horaInicio} - {reserva.horaFin}</div>
                                         </td>
-                                        <td className="py-5 font-black text-slate-900 text-lg">
+                                        <td className="py-5 font-bold text-slate-900 text-lg">
                                             ${reserva.total.toLocaleString()}
                                         </td>
                                         <td className="py-5">
-                                            <span className="px-3.5 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-[10px] font-black uppercase tracking-wider">
+                                            <span className="px-3.5 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-xs font-bold uppercase tracking-wider">
                                                 Confirmada
                                             </span>
                                         </td>
@@ -211,9 +211,9 @@ export default function ReservasAdminPage() {
                     </div>
                 </div>
             ) : (
-                <div className="py-35 bg-white border border-slate-200 border-dashed rounded-[3rem] flex flex-col items-center justify-center text-center p-8">
+                <div className="py-35 bg-white border border-slate-200 border-dashed rounded-2xl flex flex-col items-center justify-center text-center p-8">
                     <SearchX size={44} className="text-slate-300 mb-4" />
-                    <h3 className="text-xl font-black text-slate-400 uppercase italic">Sin reservas registradas</h3>
+                    <h3 className="text-xl font-bold text-slate-400 ">Sin reservas registradas</h3>
                 </div>
             )}
         </div>

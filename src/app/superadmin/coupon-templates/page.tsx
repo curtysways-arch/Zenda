@@ -128,7 +128,7 @@ export default function SuperAdminCouponTemplatesPage() {
         </div>
         <button 
           onClick={openCreateModal}
-          className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] transition-all text-slate-950 font-black rounded-2xl shadow-lg shadow-emerald-500/20 border-none relative z-10 cursor-pointer"
+          className="flex items-center gap-2 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] transition-all text-slate-950 font-bold rounded-2xl shadow-lg shadow-emerald-500/20 border-none relative z-10 cursor-pointer"
         >
           <Plus size={20} />
           Crear Plantilla
@@ -168,12 +168,12 @@ export default function SuperAdminCouponTemplatesPage() {
               >
                 <div>
                   <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100">
+                    <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100">
                       {config.tipo === 'PORCENTAJE' ? `${config.valor}% DTO` : `$${config.valor} DTO`}
                     </span>
-                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
-                      template.activo ? 'bg-emerald-50 text-emerald-600 border border-emerald-150' : 'bg-slate-100 text-slate-400 border border-slate-200'
-                    }`}>
+                    <span className={`text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full ${
+ template.activo ? 'bg-emerald-50 text-emerald-600 border border-emerald-150' : 'bg-slate-100 text-slate-400 border border-slate-200'
+ }`}>
                       {template.activo ? 'ACTIVO' : 'INACTIVO'}
                     </span>
                   </div>
@@ -205,7 +205,7 @@ export default function SuperAdminCouponTemplatesPage() {
                       </button>
                     )}
                   </div>
-                  <span className="text-[10px] text-slate-400 font-bold">
+                  <span className="text-xs text-slate-400 font-bold">
                     Creado {new Date(template.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -233,7 +233,7 @@ export default function SuperAdminCouponTemplatesPage() {
 
             <form onSubmit={handleSave} className="p-6 space-y-6">
               <div className="space-y-2">
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700">Nombre de la Plantilla</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">Nombre de la Plantilla</label>
                 <input 
                   type="text" 
                   value={nombre} 
@@ -245,7 +245,7 @@ export default function SuperAdminCouponTemplatesPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700">Código de Cupón (para el cliente)</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">Código de Cupón (para el cliente)</label>
                 <input 
                   type="text" 
                   value={codigo} 
@@ -257,7 +257,7 @@ export default function SuperAdminCouponTemplatesPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700">Descripción del Beneficio</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">Descripción del Beneficio</label>
                 <textarea 
                   value={descripcion} 
                   onChange={e => setDescripcion(e.target.value)}
@@ -269,7 +269,7 @@ export default function SuperAdminCouponTemplatesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700">Tipo de Descuento</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">Tipo de Descuento</label>
                   <select 
                     value={tipo} 
                     onChange={e => setTipo(e.target.value as any)}
@@ -281,7 +281,7 @@ export default function SuperAdminCouponTemplatesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-black uppercase tracking-wider text-slate-700">Valor de Descuento</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">Valor de Descuento</label>
                   <input 
                     type="number" 
                     value={valor} 
@@ -317,7 +317,7 @@ export default function SuperAdminCouponTemplatesPage() {
                 <button 
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-sm border-none shadow-lg shadow-emerald-500/10 cursor-pointer disabled:opacity-50"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm border-none shadow-lg shadow-emerald-500/10 cursor-pointer disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                   Guardar Plantilla

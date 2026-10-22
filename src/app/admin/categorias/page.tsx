@@ -127,7 +127,7 @@ export default function AdminCategorias() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none italic uppercase">
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none ">
                         Categorías
                     </h1>
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">
@@ -136,7 +136,7 @@ export default function AdminCategorias() {
                 </div>
                 <button
                     onClick={handleOpenCreate}
-                    className="flex items-center justify-center gap-2 bg-slate-900 text-white px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md w-full sm:w-auto shrink-0"
+                    className="flex items-center justify-center gap-2 bg-slate-900 text-white px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-md w-full sm:w-auto shrink-0"
                 >
                     <FolderPlus className="size-4" />
                     Nueva Categoría
@@ -144,11 +144,11 @@ export default function AdminCategorias() {
             </div>
 
             {/* Listado */}
-            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <Loader2 className="size-8 text-slate-300 animate-spin mb-3" />
-                        <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Cargando categorías...</span>
+                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wide">Cargando categorías...</span>
                     </div>
                 ) : categories.length > 0 ? (
                     <div>
@@ -157,20 +157,20 @@ export default function AdminCategorias() {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="border-b border-slate-100 bg-slate-50/50">
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Orden</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wide">Orden</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wide">Nombre</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wide text-center">Estado</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wide text-right">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {categories.map((cat) => (
                                         <tr key={cat.id} className="hover:bg-slate-50/30 transition-colors">
                                             <td className="px-6 py-4">
-                                                <span className="text-xs font-black text-slate-500">#{cat.orden}</span>
+                                                <span className="text-xs font-bold text-slate-500">#{cat.orden}</span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="text-xs font-black text-slate-800 uppercase italic">{cat.nombre}</span>
+                                                <span className="text-xs font-bold text-slate-800 uppercase ">{cat.nombre}</span>
                                             </td>
                                             <td className="px-6 py-4 flex justify-center">
                                                 <button 
@@ -178,9 +178,9 @@ export default function AdminCategorias() {
                                                     className="focus:outline-none"
                                                 >
                                                     {cat.activo ? (
-                                                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-wider">Activo</span>
+                                                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-xs font-bold uppercase tracking-wider">Activo</span>
                                                     ) : (
-                                                        <span className="px-3 py-1 bg-slate-200 text-slate-500 rounded-full text-[9px] font-black uppercase tracking-wider">Inactivo</span>
+                                                        <span className="px-3 py-1 bg-slate-200 text-slate-500 rounded-full text-xs font-bold uppercase tracking-wider">Inactivo</span>
                                                     )}
                                                 </button>
                                             </td>
@@ -213,17 +213,17 @@ export default function AdminCategorias() {
                             {categories.map((cat) => (
                                 <div key={cat.id} className="p-4 flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3">
-                                        <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">#{cat.orden}</span>
+                                        <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">#{cat.orden}</span>
                                         <div>
-                                            <h4 className="text-xs font-black text-slate-900 uppercase italic">{cat.nombre}</h4>
+                                            <h4 className="text-xs font-bold text-slate-900 uppercase ">{cat.nombre}</h4>
                                             <button 
                                                 onClick={() => handleToggleActive(cat)}
                                                 className="mt-1 inline-block"
                                             >
                                                 {cat.activo ? (
-                                                    <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-full text-[8px] font-black uppercase tracking-wider">Activo</span>
+                                                    <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-full text-xs font-bold uppercase tracking-wider">Activo</span>
                                                 ) : (
-                                                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-[8px] font-black uppercase tracking-wider">Inactivo</span>
+                                                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs font-bold uppercase tracking-wider">Inactivo</span>
                                                 )}
                                             </button>
                                         </div>
@@ -251,8 +251,8 @@ export default function AdminCategorias() {
                 ) : (
                     <div className="text-center py-20">
                         <FolderPlus className="size-12 text-slate-200 mx-auto mb-3" />
-                        <h3 className="text-xs font-black text-slate-700 mb-1">Sin categorías</h3>
-                        <p className="text-[11px] text-slate-400 font-medium">Crea una categoría para empezar a organizar tu menú.</p>
+                        <h3 className="text-xs font-bold text-slate-700 mb-1">Sin categorías</h3>
+                        <p className="text-xs text-slate-400 font-medium">Crea una categoría para empezar a organizar tu menú.</p>
                     </div>
                 )}
             </div>
@@ -260,9 +260,9 @@ export default function AdminCategorias() {
             {/* Modal Creación / Edición */}
             {isOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                    <div className="w-full max-w-md bg-white rounded-[2rem] p-6 shadow-2xl border border-slate-100 animate-fade-in text-left">
+                    <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-100 animate-fade-in text-left">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
-                            <h3 className="text-sm font-black text-slate-950 uppercase tracking-widest">
+                            <h3 className="text-sm font-bold text-slate-950 uppercase tracking-wide">
                                 {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
                             </h3>
                             <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -272,7 +272,7 @@ export default function AdminCategorias() {
 
                         <form onSubmit={handleSave} className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Nombre de la Categoría</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nombre de la Categoría</label>
                                 <input
                                     type="text"
                                     required
@@ -285,7 +285,7 @@ export default function AdminCategorias() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Orden de Visualización</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Orden de Visualización</label>
                                     <input
                                         type="number"
                                         required
@@ -296,7 +296,7 @@ export default function AdminCategorias() {
                                     />
                                 </div>
                                 <div className="flex flex-col justify-end pb-1.5">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5 block">Estado</span>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Estado</span>
                                     <label className="flex items-center gap-2.5 cursor-pointer select-none">
                                         <input
                                             type="checkbox"
@@ -317,7 +317,7 @@ export default function AdminCategorias() {
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="w-full mt-6 py-4 bg-slate-900 hover:bg-slate-950 text-white rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-transform flex items-center justify-center gap-2"
+                                className="w-full mt-6 py-4 bg-slate-900 hover:bg-slate-950 text-white rounded-2xl text-xs font-bold uppercase tracking-wide active:scale-95 transition-transform flex items-center justify-center gap-2"
                             >
                                 {saving ? (
                                     <>

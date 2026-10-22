@@ -10,7 +10,7 @@ import { Trophy, RefreshCw, Plus, Zap, Filter, Calendar } from 'lucide-react';
 
 export default function CourtGridPage() {
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    new Date().toLocaleDateString('en-CA')
   );
   const [resources, setResources] = useState<OperableResource[]>([]);
   const [appointments, setAppointments] = useState<GridAppointmentItem[]>([]);
@@ -71,7 +71,7 @@ export default function CourtGridPage() {
             <Trophy className="size-6" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white italic tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               Grilla de Canchas Deportivas
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">

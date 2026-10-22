@@ -34,8 +34,8 @@ export function ShareWidget({ url, negocio }: { url: string; negocio?: any }) {
     };
 
     return (
-        <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl relative overflow-hidden flex flex-col items-center">
-            <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] w-full text-left mb-6">Promociona tu Negocio</h3>
+        <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-xl relative overflow-hidden flex flex-col items-center">
+            <h3 className="font-bold text-gray-900 uppercase tracking-wide text-xs w-full text-left mb-6">Promociona tu Negocio</h3>
 
             <div className="bg-gray-50 p-4 rounded-3xl w-full flex justify-center mb-6 relative group">
                 <img
@@ -50,7 +50,7 @@ export function ShareWidget({ url, negocio }: { url: string; negocio?: any }) {
                     className="absolute inset-0 m-4 bg-black/40 hover:bg-black/60 rounded-xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white gap-2 transition-all duration-300 cursor-pointer shadow-inner"
                 >
                     <QrCode size={30} className="animate-pulse" />
-                    <span className="text-[9px] font-black uppercase tracking-widest">Imprimir / Descargar</span>
+                    <span className="text-xs font-bold uppercase tracking-wide">Imprimir / Descargar</span>
                 </button>
             </div>
 
@@ -86,7 +86,7 @@ export function ShareWidget({ url, negocio }: { url: string; negocio?: any }) {
                 <div className="grid grid-cols-1 gap-2.5">
                     <button
                         onClick={() => setIsQRModalOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 p-3 mt-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all font-black text-[10px] uppercase tracking-widest shadow-md cursor-pointer active:scale-95"
+                        className="w-full flex items-center justify-center gap-2 p-3 mt-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all font-bold text-xs uppercase tracking-wide shadow-md cursor-pointer active:scale-95"
                     >
                         <Printer size={14} />
                         Imprimir Tarjeta QR

@@ -320,9 +320,9 @@ export default function GymKnowTheGymAdmin({ negocioSlug }: { negocioSlug: strin
                   </div>
                 )}
                 {/* Badge activo/inactivo */}
-                <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                  item.active ? 'bg-emerald-500 text-white' : 'bg-gray-400 text-white'
-                }`}>
+                <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
+ item.active ? 'bg-emerald-500 text-white' : 'bg-gray-400 text-white'
+ }`}>
                   {item.active ? 'Visible' : 'Oculto'}
                 </div>
               </div>
@@ -334,12 +334,12 @@ export default function GymKnowTheGymAdmin({ negocioSlug }: { negocioSlug: strin
                   <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
                 )}
                 {tab === 'equipment' && (item as GymEquipment).area && (
-                  <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[10px] font-semibold border border-orange-100">
+                  <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 text-xs font-semibold border border-orange-100">
                     <Tag size={10} /> {(item as GymEquipment).area?.name}
                   </span>
                 )}
                 {tab === 'areas' && (item as GymArea).equipment && (
-                  <p className="text-[10px] text-gray-400 mt-2">
+                  <p className="text-xs text-gray-400 mt-2">
                     {(item as GymArea).equipment!.length} equipos
                   </p>
                 )}
@@ -476,7 +476,7 @@ export default function GymKnowTheGymAdmin({ negocioSlug }: { negocioSlug: strin
                     />
                   </label>
                 )}
-                <p className="text-[10px] text-gray-400 mt-1">O pega una URL:</p>
+                <p className="text-xs text-gray-400 mt-1">O pega una URL:</p>
                 <input
                   type="url"
                   value={form.imageUrl}

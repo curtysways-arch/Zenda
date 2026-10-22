@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
 import prisma from "@/lib/prisma";
 import { NotificationService } from "@/lib/notifications/notificationService";
 
 async function getAdminNegocioId() {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) return null;
     return (session.user as any).negocioId;
 }

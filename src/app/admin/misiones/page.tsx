@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import ClubResumen from '@/components/admin/club/ClubResumen';
 import { useSession } from 'next-auth/react';
 import { 
     Award, 
@@ -50,11 +51,13 @@ import {
     QrCode,
     Search,
     BookOpen,
-    Printer
+    Printer,
+    Target
 } from 'lucide-react';
 import ImageUploader from '@/components/ui/ImageUploader';
+import ClubQuickStart from '@/components/admin/ClubQuickStart';
 import LevelsAdminTab from '@/components/admin/loyalty/LevelsAdminTab';
-import PlanRestriction from '@/components/admin/PlanRestriction';
+import ModuleUpsellGate from '@/components/admin/ModuleUpsellGate';
 
 interface ActionConfig {
     id: string;
@@ -1906,7 +1909,7 @@ export default function QuestDashboard() {
                     totalParticipantes: totalClientes,
                     enProgreso: misionesRes.stats?.enProgreso || 0,
                     completadas: totalMisionesCompletadas,
-                    roiEstimado: totalMisionesCompletadas > 0 ? (totalMisionesCompletadas * 12.5).toFixed(1) : 28.5,
+                    roiEstimado: 0,
                     reservasGeneradas: totalMisionesCompletadas,
                     puntosEntregados: totalMisionesCompletadas * 120, // representativo
                     cuponesUsados: couponsRes?.filter((c: any) => c.usosActuales > 0).length || 0,
@@ -3365,81 +3368,136 @@ export default function QuestDashboard() {
     };
 
     return (
-        <PlanRestriction feature="loyalty">
+        <ModuleUpsellGate
+            capabilityKey="LOYALTY"
+            addonCode="ADDON_LOYALTY"
+            title="Club de Beneficios & Fidelización"
+            subtitle="Fideliza a tus clientes con niveles VIP, misiones gamificadas, cashback y catálogo de premios para multiplicar la recompra en tu negocio."
+            badgeText="Módulo Pro • Fidelización"
+            icon={Trophy}
+            stats={[
+                { value: '1 min', label: 'Para activarlo con una plantilla' },
+                { value: 'Automático', label: 'Puntos en cada visita o compra' },
+                { value: 'Tú decides', label: 'Qué premios entregas' },
+                { value: 'En su celular', label: 'Tus clientes ven su progreso' }
+            ]}
+            benefits={[
+                {
+                    title: 'Niveles VIP (Bronce, Plata, Oro, Diamante)',
+                    desc: 'Incentiva a tus clientes a subir de rango consumiendo más servicios para desbloquear multiplicadores de puntos y ventajas VIP.',
+                    icon: Crown
+                },
+                {
+                    title: 'Misiones & Retos Gamificados',
+                    desc: 'Premia automáticamente por agendar citas, dejar reseñas de 5 estrellas en Google, invitar amigos o celebrar su cumpleaños.',
+                    icon: Target
+                },
+                {
+                    title: 'Catálogo de Recompensas & Cupones',
+                    desc: 'Crea canjes de servicios gratuitos, descuentos porcentuales o productos físicos directo desde la app del cliente.',
+                    icon: Gift
+                },
+                {
+                    title: 'Campañas de Re-enganche & Notificaciones',
+                    desc: 'Envía alertas automáticas cuando un cliente está a punto de subir de nivel o tiene puntos por vencer.',
+                    icon: Sparkles
+                }
+            ]}
+        >
             <div className="p-6 space-y-8 max-w-7xl mx-auto">
             {/* TOAST SYSTEM */}
             {toastMsg && (
-                <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-xl border text-xs font-bold transition-all uppercase tracking-widest ${
-                    toastMsg.type === 'success' 
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
-                        : 'bg-rose-50 text-rose-800 border-rose-200'
-                }`}>
+                <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-xl border text-xs font-bold transition-all uppercase tracking-wide ${
+ toastMsg.type === 'success' 
+ ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+ : 'bg-rose-50 text-rose-800 border-rose-200'
+ }`}>
                     {toastMsg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                     {toastMsg.text}
                 </div>
             )}
 
             {/* HEADER */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 flex items-center gap-2">
-                        <Trophy className="text-pink-500 animate-pulse" /> {activeVertical === 'GIMNASIO' ? 'Club de Beneficios & Retos Fitness' : 'Club de Beneficios'}
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2.5">
+                        <span className="size-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: primaryColor }}>
+                            <Trophy size={20} />
+                        </span>
+                        Club de beneficios
                     </h1>
-                    <p className="text-slate-500 font-medium mt-1">
+                    <p className="text-slate-500 mt-1.5 max-w-xl">
                         {activeVertical === 'GIMNASIO'
-                            ? 'Fidelización de socios mediante retos de asistencia con QR, constancia semanal y premios deportivos.'
-                            : 'Centro de retos, referidos y fidelización unificado de Citiox.'}
+                            ? 'Premia la constancia de tus socios: retos de asistencia, puntos y premios que los hacen volver.'
+                            : 'Tus clientes ganan puntos y premios por volver, recomendarte y dejar reseñas. Tú decides los premios.'}
                     </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2 w-full md:w-auto">
                     <button
                         onClick={() => setIsGuideOpen(true)}
-                        className="inline-flex items-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-350 text-slate-700 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-sm transition-all active:scale-95 cursor-pointer"
+                        className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition-colors cursor-pointer"
                     >
-                        <BookOpen size={16} className="text-pink-500" /> Guía Club de Beneficios
+                        <BookOpen size={16} /> Cómo funciona
                     </button>
                     <button
                         onClick={() => {
                             setWizardStep(0);
                             setIsWizardOpen(true);
                         }}
-                        className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
-                        style={{
-                            backgroundColor: primaryColor,
-                            boxShadow: `0 10px 15px -3px ${primaryColor}33`
-                        }}
+                        className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 text-white font-semibold text-sm rounded-xl shadow-sm transition-opacity hover:opacity-90 cursor-pointer"
+                        style={{ backgroundColor: primaryColor }}
                     >
-                        <Plus size={16} /> {activeVertical === 'GIMNASIO' ? 'Crear Reto Fitness' : 'Crear Misión / Campaña'}
+                        <Plus size={16} /> {activeVertical === 'GIMNASIO' ? 'Crear reto' : 'Crear misión'}
                     </button>
                 </div>
             </div>
 
-            {/* NAVIGATION TABS (9 Pestañas) */}
-            <div className="flex border-b border-slate-200 gap-6 overflow-x-auto scrollbar-none pb-0.5">
-                {[
-                    { id: 'dashboard', label: 'Dashboard' },
-                    { id: 'campaigns', label: 'Retos y Misiones' },
-                    { id: 'templates', label: 'Plantillas Citiox' },
-                    { id: 'participants', label: 'Participantes' },
-                    { id: 'rewards', label: 'Premios y Canjes' },
-                    { id: 'points', label: 'Puntos' },
-                    { id: 'coupons', label: 'Cupones' },
-                    { id: 'levels', label: 'Niveles y Temporada' },
-                    { id: 'stats', label: 'Estadísticas' },
-                    { id: 'history', label: 'Historial' }
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
-                            activeTab === tab.id ? 'text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
-                        }`}
-                        style={{ borderColor: activeTab === tab.id ? primaryColor : 'transparent' }}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
+            {/* NAVEGACIÓN: 5 secciones con sub-pestañas */}
+            {(() => {
+                const groups: { id: string; label: string; subs: { id: string; label: string }[] }[] = [
+                    { id: 'resumen', label: 'Resumen', subs: [{ id: 'dashboard', label: 'Resumen' }] },
+                    { id: 'misiones', label: activeVertical === 'GIMNASIO' ? 'Retos' : 'Misiones', subs: [{ id: 'campaigns', label: 'Mis misiones' }, { id: 'templates', label: 'Plantillas listas' }] },
+                    { id: 'premios', label: 'Premios', subs: [{ id: 'rewards', label: 'Premios y canjes' }, { id: 'coupons', label: 'Cupones' }] },
+                    { id: 'clientes', label: activeVertical === 'GIMNASIO' ? 'Socios' : 'Clientes', subs: [{ id: 'participants', label: 'Participantes' }, { id: 'points', label: 'Puntos' }, { id: 'levels', label: 'Niveles y temporada' }] },
+                    { id: 'actividad', label: 'Actividad', subs: [{ id: 'stats', label: 'Resultados' }, { id: 'history', label: 'Historial' }] },
+                ];
+                const currentGroup = groups.find(g => g.subs.some(sub => sub.id === activeTab)) || groups[0];
+                return (
+                    <div className="space-y-3">
+                        <div className="flex gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto [scrollbar-width:none]">
+                            {groups.map(g => {
+                                const active = g.id === currentGroup.id;
+                                return (
+                                    <button
+                                        key={g.id}
+                                        onClick={() => setActiveTab(g.subs[0].id as any)}
+                                        className={`flex-1 min-w-fit px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${active ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                                    >
+                                        {g.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {currentGroup.subs.length > 1 && (
+                            <div className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
+                                {currentGroup.subs.map(sub => {
+                                    const active = sub.id === activeTab;
+                                    return (
+                                        <button
+                                            key={sub.id}
+                                            onClick={() => setActiveTab(sub.id as any)}
+                                            className={`px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap border transition-colors cursor-pointer ${active ? 'text-white border-transparent' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+                                            style={active ? { backgroundColor: primaryColor } : undefined}
+                                        >
+                                            {sub.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
 
             {/* TAB CONTENTS */}
             {loading ? (
@@ -3451,111 +3509,26 @@ export default function QuestDashboard() {
                     {/* 1. DASHBOARD */}
                     {activeTab === 'dashboard' && (
                         <div className="space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div className="bg-white p-5 rounded-2xl border border-slate-150 shadow-sm flex items-center gap-4">
-                                    <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><Users size={24} /></div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                            {activeVertical === 'GIMNASIO' ? 'Socios Activos' : 'Clientes Activos'}
-                                        </p>
-                                        <h4 className="text-2xl font-black text-slate-800">{stats.totalParticipantes}</h4>
-                                    </div>
-                                </div>
-                                <div className="bg-white p-5 rounded-2xl border border-slate-150 shadow-sm flex items-center gap-4">
-                                    <div className="p-3 bg-pink-50 text-pink-600 rounded-xl"><Zap size={24} /></div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Retos en Progreso</p>
-                                        <h4 className="text-2xl font-black text-slate-800">{stats.enProgreso}</h4>
-                                    </div>
-                                </div>
-                                <div className="bg-white p-5 rounded-2xl border border-slate-150 shadow-sm flex items-center gap-4">
-                                    <div className="p-3 bg-green-50 text-green-600 rounded-xl"><CheckCircle2 size={24} /></div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                            {activeVertical === 'GIMNASIO' ? 'Retos Superados' : 'Misiones Completadas'}
-                                        </p>
-                                        <h4 className="text-2xl font-black text-slate-800">{stats.completadas}</h4>
-                                    </div>
-                                </div>
-                                <div className="bg-white p-5 rounded-2xl border border-slate-150 shadow-sm flex items-center gap-4">
-                                    <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><TrendingUp size={24} /></div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aumento ROI</p>
-                                        <h4 className="text-2xl font-black text-slate-800">+{stats.roiEstimado}%</h4>
-                                    </div>
-                                </div>
+                            <ClubResumen primaryColor={primaryColor} />
+
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    { label: 'Crear premio', icon: Trophy, onClick: () => setIsCatalogRewardModalOpen(true) },
+                                    { label: 'Crear cupón', icon: Gift, onClick: () => setIsCouponModalOpen(true) },
+                                    { label: 'Sumar o quitar puntos', icon: Coins, onClick: () => setIsPointsAdjustmentModalOpen(true) },
+                                    { label: activeVertical === 'GIMNASIO' ? 'Ver socios' : 'Ver clientes', icon: Users, onClick: () => setActiveTab('participants') },
+                                ].map(({ label, icon: Icon, onClick }) => (
+                                    <button
+                                        key={label}
+                                        onClick={onClick}
+                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+                                    >
+                                        <Icon size={16} className="text-slate-500" /> {label}
+                                    </button>
+                                ))}
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                {/* Resumen del Crecimiento */}
-                                <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
-                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
-                                        <Sparkles className="text-pink-500" size={18} /> Resumen del Canal
-                                    </h3>
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                {activeVertical === 'GIMNASIO' ? 'Asistencias & Check-ins Premiados' : 'Reservas Adicionales Generadas'}
-                                            </span>
-                                            <span className="text-xs font-black text-slate-800">{stats.reservasGeneradas}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                {activeVertical === 'GIMNASIO' ? 'Nuevos Socios Referidos (Gym Bros)' : 'Clientes Recomendados (Referidos)'}
-                                            </span>
-                                            <span className="text-xs font-black text-slate-800">{stats.referidosValidos}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Puntos de Fidelidad Emitidos</span>
-                                            <span className="text-xs font-black text-slate-800">{stats.puntosEntregados} pts</span>
-                                        </div>
-                                        <div className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cupones Otorgados Utilizados</span>
-                                            <span className="text-xs font-black text-slate-800">{stats.cuponesUsados}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Acciones Rápidas */}
-                                <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
-                                    <div>
-                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-2">
-                                            <Zap className="text-amber-500" size={18} /> Acciones Rápidas
-                                        </h3>
-                                        <p className="text-slate-400 text-xs font-medium mb-6">Utiliza estas utilidades para administrar tus puntos y cupones de forma inmediata.</p>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <button 
-                                            onClick={() => setIsCouponModalOpen(true)}
-                                            className="flex flex-col items-center justify-center p-5 border border-slate-150 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors group cursor-pointer"
-                                        >
-                                            <Gift className="text-purple-500 group-hover:scale-110 transition-transform mb-2.5" size={24} />
-                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">Crear Cupón</span>
-                                        </button>
-                                        <button 
-                                            onClick={() => setIsCatalogRewardModalOpen(true)}
-                                            className="flex flex-col items-center justify-center p-5 border border-slate-150 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors group cursor-pointer"
-                                        >
-                                            <Trophy className="text-pink-500 group-hover:scale-110 transition-transform mb-2.5" size={24} />
-                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">Crear Premio Puntos</span>
-                                        </button>
-                                        <button 
-                                            onClick={() => setIsPointsAdjustmentModalOpen(true)}
-                                            className="flex flex-col items-center justify-center p-5 border border-slate-150 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors group cursor-pointer"
-                                        >
-                                            <Coins className="text-amber-500 group-hover:scale-110 transition-transform mb-2.5" size={24} />
-                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">Ajuste de Puntos</span>
-                                        </button>
-                                        <button 
-                                            onClick={() => setActiveTab('participants')}
-                                            className="flex flex-col items-center justify-center p-5 border border-slate-150 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors group cursor-pointer"
-                                        >
-                                            <Users className="text-blue-500 group-hover:scale-110 transition-transform mb-2.5" size={24} />
-                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">Ver Participantes</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            <ClubQuickStart primaryColor={primaryColor} onNavigate={(tab) => setActiveTab(tab as any)} />
                         </div>
                     )}
 
@@ -3565,7 +3538,7 @@ export default function QuestDashboard() {
                             {campaigns.length === 0 ? (
                                 <div className="bg-white border border-slate-150 rounded-3xl p-12 text-center shadow-sm">
                                     <Trophy className="mx-auto text-slate-300 mb-4" size={40} />
-                                    <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No hay campañas configuradas</h3>
+                                    <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight mb-2">No hay campañas configuradas</h3>
                                     <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
                                         Las campañas agrupan tus misiones comerciales (Navidad, Temporada, VIP). Crea tu primera campaña.
                                     </p>
@@ -3576,7 +3549,7 @@ export default function QuestDashboard() {
                                         <div key={camp.id} className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
                                             <div className="flex justify-between items-start border-b border-slate-100 pb-4 mb-4">
                                                 <div>
-                                                    <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">{camp.nombre}</h3>
+                                                    <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider">{camp.nombre}</h3>
                                                     <p className="text-slate-400 text-xs font-medium mt-1">{camp.descripcion || 'Sin descripción'}</p>
                                                 </div>
                                                 <button
@@ -3596,8 +3569,8 @@ export default function QuestDashboard() {
                                                                 <Award size={18} />
                                                             </div>
                                                             <div>
-                                                                <h4 className="text-xs font-black text-slate-850 uppercase tracking-wider">{formatQuestTitle(quest.nombre, activeVertical)}</h4>
-                                                                <p className="text-[9px] text-slate-400 font-semibold uppercase mt-0.5">Trigger: {formatTriggerBadge(quest.triggerEvent, activeVertical)} (Meta: {quest.cantidadMeta})</p>
+                                                                <h4 className="text-xs font-bold text-slate-850 uppercase tracking-wider">{formatQuestTitle(quest.nombre, activeVertical)}</h4>
+                                                                <p className="text-xs text-slate-400 font-semibold uppercase mt-0.5">Trigger: {formatTriggerBadge(quest.triggerEvent, activeVertical)} (Meta: {quest.cantidadMeta})</p>
                                                             </div>
                                                         </div>
                                                         <div className="flex gap-2">
@@ -3669,29 +3642,29 @@ export default function QuestDashboard() {
                                                 <div className="flex justify-between items-start mb-4 mt-1">
                                                     <div className="flex items-center gap-1.5 flex-wrap">
                                                         {(tpl.categorias || []).slice(0, 2).map((cat: string, i: number) => (
-                                                            <span key={i} className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{cat}</span>
+                                                            <span key={i} className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{cat}</span>
                                                         ))}
                                                     </div>
                                                     {hasUpdate ? (
-                                                        <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 animate-pulse">⬆ Actualizar</span>
+                                                        <span className="text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 animate-pulse">⬆ Actualizar</span>
                                                     ) : isUpToDate ? (
-                                                        <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-green-50 text-green-600 border border-green-200">✓ Instalada</span>
+                                                        <span className="text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-md bg-green-50 text-green-600 border border-green-200">✓ Instalada</span>
                                                     ) : (
-                                                        <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-pink-50 text-pink-600 border border-pink-100">1-CLIC</span>
+                                                        <span className="text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-md bg-pink-50 text-pink-600 border border-pink-100">1-CLIC</span>
                                                     )}
                                                 </div>
 
                                                 {/* Nombre + Descripción */}
-                                                <h3 className="text-sm font-black text-slate-800 dark:text-white mb-1.5 flex items-center gap-2">
+                                                <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1.5 flex items-center gap-2">
                                                     <Award size={15} className="text-pink-500 group-hover:scale-110 transition-transform shrink-0" style={{ color: tpl.color || '#ec4899' }} />
                                                     {tpl.nombre}
                                                 </h3>
-                                                <p className="text-[11px] text-slate-400 font-medium leading-relaxed mb-4">
+                                                <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
                                                     {tpl.descripcion}
                                                 </p>
 
                                                 {/* Stats de la plantilla */}
-                                                <div className="flex items-center gap-4 text-[10px] text-slate-400 font-semibold">
+                                                <div className="flex items-center gap-4 text-xs text-slate-400 font-semibold">
                                                     <span>📥 {tpl.installCount || 0} instalaciones</span>
                                                     <span>⭐ {tpl.rating || 5.0}</span>
                                                     {tpl.Missions?.length > 0 && <span>🎯 {tpl.Missions.length} misiones</span>}
@@ -3700,13 +3673,13 @@ export default function QuestDashboard() {
 
                                             {/* Pie del card */}
                                             <div className="border-t border-slate-100 dark:border-slate-700 pt-4 flex justify-between items-center mt-5">
-                                                <div className="text-[9px] font-bold text-slate-400">
+                                                <div className="text-xs font-bold text-slate-400">
                                                     v{tpl.versionSemantica || '1.0.0'}
                                                     {installed && <span className="ml-2 text-slate-300">· instalada v{installed.versionInstalada}</span>}
                                                 </div>
                                                 <button
                                                     onClick={() => handleInstallTemplate(tpl)}
-                                                    className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                                                    className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all cursor-pointer"
                                                     style={{
                                                         background: hasUpdate ? '#f59e0b' : tpl.color || '#ec4899',
                                                         color: '#fff'
@@ -3722,7 +3695,7 @@ export default function QuestDashboard() {
 
                             {templates.length === 0 && (
                                 <div className="text-center py-20">
-                                    <p className="text-5xl mb-4">🏪</p>
+                                    <p className="text-3xl mb-4">🏪</p>
                                     <p className="text-slate-500 font-semibold">El Marketplace no tiene plantillas publicadas todavía.</p>
                                     <p className="text-slate-400 text-sm mt-1">El Superadmin puede crear y publicar plantillas desde el panel de administración.</p>
                                 </div>
@@ -3793,7 +3766,7 @@ export default function QuestDashboard() {
                                     <button
                                         onClick={handleConfirmInstall}
                                         disabled={installingTemplate}
-                                        className="flex-1 py-3 rounded-2xl text-sm font-black text-white transition-all disabled:opacity-50"
+                                        className="flex-1 py-3 rounded-2xl text-sm font-bold text-white transition-all disabled:opacity-50"
                                         style={{ background: installModalTemplate.color || '#ec4899' }}
                                     >
                                         {installingTemplate ? '⏳ Procesando...' : '✓ Confirmar'}
@@ -3809,7 +3782,7 @@ export default function QuestDashboard() {
                             {/* Progresos Activos */}
                             <div className="lg:col-span-2 space-y-6">
                                 <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
-                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
                                         <Users className="text-blue-500" size={18} /> Progreso de Clientes en Misiones
                                     </h3>
                                     {participantsProgress.length === 0 ? (
@@ -3818,7 +3791,7 @@ export default function QuestDashboard() {
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-left border-collapse">
                                                 <thead>
-                                                    <tr className="border-b border-slate-150 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                                                    <tr className="border-b border-slate-150 text-xs font-bold uppercase tracking-wider text-slate-400">
                                                         <th className="pb-3">Cliente</th>
                                                         <th className="pb-3">Misión / Reto</th>
                                                         <th className="pb-3">Avance</th>
@@ -3830,12 +3803,12 @@ export default function QuestDashboard() {
                                                     {participantsProgress.map((prog: any) => (
                                                         <tr key={prog.id} className="border-b border-slate-100 text-xs font-bold text-slate-700">
                                                             <td className="py-4">
-                                                                <p className="font-black text-slate-800">{prog.Usuario?.nombre || 'Desconocido'}</p>
-                                                                <p className="text-[9px] text-slate-400 mt-0.5">{prog.Usuario?.phone || 'Sin cel'}</p>
+                                                                <p className="font-bold text-slate-800">{prog.Usuario?.nombre || 'Desconocido'}</p>
+                                                                <p className="text-xs text-slate-400 mt-0.5">{prog.Usuario?.phone || 'Sin cel'}</p>
                                                             </td>
                                                             <td className="py-4">
-                                                                <p className="uppercase text-[10px] font-bold" style={{ color: prog.Quest?.color || primaryColor }}>{prog.Quest?.nombre}</p>
-                                                                <p className="text-[8px] text-slate-400 uppercase font-semibold mt-0.5">{prog.Quest?.triggerEvent}</p>
+                                                                <p className="uppercase text-xs font-bold" style={{ color: prog.Quest?.color || primaryColor }}>{prog.Quest?.nombre}</p>
+                                                                <p className="text-xs text-slate-400 uppercase font-semibold mt-0.5">{prog.Quest?.triggerEvent}</p>
                                                             </td>
                                                             <td className="py-4">
                                                                 <div className="w-24 bg-slate-100 rounded-full h-2 relative overflow-hidden">
@@ -3844,16 +3817,16 @@ export default function QuestDashboard() {
                                                                         backgroundColor: prog.Quest?.color || primaryColor 
                                                                     }}></div>
                                                                 </div>
-                                                                <span className="text-[9px] text-slate-400 font-black mt-1 block">{prog.progresoActual} / {prog.progresoRequerido}</span>
+                                                                <span className="text-xs text-slate-400 font-bold mt-1 block">{prog.progresoActual} / {prog.progresoRequerido}</span>
                                                             </td>
                                                             <td className="py-4">
-                                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                                                                    prog.estado === 'PENDIENTE_APROBACION' 
-                                                                        ? 'bg-amber-50 text-amber-600 border border-amber-100' 
-                                                                        : prog.estado === 'COMPLETADA' 
-                                                                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
-                                                                            : 'bg-blue-50 text-blue-600 border border-blue-100'
-                                                                }`}>
+                                                                <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md ${
+ prog.estado === 'PENDIENTE_APROBACION' 
+ ? 'bg-amber-50 text-amber-600 border border-amber-100' 
+ : prog.estado === 'COMPLETADA' 
+ ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+ : 'bg-blue-50 text-blue-600 border border-blue-100'
+ }`}>
                                                                     {prog.estado}
                                                                 </span>
                                                             </td>
@@ -3862,13 +3835,13 @@ export default function QuestDashboard() {
                                                                     <div className="flex gap-1 justify-end">
                                                                         <button 
                                                                             onClick={() => handleApproveParticipant(prog.id)}
-                                                                            className="px-2.5 py-1.5 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 cursor-pointer"
+                                                                            className="px-2.5 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-emerald-600 cursor-pointer"
                                                                         >
                                                                             Aprobar
                                                                         </button>
                                                                         <button 
                                                                             onClick={() => handleRejectParticipant(prog.id)}
-                                                                            className="px-2.5 py-1.5 bg-rose-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-rose-600 cursor-pointer"
+                                                                            className="px-2.5 py-1.5 bg-rose-500 text-white rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-rose-600 cursor-pointer"
                                                                         >
                                                                             Rechazar
                                                                         </button>
@@ -3887,7 +3860,7 @@ export default function QuestDashboard() {
                             {/* Historial de Logros */}
                             <div className="space-y-6">
                                 <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
-                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
                                         <History className="text-purple-500" size={18} /> Actividad Reciente
                                     </h3>
                                     <div className="space-y-4">
@@ -3895,11 +3868,11 @@ export default function QuestDashboard() {
                                             <div key={hist.id} className="p-3 bg-slate-50 border border-slate-100 rounded-2xl flex gap-3 items-start">
                                                 <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><UserCheck size={16} /></div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-slate-800 uppercase tracking-wide">
+                                                    <p className="text-xs font-bold text-slate-800 uppercase tracking-wide">
                                                         {hist.Usuario?.nombre || 'Cliente'} Completó Reto
                                                     </p>
-                                                    <p className="text-[10px] font-black text-pink-600 uppercase mt-0.5">{hist.Quest?.nombre}</p>
-                                                    <p className="text-[8px] text-slate-400 font-semibold mt-1">{new Date(hist.createdAt).toLocaleString()}</p>
+                                                    <p className="text-xs font-bold text-pink-600 uppercase mt-0.5">{hist.Quest?.nombre}</p>
+                                                    <p className="text-xs text-slate-400 font-semibold mt-1">{new Date(hist.createdAt).toLocaleString()}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -3918,7 +3891,7 @@ export default function QuestDashboard() {
                             {/* Premios Pendientes / Entregados */}
                             <div className="lg:col-span-2 bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
+                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
                                     <Gift className="text-pink-500" size={18} /> Canje de Premios en Recepción
                                     </h3>
                                     <button
@@ -3926,7 +3899,7 @@ export default function QuestDashboard() {
                                             console.log("Abriendo buscador manual...");
                                             setShowManualModal(true);
                                         }}
-                                        className="px-4 py-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all flex items-center gap-1.5 shadow-sm border-0 cursor-pointer"
+                                        className="px-4 py-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-xl text-xs font-bold uppercase tracking-wide active:scale-95 transition-all flex items-center gap-1.5 shadow-sm border-0 cursor-pointer"
                                     >
                                         <QrCode size={14} />
                                         Escanear / Buscar Código
@@ -3938,7 +3911,7 @@ export default function QuestDashboard() {
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left border-collapse">
                                             <thead>
-                                                <tr className="border-b border-slate-150 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                                                <tr className="border-b border-slate-150 text-xs font-bold uppercase tracking-wider text-slate-400">
                                                     <th className="pb-3">Cliente</th>
                                                     <th className="pb-3">Premio / Concepto</th>
                                                     <th className="pb-3">Tipo</th>
@@ -3950,32 +3923,32 @@ export default function QuestDashboard() {
                                                 {rewardsList.map((rew: any) => (
                                                     <tr key={rew.id} className="border-b border-slate-100 text-xs font-bold text-slate-700">
                                                         <td className="py-4">
-                                                            <p className="font-black text-slate-855">{rew.Usuario?.nombre || 'Cliente'}</p>
-                                                            <p className="text-[9px] text-slate-450 mt-0.5">{rew.Usuario?.phone || 'Sin tel'}</p>
+                                                            <p className="font-bold text-slate-855">{rew.Usuario?.nombre || 'Cliente'}</p>
+                                                            <p className="text-xs text-slate-450 mt-0.5">{rew.Usuario?.phone || 'Sin tel'}</p>
                                                         </td>
                                                         <td className="py-4">
-                                                            <p className="font-black text-slate-800 uppercase tracking-wider">
+                                                            <p className="font-bold text-slate-800 uppercase tracking-wider">
                                                                 {rew.Campaign?.valorRecompensa || rew.Reward?.nombre}
                                                             </p>
-                                                            <p className="text-[9px] text-slate-400 uppercase mt-0.5">
+                                                            <p className="text-xs text-slate-400 uppercase mt-0.5">
                                                                 {rew.Campaign?.nombre || 'Canje de Catálogo'}
                                                             </p>
                                                         </td>
                                                         <td className="py-4">
-                                                            <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-100">
+                                                            <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 border border-purple-100">
                                                                 {rew.tipoOrigen}
                                                             </span>
                                                         </td>
                                                         <td className="py-4">
-                                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                                                                rew.estado === 'DISPONIBLE' || rew.estado === 'PENDIENTE_ENTREGA'
-                                                                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
-                                                                    : rew.estado === 'SOLICITADO'
-                                                                    ? 'bg-amber-50 text-amber-600 border border-amber-100'
-                                                                    : rew.estado === 'LISTO_PARA_RETIRAR'
-                                                                    ? 'bg-blue-50 text-blue-600 border border-blue-100'
-                                                                    : 'bg-slate-100 text-slate-500 border border-slate-200'
-                                                            }`}>
+                                                            <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md ${
+ rew.estado === 'DISPONIBLE' || rew.estado === 'PENDIENTE_ENTREGA'
+ ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+ : rew.estado === 'SOLICITADO'
+ ? 'bg-amber-50 text-amber-600 border border-amber-100'
+ : rew.estado === 'LISTO_PARA_RETIRAR'
+ ? 'bg-blue-50 text-blue-600 border border-blue-100'
+ : 'bg-slate-100 text-slate-500 border border-slate-200'
+ }`}>
                                                                 {rew.estado}
                                                             </span>
                                                         </td>
@@ -3983,7 +3956,7 @@ export default function QuestDashboard() {
                                                             {rew.estado !== 'CANJEADO' && rew.estado !== 'ENTREGADO' && (
                                                                 <button
                                                                     onClick={() => handleOpenCanjeModal(rew)}
-                                                                    className="px-3.5 py-2 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 cursor-pointer"
+                                                                    className="px-3.5 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wide hover:bg-slate-900 cursor-pointer"
                                                                 >
                                                                     Entregar
                                                                 </button>
@@ -4001,27 +3974,27 @@ export default function QuestDashboard() {
                             <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
                                 <div>
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
+                                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
                                             <Trophy className="text-amber-500" size={18} /> Catálogo de Puntos
                                         </h3>
                                         <button 
                                             onClick={() => setIsCatalogRewardModalOpen(true)}
-                                            className="px-3.5 py-2 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-slate-900 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 shrink-0"
+                                            className="px-3.5 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-900 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 shrink-0"
                                             title="Crear Premio de Catálogo"
                                         >
                                             <Plus size={12} />
                                             Crear Premio
                                         </button>
                                     </div>
-                                    <p className="text-[10px] text-slate-400 font-semibold mb-4 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <p className="text-xs text-slate-400 font-semibold mb-4 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
                                         💡 Aquí creas los premios físicos, servicios gratis o regalos que tus clientes podrán canjear usando sus puntos acumulados en su cuenta.
                                     </p>
                                     <div className="space-y-4">
                                         {loyaltyRewards.map((item: any) => (
                                             <div key={item.id} className="p-4 border border-slate-150 rounded-2xl bg-slate-50 hover:bg-white transition-colors flex justify-between items-center">
                                                 <div>
-                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">{item.nombre}</h4>
-                                                    <p className="text-[10px] text-pink-600 font-bold uppercase mt-1">{item.costoPuntos} Puntos requeridos</p>
+                                                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{item.nombre}</h4>
+                                                    <p className="text-xs text-pink-600 font-bold uppercase mt-1">{item.costoPuntos} Puntos requeridos</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <button 
@@ -4064,12 +4037,12 @@ export default function QuestDashboard() {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <div className="lg:col-span-2 bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                                         <Coins className="text-amber-500" size={18} /> Balance de Puntos de Clientes
                                     </h3>
                                     <button 
                                         onClick={() => setIsPointsAdjustmentModalOpen(true)}
-                                        className="px-4 py-2 bg-slate-850 hover:bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-wider cursor-pointer"
+                                        className="px-4 py-2 bg-slate-850 hover:bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer"
                                     >
                                         Ajuste Manual
                                     </button>
@@ -4080,7 +4053,7 @@ export default function QuestDashboard() {
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left border-collapse">
                                             <thead>
-                                                <tr className="border-b border-slate-150 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                                                <tr className="border-b border-slate-150 text-xs font-bold uppercase tracking-wider text-slate-400">
                                                     <th className="pb-3">Cliente</th>
                                                     <th className="pb-3">Balance de Puntos</th>
                                                     <th className="pb-3 text-right">Última Actualización</th>
@@ -4090,11 +4063,11 @@ export default function QuestDashboard() {
                                                 {pointsRankings.map((p: any) => (
                                                     <tr key={p.id} className="border-b border-slate-100 text-xs font-bold text-slate-700">
                                                         <td className="py-4">
-                                                            <p className="font-black text-slate-800">{p.Usuario?.nombre || 'Cliente'}</p>
-                                                            <p className="text-[9px] text-slate-400 mt-0.5">{p.Usuario?.email}</p>
+                                                            <p className="font-bold text-slate-800">{p.Usuario?.nombre || 'Cliente'}</p>
+                                                            <p className="text-xs text-slate-400 mt-0.5">{p.Usuario?.email}</p>
                                                         </td>
-                                                        <td className="py-4 font-black text-slate-800">{p.puntos} pts</td>
-                                                        <td className="py-4 text-right text-slate-400 text-[10px]">{new Date(p.updatedAt).toLocaleString()}</td>
+                                                        <td className="py-4 font-bold text-slate-800">{p.puntos} pts</td>
+                                                        <td className="py-4 text-right text-slate-400 text-xs">{new Date(p.updatedAt).toLocaleString()}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -4110,44 +4083,44 @@ export default function QuestDashboard() {
                         <div className="space-y-6">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-50 p-5 rounded-2xl border border-slate-150 gap-4">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Módulo de Cupones Promocionales</span>
-                                    <span className="text-[9px] text-slate-400 font-semibold mt-1 leading-relaxed">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Módulo de Cupones Promocionales</span>
+                                    <span className="text-xs text-slate-400 font-semibold mt-1 leading-relaxed">
                                         💡 Crea cupones independientes para asignar a tus clientes directamente, o enlázalos a tus premios de catálogo de puntos y misiones para que se entreguen solos.
                                     </span>
                                 </div>
                                 <button 
                                     onClick={() => setIsCouponModalOpen(true)}
-                                    className="px-4 py-2 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-slate-900 cursor-pointer active:scale-95 transition-all shrink-0"
+                                    className="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-900 cursor-pointer active:scale-95 transition-all shrink-0"
                                 >
                                     + Crear Cupón
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {coupons.map((coupon: any) => (
-                                    <div key={coupon.id} className="bg-white border border-slate-150 rounded-[2rem] p-5 shadow-sm hover:shadow-md transition-shadow relative">
+                                    <div key={coupon.id} className="bg-white border border-slate-150 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative">
                                         <div className="flex justify-between items-start mb-4">
-                                            <span className="text-[8px] font-black text-purple-600 uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-purple-50 border border-purple-100">
+                                            <span className="text-xs font-bold text-purple-600 uppercase tracking-wide px-2.5 py-0.5 rounded-md bg-purple-50 border border-purple-100">
                                                 {coupon.tipo === 'PORCENTAJE' ? `${coupon.valor}% DTO` : `$${coupon.valor} DTO`}
                                             </span>
-                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                                                coupon.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-450'
-                                            }`}>
+                                            <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md ${
+ coupon.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-450'
+ }`}>
                                                 {coupon.activa ? 'ACTIVO' : 'INACTIVO'}
                                             </span>
                                         </div>
-                                        <h3 className="text-xs font-black text-slate-800 tracking-wider uppercase mb-1">
+                                        <h3 className="text-xs font-bold text-slate-800 tracking-wider uppercase mb-1">
                                             CÓDIGO: <span style={{ color: primaryColor }}>{coupon.codigo}</span>
                                         </h3>
-                                        <p className="text-[10px] text-slate-400 font-semibold mb-4">
+                                        <p className="text-xs text-slate-400 font-semibold mb-4">
                                             {coupon.descripcion || 'Sin descripción'}
                                         </p>
                                         <div className="space-y-2 bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                                            <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                            <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                                 <span className="text-slate-400">Usos totales:</span>
                                                 <span className="text-slate-800">{coupon.usosActuales} / {coupon.maxUsos || 'Ilimitado'}</span>
                                             </div>
                                             {coupon.fechaFin && (
-                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
                                                     <span className="text-slate-400">Vence:</span>
                                                     <span className="text-slate-800">{new Date(coupon.fechaFin).toLocaleDateString()}</span>
                                                 </div>
@@ -4170,25 +4143,25 @@ export default function QuestDashboard() {
                     {activeTab === 'stats' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
-                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
                                     <BarChart2 className="text-blue-500" size={18} /> Conversiones e Impacto
                                 </h3>
                                 <div className="space-y-4">
                                     <div className="flex justify-between border-b border-slate-100 pb-3">
-                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Reservas Directas del Motor</span>
-                                        <span className="text-xs font-black text-slate-850">{stats.completadas} citas</span>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Reservas Directas del Motor</span>
+                                        <span className="text-xs font-bold text-slate-850">{stats.completadas} citas</span>
                                     </div>
                                     <div className="flex justify-between border-b border-slate-100 pb-3">
-                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Amigos Recomendados</span>
-                                        <span className="text-xs font-black text-slate-850">{stats.referidosValidos} amigos</span>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Amigos Recomendados</span>
+                                        <span className="text-xs font-bold text-slate-850">{stats.referidosValidos} amigos</span>
                                     </div>
                                     <div className="flex justify-between border-b border-slate-100 pb-3">
-                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Tasa de Conversión Promedio</span>
-                                        <span className="text-xs font-black text-slate-850">84.2%</span>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Puntos entregados</span>
+                                        <span className="text-xs font-bold text-slate-850">{stats.puntosEntregados} pts</span>
                                     </div>
                                     <div className="flex justify-between pb-3">
-                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Retorno de Inversión Est. (ROI)</span>
-                                        <span className="text-xs font-black text-emerald-600">+{stats.roiEstimado}%</span>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Cupones usados</span>
+                                        <span className="text-xs font-bold text-emerald-600">{stats.cuponesUsados}</span>
                                     </div>
                                 </div>
                             </div>
@@ -4200,17 +4173,17 @@ export default function QuestDashboard() {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             {/* LISTADO DE MISIONES */}
                             <div className="lg:col-span-2 space-y-6">
-                                <div className="bg-slate-900 text-white rounded-[2rem] p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                     <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500 rounded-full blur-[100px] opacity-25" />
                                     <div>
-                                        <h3 className="text-base font-black uppercase tracking-wider flex items-center gap-2">
+                                        <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2">
                                             <Sparkles className="text-emerald-400" size={18} /> Retos Citiox Oficiales
                                         </h3>
                                         <p className="text-slate-400 text-xs mt-1">Completa estos retos de plataforma para desbloquear beneficios exclusivos, días gratis de plan y herramientas avanzadas para tu negocio.</p>
                                     </div>
                                     <button 
                                         onClick={fetchData} 
-                                        className="px-4 py-2 bg-white/10 hover:bg-white/20 active:scale-95 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                                        className="px-4 py-2 bg-white/10 hover:bg-white/20 active:scale-95 text-xs font-bold uppercase tracking-wide rounded-xl transition-all flex items-center gap-1 cursor-pointer shrink-0"
                                     >
                                         <RefreshCw size={12} className={loadingGlobal ? "animate-spin" : ""} /> Sincronizar
                                     </button>
@@ -4219,12 +4192,12 @@ export default function QuestDashboard() {
                                 {loadingGlobal ? (
                                     <div className="py-16 text-center space-y-3 bg-white border border-slate-150 rounded-3xl">
                                         <Loader2 size={32} className="animate-spin text-slate-400 mx-auto" />
-                                        <p className="text-[10px] font-black text-slate-450 uppercase tracking-wider">Cargando misiones de Citiox...</p>
+                                        <p className="text-xs font-bold text-slate-450 uppercase tracking-wider">Cargando misiones de Citiox...</p>
                                     </div>
                                 ) : globalMissions.length === 0 ? (
                                     <div className="bg-white border border-slate-150 rounded-3xl p-16 text-center shadow-sm">
                                         <Trophy className="mx-auto text-slate-300 mb-4" size={48} />
-                                        <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No hay campañas de Citiox activas</h3>
+                                        <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight mb-2">No hay campañas de Citiox activas</h3>
                                         <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto">
                                             Citiox lanza retos por temporadas. Vuelve más tarde para descubrir nuevas misiones oficiales.
                                         </p>
@@ -4276,26 +4249,26 @@ export default function QuestDashboard() {
                                                             </div>
                                                             <div>
                                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                                    <h4 className="text-xs font-black text-slate-850 uppercase tracking-wider">{m.titulo}</h4>
-                                                                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-0.5">
+                                                                    <h4 className="text-xs font-bold text-slate-850 uppercase tracking-wider">{m.titulo}</h4>
+                                                                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-0.5">
                                                                         ✨ Oficial Citiox
                                                                     </span>
                                                                 </div>
-                                                                <p className="text-[10px] text-slate-400 font-medium mt-1">{m.descripcion}</p>
+                                                                <p className="text-xs text-slate-400 font-medium mt-1">{m.descripcion}</p>
                                                             </div>
                                                         </div>
 
                                                         <div className="text-right shrink-0">
                                                             {recompensaDada ? (
-                                                                <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[8px] font-black uppercase tracking-wider inline-block">
+                                                                <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
                                                                     Premio Entregado
                                                                 </span>
                                                             ) : completada ? (
-                                                                <span className="px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-full text-[8px] font-black uppercase tracking-wider inline-block animate-pulse">
+                                                                <span className="px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-full text-xs font-bold uppercase tracking-wider inline-block animate-pulse">
                                                                     Listo
                                                                 </span>
                                                             ) : (
-                                                                <span className="px-2.5 py-1 bg-slate-50 text-slate-400 border border-slate-200 rounded-full text-[8px] font-black uppercase tracking-wider inline-block">
+                                                                <span className="px-2.5 py-1 bg-slate-50 text-slate-400 border border-slate-200 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
                                                                     En Curso
                                                                 </span>
                                                             )}
@@ -4304,7 +4277,7 @@ export default function QuestDashboard() {
 
                                                     {/* PROGRES BAR */}
                                                     <div className="space-y-1.5 pt-2">
-                                                        <div className="flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                                        <div className="flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-wide">
                                                             <span>Progreso de Misión</span>
                                                             <span className="text-slate-700 font-bold">{Math.min(meta, actual)} / {meta} ({pct}%)</span>
                                                         </div>
@@ -4323,10 +4296,10 @@ export default function QuestDashboard() {
                                                     <div className="flex items-center justify-between p-3.5 bg-indigo-50/40 rounded-2xl border border-indigo-50/60 mt-2">
                                                         <div className="flex items-center gap-2">
                                                             <Sparkles className="text-indigo-500 animate-pulse" size={14} />
-                                                            <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">Recompensa:</span>
-                                                            <span className="text-xs font-black text-slate-800">{rewardText}</span>
+                                                            <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Recompensa:</span>
+                                                            <span className="text-xs font-bold text-slate-800">{rewardText}</span>
                                                         </div>
-                                                        <span className="text-[9px] font-bold text-slate-400">Entrega Automática</span>
+                                                        <span className="text-xs font-bold text-slate-400">Entrega Automática</span>
                                                     </div>
                                                 </div>
                                             );
@@ -4338,7 +4311,7 @@ export default function QuestDashboard() {
                             {/* HISTORIAL DE RECOMPENSAS */}
                             <div className="space-y-6">
                                 <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
-                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
                                         <Trophy className="text-indigo-500" size={18} /> Historial de Recompensas
                                     </h3>
                                     <div className="space-y-4">
@@ -4358,11 +4331,11 @@ export default function QuestDashboard() {
                                                             <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
                                                                 <CheckCircle2 size={14} />
                                                             </div>
-                                                            <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{h.Mission?.titulo || 'Reto Citiox'}</span>
+                                                            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">{h.Mission?.titulo || 'Reto Citiox'}</span>
                                                         </div>
-                                                        <span className="text-[8px] text-slate-400 font-bold">{new Date(h.fecha).toLocaleDateString()}</span>
+                                                        <span className="text-xs text-slate-400 font-bold">{new Date(h.fecha).toLocaleDateString()}</span>
                                                     </div>
-                                                    <p className="text-[11px] font-bold text-indigo-600 leading-tight">{h.detalles}</p>
+                                                    <p className="text-xs font-bold text-indigo-600 leading-tight">{h.detalles}</p>
                                                 </div>
                                             ))
                                         )}
@@ -4375,18 +4348,18 @@ export default function QuestDashboard() {
                     {/* 10. HISTORIAL */}
                     {activeTab === 'history' && (
                         <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
-                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
                                 <History className="text-slate-500" size={18} /> Auditoría del Growth Engine
                             </h3>
                             <div className="space-y-4">
                                 {participantsHistory.map((log: any) => (
                                     <div key={log.id} className="p-3 bg-slate-50 border border-slate-100 rounded-2xl flex justify-between items-center text-xs">
                                         <div>
-                                            <p className="font-black text-slate-850 uppercase">{log.action}</p>
-                                            <p className="text-slate-450 text-[10px] mt-0.5">Cliente: {log.Usuario?.nombre || 'Cliente'} - Reto: {log.Quest?.nombre}</p>
-                                            {log.detalles && <p className="text-[9px] text-slate-400 font-semibold mt-1 italic">Detalles: {log.detalles}</p>}
+                                            <p className="font-bold text-slate-850 uppercase">{log.action}</p>
+                                            <p className="text-slate-450 text-xs mt-0.5">Cliente: {log.Usuario?.nombre || 'Cliente'} - Reto: {log.Quest?.nombre}</p>
+                                            {log.detalles && <p className="text-xs text-slate-400 font-semibold mt-1 ">Detalles: {log.detalles}</p>}
                                         </div>
-                                        <span className="text-[9px] text-slate-400 font-black">{new Date(log.createdAt).toLocaleString()}</span>
+                                        <span className="text-xs text-slate-400 font-bold">{new Date(log.createdAt).toLocaleString()}</span>
                                     </div>
                                 ))}
                                 {participantsHistory.length === 0 && (
@@ -4406,11 +4379,11 @@ export default function QuestDashboard() {
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h3 className="text-base font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                        {editingQuestId ? 'Editar Desafío / Misión' : 'Asistente de Misiones'} <span className="text-pink-500 font-extrabold text-[10px] bg-pink-50 px-2 py-0.5 rounded-full">Growth Engine v2</span>
+                                    <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                        {editingQuestId ? 'Editar Desafío / Misión' : 'Asistente de Misiones'} <span className="text-pink-500 font-extrabold text-xs bg-pink-50 px-2 py-0.5 rounded-full">Growth Engine v2</span>
                                     </h3>
                                 </div>
-                                <p className="text-slate-400 text-[10px] font-bold mt-0.5">
+                                <p className="text-slate-400 text-xs font-bold mt-0.5">
                                     Paso {wizardStep} de 7 {wizardStep === 0 ? "(Configuración Inicial)" : ""}
                                 </p>
                             </div>
@@ -4446,18 +4419,18 @@ export default function QuestDashboard() {
                                             className="relative z-10 flex flex-col items-center group cursor-pointer focus:outline-none"
                                             disabled={!canNavigate}
                                         >
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
-                                                isCompleted 
-                                                    ? 'bg-emerald-500 text-white shadow-md' 
-                                                    : isActive 
-                                                        ? 'bg-pink-500 text-white shadow-lg ring-4 ring-pink-100 scale-110' 
-                                                        : 'bg-slate-50 border border-slate-200 text-slate-400 group-hover:bg-slate-100'
-                                            }`}>
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+ isCompleted 
+ ? 'bg-emerald-500 text-white shadow-md' 
+ : isActive 
+ ? 'bg-pink-500 text-white shadow-lg ring-4 ring-pink-100 scale-110' 
+ : 'bg-slate-50 border border-slate-200 text-slate-400 group-hover:bg-slate-100'
+ }`}>
                                                 {isCompleted ? '✓' : s.step}
                                             </div>
-                                            <span className={`text-[9px] font-bold mt-2 uppercase tracking-wider transition-colors ${
-                                                isActive ? 'text-pink-600 font-extrabold' : isCompleted ? 'text-emerald-600' : 'text-slate-400'
-                                            }`}>
+                                            <span className={`text-xs font-bold mt-2 uppercase tracking-wider transition-colors ${
+ isActive ? 'text-pink-600 font-extrabold' : isCompleted ? 'text-emerald-600' : 'text-slate-400'
+ }`}>
                                                 {s.label}
                                             </span>
                                         </button>
@@ -4476,8 +4449,8 @@ export default function QuestDashboard() {
                                 {wizardStep === 0 && (
                                     <div className="space-y-6">
                                         <div className="text-center max-w-xl mx-auto py-2">
-                                            <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-2">¿Cómo deseas crear tu campaña de crecimiento?</h4>
-                                            <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">
+                                            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">¿Cómo deseas crear tu campaña de crecimiento?</h4>
+                                            <p className="text-xs text-slate-400 font-semibold leading-relaxed">
                                                 Elige el método que mejor se adapte a tu flujo. El asistente inteligente te guiará en cada paso.
                                             </p>
                                         </div>
@@ -4489,14 +4462,14 @@ export default function QuestDashboard() {
                                                     <div className="w-10 h-10 rounded-2xl bg-pink-50 flex items-center justify-center mb-4 group-hover:bg-pink-100 transition-colors">
                                                         <Trophy className="text-pink-500" size={20} />
                                                     </div>
-                                                    <h5 className="text-xs font-black uppercase tracking-wider text-slate-800 mb-2">Plantillas Citiox</h5>
-                                                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mb-4">
+                                                    <h5 className="text-xs font-bold uppercase tracking-wider text-slate-800 mb-2">Plantillas Citiox</h5>
+                                                    <p className="text-xs text-slate-400 font-semibold leading-relaxed mb-4">
                                                         Elige entre 6 configuraciones prediseñadas listas para captar y fidelizar clientes.
                                                     </p>
                                                 </div>
                                                 <button
                                                     onClick={() => setWizardStep(1.5)}
-                                                    className="w-full py-2.5 bg-pink-50 text-pink-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-pink-100 cursor-pointer"
+                                                    className="w-full py-2.5 bg-pink-50 text-pink-600 rounded-xl text-xs font-bold uppercase tracking-wide hover:bg-pink-100 cursor-pointer"
                                                 >
                                                     Explorar Plantillas
                                                 </button>
@@ -4508,14 +4481,14 @@ export default function QuestDashboard() {
                                                     <div className="w-10 h-10 rounded-2xl bg-purple-50 flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors">
                                                         <Bot className="text-purple-500" size={20} />
                                                     </div>
-                                                    <h5 className="text-xs font-black uppercase tracking-wider text-slate-800 mb-2">Asistente IA de Citiox</h5>
-                                                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mb-4">
+                                                    <h5 className="text-xs font-bold uppercase tracking-wider text-slate-800 mb-2">Asistente IA de Citiox</h5>
+                                                    <p className="text-xs text-slate-400 font-semibold leading-relaxed mb-4">
                                                         Describe tu idea en lenguaje natural y la IA autocompletará el formulario en segundos.
                                                     </p>
                                                 </div>
                                                 <button
                                                     onClick={() => setWizardStep(1.6)}
-                                                    className="w-full py-2.5 bg-purple-50 text-purple-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-100 cursor-pointer"
+                                                    className="w-full py-2.5 bg-purple-50 text-purple-600 rounded-xl text-xs font-bold uppercase tracking-wide hover:bg-purple-100 cursor-pointer"
                                                 >
                                                     Escribir Idea
                                                 </button>
@@ -4527,14 +4500,14 @@ export default function QuestDashboard() {
                                                     <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center mb-4 group-hover:bg-slate-200 transition-colors">
                                                         <Plus className="text-slate-600" size={20} />
                                                     </div>
-                                                    <h5 className="text-xs font-black uppercase tracking-wider text-slate-800 mb-2">Crear Desde Cero</h5>
-                                                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mb-4">
+                                                    <h5 className="text-xs font-bold uppercase tracking-wider text-slate-800 mb-2">Crear Desde Cero</h5>
+                                                    <p className="text-xs text-slate-400 font-semibold leading-relaxed mb-4">
                                                         Define paso a paso las categorías, condiciones, límites y las recompensas personalizadas.
                                                     </p>
                                                 </div>
                                                 <button
                                                     onClick={() => setWizardStep(1)}
-                                                    className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 cursor-pointer"
+                                                    className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold uppercase tracking-wide hover:bg-slate-200 cursor-pointer"
                                                 >
                                                     Iniciar Asistente
                                                 </button>
@@ -4550,7 +4523,7 @@ export default function QuestDashboard() {
                                             <button onClick={() => setWizardStep(0)} className="p-2 border border-slate-150 rounded-xl hover:bg-slate-50 cursor-pointer">
                                                 <ChevronLeft size={16} className="text-slate-500" />
                                             </button>
-                                            <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Selecciona una Plantilla Citiox Recomendada</h4>
+                                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Selecciona una Plantilla Citiox Recomendada</h4>
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {LOCAL_TEMPLATES.map((tpl) => (
@@ -4560,19 +4533,19 @@ export default function QuestDashboard() {
                                                 >
                                                     <div>
                                                         <div className="flex justify-between items-start mb-3">
-                                                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: `${tpl.color}15`, color: tpl.color }}>
+                                                            <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: `${tpl.color}15`, color: tpl.color }}>
                                                                 {tpl.categoria}
                                                             </span>
                                                             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${tpl.color}15` }}>
                                                                 <Trophy color={tpl.color} size={16} />
                                                             </div>
                                                         </div>
-                                                        <h5 className="text-[11px] font-black uppercase tracking-wider text-slate-800 mb-1">{tpl.nombre}</h5>
-                                                        <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mb-4">{tpl.descripcion}</p>
+                                                        <h5 className="text-xs font-bold uppercase tracking-wider text-slate-800 mb-1">{tpl.nombre}</h5>
+                                                        <p className="text-xs text-slate-400 font-semibold leading-relaxed mb-4">{tpl.descripcion}</p>
                                                     </div>
                                                     <button
                                                         onClick={() => handleApplyLocalTemplate(tpl)}
-                                                        className="w-full py-2 border border-slate-150 rounded-xl text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer text-center"
+                                                        className="w-full py-2 border border-slate-150 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer text-center"
                                                     >
                                                         Utilizar esta plantilla
                                                     </button>
@@ -4589,13 +4562,13 @@ export default function QuestDashboard() {
                                             <button onClick={() => setWizardStep(0)} className="p-2 border border-slate-150 rounded-xl hover:bg-slate-50 cursor-pointer">
                                                 <ChevronLeft size={16} className="text-slate-500" />
                                             </button>
-                                            <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                                                 <Bot size={16} className="text-purple-500" /> Asistente IA de Citiox (Natural Language)
                                             </h4>
                                         </div>
 
                                         <div className="space-y-4">
-                                            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                                            <p className="text-xs text-slate-400 font-semibold leading-relaxed">
                                                 Describe lo que quieres conseguir. Por ejemplo: <i>{
                                                     activeVertical === 'CANCHAS' ? '"Misión para que jueguen 5 partidos en las canchas los fines de semana, ganen 150 puntos y 1 hora de alquiler gratis..."' :
                                                     activeVertical === 'SHOE_CARE' ? '"Misión para que completen 3 lavados de sneakers o calzado, ganen 100 puntos y un cupón del 10%..."' :
@@ -4617,7 +4590,7 @@ export default function QuestDashboard() {
                                             <button
                                                 onClick={handleIaParse}
                                                 disabled={isIaProcessing}
-                                                className="w-full py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest bg-purple-500 hover:bg-purple-600 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                                                className="w-full py-3 text-white rounded-2xl text-xs font-bold uppercase tracking-wide bg-purple-500 hover:bg-purple-600 transition-colors cursor-pointer flex items-center justify-center gap-2"
                                             >
                                                 {isIaProcessing ? (
                                                     <>
@@ -4639,10 +4612,10 @@ export default function QuestDashboard() {
                                 {wizardStep === 1 && (
                                     <div className="space-y-6">
                                         <div className="flex justify-between items-center mb-4">
-                                            <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">¿Qué categoría deseas premiar?</h4>
+                                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">¿Qué categoría deseas premiar?</h4>
                                             <button 
                                                 onClick={() => setWizardStep(1.6)}
-                                                className="text-[9px] font-black text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 hover:bg-purple-100 transition-all cursor-pointer"
+                                                className="text-xs font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 hover:bg-purple-100 transition-all cursor-pointer"
                                             >
                                                 ✨ Usar IA de Citiox
                                             </button>
@@ -4667,15 +4640,15 @@ export default function QuestDashboard() {
                                                         {opt.icono === 'Sparkles' && <Sparkles style={{ color: opt.color }} size={20} />}
                                                     </div>
                                                     <div>
-                                                        <span className="block text-xs font-black uppercase tracking-wider text-slate-800 mb-1">{opt.label}</span>
-                                                        <span className="block text-[10px] text-slate-400 font-semibold leading-relaxed">{opt.desc}</span>
+                                                        <span className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-1">{opt.label}</span>
+                                                        <span className="block text-xs text-slate-400 font-semibold leading-relaxed">{opt.desc}</span>
                                                     </div>
                                                 </button>
                                             ))}
                                         </div>
                                         <div className="flex justify-between mt-8 border-t border-slate-100 pt-6">
-                                            <button onClick={() => setWizardStep(0)} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
-                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-pointer" style={{ backgroundColor: primaryColor }}>Continuar</button>
+                                            <button onClick={() => setWizardStep(0)} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
+                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-xs font-bold uppercase tracking-wide cursor-pointer" style={{ backgroundColor: primaryColor }}>Continuar</button>
                                         </div>
                                     </div>
                                 )}
@@ -4683,12 +4656,12 @@ export default function QuestDashboard() {
                                 {/* PASO 2: ACCIÓN Y TRIGGERS DEL CLIENTE */}
                                 {wizardStep === 2 && (
                                     <div className="space-y-6 animate-fadeIn">
-                                        <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Detalles y Configuración de Eventos</h4>
+                                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Detalles y Configuración de Eventos</h4>
                                         
                                         <div className="space-y-4">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Nombre del Reto / Misión</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nombre del Reto / Misión</label>
                                                     <input
                                                         type="text"
                                                         value={wizardData.nombre}
@@ -4698,7 +4671,7 @@ export default function QuestDashboard() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Evento Detonador (Trigger)</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Evento Detonador (Trigger)</label>
                                                     <select
                                                         value={wizardData.triggerEvent}
                                                         onChange={e => {
@@ -4728,18 +4701,18 @@ export default function QuestDashboard() {
                                                 {['BOOKING_COMPLETED', 'REVIEW_CREATED', 'CUMPLEANOS', 'CUMPLEANOS_WEEK', 'CUMPLEANOS_MONTH'].includes(wizardData.triggerEvent) ? (
                                                     <>
                                                         <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                                                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">✅ Disponible en el motor automático de Citiox</span>
+                                                        <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">✅ Disponible en el motor automático de Citiox</span>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <div className="size-2 rounded-full bg-amber-500 animate-pulse" />
-                                                        <span className="text-[10px] font-black text-amber-600 uppercase tracking-wider">⚠ Requiere validación manual del staff al completarse</span>
+                                                        <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">⚠ Requiere validación manual del staff al completarse</span>
                                                     </>
                                                 )}
                                             </div>
 
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Descripción pública para el cliente</label>
+                                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descripción pública para el cliente</label>
                                                 <textarea
                                                     value={wizardData.descripcion}
                                                     onChange={e => setWizardData(prev => ({ ...prev, descripcion: e.target.value }))}
@@ -4750,7 +4723,7 @@ export default function QuestDashboard() {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Frecuencia / Conteo</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Frecuencia / Conteo</label>
                                                     <select
                                                         value={wizardData.progresoTipo}
                                                         onChange={e => {
@@ -4769,7 +4742,7 @@ export default function QuestDashboard() {
                                                 </div>
                                                 {wizardData.progresoTipo === 'ACUMULATIVO' && (
                                                     <div>
-                                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Meta de Veces Requerida</label>
+                                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Meta de Veces Requerida</label>
                                                         <input
                                                             type="number"
                                                             value={wizardData.cantidadMeta}
@@ -4783,8 +4756,8 @@ export default function QuestDashboard() {
                                         </div>
 
                                         <div className="flex justify-between mt-8 border-t border-slate-100 pt-6">
-                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
-                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-pointer" style={{ backgroundColor: primaryColor }}>Continuar</button>
+                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
+                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-xs font-bold uppercase tracking-wide cursor-pointer" style={{ backgroundColor: primaryColor }}>Continuar</button>
                                         </div>
                                     </div>
                                 )}
@@ -4792,8 +4765,8 @@ export default function QuestDashboard() {
                                 {/* PASO 3: CONDICIONES DINÁMICAS (`+ Agregar Condición`) */}
                                 {wizardStep === 3 && (
                                     <div className="space-y-6 animate-fadeIn">
-                                        <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Ajustar Filtros y Condiciones Avanzadas (Opcionales)</h4>
-                                        <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Ajustar Filtros y Condiciones Avanzadas (Opcionales)</h4>
+                                        <p className="text-xs text-slate-400 font-semibold leading-relaxed">
                                             Restringe esta misión para servicios, días, horarios o segmentos específicos. Deja vacío para aplicar de forma general.
                                         </p>
 
@@ -4802,7 +4775,7 @@ export default function QuestDashboard() {
                                             {wizardData.condiciones && wizardData.condiciones.length > 0 ? (
                                                 wizardData.condiciones.map((cond: any, idx: number) => (
                                                     <div key={idx} className="flex justify-between items-center p-3.5 border border-slate-150 rounded-2xl bg-slate-50">
-                                                        <div className="text-[10px] font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2">
+                                                        <div className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2">
                                                             <span className="px-2 py-0.5 rounded-md bg-pink-50 text-pink-600">{cond.field}</span>
                                                             <span className="text-slate-400">{cond.operator}</span>
                                                             <span className="text-slate-800">
@@ -4825,7 +4798,7 @@ export default function QuestDashboard() {
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="p-5 border border-dashed border-slate-200 rounded-3xl text-center text-slate-400 text-[10px] font-bold">
+                                                <div className="p-5 border border-dashed border-slate-200 rounded-3xl text-center text-slate-400 text-xs font-bold">
                                                     Sin filtros activos. La misión aplica a todo el negocio.
                                                 </div>
                                             )}
@@ -4833,16 +4806,16 @@ export default function QuestDashboard() {
 
                                         {/* Selector para añadir nueva condición */}
                                         <div className="p-5 border border-slate-150 rounded-3xl bg-slate-50/50 space-y-4">
-                                            <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                            <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                                                 <PlusCircle size={14} /> Agregar Filtro Condicional
                                             </h5>
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                 <div>
-                                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Campo</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Campo</label>
                                                     <select
                                                         value={newCondition.field}
                                                         onChange={e => setNewCondition(prev => ({ ...prev, field: e.target.value, value: '' }))}
-                                                        className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-[10px] font-bold bg-white text-slate-800 focus:outline-none"
+                                                        className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-xs font-bold bg-white text-slate-800 focus:outline-none"
                                                     >
                                                         <option value="servicioId">Servicio Específico</option>
                                                         <option value="categoriaId">Categoría de Servicio</option>
@@ -4856,11 +4829,11 @@ export default function QuestDashboard() {
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Operador</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Operador</label>
                                                     <select
                                                         value={newCondition.operator}
                                                         onChange={e => setNewCondition(prev => ({ ...prev, operator: e.target.value }))}
-                                                        className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-[10px] font-bold bg-white text-slate-800 focus:outline-none"
+                                                        className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-xs font-bold bg-white text-slate-800 focus:outline-none"
                                                     >
                                                         <option value="equals">Igual a (equals)</option>
                                                         <option value="greater_than">Mayor que (&gt;)</option>
@@ -4869,12 +4842,12 @@ export default function QuestDashboard() {
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-[8px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Valor</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Valor</label>
                                                     {newCondition.field === 'servicioId' ? (
                                                         <select
                                                             value={newCondition.value}
                                                             onChange={e => setNewCondition(prev => ({ ...prev, value: e.target.value }))}
-                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-[10px] font-bold bg-white text-slate-800 focus:outline-none"
+                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-xs font-bold bg-white text-slate-800 focus:outline-none"
                                                         >
                                                             <option value="">Selecciona servicio...</option>
                                                             {servicesList.map((s: any) => (
@@ -4885,7 +4858,7 @@ export default function QuestDashboard() {
                                                         <select
                                                             value={newCondition.value}
                                                             onChange={e => setNewCondition(prev => ({ ...prev, value: e.target.value }))}
-                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-[10px] font-bold bg-white text-slate-800 focus:outline-none"
+                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-xs font-bold bg-white text-slate-800 focus:outline-none"
                                                         >
                                                             <option value="">Selecciona día...</option>
                                                             <option value="LUNES">Lunes</option>
@@ -4900,7 +4873,7 @@ export default function QuestDashboard() {
                                                         <select
                                                             value={newCondition.value}
                                                             onChange={e => setNewCondition(prev => ({ ...prev, value: e.target.value }))}
-                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-[10px] font-bold bg-white text-slate-800 focus:outline-none"
+                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-xs font-bold bg-white text-slate-800 focus:outline-none"
                                                         >
                                                             <option value="">Selecciona...</option>
                                                             <option value="true">Sí (True)</option>
@@ -4910,7 +4883,7 @@ export default function QuestDashboard() {
                                                         <select
                                                             value={newCondition.value}
                                                             onChange={e => setNewCondition(prev => ({ ...prev, value: e.target.value }))}
-                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-[10px] font-bold bg-white text-slate-800 focus:outline-none"
+                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-xs font-bold bg-white text-slate-800 focus:outline-none"
                                                         >
                                                             <option value="">Selecciona...</option>
                                                             <option value="Femenino">Femenino</option>
@@ -4922,7 +4895,7 @@ export default function QuestDashboard() {
                                                             type="text"
                                                             value={newCondition.value}
                                                             onChange={e => setNewCondition(prev => ({ ...prev, value: e.target.value }))}
-                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-[10px] font-bold bg-white text-slate-850"
+                                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-150 text-xs font-bold bg-white text-slate-850"
                                                             placeholder="Ej: Faciales, 18, etc."
                                                         />
                                                     )}
@@ -4942,15 +4915,15 @@ export default function QuestDashboard() {
                                                     setNewCondition({ field: 'servicioId', operator: 'equals', value: '' });
                                                     showToast('Filtro condicional añadido', 'success');
                                                 }}
-                                                className="px-4 py-2 bg-pink-50 text-pink-600 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-pink-100 cursor-pointer"
+                                                className="px-4 py-2 bg-pink-50 text-pink-600 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-pink-100 cursor-pointer"
                                             >
                                                 Añadir Filtro
                                             </button>
                                         </div>
 
                                         <div className="flex justify-between mt-8 border-t border-slate-100 pt-6">
-                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
-                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-pointer" style={{ backgroundColor: primaryColor }}>Continuar</button>
+                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
+                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-xs font-bold uppercase tracking-wide cursor-pointer" style={{ backgroundColor: primaryColor }}>Continuar</button>
                                         </div>
                                     </div>
                                 )}
@@ -4958,8 +4931,8 @@ export default function QuestDashboard() {
                                 {/* PASO 4: RECOMPENSAS Y CANALES AUTOMATIZADOS (Unificado y combinable) */}
                                 {wizardStep === 4 && (
                                     <div className="space-y-6 animate-fadeIn">
-                                        <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Unificar Premios y Canales Automatizados</h4>
-                                        <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Unificar Premios y Canales Automatizados</h4>
+                                        <p className="text-xs text-slate-400 font-semibold leading-relaxed">
                                             Selecciona múltiples recompensas para acumular valor. Puedes combinarlas libremente.
                                         </p>
 
@@ -4977,8 +4950,8 @@ export default function QuestDashboard() {
                                                         className="size-4 rounded accent-pink-500"
                                                     />
                                                     <div>
-                                                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">Puntos de fidelidad</span>
-                                                        <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Sumar saldo de puntos directo al cliente</span>
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block">Puntos de fidelidad</span>
+                                                        <span className="text-xs text-slate-400 font-bold block mt-0.5">Sumar saldo de puntos directo al cliente</span>
                                                     </div>
                                                 </label>
                                                 {wizardData.recompensasSeleccionadas.puntos && (
@@ -5005,8 +4978,8 @@ export default function QuestDashboard() {
                                                         className="size-4 rounded accent-pink-500"
                                                     />
                                                     <div>
-                                                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">Cupón de Descuento</span>
-                                                        <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Genera un código de descuento autodeclarante</span>
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block">Cupón de Descuento</span>
+                                                        <span className="text-xs text-slate-400 font-bold block mt-0.5">Genera un código de descuento autodeclarante</span>
                                                     </div>
                                                 </label>
                                                 {wizardData.recompensasSeleccionadas.cupon && (
@@ -5020,7 +4993,7 @@ export default function QuestDashboard() {
                                                                     onChange={() => setWizardData(prev => ({ ...prev, cuponId: '' }))}
                                                                     className="accent-pink-500 font-bold"
                                                                 />
-                                                                <span className="text-[10px] font-black text-slate-600 uppercase">Crear Nuevo</span>
+                                                                <span className="text-xs font-bold text-slate-600 uppercase">Crear Nuevo</span>
                                                             </label>
                                                             <label className="flex items-center gap-2 cursor-pointer">
                                                                 <input
@@ -5034,37 +5007,37 @@ export default function QuestDashboard() {
                                                                     }}
                                                                     className="accent-pink-500 font-bold"
                                                                 />
-                                                                <span className="text-[10px] font-black text-slate-600 uppercase">Seleccionar Existente</span>
+                                                                <span className="text-xs font-bold text-slate-600 uppercase">Seleccionar Existente</span>
                                                             </label>
                                                         </div>
 
                                                         {!wizardData.cuponId ? (
                                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                                 <div>
-                                                                    <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Nombre Cupón</label>
+                                                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nombre Cupón</label>
                                                                     <input
                                                                         type="text"
                                                                         value={wizardData.cuponNombre}
                                                                         onChange={e => setWizardData(prev => ({ ...prev, cuponNombre: e.target.value }))}
-                                                                        className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
+                                                                        className="w-full px-3 py-2 rounded-xl border border-slate-150 text-xs font-bold text-slate-800 bg-white"
                                                                         placeholder="Ej. Cupón Citas"
                                                                     />
                                                                 </div>
                                                                 <div>
-                                                                    <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Valor</label>
+                                                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Valor</label>
                                                                     <input
                                                                         type="number"
                                                                         value={wizardData.cuponValor}
                                                                         onChange={e => setWizardData(prev => ({ ...prev, cuponValor: Number(e.target.value) }))}
-                                                                        className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
+                                                                        className="w-full px-3 py-2 rounded-xl border border-slate-150 text-xs font-bold text-slate-800 bg-white"
                                                                     />
                                                                 </div>
                                                                 <div>
-                                                                    <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Tipo</label>
+                                                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Tipo</label>
                                                                     <select
                                                                         value={wizardData.cuponTipo}
                                                                         onChange={e => setWizardData(prev => ({ ...prev, cuponTipo: e.target.value }))}
-                                                                        className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
+                                                                        className="w-full px-3 py-2 rounded-xl border border-slate-150 text-xs font-bold text-slate-800 bg-white"
                                                                     >
                                                                         <option value="PORCENTAJE">Porcentaje (%)</option>
                                                                         <option value="FIJO">Fijo ($)</option>
@@ -5073,11 +5046,11 @@ export default function QuestDashboard() {
                                                             </div>
                                                         ) : (
                                                             <div>
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Buscar Cupón del Catálogo</label>
+                                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Buscar Cupón del Catálogo</label>
                                                                 <select
                                                                     value={wizardData.cuponId}
                                                                     onChange={e => setWizardData(prev => ({ ...prev, cuponId: e.target.value }))}
-                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
+                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-xs font-bold text-slate-800 bg-white"
                                                                 >
                                                                     {coupons.filter((c: any) => c.activa).map((c: any) => (
                                                                         <option key={c.id} value={c.id}>
@@ -5104,7 +5077,7 @@ export default function QuestDashboard() {
                                                             }))}
                                                             className="size-4 rounded accent-pink-500"
                                                         />
-                                                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-700">Producto Gratis</span>
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Producto Gratis</span>
                                                     </label>
                                                     <label className="flex items-center gap-3 cursor-pointer">
                                                         <input
@@ -5116,7 +5089,7 @@ export default function QuestDashboard() {
                                                             }))}
                                                             className="size-4 rounded accent-pink-500"
                                                         />
-                                                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-700">Servicio de Regalo</span>
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Servicio de Regalo</span>
                                                     </label>
                                                 </div>
 
@@ -5124,22 +5097,22 @@ export default function QuestDashboard() {
                                                     <div className="pl-7 space-y-3">
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                             <div>
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Nombre del producto de regalo</label>
+                                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nombre del producto de regalo</label>
                                                                 <input
                                                                     type="text"
                                                                     value={wizardData.productoGratisNombre}
                                                                     onChange={e => setWizardData(prev => ({ ...prev, productoGratisNombre: e.target.value }))}
-                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
+                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-xs font-bold text-slate-800 bg-white"
                                                                     placeholder="Ej. Crema hidratante corporal"
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Imagen del Producto Físico (URL Opcional)</label>
+                                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Imagen del Producto Físico (URL Opcional)</label>
                                                                 <input
                                                                     type="text"
                                                                     value={wizardData.productoGratisImagenUrl}
                                                                     onChange={e => setWizardData(prev => ({ ...prev, productoGratisImagenUrl: e.target.value }))}
-                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
+                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-xs font-bold text-slate-800 bg-white"
                                                                     placeholder="Ej. https://servidor.com/producto.png"
                                                                 />
                                                             </div>
@@ -5151,7 +5124,7 @@ export default function QuestDashboard() {
                                                     <div className="pl-7 space-y-3">
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                             <div>
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Seleccionar Servicio Real</label>
+                                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Seleccionar Servicio Real</label>
                                                                 <select
                                                                     value={wizardData.servicioGratisId}
                                                                     onChange={e => {
@@ -5162,7 +5135,7 @@ export default function QuestDashboard() {
                                                                             servicioGratisNombre: s ? `Servicio Gratis: ${s.nombre}` : prev.servicioGratisNombre
                                                                         }));
                                                                     }}
-                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
+                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-xs font-bold text-slate-800 bg-white"
                                                                     required
                                                                 >
                                                                     <option value="">Buscar servicio...</option>
@@ -5174,12 +5147,12 @@ export default function QuestDashboard() {
                                                                 </select>
                                                             </div>
                                                             <div>
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Nombre Descriptivo</label>
+                                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nombre Descriptivo</label>
                                                                 <input
                                                                     type="text"
                                                                     value={wizardData.servicioGratisNombre}
                                                                     onChange={e => setWizardData(prev => ({ ...prev, servicioGratisNombre: e.target.value }))}
-                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
+                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-xs font-bold text-slate-800 bg-white"
                                                                     placeholder="Ej. Masaje Express gratis"
                                                                 />
                                                             </div>
@@ -5196,8 +5169,8 @@ export default function QuestDashboard() {
                                                         className="size-4 rounded accent-pink-500"
                                                     />
                                                     <div>
-                                                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">Cashback en Monedero ($)</span>
-                                                        <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Dinero real acumulado para su próxima reserva</span>
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block">Cashback en Monedero ($)</span>
+                                                        <span className="text-xs text-slate-400 font-bold block mt-0.5">Dinero real acumulado para su próxima reserva</span>
                                                     </div>
                                                 </label>
                                                 {wizardData.recompensasSeleccionadas.cashback && (
@@ -5213,7 +5186,7 @@ export default function QuestDashboard() {
 
                                             {/* CANALES AUTOMATIZADOS DE NOTIFICACIÓN */}
                                             <div className="p-5 border border-purple-100 rounded-3xl bg-purple-50/20 space-y-4">
-                                                <h5 className="text-[10px] font-black uppercase tracking-wider text-purple-600 flex items-center gap-1.5">
+                                                <h5 className="text-xs font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1.5">
                                                     <Sparkle size={14} className="animate-spin" /> Automatizaciones de Notificación
                                                 </h5>
 
@@ -5229,7 +5202,7 @@ export default function QuestDashboard() {
                                                             }))}
                                                             className="size-4 rounded accent-purple-500"
                                                         />
-                                                        <span className="text-[10px] font-bold text-purple-800">WhatsApp Directo</span>
+                                                        <span className="text-xs font-bold text-purple-800">WhatsApp Directo</span>
                                                     </label>
                                                     <label className="flex items-center gap-2 cursor-pointer p-3 border border-purple-100 bg-white rounded-xl">
                                                         <input
@@ -5241,7 +5214,7 @@ export default function QuestDashboard() {
                                                             }))}
                                                             className="size-4 rounded accent-purple-500"
                                                         />
-                                                        <span className="text-[10px] font-bold text-purple-800">Notificación Push</span>
+                                                        <span className="text-xs font-bold text-purple-800">Notificación Push</span>
                                                     </label>
                                                     <label className="flex items-center gap-2 cursor-pointer p-3 border border-purple-100 bg-white rounded-xl">
                                                         <input
@@ -5253,18 +5226,18 @@ export default function QuestDashboard() {
                                                             }))}
                                                             className="size-4 rounded accent-purple-500"
                                                         />
-                                                        <span className="text-[10px] font-bold text-purple-800">Correo Electrónico</span>
+                                                        <span className="text-xs font-bold text-purple-800">Correo Electrónico</span>
                                                     </label>
                                                 </div>
 
                                                 {/* Textareas para redactar notificaciones */}
                                                 {wizardData.recompensasSeleccionadas.whatsapp && (
                                                     <div className="space-y-2">
-                                                        <label className="block text-[8px] font-black text-purple-500 uppercase tracking-wider">Mensaje de WhatsApp (Soporta variables)</label>
+                                                        <label className="block text-xs font-bold text-purple-500 uppercase tracking-wider">Mensaje de WhatsApp (Soporta variables)</label>
                                                         <textarea
                                                             value={wizardData.whatsappMensaje}
                                                             onChange={e => setWizardData(prev => ({ ...prev, whatsappMensaje: e.target.value }))}
-                                                            className="w-full h-16 p-3 rounded-xl border border-purple-100 text-[10px] font-bold bg-white text-slate-800 focus:outline-none"
+                                                            className="w-full h-16 p-3 rounded-xl border border-purple-100 text-xs font-bold bg-white text-slate-800 focus:outline-none"
                                                             placeholder="Usa {{nombre}} para personalizar..."
                                                         />
                                                     </div>
@@ -5273,21 +5246,21 @@ export default function QuestDashboard() {
                                                 {wizardData.recompensasSeleccionadas.push && (
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                         <div>
-                                                            <label className="block text-[8px] font-black text-purple-500 uppercase tracking-wider mb-1">Título Notificación</label>
+                                                            <label className="block text-xs font-bold text-purple-500 uppercase tracking-wider mb-1">Título Notificación</label>
                                                             <input
                                                                 type="text"
                                                                 value={wizardData.pushTitulo}
                                                                 onChange={e => setWizardData(prev => ({ ...prev, pushTitulo: e.target.value }))}
-                                                                className="w-full px-3 py-2 rounded-xl border border-purple-100 text-[10px] font-bold bg-white text-slate-800"
+                                                                className="w-full px-3 py-2 rounded-xl border border-purple-100 text-xs font-bold bg-white text-slate-800"
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-[8px] font-black text-purple-500 uppercase tracking-wider mb-1">Cuerpo Notificación</label>
+                                                            <label className="block text-xs font-bold text-purple-500 uppercase tracking-wider mb-1">Cuerpo Notificación</label>
                                                             <input
                                                                 type="text"
                                                                 value={wizardData.pushCuerpo}
                                                                 onChange={e => setWizardData(prev => ({ ...prev, pushCuerpo: e.target.value }))}
-                                                                className="w-full px-3 py-2 rounded-xl border border-purple-100 text-[10px] font-bold bg-white text-slate-800"
+                                                                className="w-full px-3 py-2 rounded-xl border border-purple-100 text-xs font-bold bg-white text-slate-800"
                                                             />
                                                         </div>
                                                     </div>
@@ -5296,8 +5269,8 @@ export default function QuestDashboard() {
                                         </div>
 
                                         <div className="flex justify-between mt-8 border-t border-slate-100 pt-6">
-                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
-                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-pointer" style={{ backgroundColor: primaryColor }}>Continuar</button>
+                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
+                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-xs font-bold uppercase tracking-wide cursor-pointer" style={{ backgroundColor: primaryColor }}>Continuar</button>
                                         </div>
                                     </div>
                                 )}
@@ -5305,8 +5278,8 @@ export default function QuestDashboard() {
                                 {/* PASO 5: MÉTODOS DE VALIDACIÓN */}
                                 {wizardStep === 5 && (
                                     <div className="space-y-6 animate-fadeIn">
-                                        <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Método de Validación del Progreso</h4>
-                                        <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Método de Validación del Progreso</h4>
+                                        <p className="text-xs text-slate-400 font-semibold leading-relaxed">
                                             Elige cómo se aprueban las acciones y el progreso de los retos del cliente.
                                         </p>
 
@@ -5329,16 +5302,16 @@ export default function QuestDashboard() {
                                                         {wizardData.validacionTipo === opt.id && <Check size={10} />}
                                                     </div>
                                                     <div>
-                                                        <span className="block text-xs font-black uppercase tracking-wider text-slate-800 mb-1">{opt.label}</span>
-                                                        <span className="block text-[10px] text-slate-400 font-semibold leading-relaxed">{opt.desc}</span>
+                                                        <span className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-1">{opt.label}</span>
+                                                        <span className="block text-xs text-slate-400 font-semibold leading-relaxed">{opt.desc}</span>
                                                     </div>
                                                 </button>
                                             ))}
                                         </div>
 
                                         <div className="flex justify-between mt-8 border-t border-slate-100 pt-6">
-                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
-                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-pointer" style={{ backgroundColor: primaryColor }}>Continuar</button>
+                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
+                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-xs font-bold uppercase tracking-wide cursor-pointer" style={{ backgroundColor: primaryColor }}>Continuar</button>
                                         </div>
                                     </div>
                                 )}
@@ -5347,11 +5320,11 @@ export default function QuestDashboard() {
                                 {wizardStep === 6 && (
                                     <div className="space-y-6 animate-fadeIn">
                                         <div className="flex justify-between items-center mb-2">
-                                            <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Ajustes Generales y Gamificación</h4>
+                                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Ajustes Generales y Gamificación</h4>
                                             <button
                                                 onClick={handleIaGamificationSuggestions}
                                                 disabled={isIaGamificationAnimating}
-                                                className="text-[9px] font-black text-purple-600 bg-purple-50 px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1.5 hover:bg-purple-100 transition-all cursor-pointer"
+                                                className="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1.5 hover:bg-purple-100 transition-all cursor-pointer"
                                             >
                                                 {isIaGamificationAnimating ? (
                                                     <Loader2 size={12} className="animate-spin" />
@@ -5365,19 +5338,19 @@ export default function QuestDashboard() {
                                         {/* Tarjeta de Sugerencia de la IA */}
                                         {iaSugerencia && (
                                             <div className="p-5 border border-purple-100 bg-purple-50/30 rounded-3xl space-y-4 animate-slideIn">
-                                                <div className="text-[10px] font-semibold text-purple-800 leading-relaxed whitespace-pre-line">
+                                                <div className="text-xs font-semibold text-purple-800 leading-relaxed whitespace-pre-line">
                                                     {iaSugerencia}
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={handleApplyIaImprovements}
-                                                        className="px-3.5 py-2 bg-purple-600 text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-purple-700 cursor-pointer"
+                                                        className="px-3.5 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-purple-700 cursor-pointer"
                                                     >
                                                         Aplicar Mejoras
                                                     </button>
                                                     <button
                                                         onClick={() => setIaSugerencia(null)}
-                                                        className="px-3.5 py-2 border border-purple-200 text-purple-600 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-purple-50 cursor-pointer"
+                                                        className="px-3.5 py-2 border border-purple-200 text-purple-600 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-purple-50 cursor-pointer"
                                                     >
                                                         Descartar
                                                     </button>
@@ -5388,7 +5361,7 @@ export default function QuestDashboard() {
                                         <div className="space-y-4">
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Prioridad Misión</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Prioridad Misión</label>
                                                     <select
                                                         value={wizardData.prioridad}
                                                         onChange={e => setWizardData(prev => ({ ...prev, prioridad: e.target.value }))}
@@ -5402,7 +5375,7 @@ export default function QuestDashboard() {
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Dificultad Visual</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Dificultad Visual</label>
                                                     <select
                                                         value={wizardData.dificultad}
                                                         onChange={e => setWizardData(prev => ({ ...prev, dificultad: e.target.value }))}
@@ -5415,7 +5388,7 @@ export default function QuestDashboard() {
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Estado Campaña</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Estado Campaña</label>
                                                     <select
                                                         value={wizardData.estado}
                                                         onChange={e => setWizardData(prev => ({ ...prev, estado: e.target.value }))}
@@ -5431,7 +5404,7 @@ export default function QuestDashboard() {
 
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Límite por Cliente</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Límite por Cliente</label>
                                                     <input
                                                         type="number"
                                                         value={wizardData.limiteUsuario}
@@ -5442,7 +5415,7 @@ export default function QuestDashboard() {
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Límite Total (Global)</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Límite Total (Global)</label>
                                                     <input
                                                         type="number"
                                                         value={wizardData.limiteGlobal}
@@ -5453,7 +5426,7 @@ export default function QuestDashboard() {
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Doble Premio / Repetible</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Doble Premio / Repetible</label>
                                                     <select
                                                         value={wizardData.repetible ? 'true' : 'false'}
                                                         onChange={e => setWizardData(prev => ({ ...prev, repetible: e.target.value === 'true' }))}
@@ -5467,7 +5440,7 @@ export default function QuestDashboard() {
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Fecha de Inicio</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Fecha de Inicio</label>
                                                     <input
                                                         type="date"
                                                         value={wizardData.fechaInicio}
@@ -5476,7 +5449,7 @@ export default function QuestDashboard() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Fecha de Finalización</label>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Fecha de Finalización</label>
                                                     <input
                                                         type="date"
                                                         value={wizardData.fechaFin}
@@ -5488,8 +5461,8 @@ export default function QuestDashboard() {
                                         </div>
 
                                         <div className="flex justify-between mt-8 border-t border-slate-100 pt-6">
-                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
-                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-pointer" style={{ backgroundColor: primaryColor }}>Revisar Resumen</button>
+                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-50 cursor-pointer">Atrás</button>
+                                            <button onClick={handleWizardNext} className="px-5 py-3 text-white rounded-2xl text-xs font-bold uppercase tracking-wide cursor-pointer" style={{ backgroundColor: primaryColor }}>Revisar Resumen</button>
                                         </div>
                                     </div>
                                 )}
@@ -5497,12 +5470,12 @@ export default function QuestDashboard() {
                                 {/* PASO 7: VISTA PREVIA Y AUDITORÍA */}
                                 {wizardStep === 7 && (
                                     <div className="space-y-6 animate-fadeIn">
-                                        <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Confirmación y Auditoría del Administrador</h4>
-                                        <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Confirmación y Auditoría del Administrador</h4>
+                                        <p className="text-xs text-slate-400 font-semibold leading-relaxed">
                                             Tu misión está lista. Las acciones de auditoría se guardarán automáticamente en tu historial local de cambios para referencia de tu equipo.
                                         </p>
 
-                                        <div className="space-y-4 p-5 bg-slate-50 border border-slate-150 rounded-3xl text-[10px] font-bold text-slate-750">
+                                        <div className="space-y-4 p-5 bg-slate-50 border border-slate-150 rounded-3xl text-xs font-bold text-slate-750">
                                             <div className="flex justify-between border-b border-slate-200 pb-2.5">
                                                 <span className="text-slate-400 uppercase tracking-wider">Categoría:</span>
                                                 <span className="text-slate-800 uppercase tracking-wider font-extrabold">{wizardData.categoria}</span>
@@ -5543,10 +5516,10 @@ export default function QuestDashboard() {
                                         </div>
 
                                         <div className="flex justify-between mt-8 border-t border-slate-100 pt-6">
-                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 cursor-pointer" disabled={submitting}>Atrás</button>
+                                            <button onClick={handleWizardBack} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-50 cursor-pointer" disabled={submitting}>Atrás</button>
                                             <button 
                                                 onClick={handleCreateQuestFromWizard}
-                                                className="px-6 py-3.5 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
+                                                className="px-6 py-3.5 text-white rounded-2xl text-xs font-bold uppercase tracking-wide flex items-center gap-2 cursor-pointer transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
                                                 style={{ backgroundColor: primaryColor }}
                                                 disabled={submitting}
                                             >
@@ -5560,7 +5533,7 @@ export default function QuestDashboard() {
 
                             {/* COLUMNA DERECHA: TICKET VISTA PREVIA EN TIEMPO REAL */}
                             <div className="lg:col-span-4 lg:sticky lg:top-4 bg-slate-50 border border-slate-150 rounded-3xl p-6 space-y-6">
-                                <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5 border-b border-slate-200/60 pb-3">
+                                <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 border-b border-slate-200/60 pb-3">
                                     <Eye size={14} /> Vista Previa del Cliente (Vivo)
                                 </h5>
 
@@ -5568,7 +5541,7 @@ export default function QuestDashboard() {
                                     {/* Simulación de la Tarjeta en la App del Cliente */}
                                     <div className="rounded-3xl p-5 text-white shadow-xl space-y-4 relative overflow-hidden transition-all duration-300 animate-pulse-subtle" style={{ backgroundColor: wizardData.color || '#ec4899' }}>
                                         <div className="flex justify-between items-start relative z-10">
-                                            <span className="text-[8px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full">
+                                            <span className="text-xs font-bold uppercase tracking-wide bg-white/20 px-2 py-0.5 rounded-full">
                                                 {wizardData.categoria || 'RESERVAS'}
                                             </span>
                                             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -5577,15 +5550,15 @@ export default function QuestDashboard() {
                                         </div>
 
                                         <div className="space-y-1 relative z-10">
-                                            <h6 className="text-xs font-black uppercase tracking-wider truncate">{wizardData.nombre || 'Reto Sin Nombre'}</h6>
-                                            <p className="text-[9px] text-white/80 font-medium line-clamp-2 leading-relaxed">
+                                            <h6 className="text-xs font-bold uppercase tracking-wider truncate">{wizardData.nombre || 'Reto Sin Nombre'}</h6>
+                                            <p className="text-xs text-white/80 font-medium line-clamp-2 leading-relaxed">
                                                 {wizardData.descripcion || 'Completa esta acción para ganar recompensas exclusivas.'}
                                             </p>
                                         </div>
 
                                         {/* Barra de progreso simulada */}
                                         <div className="space-y-1.5 relative z-10 pt-2">
-                                            <div className="flex justify-between text-[8px] font-black uppercase">
+                                            <div className="flex justify-between text-xs font-bold uppercase">
                                                 <span>Progreso</span>
                                                 <span>0 / {wizardData.cantidadMeta || 1}</span>
                                             </div>
@@ -5597,40 +5570,40 @@ export default function QuestDashboard() {
 
                                     {/* Beneficios / Premios en la Vista Previa */}
                                     <div className="p-4 bg-white border border-slate-100 rounded-2xl space-y-3">
-                                        <span className="block text-[8px] font-black text-slate-400 uppercase tracking-wider">Lo que el cliente ganará:</span>
+                                        <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Lo que el cliente ganará:</span>
                                         <div className="space-y-2">
                                             {wizardData.recompensasSeleccionadas.puntos && (
-                                                <div className="flex items-center gap-2 text-[10px] font-extrabold text-slate-800">
+                                                <div className="flex items-center gap-2 text-xs font-extrabold text-slate-800">
                                                     <div className="w-5 h-5 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">★</div>
                                                     <span>+{wizardData.puntosRecompensa} Puntos de Fidelidad</span>
                                                 </div>
                                             )}
                                             {wizardData.recompensasSeleccionadas.cupon && (
-                                                <div className="flex items-center gap-2 text-[10px] font-extrabold text-slate-800">
+                                                <div className="flex items-center gap-2 text-xs font-extrabold text-slate-800">
                                                     <div className="w-5 h-5 rounded bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">%</div>
                                                     <span>Cupón: {wizardData.cuponValor}{wizardData.cuponTipo === 'PORCENTAJE' ? '%' : '$'} Descuento</span>
                                                 </div>
                                             )}
                                             {wizardData.recompensasSeleccionadas.productoGratis && (
-                                                <div className="flex items-center gap-2 text-[10px] font-extrabold text-slate-800">
+                                                <div className="flex items-center gap-2 text-xs font-extrabold text-slate-800">
                                                     <div className="w-5 h-5 rounded bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">🎁</div>
                                                     <span className="truncate">Regalo: {wizardData.productoGratisNombre || 'Producto de Regalo'}</span>
                                                 </div>
                                             )}
                                             {wizardData.recompensasSeleccionadas.servicioGratis && (
-                                                <div className="flex items-center gap-2 text-[10px] font-extrabold text-slate-800">
+                                                <div className="flex items-center gap-2 text-xs font-extrabold text-slate-800">
                                                     <div className="w-5 h-5 rounded bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">✦</div>
                                                     <span className="truncate">Servicio: {wizardData.servicioGratisNombre || 'Servicio de Regalo'}</span>
                                                 </div>
                                             )}
                                             {wizardData.recompensasSeleccionadas.cashback && (
-                                                <div className="flex items-center gap-2 text-[10px] font-extrabold text-slate-800">
+                                                <div className="flex items-center gap-2 text-xs font-extrabold text-slate-800">
                                                     <div className="w-5 h-5 rounded bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">$</div>
                                                     <span>Cashback: ${wizardData.cashbackMonto} en Monedero</span>
                                                 </div>
                                             )}
                                             {!Object.values(wizardData.recompensasSeleccionadas).some(v => v === true) && (
-                                                <span className="text-[9px] text-slate-400 font-bold block italic">Sin recompensas seleccionadas</span>
+                                                <span className="text-xs text-slate-400 font-bold block ">Sin recompensas seleccionadas</span>
                                             )}
                                         </div>
                                     </div>
@@ -5645,22 +5618,22 @@ export default function QuestDashboard() {
             {/* MODAL: ENTREGAR PREMIO FÍSICO */}
             {selectedRewardToCanje && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white border border-slate-150 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8">
+                    <div className="bg-white border border-slate-150 rounded-2xl w-full max-w-md shadow-2xl p-8">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
-                            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">Confirmar Entrega de Premio</h3>
+                            <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider">Confirmar Entrega de Premio</h3>
                             <button onClick={() => setSelectedRewardToCanje(null)} className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer">×</button>
                         </div>
                         <div className="space-y-4 mb-6">
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-bold">
                                 <p className="text-slate-400 uppercase tracking-wider mb-1">Cliente</p>
-                                <p className="text-slate-800 font-black">{selectedRewardToCanje.Usuario?.nombre}</p>
+                                <p className="text-slate-800 font-bold">{selectedRewardToCanje.Usuario?.nombre}</p>
                                 <p className="text-slate-400 font-semibold mt-1">{selectedRewardToCanje.Usuario?.phone}</p>
 
                                 <p className="text-slate-400 uppercase tracking-wider mb-1 mt-4">Premio a Entregar</p>
-                                <p className="text-slate-800 font-black uppercase">{selectedRewardToCanje.Campaign?.valorRecompensa || selectedRewardToCanje.Reward?.nombre}</p>
+                                <p className="text-slate-800 font-bold uppercase">{selectedRewardToCanje.Campaign?.valorRecompensa || selectedRewardToCanje.Reward?.nombre}</p>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">¿Quién entrega el premio? (Staff)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">¿Quién entrega el premio? (Staff)</label>
                                 <select
                                     value={canjeStaffId}
                                     onChange={e => setCanjeStaffId(e.target.value)}
@@ -5673,7 +5646,7 @@ export default function QuestDashboard() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Notas internas</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Notas internas</label>
                                 <input
                                     type="text"
                                     value={canjeNotas}
@@ -5684,10 +5657,10 @@ export default function QuestDashboard() {
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
-                            <button onClick={() => setSelectedRewardToCanje(null)} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
+                            <button onClick={() => setSelectedRewardToCanje(null)} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
                             <button 
                                 onClick={handleConfirmCanjeFisico} 
-                                className="px-5 py-3 bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 cursor-pointer flex items-center gap-2"
+                                className="px-5 py-3 bg-slate-800 text-white rounded-2xl text-xs font-bold uppercase tracking-wide hover:bg-slate-900 cursor-pointer flex items-center gap-2"
                                 disabled={submitting}
                             >
                                 {submitting ? <Loader2 className="animate-spin" size={14} /> : null}
@@ -5703,12 +5676,12 @@ export default function QuestDashboard() {
                 <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col animate-fadeIn">
                     <form onSubmit={handleCreateCoupon} className="w-full max-w-2xl mx-auto p-6 md:p-12 flex flex-col flex-1">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
-                            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">Crear Nuevo Cupón</h3>
+                            <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider">Crear Nuevo Cupón</h3>
                             <button type="button" onClick={() => setIsCouponModalOpen(false)} className="size-10 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer text-lg font-bold">×</button>
                         </div>
                         <div className="space-y-4 mb-6">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Código del Cupón</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Código del Cupón</label>
                                 <input
                                     type="text"
                                     value={couponFormData.codigo}
@@ -5720,7 +5693,7 @@ export default function QuestDashboard() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Tipo</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tipo</label>
                                     <select
                                         value={couponFormData.tipo}
                                         onChange={e => setCouponFormData(prev => ({ ...prev, tipo: e.target.value }))}
@@ -5731,7 +5704,7 @@ export default function QuestDashboard() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Valor</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Valor</label>
                                     <input
                                         type="number"
                                         value={couponFormData.valor}
@@ -5742,7 +5715,7 @@ export default function QuestDashboard() {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Descripción</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descripción</label>
                                 <input
                                     type="text"
                                     value={couponFormData.descripcion}
@@ -5753,7 +5726,7 @@ export default function QuestDashboard() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Usos Máximos</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Usos Máximos</label>
                                     <input
                                         type="number"
                                         value={couponFormData.maxUsos}
@@ -5763,7 +5736,7 @@ export default function QuestDashboard() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Vencimiento</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vencimiento</label>
                                     <input
                                         type="date"
                                         value={couponFormData.fechaFin}
@@ -5774,24 +5747,24 @@ export default function QuestDashboard() {
                             </div>
                             {/* ─── ASIGNAR A CLIENTE (OPCIONAL) ─── */}
                             <div className="bg-amber-50/60 border border-amber-100 rounded-2xl p-4 space-y-3">
-                                <label className="block text-[10px] font-black text-amber-600 uppercase tracking-wider">
+                                <label className="block text-xs font-bold text-amber-600 uppercase tracking-wider">
                                     👤 Asignar a cliente (opcional)
                                 </label>
                                 {couponClientSelected ? (
                                     <div className="flex items-center justify-between bg-white border border-amber-200 rounded-xl px-4 py-2.5">
                                         <div className="flex items-center gap-2">
-                                            <div className="size-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-black text-xs">
+                                            <div className="size-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-xs">
                                                 {(couponClientSelected.nombre || '?')[0].toUpperCase()}
                                             </div>
                                             <div>
-                                                <p className="text-xs font-black text-slate-800 leading-none">{couponClientSelected.nombre}</p>
-                                                <p className="text-[9px] text-slate-400 font-medium">{couponClientSelected.telefono || couponClientSelected.phone}</p>
+                                                <p className="text-xs font-bold text-slate-800 leading-none">{couponClientSelected.nombre}</p>
+                                                <p className="text-xs text-slate-400 font-medium">{couponClientSelected.telefono || couponClientSelected.phone}</p>
                                             </div>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={() => { setCouponClientSelected(null); setCouponClientSearch(''); setCouponClientResults([]); }}
-                                            className="text-slate-300 hover:text-rose-500 font-black text-sm cursor-pointer"
+                                            className="text-slate-300 hover:text-rose-500 font-bold text-sm cursor-pointer"
                                         >×</button>
                                     </div>
                                 ) : (
@@ -5816,12 +5789,12 @@ export default function QuestDashboard() {
                                                         onClick={() => { setCouponClientSelected(c); setCouponClientResults([]); setCouponClientSearch(''); }}
                                                         className="px-4 py-2.5 hover:bg-amber-50 cursor-pointer flex items-center gap-2 border-b border-slate-50 last:border-0"
                                                     >
-                                                        <div className="size-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-black text-[10px] shrink-0">
+                                                        <div className="size-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs shrink-0">
                                                             {(c.nombre || '?')[0].toUpperCase()}
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs font-black text-slate-800 leading-none">{c.nombre}</p>
-                                                            <p className="text-[9px] text-slate-400">{c.telefono || c.phone}</p>
+                                                            <p className="text-xs font-bold text-slate-800 leading-none">{c.nombre}</p>
+                                                            <p className="text-xs text-slate-400">{c.telefono || c.phone}</p>
                                                         </div>
                                                     </li>
                                                 ))}
@@ -5829,16 +5802,16 @@ export default function QuestDashboard() {
                                         )}
                                     </div>
                                 )}
-                                <p className="text-[9px] text-amber-600/70 font-medium">
+                                <p className="text-xs text-amber-600/70 font-medium">
                                     Si seleccionas un cliente, el cupón se asignará directamente a su cuenta y aparecerá en su app.
                                 </p>
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
-                            <button type="button" onClick={() => setIsCouponModalOpen(false)} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
+                            <button type="button" onClick={() => setIsCouponModalOpen(false)} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
                             <button 
                                 type="submit" 
-                                className="px-5 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 cursor-pointer flex items-center gap-2"
+                                className="px-5 py-3 text-white rounded-2xl text-xs font-bold uppercase tracking-wide hover:opacity-90 cursor-pointer flex items-center gap-2"
                                 style={{ backgroundColor: primaryColor }}
                                 disabled={submitting}
                             >
@@ -5856,14 +5829,14 @@ export default function QuestDashboard() {
                 <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col animate-fadeIn">
                     <form onSubmit={handleCreateCatalogReward} className="w-full max-w-2xl mx-auto p-6 md:p-12 flex flex-col flex-1">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
-                            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">
+                            <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider">
                                 {editingCatalogRewardId ? 'Editar Premio de Catálogo' : 'Crear Premio de Catálogo'}
                             </h3>
                             <button type="button" onClick={() => { setIsCatalogRewardModalOpen(false); setEditingCatalogRewardId(null); }} className="size-10 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer text-lg font-bold">×</button>
                         </div>
                         <div className="space-y-4 mb-6">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Nombre del Premio</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nombre del Premio</label>
                                 <input
                                     type="text"
                                     value={catalogRewardFormData.nombre}
@@ -5874,7 +5847,7 @@ export default function QuestDashboard() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Costo en Puntos</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Costo en Puntos</label>
                                 <input
                                     type="number"
                                     value={catalogRewardFormData.costoPuntos}
@@ -5885,7 +5858,7 @@ export default function QuestDashboard() {
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Tipo Recompensa</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tipo Recompensa</label>
                                 <select
                                     value={catalogRewardFormData.tipo}
                                     onChange={e => {
@@ -5912,7 +5885,7 @@ export default function QuestDashboard() {
                             <div className="grid grid-cols-1 gap-4">
                                 {catalogRewardFormData.tipo === 'SERVICIO_GRATIS' && (
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Seleccionar Servicio Asociado</label>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Seleccionar Servicio Asociado</label>
                                         <select
                                             value={catalogRewardFormData.serviceId}
                                             onChange={e => setCatalogRewardFormData(prev => ({ ...prev, serviceId: e.target.value }))}
@@ -5931,7 +5904,7 @@ export default function QuestDashboard() {
 
                                 {catalogRewardFormData.tipo === 'CUPON' && (
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Seleccionar Cupón Asociado</label>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Seleccionar Cupón Asociado</label>
                                         <select
                                             value={catalogRewardFormData.couponId}
                                             onChange={e => {
@@ -5958,7 +5931,7 @@ export default function QuestDashboard() {
 
                                 {catalogRewardFormData.tipo !== 'CUPON' && catalogRewardFormData.tipo !== 'SERVICIO_GRATIS' && (
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Valor Asociado (opcional)</label>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Valor Asociado (opcional)</label>
                                         <input
                                             type="text"
                                             value={catalogRewardFormData.valor}
@@ -5976,13 +5949,13 @@ export default function QuestDashboard() {
                                 if (!selected) return null;
                                 return (
                                     <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl space-y-1">
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-700">Cupón Seleccionado</p>
-                                        <p className="text-[12px] font-black text-slate-800">{selected.codigo}</p>
-                                        <p className="text-[10px] text-slate-500 font-semibold">
+                                        <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Cupón Seleccionado</p>
+                                        <p className="text-xs font-bold text-slate-800">{selected.codigo}</p>
+                                        <p className="text-xs text-slate-500 font-semibold">
                                             Valor: {selected.tipo === 'PORCENTAJE' ? `${selected.valor}% de descuento` : `$${selected.valor} de descuento`}
                                         </p>
                                         {selected.fechaFin && (
-                                            <p className="text-[9px] text-slate-400 font-medium">Vence el: {new Date(selected.fechaFin).toLocaleDateString()}</p>
+                                            <p className="text-xs text-slate-400 font-medium">Vence el: {new Date(selected.fechaFin).toLocaleDateString()}</p>
                                         )}
                                     </div>
                                 );
@@ -5990,7 +5963,7 @@ export default function QuestDashboard() {
 
                             {catalogRewardFormData.deliveryType === 'MANUAL' && (
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Imagen del Premio Físico (URL Opcional)</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Imagen del Premio Físico (URL Opcional)</label>
                                     <input
                                         type="text"
                                         value={catalogRewardFormData.recompensaImagenUrl}
@@ -6002,7 +5975,7 @@ export default function QuestDashboard() {
                             )}
 
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Imagen del Premio (Card del catálogo)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Imagen del Premio (Card del catálogo)</label>
                                 <ImageUploader
                                     category="loyalty"
                                     aspect="square"
@@ -6013,7 +5986,7 @@ export default function QuestDashboard() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Descripción</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descripción</label>
                                 <input
                                     type="text"
                                     value={catalogRewardFormData.descripcion}
@@ -6024,10 +5997,10 @@ export default function QuestDashboard() {
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
-                            <button type="button" onClick={() => { setIsCatalogRewardModalOpen(false); setEditingCatalogRewardId(null); }} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
+                            <button type="button" onClick={() => { setIsCatalogRewardModalOpen(false); setEditingCatalogRewardId(null); }} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
                             <button 
                                 type="submit" 
-                                className="px-5 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 cursor-pointer flex items-center gap-2"
+                                className="px-5 py-3 text-white rounded-2xl text-xs font-bold uppercase tracking-wide hover:opacity-90 cursor-pointer flex items-center gap-2"
                                 style={{ backgroundColor: primaryColor }}
                                 disabled={submitting}
                             >
@@ -6044,12 +6017,12 @@ export default function QuestDashboard() {
                 <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col animate-fadeIn">
                     <form onSubmit={handlePointsAdjustment} className="w-full max-w-2xl mx-auto p-6 md:p-12 flex flex-col flex-1">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
-                            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">Ajuste Manual de Puntos</h3>
+                            <h3 className="text-base font-bold text-slate-800 uppercase tracking-wider">Ajuste Manual de Puntos</h3>
                             <button type="button" onClick={() => setIsPointsAdjustmentModalOpen(false)} className="size-10 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer text-lg font-bold">×</button>
                         </div>
                         <div className="space-y-4 mb-6">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Selecciona al Cliente</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Selecciona al Cliente</label>
                                 <select
                                     value={pointsFormData.userId}
                                     onChange={e => setPointsFormData(prev => ({ ...prev, userId: e.target.value }))}
@@ -6064,7 +6037,7 @@ export default function QuestDashboard() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Puntos</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Puntos</label>
                                     <input
                                         type="number"
                                         value={pointsFormData.puntos}
@@ -6075,7 +6048,7 @@ export default function QuestDashboard() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Concepto</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Concepto</label>
                                     <select
                                         value={pointsFormData.concepto}
                                         onChange={e => setPointsFormData(prev => ({ ...prev, concepto: e.target.value }))}
@@ -6089,7 +6062,7 @@ export default function QuestDashboard() {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Notas internas / Razón</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Notas internas / Razón</label>
                                 <input
                                     type="text"
                                     value={pointsFormData.notas}
@@ -6100,10 +6073,10 @@ export default function QuestDashboard() {
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
-                            <button type="button" onClick={() => setIsPointsAdjustmentModalOpen(false)} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
+                            <button type="button" onClick={() => setIsPointsAdjustmentModalOpen(false)} className="px-5 py-3 border border-slate-150 rounded-2xl text-xs font-bold uppercase tracking-wide text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
                             <button 
                                 type="submit" 
-                                className="px-5 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 cursor-pointer flex items-center gap-2"
+                                className="px-5 py-3 text-white rounded-2xl text-xs font-bold uppercase tracking-wide hover:opacity-90 cursor-pointer flex items-center gap-2"
                                 style={{ backgroundColor: primaryColor }}
                                 disabled={submitting}
                             >
@@ -6177,7 +6150,7 @@ export default function QuestDashboard() {
                             <div className="size-16 rounded-full bg-pink-50 flex items-center justify-center mx-auto text-pink-500 mb-2" style={{ width: '4rem', height: '4rem', borderRadius: '9999px', backgroundColor: '#fdf2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ec4899' }}>
                                 <QrCode size={32} />
                             </div>
-                            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight" style={{ margin: 0 }}>
+                            <h3 className="text-lg font-bold text-slate-800 tracking-tight" style={{ margin: 0 }}>
                                 Validar por Código
                             </h3>
                             <p className="text-xs text-slate-500 mt-1 leading-relaxed" style={{ margin: 0 }}>
@@ -6188,7 +6161,7 @@ export default function QuestDashboard() {
                         {/* Formulario de Búsqueda Manual */}
                         <form onSubmit={handleManualSearch} className="space-y-4">
                             <div className="space-y-1.5" style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                     Código de Reclamo Manual
                                 </label>
                                 <input
@@ -6210,7 +6183,7 @@ export default function QuestDashboard() {
                             <button
                                 type="submit"
                                 disabled={manualSearchLoading}
-                                className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+                                className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
                                 style={{ marginTop: '1rem', width: '100%', border: '0', cursor: 'pointer' }}
                             >
                                 {manualSearchLoading ? (
@@ -6221,7 +6194,7 @@ export default function QuestDashboard() {
                             </button>
                         </form>
                         
-                        <div className="bg-slate-50 p-4 rounded-2xl text-[10px] text-slate-400 font-medium text-center leading-relaxed" style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '1rem', color: '#94a3b8' }}>
+                        <div className="bg-slate-50 p-4 rounded-2xl text-xs text-slate-400 font-medium text-center leading-relaxed" style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '1rem', color: '#94a3b8' }}>
                             💡 Para escanear de forma inalámbrica, puedes usar la cámara de cualquier celular logueado en la administración de Citiox y el link abrirá directamente la entrega.
                         </div>
                     </div>
@@ -6231,14 +6204,14 @@ export default function QuestDashboard() {
             {/* MODAL GUÍA RÁPIDA CLUB DE BENEFICIOS */}
             {isGuideOpen && (
                 <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300">
-                    <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] border border-slate-150 dark:border-white/5 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+                    <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-150 dark:border-white/5 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
                         {/* Cabecera del Modal */}
                         <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0 bg-slate-50 dark:bg-slate-900/50">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tighter uppercase italic leading-none">
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight leading-none">
                                     Guía Rápida <span className="text-pink-500">Club de Beneficios</span>
                                 </h3>
-                                <p className="text-[10px] font-black text-slate-400 dark:text-white/40 uppercase tracking-widest mt-1.5">
+                                <p className="text-xs font-bold text-slate-400 dark:text-white/40 uppercase tracking-wide mt-1.5">
                                     Manual de fidelización para tu negocio y clientes
                                 </p>
                             </div>
@@ -6313,6 +6286,6 @@ export default function QuestDashboard() {
                 </div>
             )}
         </div>
-        </PlanRestriction>
+        </ModuleUpsellGate>
     );
 }

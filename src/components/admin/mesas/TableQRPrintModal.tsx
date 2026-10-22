@@ -71,7 +71,7 @@ export default function TableQRPrintModal({
               <Printer className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-black text-sm uppercase tracking-wide">Imprimir Códigos QR de Mesas</h3>
+              <h3 className="font-bold text-sm uppercase tracking-wide">Imprimir Códigos QR de Mesas</h3>
               <p className="text-xs text-slate-400 font-medium">Imprime etiquetas físicas permanentes para instalar en tus mesas</p>
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function TableQRPrintModal({
               type="button"
               onClick={handlePrint}
               disabled={activeTablesToPrint.length === 0}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg cursor-pointer flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg cursor-pointer flex items-center gap-2 disabled:opacity-50"
             >
               <Printer className="w-4 h-4" />
               <span>Imprimir Seleccionadas ({activeTablesToPrint.length})</span>
@@ -164,13 +164,13 @@ export default function TableQRPrintModal({
                     {businessLogo ? (
                       <img src={businessLogo} alt={businessName} className="h-8 max-w-[120px] object-contain" />
                     ) : (
-                      <span className="text-sm font-black uppercase text-slate-900 tracking-wider">{businessName}</span>
+                      <span className="text-sm font-bold uppercase text-slate-900 tracking-wider">{businessName}</span>
                     )}
                   </div>
 
                   {/* Nombre de Mesa */}
                   <div className="bg-slate-900 text-white w-full py-2.5 px-4 rounded-2xl shadow-sm flex items-center justify-between">
-                    <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight">{table.nombre}</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight">{table.nombre}</h2>
                     {table.capacidad && (
                       <span className="text-xs font-bold bg-slate-800 text-amber-400 px-2.5 py-1 rounded-xl">
                         🪑 {table.capacidad} Puestos
@@ -189,18 +189,18 @@ export default function TableQRPrintModal({
 
                   {/* Instrucción de uso */}
                   <div className="space-y-1">
-                    <p className="text-xs font-black uppercase tracking-wider text-slate-900">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-900">
                       Escanea con tu celular para ver el menú
                     </p>
                     {table.permitePedidos && (
-                      <p className="text-[11px] text-slate-500 font-bold">
+                      <p className="text-xs text-slate-500 font-bold">
                         🛒 Y realiza tu pedido directo desde tu mesa
                       </p>
                     )}
                   </div>
 
                   {/* Pie de etiqueta */}
-                  <div className="pt-2 border-t border-slate-100 w-full flex items-center justify-between text-[9px] text-slate-400 font-semibold uppercase tracking-widest">
+                  <div className="pt-2 border-t border-slate-100 w-full flex items-center justify-between text-xs text-slate-400 font-semibold uppercase tracking-wide">
                     <span>Powered by Citiox</span>
                     <span>QR Permanente</span>
                   </div>

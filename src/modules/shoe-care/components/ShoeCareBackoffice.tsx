@@ -75,11 +75,11 @@ interface ShoeCareBackofficeProps {
 type TabType = 'dashboard' | 'ordenes' | 'clientes' | 'perfil' | 'servicios' | 'promociones' | 'repartidores' | 'inventario' | 'planes' | 'reportes' | 'configuracion';
 
 const ESTADOS_LISTA = [
-  { id: 'SOLICITADA', label: 'Solicitada (Pendiente Retiro)', color: 'bg-amber-50 text-amber-700 border-amber-200 font-black' },
-  { id: 'PENDIENTE_RETIRO', label: 'Pendiente Retiro', color: 'bg-amber-50 text-amber-700 border-amber-200 font-black' },
-  { id: 'ESPERANDO_REPARTIDOR_RETIRO', label: 'Esperando Repartidor Retiro', color: 'bg-amber-100 text-amber-900 border-amber-300 font-black' },
-  { id: 'ESPERANDO_ACEPTACION_REPARTIDOR', label: 'Esperando Aceptación Repartidor', color: 'bg-indigo-50 text-indigo-800 border-indigo-200 font-black' },
-  { id: 'REPARTIDOR_EN_CAMINO', label: 'Repartidor en Camino', color: 'bg-blue-50 text-blue-800 border-blue-200 font-black' },
+  { id: 'SOLICITADA', label: 'Solicitada (Pendiente Retiro)', color: 'bg-amber-50 text-amber-700 border-amber-200 font-bold' },
+  { id: 'PENDIENTE_RETIRO', label: 'Pendiente Retiro', color: 'bg-amber-50 text-amber-700 border-amber-200 font-bold' },
+  { id: 'ESPERANDO_REPARTIDOR_RETIRO', label: 'Esperando Repartidor Retiro', color: 'bg-amber-100 text-amber-900 border-amber-300 font-bold' },
+  { id: 'ESPERANDO_ACEPTACION_REPARTIDOR', label: 'Esperando Aceptación Repartidor', color: 'bg-indigo-50 text-indigo-800 border-indigo-200 font-bold' },
+  { id: 'REPARTIDOR_EN_CAMINO', label: 'Repartidor en Camino', color: 'bg-blue-50 text-blue-800 border-blue-200 font-bold' },
   { id: 'RETIRADO', label: 'Retirado por Repartidor', color: 'bg-purple-50 text-purple-700 border-purple-200' },
   { id: 'RECOGIDO', label: 'Recogido por Repartidor', color: 'bg-purple-50 text-purple-700 border-purple-200' },
   { id: 'RECIBIDO', label: 'Recibido en Local', color: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
@@ -88,13 +88,13 @@ const ESTADOS_LISTA = [
   { id: 'EN_LAVADO', label: 'En Lavado', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
   { id: 'EN_SECADO', label: 'En Secado', color: 'bg-violet-50 text-violet-700 border-violet-200' },
   { id: 'EN_ACABADOS', label: 'En Acabados', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { id: 'LISTO', label: 'Listo para Entrega', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-black' },
-  { id: 'LISTO_PARA_ENTREGA', label: 'Listo para Entrega', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-black' },
-  { id: 'ESPERANDO_REPARTIDOR_ENTREGA', label: 'Esperando Repartidor Entrega', color: 'bg-indigo-100 text-indigo-900 border-indigo-300 font-black' },
-  { id: 'EN_RUTA', label: 'En Ruta de Despacho', color: 'bg-amber-100 text-amber-800 border-amber-300 font-black' },
-  { id: 'EN_RUTA_ENTREGA', label: 'En Ruta de Despacho', color: 'bg-amber-100 text-amber-800 border-amber-300 font-black' },
-  { id: 'ENTREGADO', label: 'Entregado a Cliente', color: 'bg-purple-100 text-purple-900 border-purple-300 font-black' },
-  { id: 'FINALIZADA', label: 'Finalizada & Cerrada', color: 'bg-slate-100 text-slate-700 border-slate-200 font-black' },
+  { id: 'LISTO', label: 'Listo para Entrega', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' },
+  { id: 'LISTO_PARA_ENTREGA', label: 'Listo para Entrega', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' },
+  { id: 'ESPERANDO_REPARTIDOR_ENTREGA', label: 'Esperando Repartidor Entrega', color: 'bg-indigo-100 text-indigo-900 border-indigo-300 font-bold' },
+  { id: 'EN_RUTA', label: 'En Ruta de Despacho', color: 'bg-amber-100 text-amber-800 border-amber-300 font-bold' },
+  { id: 'EN_RUTA_ENTREGA', label: 'En Ruta de Despacho', color: 'bg-amber-100 text-amber-800 border-amber-300 font-bold' },
+  { id: 'ENTREGADO', label: 'Entregado a Cliente', color: 'bg-purple-100 text-purple-900 border-purple-300 font-bold' },
+  { id: 'FINALIZADA', label: 'Finalizada & Cerrada', color: 'bg-slate-100 text-slate-700 border-slate-200 font-bold' },
   { id: 'CANCELADO', label: 'Cancelado', color: 'bg-rose-50 text-rose-700 border-rose-200' },
   { id: 'CANCELADA', label: 'Cancelado', color: 'bg-rose-50 text-rose-700 border-rose-200' }
 ];
@@ -158,6 +158,14 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
   }, [negocio?.id, negocioProp?.id, sessionNegocioId]);
 
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  // Desde el panel de operación: /admin/ordenes-servicio?nueva=recepcion abre directo la recepción en el local
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).get('nueva') === 'recepcion') {
+      setShowReceptionModal(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [isPlanFree, setIsPlanFree] = useState(false);
 
   useEffect(() => {
@@ -773,7 +781,7 @@ ${marca}`;
       const res = await fetch(`/api/shoe-care/orders/${showPayModal.id}/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payForm)
+        body: JSON.stringify({ ...payForm, entregar: true })
       });
 
       if (res.ok) {
@@ -830,15 +838,15 @@ ${marca}`;
       {/* Top Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white border border-slate-200/80 p-6 md:p-8 rounded-3xl shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 font-black">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 font-bold">
             <Footprints size={28} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                 {negocio?.nombre || 'Sneaker Wash Premium'}
               </h1>
-              <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider rounded-full border border-emerald-200">
+              <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider rounded-full border border-emerald-200">
                 ServiceEngine Active
               </span>
             </div>
@@ -851,14 +859,14 @@ ${marca}`;
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowReceptionModal(true)}
-            className="px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-md shadow-purple-600/25 active:scale-95 cursor-pointer flex items-center gap-2"
+            className="px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wide rounded-2xl transition-all shadow-md shadow-purple-600/25 active:scale-95 cursor-pointer flex items-center gap-2"
           >
             <Store size={18} strokeWidth={2.5} />
             + Nueva Recepción
           </button>
           <button
             onClick={() => setShowNewOrderModal(true)}
-            className="px-5 py-3.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs uppercase tracking-widest rounded-2xl transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+            className="px-5 py-3.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all active:scale-95 cursor-pointer flex items-center gap-2"
           >
             <Truck size={16} strokeWidth={2.5} />
             Nueva Solicitud Domicilio
@@ -881,8 +889,8 @@ ${marca}`;
           { label: 'Clientes Recurrentes', val: clientesRecurrentes, color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200' }
         ].map((kpi, idx) => (
           <div key={idx} className={`p-4 rounded-2xl border ${kpi.bg} ${kpi.border} space-y-1 transition-all hover:scale-[1.02]`}>
-            <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">{kpi.label}</span>
-            <span className={`text-2xl font-black ${kpi.text}`}>{kpi.val}</span>
+            <span className="text-xs font-bold uppercase tracking-wider block opacity-80">{kpi.label}</span>
+            <span className={`text-2xl font-bold ${kpi.text}`}>{kpi.val}</span>
           </div>
         ))}
       </div>
@@ -892,7 +900,7 @@ ${marca}`;
         {/* Cabecera */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               Órdenes de Servicio
               <span className="ml-2 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-sm font-bold">{filteredOrders.length}</span>
             </h2>
@@ -922,7 +930,7 @@ ${marca}`;
             >
               {f.label}
               {f.count > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${statusFilter === f.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${statusFilter === f.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}`}>
                   {f.count}
                 </span>
               )}
@@ -948,7 +956,7 @@ ${marca}`;
         ) : filteredOrders.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 space-y-3">
             <Footprints size={36} className="mx-auto text-slate-300" />
-            <h3 className="text-base font-black text-slate-700">Sin órdenes en este filtro</h3>
+            <h3 className="text-base font-bold text-slate-700">Sin órdenes en este filtro</h3>
             <p className="text-xs text-slate-400">Cambia el filtro o crea una nueva recepción.</p>
           </div>
         ) : (
@@ -1057,12 +1065,12 @@ ${marca}`;
                   {/* Header */}
                   <div className="flex items-start justify-between px-4 pt-4 pb-2 gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-slate-700 text-sm shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-sm shrink-0">
                         {(ord.nombreCliente || 'C').charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-black text-slate-900 text-sm leading-tight truncate">{maskClientName(ord.nombreCliente)}</p>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="font-bold text-slate-900 text-sm leading-tight truncate">{maskClientName(ord.nombreCliente)}</p>
+                        <p className="text-xs text-slate-400">
                           {isPlanFree
                             ? <span className="blur-sm select-none">{maskClientPhone(ord.telefonoCliente)}</span>
                             : ord.telefonoCliente}
@@ -1070,22 +1078,22 @@ ${marca}`;
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="font-mono font-black text-emerald-600 text-sm">#{ord.numeroPedido}</span>
-                      <p className="text-[11px] text-slate-400">{new Date(ord.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
+                      <span className="font-mono font-bold text-emerald-600 text-sm">#{ord.numeroPedido}</span>
+                      <p className="text-xs text-slate-400">{new Date(ord.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
                     </div>
                   </div>
 
                   {/* Descripción artículos */}
                   <div className="px-4 pb-2">
-                    <p className="text-[11px] text-slate-500 line-clamp-2">{articuloDesc}</p>
+                    <p className="text-xs text-slate-500 line-clamp-2">{articuloDesc}</p>
                   </div>
 
                   {/* Estado + Total */}
                   <div className="flex items-center justify-between px-4 pb-3 gap-2">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${stObj.color}`}>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase border ${stObj.color}`}>
                       {stObj.label}
                     </span>
-                    <span className="font-black text-slate-900">${(ord.total || 0).toFixed(2)}</span>
+                    <span className="font-bold text-slate-900">${(ord.total || 0).toFixed(2)}</span>
                   </div>
 
                   {/* Acciones */}
@@ -1145,16 +1153,16 @@ ${marca}`;
             </button>
 
             <form onSubmit={handleSaveOrder} className="space-y-4 text-slate-800">
-              <h2 className="text-xl font-black text-slate-900 uppercase italic flex items-center gap-2">
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <Plus className="text-emerald-600" size={22} />
                 Nueva Orden de Servicio (ServiceEngine)
               </h2>
 
               {clientes && clientes.length > 0 && (
                 <div className="space-y-1 bg-emerald-50/80 p-3 rounded-2xl border border-emerald-200">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-emerald-800 flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center justify-between">
                     <span>👤 Seleccionar Cliente Registrado</span>
-                    <span className="text-[9px] text-emerald-600 font-bold">({clientes.length} disponibles)</span>
+                    <span className="text-xs text-emerald-600 font-bold">({clientes.length} disponibles)</span>
                   </label>
                   <select
                     onChange={(e) => {
@@ -1182,7 +1190,7 @@ ${marca}`;
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Nombre Cliente *</label>
+                  <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Nombre Cliente *</label>
                   <input 
                     type="text" 
                     required 
@@ -1192,7 +1200,7 @@ ${marca}`;
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Teléfono WhatsApp *</label>
+                  <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Teléfono WhatsApp *</label>
                   <div className="flex gap-1.5">
                     <select
                       value={orderCountryCode}
@@ -1215,7 +1223,7 @@ ${marca}`;
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-slate-500 block">Tipo de Servicio *</label>
+                <label className="text-xs font-bold uppercase text-slate-500 block">Tipo de Servicio *</label>
                 <select
                   value={newOrderForm.servicioNombre}
                   onChange={(e) => {
@@ -1239,7 +1247,7 @@ ${marca}`;
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Modo de Ingreso / Servicio</label>
+                  <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Modo de Ingreso / Servicio</label>
                   <select
                     value={newOrderForm.modo}
                     onChange={e => setNewOrderForm({ ...newOrderForm, modo: e.target.value })}
@@ -1252,7 +1260,7 @@ ${marca}`;
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Cantidad de Pares</label>
+                  <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Cantidad de Pares</label>
                   <input 
                     type="number" 
                     min={1}
@@ -1266,11 +1274,11 @@ ${marca}`;
               {newOrderForm.modo !== 'LOCAL' && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black uppercase text-slate-500">Dirección de Retiro</label>
+                    <label className="text-xs font-bold uppercase text-slate-500">Dirección de Retiro</label>
                     <button
                       type="button"
                       onClick={() => setShowMapModal(true)}
-                      className="text-[10px] font-bold text-emerald-600 flex items-center gap-1"
+                      className="text-xs font-bold text-emerald-600 flex items-center gap-1"
                     >
                       📍 Fijar en Mapa GPS
                     </button>
@@ -1284,7 +1292,7 @@ ${marca}`;
                 </div>
               )}
 
-              <button type="submit" disabled={submitting} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-xl cursor-pointer shadow-md">
+              <button type="submit" disabled={submitting} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase rounded-xl cursor-pointer shadow-md">
                 Crear Orden de Servicio
               </button>
             </form>
@@ -1302,7 +1310,7 @@ ${marca}`;
 
             <form onSubmit={handleSaveInspect} className="space-y-5">
               <div>
-                <h2 className="text-xl font-black text-slate-900 uppercase italic flex items-center gap-2">
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                   <Footprints className="text-emerald-600" size={22} />
                   Inspección Física & Cotización (Orden #{showInspectModal.numeroPedido})
                 </h2>
@@ -1311,7 +1319,7 @@ ${marca}`;
 
               {/* Nivel de suciedad */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500 block">Nivel de Suciedad / Tratamiento Base</label>
+                <label className="text-xs font-bold uppercase text-slate-500 block">Nivel de Suciedad / Tratamiento Base</label>
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { id: 'POCO', label: 'Poco', price: 4.00 },
@@ -1330,13 +1338,13 @@ ${marca}`;
                         });
                       }}
                       className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                        inspectForm.nivelSuciedad === lvl.id 
-                          ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-black' 
-                          : 'bg-slate-50 border-slate-200 text-slate-600'
-                      }`}
+ inspectForm.nivelSuciedad === lvl.id 
+ ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold' 
+ : 'bg-slate-50 border-slate-200 text-slate-600'
+ }`}
                     >
                       <span className="text-xs block">{lvl.label}</span>
-                      <span className="text-[10px] font-bold text-slate-900 block mt-0.5">${lvl.price.toFixed(2)}</span>
+                      <span className="text-xs font-bold text-slate-900 block mt-0.5">${lvl.price.toFixed(2)}</span>
                     </button>
                   ))}
                 </div>
@@ -1344,7 +1352,7 @@ ${marca}`;
 
               {/* Servicios Adicionales */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500 block">Servicios Adicionales Requeridos</label>
+                <label className="text-xs font-bold uppercase text-slate-500 block">Servicios Adicionales Requeridos</label>
                 <div className="space-y-2">
                   {ADICIONALES_CATALOGO.map(addon => {
                     const isSelected = inspectForm.serviciosAdicionales.some(s => s.nombre === addon.nombre);
@@ -1362,10 +1370,10 @@ ${marca}`;
                           setInspectForm({ ...inspectForm, serviciosAdicionales: newAddons });
                         }}
                         className={`w-full p-3 rounded-xl border flex items-center justify-between text-xs font-bold transition-all cursor-pointer ${
-                          isSelected 
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-900 font-black' 
-                            : 'bg-slate-50 border-slate-200 text-slate-600'
-                        }`}
+ isSelected 
+ ? 'bg-indigo-50 border-indigo-500 text-indigo-900 font-bold' 
+ : 'bg-slate-50 border-slate-200 text-slate-600'
+ }`}
                       >
                         <span>{addon.nombre}</span>
                         <span>+${addon.precio.toFixed(2)}</span>
@@ -1388,12 +1396,12 @@ ${marca}`;
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-slate-200">
-                  <span className="text-sm font-black text-slate-900">TOTAL DEFINITIVO ($):</span>
+                  <span className="text-sm font-bold text-slate-900">Total definitivo ($):</span>
                   <input 
                     type="number"
                     value={inspectForm.precioBase + inspectForm.serviciosAdicionales.reduce((acc, s) => acc + s.precio, 0) + inspectForm.costoRetiro + inspectForm.costoEntrega}
                     onChange={e => setInspectForm({ ...inspectForm, totalEditado: parseFloat(e.target.value) })}
-                    className="w-24 px-3 py-1.5 bg-white border border-emerald-500 rounded-lg text-emerald-700 font-mono font-black text-base text-right shadow-xs"
+                    className="w-24 px-3 py-1.5 bg-white border border-emerald-500 rounded-lg text-emerald-700 font-mono font-bold text-base text-right shadow-xs"
                   />
                 </div>
               </div>
@@ -1401,7 +1409,7 @@ ${marca}`;
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-xl cursor-pointer shadow-md"
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase rounded-xl cursor-pointer shadow-md"
               >
                 Guardar Cotización & Notificar por WhatsApp
               </button>
@@ -1421,27 +1429,27 @@ ${marca}`;
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-slate-200 pb-4">
                 <div>
-                  <h2 className="text-xl font-black text-slate-900 uppercase italic">
+                  <h2 className="text-xl font-bold text-slate-900 ">
                     Detalle de Orden #{showOrderDetailModal.numeroPedido}
                   </h2>
                   <span className="text-xs font-bold text-emerald-600">{maskClientName(showOrderDetailModal.nombreCliente)} ({maskClientPhone(showOrderDetailModal.telefonoCliente)})</span>
                 </div>
-                <span className="text-xs font-mono bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 font-black">
+                <span className="text-xs font-mono bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 font-bold">
                   ${showOrderDetailModal.total?.toFixed(2)}
                 </span>
               </div>
 
               {/* Timeline de Cambio de Estado */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500 block">Avanzar Estado de Servicio</label>
+                <label className="text-xs font-bold uppercase text-slate-500 block">Avanzar Estado de Servicio</label>
                 <div className="flex flex-wrap gap-2">
                   {ESTADOS_LISTA.map(st => (
                     <button
                       key={st.id}
                       onClick={() => handleUpdateOrderStatus(showOrderDetailModal.id, st.id)}
-                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase border transition-all cursor-pointer ${
-                        showOrderDetailModal.estado === st.id ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
-                      }`}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase border transition-all cursor-pointer ${
+ showOrderDetailModal.estado === st.id ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
+ }`}
                     >
                       {st.label}
                     </button>
@@ -1451,7 +1459,7 @@ ${marca}`;
 
               {/* Modal de Cobro */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                <span className="text-xs font-black uppercase text-slate-900 block">Registrar Cobro & Finalizar Orden</span>
+                <span className="text-xs font-bold uppercase text-slate-900 block">Registrar Cobro & Finalizar Orden</span>
                 <div className="grid grid-cols-2 gap-3">
                   <select
                     value={payForm.metodoPago}
@@ -1468,7 +1476,7 @@ ${marca}`;
                       setShowPayModal(showOrderDetailModal);
                       handleSavePay({ preventDefault: () => {} } as any);
                     }}
-                    className="py-2 bg-emerald-600 text-white font-black text-xs uppercase rounded-xl cursor-pointer shadow-xs"
+                    className="py-2 bg-emerald-600 text-white font-bold text-xs uppercase rounded-xl cursor-pointer shadow-xs"
                   >
                     Cobrar y Entregar
                   </button>
@@ -1485,19 +1493,19 @@ ${marca}`;
           {/* BARRA SUPERIOR (HEADER ESTÁTICO) */}
           <div className="h-16 px-4 sm:px-8 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-xs z-30">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-black">
+              <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
                 <Store size={20} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
                     + Nueva Recepción / Cotización
                   </h2>
-                  <span className="hidden sm:inline-flex px-2.5 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-black uppercase tracking-wider rounded-full border border-purple-200">
+                  <span className="hidden sm:inline-flex px-2.5 py-0.5 bg-purple-100 text-purple-800 text-xs font-bold uppercase tracking-wider rounded-full border border-purple-200">
                     Mostrador / Taller
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium hidden sm:block">
+                <p className="text-xs text-slate-500 font-medium hidden sm:block">
                   Recepción compacta tipo cotización con detalle de productos e inspección fotográfica
                 </p>
               </div>
@@ -1509,7 +1517,7 @@ ${marca}`;
                 <strong className="text-purple-700">{receptionTotalPares}</strong> {receptionTotalPares === 1 ? 'artículo' : 'artículos'}
               </span>
               <span className="w-1 h-1 rounded-full bg-purple-300" />
-              <span className="text-xs font-black text-purple-700">
+              <span className="text-xs font-bold text-purple-700">
                 Total: ${receptionTotalEstimado.toFixed(2)} USD
               </span>
             </div>
@@ -1523,7 +1531,7 @@ ${marca}`;
                   setClientSectionCollapsed(false);
                   setItemDetailModalIdx(null);
                 }}
-                className="px-3.5 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl text-xs font-black transition cursor-pointer"
+                className="px-3.5 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl text-xs font-bold transition cursor-pointer"
               >
                 Cancelar
               </button>
@@ -1531,7 +1539,7 @@ ${marca}`;
                 type="button"
                 disabled={submitting}
                 onClick={handleSaveReception}
-                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-purple-600/25 transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-purple-600/25 transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
               >
                 {submitting ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
                 <span>Confirmar Orden</span>
@@ -1585,15 +1593,15 @@ ${marca}`;
               {clientSectionCollapsed && (receptionForm.nombreCliente || receptionForm.telefonoCliente) ? (
                 <div className="bg-white border border-emerald-200 bg-emerald-50/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
                       {receptionForm.nombreCliente?.charAt(0)?.toUpperCase() || 'C'}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-black text-slate-900 text-sm">
+                        <span className="font-bold text-slate-900 text-sm">
                           {receptionForm.nombreCliente || 'Cliente'}
                         </span>
-                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full border border-emerald-200">
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full border border-emerald-200">
                           ✓ Cliente Asignado
                         </span>
                       </div>
@@ -1616,7 +1624,7 @@ ${marca}`;
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <User size={15} className="text-purple-600" />
-                      <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
                         1. Cliente de la Orden
                       </span>
                     </div>
@@ -1634,9 +1642,9 @@ ${marca}`;
                   {/* Dropdown de cliente frecuente */}
                   {clientes && clientes.length > 0 && (
                     <div className="bg-purple-50/70 p-2.5 rounded-xl border border-purple-200 space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-purple-900 flex items-center justify-between">
+                      <label className="text-xs font-bold uppercase tracking-wider text-purple-900 flex items-center justify-between">
                         <span>👤 Seleccionar Cliente Frecuente</span>
-                        <span className="text-[9px] text-purple-600 font-bold">({clientes.length} registrados)</span>
+                        <span className="text-xs text-purple-600 font-bold">({clientes.length} registrados)</span>
                       </label>
                       <select
                         onChange={(e) => {
@@ -1666,7 +1674,7 @@ ${marca}`;
                   {/* Inputs manuales: Teléfono, Nombre, Email */}
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                     <div className="sm:col-span-4">
-                      <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">WhatsApp / Teléfono *</label>
+                      <label className="text-xs font-bold uppercase text-slate-500 block mb-1">WhatsApp / Teléfono *</label>
                       <div className="flex gap-1">
                         <select
                           value={receptionCountryCode}
@@ -1701,7 +1709,7 @@ ${marca}`;
                     </div>
 
                     <div className="sm:col-span-5">
-                      <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Nombre Completo *</label>
+                      <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Nombre Completo *</label>
                       <input
                         type="text"
                         required
@@ -1713,7 +1721,7 @@ ${marca}`;
                     </div>
 
                     <div className="sm:col-span-3">
-                      <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Email (Opcional)</label>
+                      <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Email (Opcional)</label>
                       <input
                         type="email"
                         placeholder="correo@ejemplo.com"
@@ -1744,7 +1752,7 @@ ${marca}`;
                 <div className="px-4 sm:px-5 py-3.5 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Footprints size={16} className="text-purple-600" />
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
                       2. Artículos & Servicios ({receptionForm.items.length})
                     </span>
                   </div>
@@ -1761,7 +1769,7 @@ ${marca}`;
                 {/* Tabla de Productos / Cotización */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-200">
+                    <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs border-b border-slate-200">
                       <tr>
                         <th className="py-2.5 px-3 w-10 text-center">#</th>
                         <th className="py-2.5 px-3 min-w-[190px]">Tipo de Artículo</th>
@@ -1822,7 +1830,7 @@ ${marca}`;
                                 max={50}
                                 value={item.cantidad}
                                 onChange={(e) => handleUpdateReceptionItem(idx, { cantidad: parseInt(e.target.value) || 1 })}
-                                className="w-14 px-2 py-1.5 text-center bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-900 outline-none focus:border-purple-500"
+                                className="w-14 px-2 py-1.5 text-center bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-900 outline-none focus:border-purple-500"
                               />
                             </td>
                             <td className="py-2.5 px-3">
@@ -1834,11 +1842,11 @@ ${marca}`;
                                   min={0}
                                   value={item.precioUnitario}
                                   onChange={(e) => handleUpdateReceptionItem(idx, { precioUnitario: parseFloat(e.target.value) || 0 })}
-                                  className="w-24 pl-5 pr-2 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-black text-purple-700 outline-none focus:border-purple-500"
+                                  className="w-24 pl-5 pr-2 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-bold text-purple-700 outline-none focus:border-purple-500"
                                 />
                               </div>
                             </td>
-                            <td className="py-2.5 px-3 text-right font-black text-slate-800">
+                            <td className="py-2.5 px-3 text-right font-bold text-slate-800">
                               ${subtotalItem.toFixed(2)}
                             </td>
                             <td className="py-2.5 px-3 text-center">
@@ -1895,7 +1903,7 @@ ${marca}`;
 
               {/* 3. ABAJO: OBSERVACIONES GENERALES */}
               <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-2 shadow-xs">
-                <label className="text-xs font-black uppercase tracking-wider text-slate-800 block">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-800 block">
                   3. Observaciones Generales de la Orden
                 </label>
                 <textarea
@@ -1912,7 +1920,7 @@ ${marca}`;
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <Calendar size={15} className="text-purple-600" />
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
                       4. Tiempo de Entrega & Fecha
                     </span>
                   </div>
@@ -1935,7 +1943,7 @@ ${marca}`;
                             fechaEstimada: targetDate.toISOString().split('T')[0]
                           }));
                         }}
-                        className="px-2.5 py-1 bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-600 text-[10px] font-bold rounded-lg transition cursor-pointer"
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-600 text-xs font-bold rounded-lg transition cursor-pointer"
                       >
                         {preset.label}
                       </button>
@@ -1945,7 +1953,7 @@ ${marca}`;
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Fecha Estimada *</label>
+                    <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Fecha Estimada *</label>
                     <input
                       type="date"
                       required
@@ -1964,7 +1972,7 @@ ${marca}`;
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Hora Estimada *</label>
+                    <label className="text-xs font-bold uppercase text-slate-500 block mb-1">Hora Estimada *</label>
                     <input
                       type="time"
                       required
@@ -1983,12 +1991,12 @@ ${marca}`;
                     <span className="text-xs font-bold text-purple-300 uppercase tracking-wider">
                       Resumen de Cotización
                     </span>
-                    <span className="px-2 py-0.5 bg-white/10 text-white text-[10px] font-bold rounded-full">
+                    <span className="px-2 py-0.5 bg-white/10 text-white text-xs font-bold rounded-full">
                       {receptionTotalPares} {receptionTotalPares === 1 ? 'artículo' : 'artículos'}
                     </span>
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-2xl sm:text-3xl font-black text-emerald-400">
+                    <span className="text-2xl sm:text-3xl font-bold text-emerald-400">
                       ${receptionTotalEstimado.toFixed(2)}
                     </span>
                     <span className="text-xs text-slate-300 font-semibold">USD Total Estimado</span>
@@ -2010,7 +2018,7 @@ ${marca}`;
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-purple-600/40 transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wide rounded-xl shadow-lg shadow-purple-600/40 transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                   >
                     {submitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                     <span>Confirmar Recepción</span>
@@ -2027,10 +2035,10 @@ ${marca}`;
               <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div>
-                    <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-black uppercase tracking-wider rounded-md">
+                    <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold uppercase tracking-wider rounded-md">
                       Ítem #{itemDetailModalIdx + 1}
                     </span>
-                    <h3 className="text-base font-black text-slate-900 mt-1">
+                    <h3 className="text-base font-bold text-slate-900 mt-1">
                       Detalles & Fotos de Inspección
                     </h3>
                     <p className="text-xs text-slate-400 font-medium">
@@ -2048,7 +2056,7 @@ ${marca}`;
 
                 {/* Observaciones específicas del ítem */}
                 <div className="space-y-1">
-                  <label className="text-xs font-black uppercase text-slate-600 block">
+                  <label className="text-xs font-bold uppercase text-slate-600 block">
                     Observaciones / Estado de este Ítem
                   </label>
                   <textarea
@@ -2062,7 +2070,7 @@ ${marca}`;
 
                 {/* Fotos & Video de este ítem */}
                 <div className="space-y-2.5">
-                  <label className="text-xs font-black uppercase text-slate-600 block flex items-center gap-1.5">
+                  <label className="text-xs font-bold uppercase text-slate-600 block flex items-center gap-1.5">
                     <Camera size={14} className="text-purple-600" />
                     Fotos y Video de Ingreso ({receptionForm.items[itemDetailModalIdx].fotos?.length || 0})
                   </label>
@@ -2160,15 +2168,15 @@ ${marca}`;
       {/* 📱 MODAL WHATSAPP CONFIRMACIÓN DE RECEPCIÓN */}
       {showWhatsAppReceiptModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-slate-100 rounded-[2.5rem] p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl relative text-center">
+          <div className="bg-white border border-slate-100 rounded-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl relative text-center">
             <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
               <CheckCircle2 size={36} />
             </div>
 
             <div>
-              <h3 className="text-xl font-black text-slate-900">¡Recepción Creada Exitosamente!</h3>
+              <h3 className="text-xl font-bold text-slate-900">¡Recepción Creada Exitosamente!</h3>
               <p className="text-xs text-slate-500 font-medium mt-1">
-                Orden <strong className="text-purple-700">#{showWhatsAppReceiptModal.numeroPedido}</strong> registrada en estado <strong className="text-cyan-700">RECIBIDO EN LOCAL</strong>.
+                Orden <strong className="text-purple-700">#{showWhatsAppReceiptModal.numeroPedido}</strong> registrada en estado <strong className="text-cyan-700">Recibido en local</strong>.
               </p>
             </div>
 
@@ -2181,13 +2189,13 @@ ${marca}`;
               <button
                 type="button"
                 onClick={() => setShowWhatsAppReceiptModal(null)}
-                className="py-3.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase tracking-widest rounded-2xl transition cursor-pointer"
+                className="py-3.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wide rounded-2xl transition cursor-pointer"
               >
                 Cerrar
               </button>
 
               {isPlanFree ? (
-                <div className="py-3.5 px-4 bg-slate-100 border border-slate-200 text-slate-400 font-black text-xs uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed" title="WhatsApp disponible en Plan Pro">
+                <div className="py-3.5 px-4 bg-slate-100 border border-slate-200 text-slate-400 font-bold text-xs uppercase tracking-wide rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed" title="WhatsApp disponible en Plan Pro">
                   <Lock size={16} />
                   WhatsApp (Plan Pro)
                 </div>
@@ -2197,7 +2205,7 @@ ${marca}`;
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setShowWhatsAppReceiptModal(null)}
-                  className="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2 cursor-pointer"
+                  className="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Phone size={16} />
                   Enviar WhatsApp

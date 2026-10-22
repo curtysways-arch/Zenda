@@ -168,7 +168,7 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
     if (b.includes('restaurant') || b.includes('fast_food') || b.includes('pincho')) return 'RESTAURANTE';
     if (b.includes('spa') || b.includes('barber') || b.includes('clinic') || b.includes('dental')) return 'SERVICIOS';
     if (b.includes('padel') || b.includes('cancha') || b.includes('academy') || b.includes('curso')) return 'CANCHAS';
-    if (b.includes('shoe') || b.includes('calzado') || b.includes('laundry')) return 'LAVANDERIA';
+    if (b.includes('shoe') || b.includes('calzado') || b.includes('laundry') || b.includes('lavand') || b.includes('wash') || b.includes('bubble')) return 'LAVANDERIA';
     if (b.includes('store') || b.includes('tienda') || b.includes('retail')) return 'TIENDA';
     return 'RESTAURANTE';
   };
@@ -352,7 +352,7 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
   };
 
   return (
-    <div className="max-w-5xl w-full max-h-[92vh] flex flex-col bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl text-white font-sans relative overflow-hidden">
+    <div className="max-w-5xl w-full max-h-[92vh] flex flex-col bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl text-white font-sans relative overflow-hidden">
       {/* Header Fijo Superior */}
       <div className="flex items-center justify-between border-b border-slate-800 px-6 py-3.5 bg-slate-950/80 backdrop-blur-md shrink-0 gap-3">
         <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
@@ -361,13 +361,13 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
               key={s}
               type="button"
               onClick={() => s <= step && setStep(s)}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black cursor-pointer shrink-0 transition ${
-                s === step
-                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : s < step
-                  ? 'bg-slate-800 text-emerald-400 hover:bg-slate-700'
-                  : 'bg-slate-950 text-slate-600'
-              }`}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold cursor-pointer shrink-0 transition ${
+ s === step
+ ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+ : s < step
+ ? 'bg-slate-800 text-emerald-400 hover:bg-slate-700'
+ : 'bg-slate-950 text-slate-600'
+ }`}
             >
               <span>P{s}</span>
             </button>
@@ -407,10 +407,10 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
       {step === 1 && (
         <div className="space-y-6 text-left">
           <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <span className="text-[10px] font-black tracking-widest text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+            <span className="text-xs font-bold tracking-wide text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
               Paso 1 — Elegir Blueprint de Industria
             </span>
-            <h2 className="text-2xl font-black text-white italic">¿Qué tipo de negocio deseas crear?</h2>
+            <h2 className="text-2xl font-bold text-white ">¿Qué tipo de negocio deseas crear?</h2>
             <p className="text-xs text-slate-400">Cada Blueprint preconfigura de forma automática las capacidades nativas, flujos de comanda, turnos, canales y recursos iniciales.</p>
           </div>
 
@@ -428,13 +428,13 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
                 type="button"
                 onClick={() => setBlueprintCategoryFilter(tab.id as any)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  blueprintCategoryFilter === tab.id
-                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 font-black'
-                    : 'bg-slate-950/60 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
-                }`}
+ blueprintCategoryFilter === tab.id
+ ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 font-bold'
+ : 'bg-slate-950/60 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+ }`}
               >
                 <span>{tab.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${blueprintCategoryFilter === tab.id ? 'bg-slate-950/20 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'}`}>
+                <span className={`text-xs px-1.5 py-0.2 rounded-md ${blueprintCategoryFilter === tab.id ? 'bg-slate-950/20 text-slate-950 font-bold' : 'bg-slate-800 text-slate-400'}`}>
                   {tab.count}
                 </span>
               </button>
@@ -477,19 +477,19 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
                           <IconComponent size={18} />
                         </div>
                         {t.badge && (
-                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
-                            isSelected
-                              ? 'text-emerald-300 bg-emerald-500/20 border-emerald-500/30'
-                              : 'text-slate-400 bg-slate-900 border-slate-800'
-                          }`}>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
+ isSelected
+ ? 'text-emerald-300 bg-emerald-500/20 border-emerald-500/30'
+ : 'text-slate-400 bg-slate-900 border-slate-800'
+ }`}>
                             {t.badge}
                           </span>
                         )}
                       </div>
 
                       <div>
-                        <h3 className="font-black text-xs md:text-sm text-white leading-snug">{t.name}</h3>
-                        <p className="text-[11px] text-slate-400 leading-relaxed mt-1 line-clamp-2">{t.description}</p>
+                        <h3 className="font-bold text-xs md:text-sm text-white leading-snug">{t.name}</h3>
+                        <p className="text-xs text-slate-400 leading-relaxed mt-1 line-clamp-2">{t.description}</p>
                       </div>
                     </div>
 
@@ -499,19 +499,19 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
                           .filter(([_, active]) => active)
                           .slice(0, 3)
                           .map(([cap]) => (
-                            <span key={cap} className="text-[8px] font-bold uppercase tracking-wider text-slate-300 bg-slate-900/90 px-1.5 py-0.5 rounded-md border border-slate-800">
+                            <span key={cap} className="text-xs font-bold uppercase tracking-wider text-slate-300 bg-slate-900/90 px-1.5 py-0.5 rounded-md border border-slate-800">
                               {cap.replace(/_/g, ' ')}
                             </span>
                           ))}
                         {Object.keys(t.capabilities).length > 3 && (
-                          <span className="text-[8px] font-bold text-slate-500 bg-slate-900 px-1 py-0.5 rounded-md">
+                          <span className="text-xs font-bold text-slate-500 bg-slate-900 px-1 py-0.5 rounded-md">
                             +{Object.keys(t.capabilities).length - 3}
                           </span>
                         )}
                       </div>
 
                       {isSelected && (
-                        <div className="flex items-center gap-1 text-[10px] font-black text-emerald-400">
+                        <div className="flex items-center gap-1 text-xs font-bold text-emerald-400">
                           <CheckCircle2 size={12} />
                           <span>Seleccionado</span>
                         </div>
@@ -527,14 +527,14 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
             <button
               type="button"
               onClick={() => setStep(0)}
-              className="flex items-center gap-2 bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:text-white hover:bg-slate-700 transition"
+              className="flex items-center gap-2 bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wide px-6 py-3 rounded-xl hover:text-white hover:bg-slate-700 transition"
             >
               <ArrowLeft size={16} /> Anterior
             </button>
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest px-8 py-3 rounded-xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+              className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wide px-8 py-3 rounded-xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
             >
               Continuar <ArrowRight size={16} />
             </button>
@@ -546,10 +546,10 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
       {step === 2 && (
         <div className="space-y-6 text-left">
           <div className="text-center space-y-2 max-w-xl mx-auto">
-            <span className="text-[10px] font-black tracking-widest text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+            <span className="text-xs font-bold tracking-wide text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
               Paso 2 — Elegir Plan
             </span>
-            <h2 className="text-2xl font-black text-white italic">Nivel de Suscripción</h2>
+            <h2 className="text-2xl font-bold text-white ">Nivel de Suscripción</h2>
             <p className="text-xs text-slate-400">
               Planes configurados para la familia <span className="text-emerald-400 font-bold">{FAMILY_LABELS[currentFamilyCode] || currentFamilyCode}</span>.
               Gobiernan cuotas de uso y límites operativos.
@@ -575,18 +575,18 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <span className="text-[9px] font-black tracking-widest text-slate-500 uppercase">
+                        <span className="text-xs font-bold tracking-wide text-slate-500 uppercase">
                           {p.familyLabel || (typeof p.family === 'string' ? p.family : currentFamilyCode)}
                         </span>
                         <h3 className="font-bold text-base text-white">{p.name}</h3>
                       </div>
                       {p.isDefault && (
-                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                        <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
                           Recomendado
                         </span>
                       )}
                       {isFree && !p.isDefault && (
-                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 shrink-0">
+                        <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 shrink-0">
                           Gratuito
                         </span>
                       )}
@@ -594,25 +594,25 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
 
                     <div className="flex items-baseline gap-1">
                       {isFree ? (
-                        <span className="text-2xl font-black text-emerald-400">Gratis</span>
+                        <span className="text-2xl font-bold text-emerald-400">Gratis</span>
                       ) : (
                         <>
-                          <span className="text-2xl font-black text-emerald-400">${priceNum.toFixed(2)}</span>
+                          <span className="text-2xl font-bold text-emerald-400">${priceNum.toFixed(2)}</span>
                           <span className="text-xs text-slate-400 font-semibold">/mes</span>
                         </>
                       )}
                     </div>
 
                     {p.description && (
-                      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
                         {p.description}
                       </p>
                     )}
 
                     {p.limits && Object.keys(p.limits).length > 0 && (
-                      <div className="text-[10px] text-slate-300 space-y-1.5 border-t border-slate-800/80 pt-3">
+                      <div className="text-xs text-slate-300 space-y-1.5 border-t border-slate-800/80 pt-3">
                         {Object.entries(p.limits).map(([key, val]) => (
-                          <div key={key} className="flex justify-between items-center text-[10px]">
+                          <div key={key} className="flex justify-between items-center text-xs">
                             <span className="text-slate-400 font-medium">{formatLimitLabel(key)}:</span>
                             <span className="text-emerald-400 font-bold">{String(val)}</span>
                           </div>
@@ -622,7 +622,7 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
                   </div>
 
                   <div className="pt-4 mt-3 border-t border-slate-800/60 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold">
+                    <div className="flex items-center gap-1.5 text-xs font-bold">
                       <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
                       <span className={isSelected ? 'text-emerald-400' : 'text-slate-500'}>
                         {isSelected ? 'Seleccionado' : 'Hacer clic para elegir'}
@@ -640,14 +640,14 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="flex items-center gap-2 bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:text-white hover:bg-slate-700 transition"
+              className="flex items-center gap-2 bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wide px-6 py-3 rounded-xl hover:text-white hover:bg-slate-700 transition"
             >
               <ArrowLeft size={16} /> Anterior
             </button>
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest px-8 py-3 rounded-xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+              className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wide px-8 py-3 rounded-xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
             >
               Continuar <ArrowRight size={16} />
             </button>
@@ -659,15 +659,15 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
       {step === 3 && (
         <div className="space-y-6 text-left">
           <div className="text-center space-y-2 max-w-xl mx-auto">
-            <span className="text-[10px] font-black tracking-widest text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+            <span className="text-xs font-bold tracking-wide text-emerald-500 uppercase px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
               Paso 3 — Información General
             </span>
-            <h2 className="text-2xl font-black text-white italic">Datos Básicos y Administrador</h2>
+            <h2 className="text-2xl font-bold text-white ">Datos Básicos y Administrador</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase">Nombre del Negocio</label>
+              <label className="text-xs font-bold text-slate-400 uppercase">Nombre del Negocio</label>
               <input
                 type="text"
                 placeholder="Ej: Resto Grill Central"
@@ -682,7 +682,7 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase">Slug de Dominio</label>
+              <label className="text-xs font-bold text-slate-400 uppercase">Slug de Dominio</label>
               <input
                 type="text"
                 placeholder="resto-grill-central"
@@ -693,7 +693,7 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase">Email Administrador</label>
+              <label className="text-xs font-bold text-slate-400 uppercase">Email Administrador</label>
               <input
                 type="email"
                 placeholder="admin@resto.com"
@@ -704,7 +704,7 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase">Contraseña Administrador</label>
+              <label className="text-xs font-bold text-slate-400 uppercase">Contraseña Administrador</label>
               <input
                 type="password"
                 placeholder="••••••••"
@@ -715,7 +715,7 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase">WhatsApp de Atención</label>
+              <label className="text-xs font-bold text-slate-400 uppercase">WhatsApp de Atención</label>
               <input
                 type="text"
                 placeholder="+593959997521"
@@ -726,7 +726,7 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase">Ciudad / Ubicación</label>
+              <label className="text-xs font-bold text-slate-400 uppercase">Ciudad / Ubicación</label>
               <input
                 type="text"
                 placeholder="Guayaquil"
@@ -742,14 +742,14 @@ export default function BusinessProvisioningWizard({ onClose, onSuccess }: Busin
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="flex items-center gap-2 bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-widest px-6 py-3 rounded-xl hover:text-white hover:bg-slate-700 transition"
+              className="flex items-center gap-2 bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wide px-6 py-3 rounded-xl hover:text-white hover:bg-slate-700 transition"
             >
               <ArrowLeft size={16} /> Anterior
             </button>
             <button
               type="button"
               onClick={() => setStep(4)}
-              className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest px-8 py-3 rounded-xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+              className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wide px-8 py-3 rounded-xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
             >
               Continuar <ArrowRight size={16} />
             </button>

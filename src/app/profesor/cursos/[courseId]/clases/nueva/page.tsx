@@ -15,7 +15,7 @@ export default function NewClassPage() {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
-        class_date: new Date().toISOString().split('T')[0]
+        class_date: new Date().toLocaleDateString('en-CA')
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -45,17 +45,17 @@ export default function NewClassPage() {
             <div className="space-y-4">
                 <Link 
                     href={`/profesor/cursos/${courseId}/clases`}
-                    className="inline-flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-emerald-600 transition-colors"
+                    className="inline-flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-wide hover:text-emerald-600 transition-colors"
                 >
                     <ChevronLeft size={14} /> Volver a clases
                 </Link>
-                <h1 className="text-4xl font-black uppercase tracking-tighter">Nueva Clase</h1>
+                <h1 className="text-4xl font-bold tracking-tight">Nueva Clase</h1>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 space-y-8">
+            <form onSubmit={handleSubmit} className="bg-white p-10 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 space-y-8">
                 <div className="space-y-6">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Título de la clase</label>
+                        <label className="text-xs font-bold uppercase tracking-wide text-slate-400 ml-4">Título de la clase</label>
                         <div className="relative">
                             <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300">
                                 <FileText size={20} />
@@ -72,7 +72,7 @@ export default function NewClassPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Descripción (Opcional)</label>
+                        <label className="text-xs font-bold uppercase tracking-wide text-slate-400 ml-4">Descripción (Opcional)</label>
                         <textarea
                             placeholder="Detalles sobre qué se trabajará en esta clase..."
                             className="w-full p-6 bg-slate-50 border-none rounded-3xl font-bold focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none min-h-[120px]"
@@ -82,7 +82,7 @@ export default function NewClassPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Fecha de la clase</label>
+                        <label className="text-xs font-bold uppercase tracking-wide text-slate-400 ml-4">Fecha de la clase</label>
                         <div className="relative">
                             <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300">
                                 <Calendar size={20} />
@@ -101,7 +101,7 @@ export default function NewClassPage() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-emerald-600 text-white font-black py-6 rounded-3xl uppercase tracking-widest text-sm shadow-xl shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                    className="w-full bg-emerald-600 text-white font-bold py-6 rounded-3xl uppercase tracking-wide text-sm shadow-xl shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
                 >
                     {loading ? <Loader2 className="animate-spin" /> : <><Save size={18} /> Crear Clase</>}
                 </button>

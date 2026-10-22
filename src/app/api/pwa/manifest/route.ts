@@ -9,21 +9,21 @@ export async function GET(request: Request) {
 
   // Default manifest configuration
   const defaultManifest = {
-    name: "Cancha SaaS",
-    short_name: "Cancha",
-    description: "Plataforma de Reservas de Canchas",
+    name: "CitiOx",
+    short_name: "CitiOx",
+    description: "Plataforma Inteligente de Reservas y Gestión de Negocios",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#ffffff",
+    theme_color: "#06b6d4",
     icons: [
       {
-        src: "/icons/icon-192x192.png",
+        src: "/logo-citiox.png",
         sizes: "192x192",
         type: "image/png"
       },
       {
-        src: "/icons/icon-512x512.png",
+        src: "/logo-citiox.png",
         sizes: "512x512",
         type: "image/png"
       }
@@ -32,6 +32,41 @@ export async function GET(request: Request) {
 
   if (!slug) {
     return NextResponse.json(defaultManifest);
+  }
+
+  if (slug === 'driver') {
+    return NextResponse.json({
+      name: "Citiox Driver",
+      short_name: "Citiox Driver",
+      description: "Aplicación y Portal Oficial del Repartidor Citiox",
+      start_url: "/driver?source=pwa",
+      id: "/driver-pwa",
+      scope: "/driver",
+      display: "standalone",
+      orientation: "portrait",
+      background_color: "#0f172a",
+      theme_color: "#2563eb",
+      icons: [
+        {
+          src: "/icons/driver-icon-192x192.png",
+          sizes: "192x192",
+          type: "image/png",
+          purpose: "any"
+        },
+        {
+          src: "/icons/driver-icon-512x512.png",
+          sizes: "512x512",
+          type: "image/png",
+          purpose: "any"
+        },
+        {
+          src: "/icons/driver-icon-maskable-512x512.png",
+          sizes: "512x512",
+          type: "image/png",
+          purpose: "maskable"
+        }
+      ]
+    });
   }
 
   try {

@@ -43,19 +43,66 @@ export async function GET(req: Request) {
       const extra = (order.extraInfo as any) || {};
       if (extra.stockRestored === true) continue;
 
+      const { InventoryEngine } = await import('@/core/inventory/InventoryEngine');
       await prisma.$transaction(async (tx) => {
-        // Restauración idempotente de stock por variante o producto
+        let warehouse = order.sucursalId ? await (tx as any).warehouse.findFirst({
+          where: { businessId: order.negocioId, branchId: order.sucursalId, active: true }
+        }) : null;
+        if (!warehouse) {
+          warehouse = await (tx as any).warehouse.findFirst({
+            where: { businessId: order.negocioId, isDefault: true, active: true }
+          });
+        }
+        if (!warehouse) {
+          warehouse = await (tx as any).warehouse.findFirst({
+            where: { businessId: order.negocioId, active: true }
+          });
+        }
+
+        // Restauración idempotente de stock mediante InventoryEngine a la bodega original
         for (const item of order.items || []) {
-          if (item.varianteId) {
-            await (tx as any).productoVariante.update({
-              where: { id: item.varianteId },
-              data: { stock: { increment: item.cantidad } }
-            }).catch(() => {});
-          } else if (item.productoId) {
-            await (tx as any).producto.update({
-              where: { id: item.productoId },
-              data: { stock: { increment: item.cantidad } }
-            }).catch(() => {});
+          if (item.productoId) {
+            try {
+              const origMov = await (tx as any).inventoryMovement.findFirst({
+                where: {
+                  businessId: order.negocioId,
+                  productId: item.productoId,
+                  sourceDocId: order.id,
+                  type: 'VENTA'
+                },
+                orderBy: { createdAt: 'desc' }
+              });
+
+              let itemWarehouseId = origMov?.warehouseId || warehouse?.id;
+              let itemBranchId = origMov?.branchId || order.sucursalId || warehouse?.branchId;
+              let histUnitCost = origMov?.unitCost !== null && origMov?.unitCost !== undefined ? origMov.unitCost : undefined;
+
+              if (!itemWarehouseId) {
+                const fbWh = await (tx as any).warehouse.findFirst({
+                  where: { businessId: order.negocioId, isDefault: true, active: true, type: { notIn: ['TRANSIT', 'SCRAP_WASTE'] } }
+                });
+                itemWarehouseId = fbWh?.id;
+                itemBranchId = fbWh?.branchId;
+              }
+
+              if (itemWarehouseId) {
+                await InventoryEngine.recordMovement({
+                  businessId: order.negocioId,
+                  warehouseId: itemWarehouseId,
+                  branchId: itemBranchId,
+                  productId: item.productoId,
+                  variantId: item.varianteId || null,
+                  type: 'DEVOLUCION_CLIENTE',
+                  quantity: Math.abs(Number(item.cantidad)),
+                  unitCost: histUnitCost,
+                  sourceDocType: 'VENTA',
+                  sourceDocId: order.id,
+                  reason: 'Liberación de reserva por expiración de pedido PENDIENTE'
+                }, tx);
+              }
+            } catch (itemErr) {
+              console.warn(`[CRON_RELEASE_ITEM_ERROR] Producto ${item.productoId}:`, itemErr);
+            }
           }
         }
 

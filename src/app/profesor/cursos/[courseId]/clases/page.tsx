@@ -28,19 +28,19 @@ export default async function CourseClasses({ params }: { params: Promise<{ cour
                 <div>
                     <Link 
                         href="/profesor/clases" 
-                        className="inline-flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] mb-4 hover:text-emerald-500 transition-colors group"
+                        className="inline-flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-wide mb-4 hover:text-emerald-500 transition-colors group"
                     >
                         <ArrowRight size={14} className="rotate-180 group-hover:-translate-x-1 transition-transform" /> Volver a cursos
                     </Link>
-                    <h1 className="text-4xl font-black uppercase tracking-tighter text-slate-900 leading-tight">
+                    <h1 className="text-4xl font-bold tracking-tight text-slate-900 leading-tight">
                         {course.name}
                     </h1>
-                    <p className="text-slate-500 font-medium mt-1 italic">Gestión de clases y asistencia diaria.</p>
+                    <p className="text-slate-500 font-medium mt-1 ">Gestión de clases y asistencia diaria.</p>
                 </div>
                 
                 <Link 
                     href={`/profesor/cursos/${courseId}/clases/nueva`}
-                    className="flex items-center justify-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black px-8 py-5 rounded-[2rem] shadow-2xl shadow-emerald-500/30 uppercase tracking-[0.2em] text-xs transition-all active:scale-95 shrink-0"
+                    className="flex items-center justify-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-5 rounded-2xl shadow-2xl shadow-emerald-500/30 uppercase tracking-wide text-xs transition-all active:scale-95 shrink-0"
                 >
                     <Plus size={20} strokeWidth={3} /> Nueva Clase
                 </Link>
@@ -48,16 +48,16 @@ export default async function CourseClasses({ params }: { params: Promise<{ cour
 
             <div className="grid gap-6">
                 {course.course_classes.map((cls) => (
-                    <div key={cls.id} className="group bg-white p-6 md:p-8 rounded-[3rem] border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-8 hover:shadow-2xl hover:shadow-slate-200 transition-all duration-500 relative overflow-hidden shadow-sm">
+                    <div key={cls.id} className="group bg-white p-6 md:p-8 rounded-2xl border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-8 hover:shadow-2xl hover:shadow-slate-200 transition-all duration-500 relative overflow-hidden shadow-sm">
                         <div className="flex items-center gap-6">
-                            <div className="size-16 rounded-[2rem] bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-all duration-500 group-hover:scale-110">
+                            <div className="size-16 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-all duration-500 group-hover:scale-110">
                                 <Calendar size={28} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h3 className="font-black uppercase tracking-tight text-xl text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                <h3 className="font-bold tracking-tight text-xl text-slate-900 group-hover:text-emerald-600 transition-colors">
                                     {cls.title || "Clase Programada"}
                                 </h3>
-                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
+                                <p className="text-slate-500 text-xs font-bold uppercase tracking-wide mt-1 flex items-center gap-2">
                                     <span className="inline-block size-2 rounded-full bg-emerald-500" />
                                     {new Date(cls.class_date).toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })}
                                 </p>
@@ -66,7 +66,7 @@ export default async function CourseClasses({ params }: { params: Promise<{ cour
 
                         <Link 
                             href={`/profesor/clases/${cls.id}/asistencia`}
-                            className="flex items-center justify-center gap-3 bg-slate-900 hover:bg-emerald-600 text-white font-black px-8 py-5 rounded-2xl uppercase tracking-[0.2em] text-[10px] transition-all shadow-xl shadow-slate-900/10 active:scale-95 group/btn"
+                            className="flex items-center justify-center gap-3 bg-slate-900 hover:bg-emerald-600 text-white font-bold px-8 py-5 rounded-2xl uppercase tracking-wide text-xs transition-all shadow-xl shadow-slate-900/10 active:scale-95 group/btn"
                         >
                             <UserCheck size={18} /> Tomar Asistencia <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
                         </Link>
@@ -74,12 +74,12 @@ export default async function CourseClasses({ params }: { params: Promise<{ cour
                 ))}
 
                 {course.course_classes.length === 0 && (
-                    <div className="py-24 text-center bg-white rounded-[4rem] border-4 border-dashed border-slate-50 flex flex-col items-center gap-6">
+                    <div className="py-24 text-center bg-white rounded-2xl border-4 border-dashed border-slate-50 flex flex-col items-center gap-6">
                         <div className="p-8 bg-slate-50 rounded-full text-slate-200">
                             <Calendar size={64} />
                         </div>
                         <div className="space-y-2">
-                            <p className="text-slate-400 font-black uppercase tracking-[0.2em] italic">No hay clases registradas.</p>
+                            <p className="text-slate-400 font-bold uppercase tracking-wide ">No hay clases registradas.</p>
                             <p className="text-slate-300 text-xs font-medium">Comienza creando tu primera sesión.</p>
                         </div>
                     </div>

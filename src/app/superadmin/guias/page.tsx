@@ -120,10 +120,10 @@ export default function SuperAdminGuiasPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6">
                 <div>
-                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest block mb-1">
+                    <span className="text-xs font-bold text-emerald-500 uppercase tracking-wide block mb-1">
                         SOPORTE Y DOCUMENTACIÓN
                     </span>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tight flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
                         <BookOpen className="text-emerald-500" size={32} />
                         Gestor de Guías de la Plataforma
                     </h1>
@@ -136,14 +136,14 @@ export default function SuperAdminGuiasPage() {
                     <Link
                         href="/admin/ayuda"
                         target="_blank"
-                        className="flex items-center gap-2 px-5 py-3 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-black uppercase tracking-wider transition-colors"
+                        className="flex items-center gap-2 px-5 py-3 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold uppercase tracking-wider transition-colors"
                     >
                         <ExternalLink size={16} />
                         Ver Vista Negocio
                     </Link>
                     <button
                         onClick={handleCreateNew}
-                        className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-950/20 active:scale-95 transition-all cursor-pointer"
+                        className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-bold uppercase tracking-wide shadow-lg shadow-emerald-950/20 active:scale-95 transition-all cursor-pointer"
                     >
                         <Plus size={16} />
                         Nueva Guía
@@ -170,7 +170,7 @@ export default function SuperAdminGuiasPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     {/* Lista Izquierda de Guías */}
                     <div className="lg:col-span-4 space-y-3">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block px-1">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block px-1">
                             Guías Activas ({guias.length})
                         </span>
                         <div className="space-y-2.5">
@@ -189,13 +189,13 @@ export default function SuperAdminGuiasPage() {
                                     }`}
                                 >
                                     <div className="flex items-center justify-between mb-1.5">
-                                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60">
+                                        <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60">
                                             {g.category || 'General'}
                                         </span>
-                                        <span className="text-[9px] font-mono text-slate-400">/{g.slug}</span>
+                                        <span className="text-xs font-mono text-slate-400">/{g.slug}</span>
                                     </div>
-                                    <h3 className="text-xs font-black text-slate-900 dark:text-white line-clamp-1">{g.title}</h3>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 font-medium">{g.summary}</p>
+                                    <h3 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">{g.title}</h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 font-medium">{g.summary}</p>
                                 </button>
                             ))}
                         </div>
@@ -208,7 +208,7 @@ export default function SuperAdminGuiasPage() {
                                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4">
                                     <div className="flex items-center gap-2">
                                         <Sparkles className="size-5 text-emerald-500" />
-                                        <h2 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                                        <h2 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                                             {isEditing ? 'Editor de Contenido' : 'Visualización de la Guía'}
                                         </h2>
                                     </div>
@@ -225,7 +225,7 @@ export default function SuperAdminGuiasPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => setIsEditing(true)}
-                                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
                                             >
                                                 <Edit3 size={14} /> Editar
                                             </button>
@@ -251,7 +251,7 @@ export default function SuperAdminGuiasPage() {
                                     >
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                     Título de la Guía
                                                 </label>
                                                 <input
@@ -263,7 +263,7 @@ export default function SuperAdminGuiasPage() {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                     Slug de URL (ej: variantes-e-inventario)
                                                 </label>
                                                 <input
@@ -277,7 +277,7 @@ export default function SuperAdminGuiasPage() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                 Categoría / Módulo
                                             </label>
                                             <input
@@ -290,7 +290,7 @@ export default function SuperAdminGuiasPage() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                 Resumen Breve
                                             </label>
                                             <textarea
@@ -302,7 +302,7 @@ export default function SuperAdminGuiasPage() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                                                 Contenido Detallado (Soporta Markdown y Viñetas)
                                             </label>
                                             <textarea
@@ -318,7 +318,7 @@ export default function SuperAdminGuiasPage() {
                                             <button
                                                 type="submit"
                                                 disabled={saving}
-                                                className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                                                className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-95 flex items-center gap-2 cursor-pointer disabled:opacity-50"
                                             >
                                                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                                                 Guardar Guía
@@ -328,10 +328,10 @@ export default function SuperAdminGuiasPage() {
                                 ) : (
                                     <div className="space-y-4">
                                         <div>
-                                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60">
+                                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60">
                                                 {selectedGuia.category}
                                             </span>
-                                            <h1 className="text-2xl font-black text-slate-900 dark:text-white mt-2 leading-snug">
+                                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-2 leading-snug">
                                                 {selectedGuia.title}
                                             </h1>
                                             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">

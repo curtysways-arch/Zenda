@@ -41,10 +41,10 @@ export default function CheckInPage({ params }: { params: Promise<{ shareToken: 
                     <img src={appointment.logoUrl} alt={appointment.negocio} className="w-8 h-8 rounded-xl object-cover border border-slate-100" />
                 ) : (
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${color}20` }}>
-                        <span className="text-[10px] font-black" style={{ color }}>✨</span>
+                        <span className="text-xs font-bold" style={{ color }}>✨</span>
                     </div>
                 )}
-                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color }}>
+                <span className="text-xs font-bold uppercase tracking-wide" style={{ color }}>
                     {appointment?.negocio || 'Mi Cita'}
                 </span>
             </header>
@@ -56,9 +56,9 @@ export default function CheckInPage({ params }: { params: Promise<{ shareToken: 
                     </div>
                 ) : error ? (
                     <div className="flex-1 flex items-center justify-center">
-                        <div className="text-center space-y-4 p-8 bg-white rounded-[2rem] border border-red-100 shadow-xl">
+                        <div className="text-center space-y-4 p-8 bg-white rounded-3xl border border-red-100 shadow-xl">
                             <AlertCircle size={40} className="text-red-400 mx-auto" />
-                            <p className="font-black text-slate-900 uppercase">Cita no encontrada</p>
+                            <p className="font-bold text-slate-900 uppercase">Cita no encontrada</p>
                             <p className="text-sm font-bold text-slate-500">{error}</p>
                         </div>
                     </div>
@@ -66,10 +66,10 @@ export default function CheckInPage({ params }: { params: Promise<{ shareToken: 
                     <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
                         {/* Saludo */}
                         <div className="px-2">
-                            <p className="text-[11px] font-black uppercase tracking-widest mb-1" style={{ color }}>
+                            <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color }}>
                                 ¡Hola, {appointment.clienteNombre}!
                             </p>
-                            <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight leading-none">
+                            <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">
                                 Tu Cita
                             </h1>
                         </div>
@@ -78,8 +78,8 @@ export default function CheckInPage({ params }: { params: Promise<{ shareToken: 
                         <CheckInCard appointment={appointment} />
 
                         {/* Instrucciones */}
-                        <div className="bg-white rounded-[1.5rem] border border-slate-100 p-5 space-y-3 shadow-sm">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">¿Cómo funciona?</p>
+                        <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-3 shadow-sm">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">¿Cómo funciona?</p>
                             <div className="space-y-2.5">
                                 {[
                                     { emoji: '🕐', text: '30 minutos antes aparece el botón "Ya llegué"' },
@@ -89,7 +89,7 @@ export default function CheckInPage({ params }: { params: Promise<{ shareToken: 
                                 ].map((item, i) => (
                                     <div key={i} className="flex items-start gap-3">
                                         <span className="text-base leading-none mt-0.5">{item.emoji}</span>
-                                        <p className="text-[12px] font-bold text-slate-600 leading-tight">{item.text}</p>
+                                        <p className="text-xs font-bold text-slate-600 leading-tight">{item.text}</p>
                                     </div>
                                 ))}
                             </div>

@@ -1,8 +1,9 @@
 import { getImageUrl } from './utils';
 
-// Elegant curated spa and beauty Unsplash placeholder
+// Elegant curated placeholders por rubro
 const SERVICE_PLACEHOLDER_SPA = 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=600';
 const SERVICE_PLACEHOLDER_SHOES = 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=600';
+const SERVICE_PLACEHOLDER_DENTAL = 'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&q=80&w=600';
 
 /**
  * Obtiene la imagen de portada principal de un servicio de forma centralizada y optimizada.
@@ -18,7 +19,8 @@ export function getServicePrimaryImage(
   tipoNegocio?: string
 ): string {
   const isShoeCare = tipoNegocio === 'SHOE_CARE' || tipoNegocio === 'LAVANDERIA' || (service?.nombre && /lavado|calzado|zapatilla|zapato/i.test(service.nombre));
-  const defaultPlaceholder = isShoeCare ? SERVICE_PLACEHOLDER_SHOES : SERVICE_PLACEHOLDER_SPA;
+  const isDental = tipoNegocio === 'ODONTOLOGIA' || tipoNegocio === 'DENTISTA' || (service?.nombre && /dental|diente|odontol|ortodoncia|endodoncia|implante|limpieza dental|blanqueamiento|sonrisa|carillas/i.test(service.nombre));
+  const defaultPlaceholder = isDental ? SERVICE_PLACEHOLDER_DENTAL : isShoeCare ? SERVICE_PLACEHOLDER_SHOES : SERVICE_PLACEHOLDER_SPA;
 
   if (!service) return defaultPlaceholder;
 
@@ -27,10 +29,24 @@ export function getServicePrimaryImage(
     return getImageUrl(service.imageMedia, size);
   }
 
-  // 2. Fallback a imagenes de la galería (legacy)
+  // 2. Extraer de extraInfo.imageUrl si está presente
+  let extraInfo = service.extraInfo;
+  if (typeof extraInfo === 'string') {
+    try { extraInfo = JSON.parse(extraInfo); } catch { extraInfo = {}; }
+  }
+  if (extraInfo?.imageUrl) {
+    return getImageUrl(extraInfo.imageUrl, size);
+  }
+
+  // 3. Campo directo imageUrl si existe
+  if (service.imageUrl) {
+    return getImageUrl(service.imageUrl, size);
+  }
+
+  // 4. Fallback a imagenes de la galería (legacy)
   if (service.imagenes && service.imagenes.length > 0) {
     // Si hay un orden definido y el primer elemento según orden existe
-    const order = service.extraInfo?.galleryOrder;
+    const order = extraInfo?.galleryOrder;
     if (Array.isArray(order) && order.length > 0) {
       const firstImageId = order[0];
       const found = service.imagenes.find((img: any) => img.id === firstImageId);
@@ -42,7 +58,7 @@ export function getServicePrimaryImage(
     return getImageUrl(service.imagenes[0].url, size);
   }
 
-  // 3. Fallback a placeholder premium según rubro
+  // 5. Fallback a placeholder premium según rubro
   return defaultPlaceholder;
 }
 
@@ -64,6 +80,16 @@ export function getServiceGalleryImages(
     // Si no hay galería pero sí hay portada principal
     if (service.imageMedia) {
       return [getImageUrl(service.imageMedia, size)];
+    }
+    let extraInfo = service.extraInfo;
+    if (typeof extraInfo === 'string') {
+      try { extraInfo = JSON.parse(extraInfo); } catch { extraInfo = {}; }
+    }
+    if (extraInfo?.imageUrl) {
+      return [getImageUrl(extraInfo.imageUrl, size)];
+    }
+    if (service.imageUrl) {
+      return [getImageUrl(service.imageUrl, size)];
     }
     return [];
   }

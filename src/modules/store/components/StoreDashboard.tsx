@@ -143,7 +143,7 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
             </span>
             <span className="text-slate-400 text-sm">| Multi-Tenant Isolated</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white !text-white" style={{ color: '#ffffff' }}>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white !text-white" style={{ color: '#ffffff' }}>
             <span className="text-white !text-white" style={{ color: '#ffffff' }}>{negocio?.nombre || 'Mi Tienda'}</span>
           </h1>
           <p className="text-slate-300 text-sm mt-1">Panel de control comercial, inventario y despacho online</p>
@@ -186,7 +186,7 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-3xl font-black text-slate-900">${ventasHoy.toFixed(2)}</div>
+          <div className="text-3xl font-bold text-slate-900">${ventasHoy.toFixed(2)}</div>
           <p className="text-xs text-slate-500 mt-2 font-medium">Últimos 7 días: ${ventas7Dias.toFixed(2)}</p>
         </div>
 
@@ -198,7 +198,7 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-3xl font-black text-slate-900">${ventasMes.toFixed(2)}</div>
+          <div className="text-3xl font-bold text-slate-900">${ventasMes.toFixed(2)}</div>
           <p className="text-xs text-slate-500 mt-2 font-medium">{pedidosEntregadosCount} pedidos entregados</p>
         </div>
 
@@ -211,7 +211,7 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-slate-900">{pedidosNuevosCount + pedidosPendientesCount}</span>
+            <span className="text-3xl font-bold text-slate-900">{pedidosNuevosCount + pedidosPendientesCount}</span>
             <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Pendientes</span>
           </div>
           <p className="text-xs text-slate-500 mt-2 font-medium">{pedidosEnviadosCount} pedidos en ruta de entrega</p>
@@ -225,7 +225,7 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
               <Package className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-3xl font-black text-slate-900">{productosActivosCount}</div>
+          <div className="text-3xl font-bold text-slate-900">{productosActivosCount}</div>
           <div className="flex items-center gap-2 mt-2 text-xs font-medium">
             {stockAgotadosCount > 0 ? (
               <span className="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-md flex items-center gap-1">
@@ -246,7 +246,7 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-black text-slate-900">Últimos Pedidos de la Tienda</h2>
+              <h2 className="text-lg font-bold text-slate-900">Últimos Pedidos de la Tienda</h2>
               <p className="text-xs text-slate-500 font-medium">Monitoreo directo del flujo comercial e-commerce</p>
             </div>
             <Link
@@ -270,13 +270,13 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
                 return (
                   <div key={ped.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 p-2 rounded-xl transition-colors">
                     <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-black text-xs shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0">
                         #{ped.numeroPedido || ped.id.slice(-4)}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-slate-900 text-sm">{ped.nombreCliente || 'Cliente'}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}`}>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${badgeColor}`}>
                             {ped.estado}
                           </span>
                         </div>
@@ -288,8 +288,8 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
 
                     <div className="flex items-center justify-between sm:justify-end gap-4">
                       <div className="text-right">
-                        <div className="font-black text-slate-900 text-base">${(ped.total || 0).toFixed(2)}</div>
-                        <span className="text-[10px] text-slate-400 uppercase font-semibold">{ped.tipoEntrega || 'DOMICILIO'}</span>
+                        <div className="font-bold text-slate-900 text-base">${(ped.total || 0).toFixed(2)}</div>
+                        <span className="text-xs text-slate-400 uppercase font-semibold">{ped.tipoEntrega || 'DOMICILIO'}</span>
                       </div>
                       <Link
                         href={`/admin/ventas?id=${ped.id}`}
@@ -318,7 +318,7 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
-              <h2 className="text-base font-black text-slate-900">Alertas de Inventario</h2>
+              <h2 className="text-base font-bold text-slate-900">Alertas de Inventario</h2>
             </div>
             <Link href="/admin/inventario" className="text-xs font-bold text-cyan-600 hover:text-cyan-700">
               Gestionar
@@ -331,9 +331,9 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
                 <div key={item.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 truncate">{item.nombre}</p>
-                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{item.sku} • {item.variante}</p>
+                    <p className="text-xs text-slate-500 font-mono mt-0.5">{item.sku} • {item.variante}</p>
                   </div>
-                  <span className={`px-2 py-1 rounded-lg text-xs font-black shrink-0 ${item.stock === 0 ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'}`}>
+                  <span className={`px-2 py-1 rounded-lg text-xs font-bold shrink-0 ${item.stock === 0 ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'}`}>
                     {item.stock === 0 ? 'AGOTADO' : `${item.stock} en stock`}
                   </span>
                 </div>
@@ -343,7 +343,7 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
             <div className="py-8 text-center space-y-2">
               <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
               <p className="text-xs font-bold text-slate-700">Inventario 100% Saludable</p>
-              <p className="text-[11px] text-slate-400">No hay productos en riesgo de agotarse.</p>
+              <p className="text-xs text-slate-400">No hay productos en riesgo de agotarse.</p>
             </div>
           )}
         </div>

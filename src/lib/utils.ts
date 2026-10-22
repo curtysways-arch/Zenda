@@ -11,8 +11,13 @@ export function getImageUrl(
   size: 'thumb' | 'medium' | 'original' = 'original'
 ): string {
   if (!media) return '';
-  const url = typeof media === 'string' ? media : media.url;
+  let url = typeof media === 'string' ? media : media.url;
   if (!url) return '';
+
+  // Normalizar URLs absolutas de citiox.com a relativas para que funcionen tanto local como en producción
+  if (url.includes('citiox.com/api/media/')) {
+    url = url.replace(/^https?:\/\/(?:www\.)?citiox\.com/i, '');
+  }
 
   if (url.includes('_original.webp')) {
     if (size === 'thumb') {

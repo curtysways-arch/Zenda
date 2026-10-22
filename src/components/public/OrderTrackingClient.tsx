@@ -5,7 +5,7 @@ import {
     Clock, MapPin, Phone, ShoppingBag, MessageCircle, 
     CheckCircle2, AlertCircle, ChefHat, PackageCheck, Bike,
     ArrowLeft, Upload, FileText, Loader2, XCircle, ShieldCheck, Flame, ExternalLink, Calendar,
-    Copy, Building2, CreditCard, Hash, UploadCloud, Send, Lock, Wallet, User, Check, X
+    Copy, Building2, CreditCard, Hash, UploadCloud, Send, Lock, Wallet, User, Check, X, KeyRound
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -34,6 +34,7 @@ export interface Order {
     total: number;
     estado: string;
     notas?: string | null;
+    extraInfo?: any;
     createdAt: string;
     items: OrderItem[];
     payment?: {
@@ -86,14 +87,66 @@ function getStepIndex(orderStatus: string, paymentStatus?: string): number {
     const s = (orderStatus || '').toUpperCase();
     const p = (paymentStatus || '').toUpperCase();
 
-    if (s === 'ENTREGADO' || s === 'FINALIZADO') return 5;
-    if (s === 'ESPERANDO_CLIENTE') return 4;
-    if (s === 'RUTA' || s === 'EN_RUTA' || s === 'EN_CAMINO') return 4;
-    if (s === 'LISTO') return 4;
-    if (s === 'PREPARACION' || s === 'EN_PREPARACION') return 3;
-    if (s === 'ACEPTADO') return 2;
-    if (p === 'CONFIRMADO' || p === 'COMPROBANTE_RECIBIDO' || p === 'COMPROBANTE_ENVIADO' || p === 'CONTRA_ENTREGA') return 2;
+    // Etapa 5: Entregado / Finalizado
+    if (s === 'ENTREGADO' || s === 'ENTREGADA' || s === 'FINALIZADO' || s === 'FINALIZADA' || s === 'COMPLETED') return 5;
+
+    // Etapa 4: En Ruta / Despacho / Listo
+    if (
+        s === 'ESPERANDO_CLIENTE' ||
+        s === 'RUTA' || s === 'EN_RUTA' || s === 'EN_CAMINO' ||
+        s === 'EN_RUTA_ENTREGA' || s === 'ESPERANDO_REPARTIDOR_ENTREGA' ||
+        s === 'LISTO' || s === 'LISTO_PARA_ENTREGA'
+    ) return 4;
+
+    // Etapa 3: Taller / Producción / Lavado / Secado / Detallado
+    if (
+        s === 'PREPARACION' || s === 'EN_PREPARACION' || s === 'PREPARANDO' ||
+        s === 'EN_PROCESO' || s === 'PROCESO' || s === 'TALLER' || s === 'EN_TALLER' ||
+        s === 'RECIBIDO' || s === 'RECIBIDA' ||
+        s === 'INSPECCIONADO' || s === 'INSPECCION' ||
+        s === 'LAVANDO' || s === 'EN_LAVADO' ||
+        s === 'SECANDO' || s === 'EN_SECADO' ||
+        s === 'DETALLADO' || s === 'EN_ACABADOS' || s === 'DETALLANDO' ||
+        s === 'CONTROL_CALIDAD' || s === 'TRATAMIENTO' || s === 'REPARACION'
+    ) return 3;
+
+    // Etapa 2: Aceptado / En Retiro / Pago Registrado
+    if (
+        s === 'ACEPTADO' || s === 'ACEPTADA' || s === 'CONFIRMED' ||
+        s === 'RETIRO' || s === 'EN_RETIRO' || s === 'PENDIENTE_RETIRO' ||
+        s === 'REPARTIDOR_EN_CAMINO' || s === 'ESPERANDO_REPARTIDOR_RETIRO' || s === 'ESPERANDO_ACEPTACION_REPARTIDOR' ||
+        s === 'RECOGIDO' || s === 'RETIRADO' ||
+        p === 'CONFIRMADO' || p === 'COMPROBANTE_RECIBIDO' || p === 'COMPROBANTE_ENVIADO' || p === 'CONTRA_ENTREGA' || p === 'PAGADO' || p === 'PAID'
+    ) return 2;
+
     return 1;
+}
+
+function getProductionPhaseLabel(status: string): string | null {
+    const s = (status || '').toUpperCase();
+    const map: Record<string, string> = {
+        'RECIBIDO': 'Recibido en Taller',
+        'RECIBIDA': 'Recibido en Taller',
+        'INSPECCIONADO': 'Inspección Inicial',
+        'INSPECCION': 'Inspección Inicial',
+        'EN_PROCESO': 'En Taller',
+        'PROCESO': 'En Taller',
+        'TALLER': 'En Taller',
+        'EN_TALLER': 'En Taller',
+        'LAVANDO': 'Lavado & Limpieza',
+        'EN_LAVADO': 'Lavado & Limpieza',
+        'SECANDO': 'Secado & Desinfección',
+        'EN_SECADO': 'Secado & Desinfección',
+        'DETALLADO': 'Detallado Final',
+        'DETALLANDO': 'Detallado Final',
+        'EN_ACABADOS': 'Acabados & Pulido',
+        'CONTROL_CALIDAD': 'Control de Calidad',
+        'TRATAMIENTO': 'Tratamiento Especial',
+        'REPARACION': 'Restauración',
+        'PREPARACION': 'En Preparación',
+        'EN_PREPARACION': 'En Preparación'
+    };
+    return map[s] || null;
 }
 
 export default function OrderTrackingClient({ order: initialOrder, negocio, onBack, onRefreshOrders }: Props) {
@@ -155,6 +208,19 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
     const fotosProceso: string[] = extraInfo?.fotosProceso || [];
     const fotosEntrega: string[] = extraInfo?.fotosEntrega || [];
     const hasPhotos = fotosRecepcion.length > 0 || fotosProceso.length > 0 || fotosEntrega.length > 0;
+
+    // Código PIN de entrega de 4 dígitos (determinista o desde extraInfo)
+    const getDeliveryPin = () => {
+        let dCode = extraInfo?.deliveryCode;
+        if (!dCode && order.id) {
+            let num = 0;
+            const str = order.id + 'delivery';
+            for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+            dCode = String(1000 + Math.abs(num));
+        }
+        return dCode || '----';
+    };
+    const deliveryPin = getDeliveryPin();
 
     // Load Bank Details for Payment Modal
     useEffect(() => {
@@ -263,20 +329,20 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                 <button
                     type="button"
                     onClick={handleBackClick}
-                    className="flex items-center gap-1.5 text-xs font-black uppercase text-slate-700 hover:text-slate-900 bg-slate-100 border border-slate-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs font-bold uppercase text-slate-700 hover:text-slate-900 bg-slate-100 border border-slate-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer"
                 >
                     <ArrowLeft className="size-4" />
                     <span>Volver</span>
                 </button>
 
                 <div className="text-center">
-                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Orden de Servicio</span>
-                    <span className="text-sm font-black text-slate-900">Orden #{order.numeroPedido}</span>
+                    <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide">Orden de Servicio</span>
+                    <span className="text-sm font-bold text-slate-900">Orden #{order.numeroPedido}</span>
                 </div>
 
-                <span className={`text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full border ${
-                    isCancelled ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-purple-50 text-purple-700 border-purple-200'
-                }`}>
+                <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${
+ isCancelled ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-purple-50 text-purple-700 border-purple-200'
+ }`}>
                     {order.estado}
                 </span>
             </header>
@@ -290,16 +356,16 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                     />
                     <div className="flex items-center gap-3">
                         <div 
-                            className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md font-black"
+                            className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md font-bold"
                             style={{ backgroundColor: primaryColor }}
                         >
                             <PackageCheck className="size-6" />
                         </div>
                         <div>
-                            <span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: primaryColor }}>
+                            <span className="text-xs font-bold uppercase tracking-wide block" style={{ color: primaryColor }}>
                                 Servicio Profesional
                             </span>
-                            <h2 className="text-lg font-black text-slate-900">Orden de Cuidado #{order.numeroPedido}</h2>
+                            <h2 className="text-lg font-bold text-slate-900">Orden de Cuidado #{order.numeroPedido}</h2>
                         </div>
                     </div>
                 </div>
@@ -310,25 +376,25 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         <button
                             type="button"
                             onClick={() => setSelectedTab('STATUS')}
-                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
-                                selectedTab === 'STATUS'
-                                    ? 'bg-white text-slate-900 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-800'
-                            }`}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+ selectedTab === 'STATUS'
+ ? 'bg-white text-slate-900 shadow-sm'
+ : 'text-slate-500 hover:text-slate-800'
+ }`}
                         >
                             Seguimiento
                         </button>
                         <button
                             type="button"
                             onClick={() => setSelectedTab('PHOTOS')}
-                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                                selectedTab === 'PHOTOS'
-                                    ? 'bg-white text-slate-900 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-800'
-                            }`}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+ selectedTab === 'PHOTOS'
+ ? 'bg-white text-slate-900 shadow-sm'
+ : 'text-slate-500 hover:text-slate-800'
+ }`}
                         >
                             <span>Auditoría de Fotos</span>
-                            <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                            <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-bold">
                                 {fotosRecepcion.length + fotosProceso.length + fotosEntrega.length}
                             </span>
                         </button>
@@ -339,7 +405,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                     <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-5 text-left">
                         {fotosRecepcion.length > 0 && (
                             <div className="space-y-3">
-                                <h4 className="text-xs font-black uppercase tracking-widest text-purple-700 flex items-center gap-2">
+                                <h4 className="text-xs font-bold uppercase tracking-wide text-purple-700 flex items-center gap-2">
                                     <span>📸 Fotos de Recepción (Antes del Cuidado)</span>
                                 </h4>
                                 <div className="grid grid-cols-3 gap-2">
@@ -354,7 +420,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
 
                         {fotosProceso.length > 0 && (
                             <div className="space-y-3 pt-3 border-t border-slate-100">
-                                <h4 className="text-xs font-black uppercase tracking-widest text-indigo-700 flex items-center gap-2">
+                                <h4 className="text-xs font-bold uppercase tracking-wide text-indigo-700 flex items-center gap-2">
                                     <span>⚡ Fotos de Proceso (En Taller)</span>
                                 </h4>
                                 <div className="grid grid-cols-3 gap-2">
@@ -369,7 +435,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
 
                         {fotosEntrega.length > 0 && (
                             <div className="space-y-3 pt-3 border-t border-slate-100">
-                                <h4 className="text-xs font-black uppercase tracking-widest text-emerald-700 flex items-center gap-2">
+                                <h4 className="text-xs font-bold uppercase tracking-wide text-emerald-700 flex items-center gap-2">
                                     <span>✨ Fotos del Resultado (Listo para Entrega)</span>
                                 </h4>
                                 <div className="grid grid-cols-3 gap-2">
@@ -385,16 +451,86 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                 ) : (
                     <>
                         {/* Banner Especial Repartidor en el Destino */}
-                        {order.estado === 'ESPERANDO_CLIENTE' && (
-                            <div className="bg-amber-400 text-slate-950 rounded-3xl p-5 shadow-lg border-2 border-amber-500 animate-pulse flex items-center gap-3.5">
-                                <div className="p-3 bg-slate-950 text-amber-400 rounded-2xl shrink-0 font-black shadow-md">
-                                    <Bike className="size-7" />
+                        {(order.estado === 'ESPERANDO_CLIENTE' || order.estado === 'WAITING_CLIENT') && (
+                            <div className="bg-amber-400 text-slate-950 rounded-3xl p-5 shadow-lg border-2 border-amber-500 animate-pulse flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-3.5">
+                                    <div className="p-3 bg-slate-950 text-amber-400 rounded-2xl shrink-0 font-bold shadow-md">
+                                        <Bike className="size-7" />
+                                    </div>
+                                    <div className="text-left space-y-0.5">
+                                        <h4 className="font-bold text-sm uppercase tracking-tight">🛵 ¡Tu repartidor ha llegado!</h4>
+                                        <p className="text-xs font-bold text-slate-900 leading-snug">
+                                            El repartidor ya se encuentra afuera de tu dirección con tu pedido. Por favor acércate a recibirlo.
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="text-left space-y-0.5">
-                                    <h4 className="font-black text-sm uppercase tracking-tight">🛵 ¡TU REPARTIDOR HA LLEGADO!</h4>
-                                    <p className="text-xs font-bold text-slate-900 leading-snug">
-                                        El repartidor ya se encuentra afuera de tu dirección con tu pedido. Por favor acércate a recibirlo.
-                                    </p>
+                                <div className="bg-slate-950 text-amber-400 px-4 py-2.5 rounded-2xl text-center shrink-0 border border-amber-500 w-full sm:w-auto shadow-md">
+                                    <span className="text-xs font-bold uppercase tracking-wider block text-amber-400/80">Código PIN de Entrega</span>
+                                    <span className="font-mono text-2xl font-bold tracking-wide">{deliveryPin}</span>
+                                </div>
+                            </div>
+                        )}
+
+                                                {/* CÓDIGO DE SEGURIDAD PARA RETIRO — Visible cuando el repartidor va a retirar calzado/prendas */}
+                        {['REPARTIDOR_EN_CAMINO', 'ESPERANDO_REPARTIDOR_RETIRO', 'PENDIENTE_RETIRO'].includes(order.estado) && (
+                            <div className="bg-gradient-to-br from-purple-700 via-indigo-800 to-purple-900 text-white rounded-3xl p-5 shadow-xl border-2 border-purple-400 space-y-3 text-left">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-purple-200 flex items-center gap-1.5">
+                                        <KeyRound className="size-4 text-purple-200" />
+                                        CÓDIGO DE SEGURIDAD PARA RETIRO
+                                    </span>
+                                    <span className="text-xs font-bold uppercase tracking-wide px-2.5 py-1 bg-white/20 rounded-full text-white">
+                                        Seguridad de tus Prendas
+                                    </span>
+                                </div>
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-purple-950/40 p-4 rounded-2xl border border-purple-400/30">
+                                    <div>
+                                        <p className="text-xs text-white font-bold">
+                                            🔒 Pídele este código de 4 dígitos a tu repartidor
+                                        </p>
+                                        <p className="text-xs text-purple-200 mt-0.5">
+                                            Cuando el repartidor llegue a tu puerta, pídele que te dicte este código antes de entregarle tus prendas o zapatos.
+                                        </p>
+                                    </div>
+                                    <div className="bg-white text-purple-950 font-mono font-bold text-3xl px-6 py-2 rounded-xl shadow-lg tracking-wide border-2 border-purple-300 shrink-0">
+                                        {(() => {
+                                            let pCode = extraInfo?.pickupCode;
+                                            if (!pCode && order.id) {
+                                                let num = 0; const str = order.id + 'pickup';
+                                                for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+                                                pCode = String(1000 + Math.abs(num));
+                                            }
+                                            return pCode;
+                                        })()}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* CÓDIGO PIN DE CONFIRMACIÓN DE ENTREGA — Visible cuando el pedido está en camino o esperando entrega */}
+                        {['EN_RUTA_ENTREGA', 'EN_CAMINO', 'EN_RUTA', 'ESPERANDO_CLIENTE', 'WAITING_CLIENT'].includes(order.estado) && (
+                            <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white rounded-3xl p-5 shadow-xl border-2 border-emerald-400 space-y-3 text-left">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-100 flex items-center gap-1.5">
+                                        <KeyRound className="size-4 text-emerald-200" />
+                                        CÓDIGO PIN DE ENTREGA
+                                    </span>
+                                    <span className="text-xs font-bold uppercase tracking-wide px-2.5 py-1 bg-white/20 rounded-full text-white">
+                                        Seguridad de Entrega
+                                    </span>
+                                </div>
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-emerald-950/40 p-4 rounded-2xl border border-emerald-400/30">
+                                    <div>
+                                        <p className="text-xs text-white font-bold">
+                                            Dicta este código de 4 dígitos a tu repartidor
+                                        </p>
+                                        <p className="text-xs text-emerald-100 mt-0.5">
+                                            El repartidor lo necesita para verificar y finalizar la entrega de tus prendas en puerta.
+                                        </p>
+                                    </div>
+                                    <div className="bg-white text-emerald-950 font-mono font-bold text-3xl px-6 py-2 rounded-xl shadow-lg tracking-wide border-2 border-emerald-300 shrink-0">
+                                        {deliveryPin}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -403,11 +539,11 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         {!isCancelled ? (
                             <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4 text-left">
                                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
                                         <Clock className="size-4" style={{ color: primaryColor }} />
                                         <span>Progreso de Tu Orden</span>
                                     </h3>
-                                    <span className="text-[10px] font-black text-purple-800 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100 uppercase tracking-wider">
+                                    <span className="text-xs font-bold text-purple-800 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100 uppercase tracking-wider">
                                         Etapa {stepIndex} de 5
                                     </span>
                                 </div>
@@ -441,19 +577,19 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                                 <div key={item.step} className="flex flex-col items-center z-10">
                                                     <div 
                                                         className={`size-8 rounded-full flex items-center justify-center text-xs transition-all duration-300 ${
-                                                            isCurrent
-                                                                ? 'text-white font-black scale-110 shadow-md'
-                                                                : isCompleted
-                                                                    ? 'bg-emerald-500 text-white font-black'
-                                                                    : 'bg-slate-100 text-slate-400 border border-slate-200'
-                                                        }`}
+ isCurrent
+ ? 'text-white font-bold scale-110 shadow-md'
+ : isCompleted
+ ? 'bg-emerald-500 text-white font-bold'
+ : 'bg-slate-100 text-slate-400 border border-slate-200'
+ }`}
                                                         style={isCurrent ? { backgroundColor: primaryColor } : {}}
                                                     >
                                                         {isCompleted ? <CheckCircle2 className="size-4" /> : <Icon className="size-4" />}
                                                     </div>
-                                                    <span className={`text-[8px] font-black uppercase tracking-wider mt-2 transition-colors ${
-                                                        isCurrent ? 'text-slate-900 font-bold' : isCompleted ? 'text-emerald-700' : 'text-slate-400'
-                                                    }`}>
+                                                    <span className={`text-xs font-bold uppercase tracking-wider mt-2 transition-colors ${
+ isCurrent ? 'text-slate-900 font-bold' : isCompleted ? 'text-emerald-700' : 'text-slate-400'
+ }`}>
                                                         {item.label}
                                                     </span>
                                                 </div>
@@ -461,12 +597,29 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                         })}
                                     </div>
                                 </div>
+
+                                {stepIndex === 3 && getProductionPhaseLabel(order.estado) && (
+                                    <div className="mt-3 p-3 bg-purple-50 border border-purple-100 rounded-2xl flex items-center justify-between">
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="relative flex h-2.5 w-2.5">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-600"></span>
+                                            </span>
+                                            <span className="text-xs font-bold text-purple-950 uppercase tracking-wide">
+                                                Fase en Taller: {getProductionPhaseLabel(order.estado)}
+                                            </span>
+                                        </div>
+                                        <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-purple-200/80 text-purple-800 uppercase tracking-wider">
+                                            En Producción
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="bg-rose-50 border border-rose-200 text-rose-900 rounded-3xl p-5 flex items-start gap-3.5">
                                 <AlertCircle className="size-6 text-rose-600 shrink-0 mt-0.5" />
                                 <div>
-                                    <h3 className="text-xs font-black uppercase tracking-wider text-rose-800">Orden Cancelada</h3>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-rose-800">Orden Cancelada</h3>
                                     <p className="text-xs font-medium text-rose-700 mt-1 leading-relaxed">
                                         Esta orden fue cancelada. Si tienes alguna inquietud, contáctanos por WhatsApp.
                                     </p>
@@ -478,24 +631,24 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-3 text-left">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-10 bg-purple-600 text-white rounded-2xl flex items-center justify-center font-black shadow-md">
+                                    <div className="size-10 bg-purple-600 text-white rounded-2xl flex items-center justify-center font-bold shadow-md">
                                         <Clock className="size-5" />
                                     </div>
                                     <div>
-                                        <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">Compromiso de Entrega</span>
-                                        <span className="text-xs font-black text-white">
+                                        <span className="text-xs font-bold text-purple-400 uppercase tracking-wide block">Compromiso de Entrega</span>
+                                        <span className="text-xs font-bold text-white">
                                             Fecha Estimada de Entrega
                                         </span>
                                     </div>
                                 </div>
-                                <span className="px-3 py-1 bg-purple-950 border border-purple-800 text-purple-300 text-[10px] font-black uppercase rounded-xl tracking-wider">
+                                <span className="px-3 py-1 bg-purple-950 border border-purple-800 text-purple-300 text-xs font-bold uppercase rounded-xl tracking-wider">
                                     {order.tipoEntrega}
                                 </span>
                             </div>
 
                             <div className="space-y-1">
-                                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Fecha Estimada de Entrega</p>
-                                <p className="text-sm font-black text-slate-900 flex items-center gap-2">
+                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha Estimada de Entrega</p>
+                                <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                     <Calendar className="size-4 text-slate-400" />
                                     <span>{formatDeliveryDate(order.fechaEntrega)}</span>
                                 </p>
@@ -503,8 +656,8 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
 
                             {countdownTime && !isCancelled && order.estado !== 'ENTREGADO' && (
                                 <div className="p-3 bg-purple-50 text-purple-900 rounded-2xl border border-purple-100 flex items-center justify-between font-mono text-xs">
-                                    <span className="font-bold uppercase tracking-wider text-[10px]">Tiempo Restante Estimado</span>
-                                    <span className="font-black text-sm">{countdownTime}</span>
+                                    <span className="font-bold uppercase tracking-wider text-xs">Tiempo Restante Estimado</span>
+                                    <span className="font-bold text-sm">{countdownTime}</span>
                                 </div>
                             )}
                         </div>
@@ -512,8 +665,8 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         {/* Estado del Pago & Subida de Comprobante */}
                         <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3 text-left">
                             <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
-                                <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Estado del Pago</span>
-                                <span className="text-xs font-mono font-black text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
+                                <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">Estado del Pago</span>
+                                <span className="text-xs font-mono font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
                                     {order.payment?.estado || 'PENDIENTE'}
                                 </span>
                             </div>
@@ -523,18 +676,20 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 <div className="space-y-3 pt-1">
                                     {order.payment?.estado === 'RECHAZADO' ? (
                                         <div className="p-4 bg-rose-50 text-rose-800 text-xs rounded-2xl border border-rose-200 space-y-1">
-                                            <div className="font-black flex items-center gap-1.5 text-rose-700">
+                                            <div className="font-bold flex items-center gap-1.5 text-rose-700">
                                                 <XCircle className="size-4" /> Comprobante Rechazado
                                             </div>
                                             <p className="font-medium"><strong>Motivo:</strong> {order.payment.motivoRechazo || 'El comprobante no era legible o correcto.'}</p>
                                         </div>
                                     ) : (
                                         <div className="p-4 bg-orange-50/80 text-orange-950 text-xs rounded-2xl border border-orange-200/80 space-y-1">
-                                            <div className="font-black flex items-center gap-1.5 text-orange-800 uppercase tracking-wider text-[11px]">
-                                                <AlertCircle className="size-4 text-orange-600 shrink-0" /> Pago Pendiente de Comprobante
+                                            <div className="font-bold flex items-center gap-1.5 text-orange-800 uppercase tracking-wider text-xs">
+                                                <AlertCircle className="size-4 text-orange-600 shrink-0" /> {stepIndex >= 3 ? 'Pago Pendiente de Verificación' : 'Pago Pendiente de Comprobante'}
                                             </div>
                                             <p className="font-medium text-slate-600 leading-relaxed">
-                                                Aún no se ha adjuntado el comprobante de pago para este pedido. Por favor sube tu comprobante para enviar a producción.
+                                                {stepIndex >= 3
+                                                    ? 'Tu orden ya se encuentra en proceso en nuestro taller. Por favor adjunta o completa tu comprobante de pago para coordinar la entrega final.'
+                                                    : 'Aún no se ha adjuntado el comprobante de pago para este pedido. Por favor sube tu comprobante para enviar a producción.'}
                                             </p>
                                         </div>
                                     )}
@@ -543,11 +698,11 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                         <button
                                             type="button"
                                             onClick={() => setShowPaymentModal(true)}
-                                            className="w-full py-4 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                                            className="w-full py-4 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
                                             style={{ backgroundColor: primaryColor }}
                                         >
                                             <Wallet className="size-4" />
-                                            <span>VER DATOS BANCARIOS Y SUBIR COMPROBANTE</span>
+                                            <span>Ver datos bancarios y subir comprobante</span>
                                         </button>
 
                                         {uploadSuccess && (
@@ -569,7 +724,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 <div className="p-4 bg-amber-50 text-amber-900 text-xs rounded-2xl border border-amber-200 flex items-start gap-3 font-medium">
                                     <Clock className="size-5 text-amber-600 shrink-0 mt-0.5" />
                                     <div className="leading-relaxed">
-                                        <strong className="block font-black text-amber-950">Pedido recibido — esperando confirmación del pago</strong>
+                                        <strong className="block font-bold text-amber-950">Pedido recibido — esperando confirmación del pago</strong>
                                         <span>Tu comprobante fue adjuntado exitosamente y está siendo verificado por el negocio.</span>
                                     </div>
                                 </div>
@@ -580,7 +735,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 <div className="p-4 bg-emerald-50 text-emerald-900 text-xs rounded-2xl border border-emerald-200 flex items-start gap-3 font-medium">
                                     <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
                                     <div className="leading-relaxed">
-                                        <strong className="block font-black text-emerald-950">🟢 Pago Contra Entrega</strong>
+                                        <strong className="block font-bold text-emerald-950">🟢 Pago Contra Entrega</strong>
                                         <span>Realizarás el pago en efectivo o POS al momento de recibir tu pedido.</span>
                                     </div>
                                 </div>
@@ -591,7 +746,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 <div className="p-4 bg-emerald-50 text-emerald-900 text-xs rounded-2xl border border-emerald-200 flex items-start gap-3 font-medium">
                                     <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
                                     <div>
-                                        <strong className="block font-black text-emerald-950">¡Pago Confirmado!</strong>
+                                        <strong className="block font-bold text-emerald-950">¡Pago Confirmado!</strong>
                                         <span>Tu pago ha sido validado correctamente.</span>
                                     </div>
                                 </div>
@@ -600,7 +755,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
 
                         {/* Desglose de Productos */}
                         <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3 text-left">
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-2 flex items-center gap-2">
+                            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide border-b border-slate-100 pb-2 flex items-center gap-2">
                                 <ShoppingBag className="size-4" style={{ color: primaryColor }} />
                                 <span>Detalle de Servicios Contratados</span>
                             </h3>
@@ -608,9 +763,9 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 {order.items.map(item => (
                                     <div key={item.id} className="py-2.5 flex justify-between items-center text-xs font-semibold">
                                         <span className="text-slate-700">
-                                            <strong className="text-slate-900 font-black">{item.cantidad}x</strong> {item.nombreProducto}
+                                            <strong className="text-slate-900 font-bold">{item.cantidad}x</strong> {item.nombreProducto}
                                         </span>
-                                        <span className="font-black text-slate-900">${(item.cantidad * item.precioUnitario).toFixed(2)}</span>
+                                        <span className="font-bold text-slate-900">${(item.cantidad * item.precioUnitario).toFixed(2)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -625,7 +780,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                         <span>${order.costoEnvio.toFixed(2)}</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between text-sm font-black text-slate-900 pt-2 border-t border-slate-100">
+                                <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-100">
                                     <span>Total a Pagar</span>
                                     <span className="text-base" style={{ color: primaryColor }}>${order.total.toFixed(2)}</span>
                                 </div>
@@ -639,7 +794,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                     href={waLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-transform rounded-2xl text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 cursor-pointer"
+                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-transform rounded-2xl text-white text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 cursor-pointer"
                                 >
                                     <MessageCircle className="size-4 shrink-0" />
                                     <span>Ayuda por WhatsApp sobre este Pedido</span>
@@ -648,7 +803,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                             <button 
                                 type="button"
                                 onClick={handleBackClick}
-                                className="w-full py-3.5 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-transform cursor-pointer border border-slate-200"
+                                className="w-full py-3.5 text-center text-xs font-bold uppercase tracking-wide rounded-2xl text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-transform cursor-pointer border border-slate-200"
                             >
                                 Volver a Mis Órdenes
                             </button>
@@ -674,7 +829,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         </button>
 
                         <div className="relative z-10 flex items-center gap-2">
-                            <span className="text-lg font-black text-white italic tracking-tighter uppercase">{negocio.nombre}</span>
+                            <span className="text-lg font-bold text-white tracking-tight ">{negocio.nombre}</span>
                         </div>
 
                         <button 
@@ -694,16 +849,16 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         <div className="text-center space-y-1.5 pb-1">
                             <div className="flex items-center justify-center gap-2 flex-wrap">
                                 <span 
-                                    className="px-3 py-1 text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-xs"
+                                    className="px-3 py-1 text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-xs"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     Paso Final
                                 </span>
-                                <span className="px-3 py-1 bg-slate-200 text-slate-800 rounded-full text-[9px] font-black uppercase tracking-wider">
+                                <span className="px-3 py-1 bg-slate-200 text-slate-800 rounded-full text-xs font-bold uppercase tracking-wider">
                                     Transferencia Bancaria
                                 </span>
                             </div>
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight pt-1">Completa tu pago</h2>
+                            <h2 className="text-2xl font-bold text-slate-900 tracking-tight pt-1">Completa tu pago</h2>
                             <div className="w-8 h-1 rounded-full mx-auto" style={{ backgroundColor: primaryColor }} />
                             <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto pt-0.5 leading-relaxed">
                                 Transfiere el monto exacto y adjunta tu comprobante para enviar a producción.
@@ -713,9 +868,9 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         {/* Tarjeta 1: Código de Pago y Monto a Transferir */}
                         <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 flex items-center justify-between shadow-2xs">
                             <div className="space-y-0.5">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Código de Pago</span>
+                                <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block">Código de Pago</span>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm font-mono font-black text-slate-900 tracking-wider">
+                                    <span className="text-sm font-mono font-bold text-slate-900 tracking-wider">
                                         {order.payment?.codigoPago || `PINCHOS-${order.id.slice(0, 6).toUpperCase()}`}
                                     </span>
                                     <button
@@ -738,8 +893,8 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
 
                             <div className="flex items-center gap-3">
                                 <div className="text-right space-y-0.5">
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Monto a Transferir</span>
-                                    <span className="text-2xl font-black text-slate-900 tracking-tight">${order.total.toFixed(2)}</span>
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block">Monto a Transferir</span>
+                                    <span className="text-2xl font-bold text-slate-900 tracking-tight">${order.total.toFixed(2)}</span>
                                 </div>
                                 <div 
                                     className="size-11 text-white rounded-2xl flex items-center justify-center shadow-md shrink-0"
@@ -755,15 +910,15 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                                 <div className="flex items-center gap-3">
                                     <div 
-                                        className="size-10 text-white rounded-full flex items-center justify-center font-black shadow-xs shrink-0"
+                                        className="size-10 text-white rounded-full flex items-center justify-center font-bold shadow-xs shrink-0"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         <Building2 className="size-5" />
                                     </div>
-                                    <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Datos para la Transferencia</span>
+                                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">Datos para la Transferencia</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl">
-                                    <span className="text-xs font-black text-slate-800 uppercase tracking-wider">{bankConfig?.banco || 'BANCO PICHINCHA'}</span>
+                                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">{bankConfig?.banco || 'BANCO PICHINCHA'}</span>
                                 </div>
                             </div>
 
@@ -773,8 +928,8 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                         <User className="size-4" />
                                     </div>
                                     <div>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TITULAR</span>
-                                        <span className="text-xs font-black text-slate-900">{bankConfig?.titular || 'Poleth Caicedo'}</span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Titular</span>
+                                        <span className="text-xs font-bold text-slate-900">{bankConfig?.titular || 'Poleth Caicedo'}</span>
                                     </div>
                                 </div>
 
@@ -783,8 +938,8 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                         <CreditCard className="size-4" />
                                     </div>
                                     <div>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TIPO DE CUENTA</span>
-                                        <span className="text-xs font-black text-slate-900">{bankConfig?.tipoCuenta || 'Ahorros'}</span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Tipo de cuenta</span>
+                                        <span className="text-xs font-bold text-slate-900">{bankConfig?.tipoCuenta || 'Ahorros'}</span>
                                     </div>
                                 </div>
 
@@ -793,7 +948,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                         <Hash className="size-4" />
                                     </div>
                                     <div>
-                                        <span className="text-xs font-mono font-black text-slate-900 select-all">{bankConfig?.numeroCuenta || '2213913435'}</span>
+                                        <span className="text-xs font-mono font-bold text-slate-900 select-all">{bankConfig?.numeroCuenta || '2213913435'}</span>
                                     </div>
                                 </div>
 
@@ -802,8 +957,8 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                         <FileText className="size-4" />
                                     </div>
                                     <div>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">IDENTIFICACIÓN / RUC</span>
-                                        <span className="text-xs font-mono font-black text-slate-900">{bankConfig?.identificacion || '1792345678001'}</span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Identificación / RUC</span>
+                                        <span className="text-xs font-mono font-bold text-slate-900">{bankConfig?.identificacion || '1792345678001'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -812,9 +967,9 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         {/* Formulario de Carga de Comprobante */}
                         {(order.payment?.evidences?.length > 0 || ['COMPROBANTE_ENVIADO', 'COMPROBANTE_RECIBIDO', 'PAGO_VERIFICADO', 'CONFIRMADO'].includes(order.payment?.estado || '')) ? (
                             <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-5 text-emerald-950 space-y-2">
-                                <div className="flex items-center gap-2 font-black text-xs text-emerald-800">
+                                <div className="flex items-center gap-2 font-bold text-xs text-emerald-800">
                                     <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                                    <span>✅ COMPROBANTE DE PAGO REGISTRADO</span>
+                                    <span>✅ Comprobante de pago registrado</span>
                                 </div>
                                 <p className="text-xs text-emerald-800 font-medium">
                                     Tu comprobante de pago ya ha sido recibido y registrado en el sistema. No necesitas volver a subir un archivo.
@@ -832,7 +987,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 className="space-y-4 pt-1"
                             >
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-3">
-                                    <label className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                                    <label className="block text-xs font-bold text-slate-900 uppercase tracking-wide">
                                         SUBIR COMPROBANTE (PNG, JPG, WEBP O PDF) *
                                     </label>
 
@@ -846,7 +1001,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                     
                                     <button
                                         type="button"
-                                        className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                                        className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
                                     >
                                         Seleccionar archivo
                                     </button>
@@ -869,7 +1024,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
 
                                 <div className="bg-slate-100/80 rounded-2xl p-3.5 flex items-start gap-3 border border-slate-200/60">
                                     <ShieldCheck className="size-5 text-orange-600 shrink-0 mt-0.5" />
-                                    <div className="text-[10px] text-slate-600 font-semibold leading-relaxed">
+                                    <div className="text-xs text-slate-600 font-semibold leading-relaxed">
                                         <strong className="text-slate-800 block">Tu comprobante es 100% seguro.</strong>
                                         Solo se usa para validar tu pago y enviar tu pedido a producción.
                                     </div>
@@ -886,7 +1041,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 <button
                                     type="submit"
                                     disabled={uploading || !evidenceFile}
-                                    className="w-full py-4 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
+                                    className="w-full py-4 text-white font-bold rounded-2xl text-xs uppercase tracking-wide shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     {uploading ? (
@@ -903,7 +1058,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 </button>
                                 <div className="flex items-center justify-center gap-1.5 text-center pt-1">
                                     <Lock className="size-3 text-slate-400" />
-                                    <span className="text-[11px] font-bold text-slate-400">Tus datos están protegidos</span>
+                                    <span className="text-xs font-bold text-slate-400">Tus datos están protegidos</span>
                                 </div>
                             </div>
                         </form>

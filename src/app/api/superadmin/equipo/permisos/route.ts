@@ -5,11 +5,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { ensureTeamCatalog } from "@/lib/admin/teamCatalog";
 import { requirePermission } from "@/lib/admin-permissions";
 
 export async function GET(req: NextRequest) {
     const { session, error } = await requirePermission('EQUIPO_VER');
     if (error) return error;
+    await ensureTeamCatalog();
 
     try {
         const permisos = await prisma.adminPermission.findMany({

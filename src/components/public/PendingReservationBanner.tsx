@@ -57,11 +57,11 @@ export default function PendingReservationBanner({ reserva, slug, whatsapp }: Pe
                     </div>
                     <div>
                         <div className="flex items-center gap-2 mb-1 justify-center md:justify-start">
-                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] italic ${isUrgent ? 'text-rose-500' : 'text-amber-500'}`}>
+                            <span className={`text-xs font-bold uppercase tracking-wide ${isUrgent ? 'text-rose-500' : 'text-amber-500'}`}>
                                 {isUrgent ? '⚠️ Acción Requerida' : 'Pago Pendiente'}
                             </span>
                         </div>
-                        <h4 className="text-sm font-black text-white italic uppercase tracking-tight leading-none">
+                        <h4 className="text-sm font-bold text-white uppercase tracking-tight leading-none">
                             Tu turno en <span className="text-emerald-400">{reserva.cancha.nombre}</span> expira pronto
                         </h4>
                     </div>
@@ -69,8 +69,8 @@ export default function PendingReservationBanner({ reserva, slug, whatsapp }: Pe
 
                 <div className="flex items-center gap-6">
                     <div className="flex flex-col items-center md:items-end">
-                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">LIBERACIÓN EN:</p>
-                        <div className={`text-2xl font-black italic tabular-nums leading-none ${isUrgent ? 'text-rose-500' : 'text-white'}`}>
+                        <p className="text-xs font-bold text-white/30 uppercase tracking-wide mb-1">Liberación en:</p>
+                        <div className={`text-2xl font-bold tabular-nums leading-none ${isUrgent ? 'text-rose-500' : 'text-white'}`}>
                             {timeLeft.m.toString().padStart(2, '0')}:{timeLeft.s.toString().padStart(2, '0')}
                         </div>
                     </div>
@@ -79,11 +79,11 @@ export default function PendingReservationBanner({ reserva, slug, whatsapp }: Pe
                         href={whatsapp ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola! 👋 Quiero confirmar mi reserva de las ${reserva.cancha.nombre}. Mi ID de reserva es #${reserva.id.slice(-4).toUpperCase()}`)}` : `/${slug}/mis-reservas`}
                         target={whatsapp ? "_blank" : "_self"}
                         onClick={(e) => e.stopPropagation()}
-                        className={`h-12 px-6 rounded-xl flex items-center gap-3 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-xl ${
-                            isUrgent 
-                                ? 'bg-rose-500 text-white shadow-rose-500/20' 
-                                : 'bg-white text-black shadow-white/5'
-                        }`}
+                        className={`h-12 px-6 rounded-xl flex items-center gap-3 font-bold text-xs uppercase tracking-wide transition-all active:scale-95 shadow-xl ${
+ isUrgent 
+ ? 'bg-rose-500 text-white shadow-rose-500/20' 
+ : 'bg-white text-black shadow-white/5'
+ }`}
                     >
                         PAGAR AHORA
                         <ChevronRight size={16} />

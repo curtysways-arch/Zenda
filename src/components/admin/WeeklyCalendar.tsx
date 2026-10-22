@@ -89,16 +89,16 @@ export function WeeklyCalendar({ reservas, canchas }: WeeklyCalendarProps) {
     };
 
     return (
-        <div className="bg-white border border-slate-200 rounded-[3rem] overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
             {/* Header del Calendario - Más compacto */}
-            <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="px-5 py-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="size-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
-                        <CalendarDays size={22} strokeWidth={2.5} />
+                    <div className="size-9 rounded-xl text-white flex items-center justify-center" style={{ backgroundColor: 'var(--primary-color, #0f172a)' }}>
+                        <CalendarDays size={18} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Agenda Semanal</h3>
-                        <p className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mt-1 italic">Control de Ocupación</p>
+                        <h3 className="text-base font-semibold text-slate-900 leading-none">Tu semana</h3>
+                        <p className="text-xs text-slate-500 mt-1">Toca un espacio libre para agendar</p>
                     </div>
                 </div>
 
@@ -110,7 +110,7 @@ export function WeeklyCalendar({ reservas, canchas }: WeeklyCalendarProps) {
                         <ChevronLeft size={18} />
                     </button>
                     <div className="px-4 py-1 text-center min-w-[150px]">
-                        <span className="text-[10px] font-black text-slate-900 uppercase tracking-tighter italic">
+                        <span className="text-xs font-bold text-slate-900 uppercase tracking-tight ">
                             {format(weekStart, 'dd')} - {format(weekEnd, 'dd')} {format(weekStart, 'MMM', { locale: es })}
                         </span>
                     </div>
@@ -125,7 +125,7 @@ export function WeeklyCalendar({ reservas, canchas }: WeeklyCalendarProps) {
                 <div className="flex items-center gap-3">
                     <button 
                         onClick={goToToday}
-                        className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg active:scale-95"
+                        className="px-6 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-wide hover:bg-black transition-all shadow-lg active:scale-95"
                     >
                         HOY
                     </button>
@@ -140,7 +140,7 @@ export function WeeklyCalendar({ reservas, canchas }: WeeklyCalendarProps) {
                         <div className="h-12 border-b border-slate-100" /> {/* Spacer */}
                         {hours.map(h => (
                             <div key={h} className="h-12 flex items-center justify-center border-b border-slate-50 relative">
-                                <span className="text-[9px] font-bold text-slate-400 tracking-tighter">
+                                <span className="text-xs font-bold text-slate-400 tracking-tight">
                                     {h.toString().padStart(2, '0')}:00
                                 </span>
                             </div>
@@ -169,17 +169,17 @@ export function WeeklyCalendar({ reservas, canchas }: WeeklyCalendarProps) {
                             return (
                                 <div key={idx} className={clsx(
                                     "relative border-r border-slate-100 min-h-[850px]",
-                                    today ? "bg-indigo-50/10" : "bg-white"
+                                    today ? "bg-slate-50/60" : "bg-white"
                                 )}>
                                     {/* Header de Día Compacto */}
                                     <div className={clsx(
                                         "h-12 flex items-center justify-center gap-3 border-b border-slate-100 sticky top-0 z-30 transition-all",
-                                        today ? "bg-indigo-600 text-white shadow-md rounded-b-xl" : "bg-white/95 backdrop-blur-sm text-slate-900"
-                                    )}>
-                                        <span className="text-[10px] font-black uppercase tracking-tight opacity-70 italic">
+                                        today ? "text-white shadow-md rounded-b-xl" : "bg-white/95 backdrop-blur-sm text-slate-900"
+                                    )} style={today ? { backgroundColor: 'var(--primary-color, #0f172a)' } : undefined}>
+                                        <span className="text-xs font-bold uppercase tracking-tight opacity-70 ">
                                             {format(day, 'EEE', { locale: es })}
                                         </span>
-                                        <span className="text-sm font-black tracking-tighter italic">
+                                        <span className="text-sm font-bold tracking-tight ">
                                             {format(day, 'dd')}
                                         </span>
                                     </div>
@@ -189,7 +189,7 @@ export function WeeklyCalendar({ reservas, canchas }: WeeklyCalendarProps) {
                                         <div key={h} className="h-12 border-b border-slate-50 group/slot relative">
                                             <Link 
                                                 href={`/admin/citas/nueva?fecha=${format(day, 'yyyy-MM-dd')}&hora=${h}:00`}
-                                                className="absolute inset-0 opacity-0 group-hover/slot:opacity-100 bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8px] font-black uppercase tracking-widest transition-all z-10"
+                                                className="absolute inset-0 opacity-0 group-hover/slot:opacity-100 bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold uppercase tracking-wide transition-all z-10"
                                             >
                                                 +
                                             </Link>
@@ -227,7 +227,7 @@ export function WeeklyCalendar({ reservas, canchas }: WeeklyCalendarProps) {
                                                     <div className="space-y-0.5 overflow-hidden">
                                                         <div className="flex justify-between items-start gap-1">
                                                             <span className={clsx(
-                                                                "text-[7px] font-black uppercase tracking-widest px-1 py-0 rounded bg-black/10 truncate",
+                                                                "text-xs font-bold uppercase tracking-wide px-1 py-0 rounded bg-black/10 truncate",
                                                                 (isConfirmed || isCheckedIn || isInProgress || isNoShow) ? "text-white/90" : 
                                                                 isExpired ? "text-slate-500" :
                                                                 isCompleted ? "text-slate-400" :
@@ -236,14 +236,14 @@ export function WeeklyCalendar({ reservas, canchas }: WeeklyCalendarProps) {
                                                                 {res.canchaNombre} {isExpired ? '(X)' : isCheckedIn ? '(LLEGÓ)' : isInProgress ? '(PROG)' : ''}
                                                             </span>
                                                         </div>
-                                                        <p className="text-[9px] font-black leading-none uppercase truncate italic">
+                                                        <p className="text-xs font-bold leading-none uppercase truncate ">
                                                             {res.clienteNombre}
                                                         </p>
                                                     </div>
                                                     
                                                     <div className="flex items-center gap-1 opacity-80 mt-auto">
                                                         <Clock size={8} strokeWidth={3} />
-                                                        <span className="text-[8px] font-bold tracking-tighter">
+                                                        <span className="text-xs font-bold tracking-tight">
                                                             {res.horaInicio}
                                                         </span>
                                                     </div>
@@ -262,31 +262,31 @@ export function WeeklyCalendar({ reservas, canchas }: WeeklyCalendarProps) {
             <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex flex-wrap items-center justify-center gap-8">
                 <div className="flex items-center gap-2">
                     <div className="size-4 rounded-md bg-emerald-500 shadow-sm" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Confirmada</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ">Confirmada</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="size-4 rounded-md bg-amber-500 animate-pulse shadow-sm" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Llegó</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ">Llegó</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="size-4 rounded-md bg-purple-600 shadow-sm" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">En Progreso</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ">En Progreso</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="size-4 rounded-md bg-slate-800 shadow-sm" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Completado</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ">Completado</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="size-4 rounded-md bg-amber-400 shadow-sm" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Pendiente</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ">Pendiente</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="size-4 rounded-md bg-red-600 shadow-sm" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">No Show</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ">No Show</span>
                 </div>
                 <div className="ml-auto hidden md:flex items-center gap-4 px-6 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
                     <div className="size-2 bg-emerald-500 rounded-full animate-pulse" />
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] italic">CHECK-IN INTELIGENTE ACTIVO</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide ">Check-in inteligente activo</span>
                 </div>
             </div>
         </div>

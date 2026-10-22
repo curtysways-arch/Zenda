@@ -66,15 +66,15 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col scale-in duration-300 text-slate-900">
+            <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col scale-in duration-300 text-slate-900">
                 {/* Header */}
                 <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-white relative text-left">
                     <UserPlus className="absolute -top-4 -left-4 text-emerald-50/50" size={100} />
                     <div className="relative z-10">
-                        <h2 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3 uppercase">
+                        <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-3 ">
                             {isEdit ? 'Editar Alumno' : 'Registrar Nuevo Alumno'}
                         </h2>
-                        <p className="text-gray-400 font-bold italic text-sm">Completa la información del estudiante.</p>
+                        <p className="text-gray-400 font-bold text-sm">Completa la información del estudiante.</p>
                     </div>
                     <button type="button" onClick={onClose} className="p-3 hover:bg-gray-100 rounded-full transition-all relative z-10">
                         <X size={24} className="text-gray-400 hover:text-gray-900" />
@@ -92,13 +92,13 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
                     <div className="space-y-6">
                         {/* Nombre del Alumno */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2 ml-1">
                                 <User size={14} className="text-emerald-500" /> Nombre Completo del Alumno
                             </label>
                             <input
                                 required
                                 type="text"
-                                className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700 shadow-sm"
                                 placeholder="Nombre completo"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -108,12 +108,12 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Edad */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2 ml-1">
                                     <Calendar size={14} className="text-emerald-500" /> Edad (Años)
                                 </label>
                                 <input
                                     type="number"
-                                    className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                    className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700 shadow-sm"
                                     placeholder="Ej: 12"
                                     value={formData.age}
                                     onChange={(e) => setFormData({ ...formData, age: e.target.value })}
@@ -122,12 +122,12 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
 
                             {/* Representante */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2 ml-1">
                                     <Info size={14} className="text-emerald-500" /> Nombre del Representante
                                 </label>
                                 <input
                                     type="text"
-                                    className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                    className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700 shadow-sm"
                                     placeholder="Padre, madre o tutor"
                                     value={formData.representative_name}
                                     onChange={(e) => setFormData({ ...formData, representative_name: e.target.value })}
@@ -147,12 +147,12 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
 
                             {/* Email */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2 ml-1">
                                     <Mail size={14} className="text-emerald-500" /> Correo Electrónico
                                 </label>
                                 <input
                                     type="email"
-                                    className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                    className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700 shadow-sm"
                                     placeholder="ejemplo@correo.com"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -167,7 +167,7 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors"
+                        className="px-8 py-4 text-xs font-bold text-gray-400 uppercase tracking-wide hover:text-gray-900 transition-colors"
                     >
                         Cancelar
                     </button>
@@ -175,7 +175,7 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
                         type="button"
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="flex items-center gap-3 bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 disabled:opacity-50 cursor-pointer"
+                        className="flex items-center gap-3 bg-slate-900 text-white px-10 py-4 rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 disabled:opacity-50 cursor-pointer"
                     >
                         {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                         {isEdit ? 'Actualizar Alumno' : 'Registrar Alumno'}

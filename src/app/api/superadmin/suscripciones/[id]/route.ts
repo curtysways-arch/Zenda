@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTeamContext, canAccessBusinessId, outsidePortfolio } from "@/lib/admin/teamGuard";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -6,9 +7,8 @@ import { getBusinessTimeZone, getSubscriptionDates } from "@/lib/dateUtils";
 import { getFounderConfig } from "@/lib/services/planService";
 
 async function isSuperAdmin() {
-    const session = await getServerSession(authOptions);
-    // Para propósitos de este desarrollo local, permitimos el acceso tal como en las otras APIs de superadmin.
-    return true;
+    // Usuario del equipo Citiox; el permiso de cada acción lo valida el middleware (lib/admin/teamAccessMap)
+    return Boolean(await getTeamContext());
 }
 
 export async function PATCH(
@@ -30,6 +30,10 @@ export async function PATCH(
         });
 
         if (!sub) return NextResponse.json({ error: "Suscripción no encontrada" }, { status: 404 });
+        {
+            const team = await getTeamContext();
+            if (!team || !(await canAccessBusinessId(team, sub.negocioId))) return outsidePortfolio();
+        }
 
         const timeZone = getBusinessTimeZone(sub.Negocio?.configuracion);
         let nuevaFechaFin = new Date(sub.fechaFin);
@@ -49,32 +53,31 @@ export async function PATCH(
             nuevaFechaFin.setDate(nuevaFechaFin.getDate() + dias);
         }
 
+        // Renovar activa el plan; extender días o cambiar de plan conservan el estado
+        // (una prueba extendida sigue siendo prueba y no se le reinician las fechas).
+        const estadoActual = String(sub.estado || '').toLowerCase();
+        const vencida = ['expired', 'vencida', 'canceled', 'cancelada'].includes(estadoActual);
         const data: any = {
             fechaFin: nuevaFechaFin,
-            estado: action === 'CANCEL' ? 'canceled' : (nuevaFechaFin > hoy ? 'ACTIVA' : sub.estado),
+            estado: action === 'CANCEL'
+                ? 'canceled'
+                : action === 'RENEW'
+                    ? 'active'
+                    : (vencida && nuevaFechaFin > hoy ? 'active' : sub.estado),
             updatedAt: new Date()
         };
 
         // Preservar estado de fundador por defecto
         // Solo modificar con acciones explícitas SET_FOUNDER / REMOVE_FOUNDER
         if (action === 'SET_FOUNDER') {
-            const { founderLockedPrice, founderMax } = await getFounderConfig();
-            const activeFoundersCount = await (prisma.suscripcion as any).count({
-                where: { isFounder: true, estado: { in: ['active', 'activa', 'ACTIVA'] } }
-            });
-            if (activeFoundersCount >= founderMax && !sub.isFounder) {
-                return NextResponse.json({ error: `Ya se alcanzó el límite de ${founderMax} fundadores` }, { status: 400 });
-            }
-            data.isFounder = true;
+            // Usa los cupos y el precio del programa de fundadores del tipo de negocio
+            const { planService } = await import('@/lib/services/planService');
             const customPrice = body.lockedPrice !== undefined ? parseFloat(String(body.lockedPrice)) : null;
-            data.lockedPrice = (customPrice !== null && !isNaN(customPrice)) ? customPrice : founderLockedPrice;
-            if (!sub.founderPosition) {
-                data.founderPosition = activeFoundersCount + 1;
-            }
+            const r = await planService.grantFounderManually(sub.negocioId, customPrice);
+            if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
         } else if (action === 'REMOVE_FOUNDER') {
-            data.isFounder = false;
-            data.founderPosition = null;
-            data.lockedPrice = null;
+            const { planService } = await import('@/lib/services/planService');
+            await planService.removeFounder(sub.negocioId);
         }
 
         // Cambio de plan: NO toca isFounder / lockedPrice / founderPosition

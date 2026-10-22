@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { initPWAInstall } from '@/lib/pwa-install';
+import { initPWAInstall, getPwaContext } from '@/lib/pwa-install';
 
 export default function DynamicManifest() {
   const pathname = usePathname();
@@ -11,14 +11,11 @@ export default function DynamicManifest() {
     // Initialize PWA installation listeners
     initPWAInstall();
 
-    // Extract slug from pathname (assuming /[slug])
-    const segments = pathname.split('/').filter(Boolean);
-    const adminRoutes = ['admin', 'superadmin', 'login', 'register', 'olvide-password', 'api', 'checkin', 'reserva', 'profesor'];
-    const isPublicBusinessPage = segments.length >= 1 && !adminRoutes.includes(segments[0]);
-    const isSuperAdminPage = segments.length >= 1 && segments[0] === 'superadmin';
-    const isAdminPage = segments.length >= 1 && segments[0] === 'admin';
-    
-    const slug = isPublicBusinessPage ? segments[0] : null;
+    const ctx = getPwaContext(pathname);
+    const slug = ctx.kind === 'business' ? ctx.slug : null;
+    const isDriverPage = ctx.kind === 'driver';
+    const isSuperAdminPage = ctx.kind === 'superadmin';
+    const isAdminPage = ctx.kind === 'admin';
 
     // Update manifest link dynamically
     const updateManifest = () => {
@@ -28,6 +25,9 @@ export default function DynamicManifest() {
       if (slug) {
         // Página pública de negocio: manifest dinámico con datos del negocio
         manifestUrl = `/api/pwa/manifest?slug=${slug}`;
+      } else if (isDriverPage) {
+        // App de Repartidores: manifest exclusivo Citiox Driver con scope /driver
+        manifestUrl = `/manifest-driver.json`;
       } else if (isSuperAdminPage) {
         // Panel de SuperAdmin: manifest exclusivo con scope /superadmin
         manifestUrl = `/manifest-superadmin.json`;

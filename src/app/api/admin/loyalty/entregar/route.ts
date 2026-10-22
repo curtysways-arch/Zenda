@@ -48,8 +48,12 @@ export async function POST(req: Request) {
             newStatus = 'LISTO_PARA_RETIRAR';
             auditAction = 'READY';
         } else if (action === 'DELIVER') {
-            if (reward.estado !== 'LISTO_PARA_RETIRAR') {
-                return NextResponse.json({ error: "El premio debe estar listo para retirar para entregarse" }, { status: 400 });
+            // Si el cliente está en el local se puede entregar directo (sin pasar por "listo")
+            if (reward.estado !== 'LISTO_PARA_RETIRAR' && reward.estado !== 'SOLICITADO') {
+                return NextResponse.json({ error: "Este premio no está pendiente de entrega" }, { status: 400 });
+            }
+            if (reward.claimTokenExpiresAt && new Date(reward.claimTokenExpiresAt) < new Date()) {
+                return NextResponse.json({ error: "El código venció. El cliente debe renovarlo." }, { status: 400 });
             }
             newStatus = 'ENTREGADO';
             auditAction = 'DELIVERED';

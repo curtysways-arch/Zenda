@@ -77,8 +77,8 @@ export default async function MiCursoPage(
                             <ChevronLeft size={24} strokeWidth={2.5} />
                         </Link>
                         <div className="space-y-0.5">
-                            <p className="text-white/40 text-[9px] font-black uppercase tracking-[0.3em] leading-none">{negocio?.nombre || 'Complex'}</p>
-                            <h1 className="text-white font-black text-xl tracking-tighter uppercase leading-none truncate max-w-[180px] md:max-w-xs">Mi Curso</h1>
+                            <p className="text-white/40 text-xs font-bold uppercase tracking-wide leading-none">{negocio?.nombre || 'Complex'}</p>
+                            <h1 className="text-white font-bold text-xl tracking-tight leading-none truncate max-w-[180px] md:max-w-xs">Mi Curso</h1>
                         </div>
                     </div>
                     
@@ -95,7 +95,7 @@ export default async function MiCursoPage(
             <main className="max-w-2xl mx-auto px-6 pt-32 pb-12">
                 <div className="space-y-8 animate-in fade-in duration-700">
                     <div>
-                        <h1 className="text-3xl font-black tracking-tighter uppercase leading-none text-emerald-500">
+                        <h1 className="text-3xl font-bold tracking-tight leading-none text-emerald-500">
                             {course.name}
                         </h1>
                         <p className="text-white/40 font-medium mt-2">
@@ -103,12 +103,12 @@ export default async function MiCursoPage(
                         </p>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden">
                         <div className="p-8">
-                            <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight mb-6">Clases del curso</h3>
+                            <h3 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-6">Clases del curso</h3>
                             
                             {classes.length === 0 ? (
-                                <p className="text-sm font-medium text-slate-400 italic text-center py-6">
+                                <p className="text-sm font-medium text-slate-400 text-center py-6">
                                     No hay clases registradas.
                                 </p>
                             ) : (
@@ -129,15 +129,15 @@ export default async function MiCursoPage(
                                                 </div>
                                                 <div>
                                                     {status === 'present' ? (
-                                                        <span className="flex items-center gap-1.5 bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest">
+                                                        <span className="flex items-center gap-1.5 bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wide">
                                                             <CheckCircle2 size={14} /> Presente
                                                         </span>
                                                     ) : status === 'absent' ? (
-                                                        <span className="flex items-center gap-1.5 bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest">
+                                                        <span className="flex items-center gap-1.5 bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wide">
                                                             <XCircle size={14} /> Ausente
                                                         </span>
                                                     ) : (
-                                                        <span className="flex items-center gap-1.5 bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest">
+                                                        <span className="flex items-center gap-1.5 bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wide">
                                                             <Clock size={14} /> {isPast ? "Sin Registro" : "Pronto"}
                                                         </span>
                                                     )}

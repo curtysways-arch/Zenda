@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, Scissors, DollarSign, Activity, Loader2, Plus, MapPin, ShieldAlert, ArrowUpCircle, Clock, Image as ImageIcon, Trash2, GripVertical, Users } from 'lucide-react';
+import { X, Scissors, DollarSign, Activity, Loader2, Plus, MapPin, ShieldAlert, ArrowUpCircle, Clock, Image as ImageIcon, Trash2, GripVertical, Users, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 import GalleryAdmin from './GalleryAdmin';
@@ -54,6 +54,13 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
 
     // Estados individuales para mayor estabilidad
     const [nombre, setNombre] = useState(initialData?.nombre || '');
+    const [descripcion, setDescripcion] = useState(
+        initialData?.descripcion || initialData?.extraInfo?.descripcion || ''
+    );
+    const [isLaundry, setIsLaundry] = useState(false);
+    const [tiempoEntrega, setTiempoEntrega] = useState(
+        initialData?.extraInfo?.tiempoEntrega || '48 horas (2 días)'
+    );
     const [tipo, setTipo] = useState(initialData?.tipo || '');
     const [categoryId, setCategoryId] = useState(initialData?.categoryId || '');
     const [duracion, setDuracion] = useState(initialData?.duracion?.toString() || '60');
@@ -88,6 +95,39 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
         ? initialData.extraInfo.features
         : [{ title: '', content: '' }];
     const [features, setFeatures] = useState<FeatureBlock[]>(initialBlocks);
+
+    // Ítems de "¿Qué incluye este servicio?" (Personalizable por el administrador)
+    const [itemsIncluidos, setItemsIncluidos] = useState<string[]>(() => {
+        const raw = initialData?.extraInfo?.itemsIncluidos || initialData?.extraInfo?.queIncluye || initialData?.itemsIncluidos;
+        if (Array.isArray(raw) && raw.length > 0) {
+            return raw.filter((x: any) => typeof x === 'string' && x.trim().length > 0);
+        }
+        if (!initialData) {
+            return [
+                'Lavado artesanal exterior e interior',
+                'Desinfección antibacteriana y desodorización',
+                'Limpieza detallada de plantillas y cordones'
+            ];
+        }
+        return [];
+    });
+    const [newItemInput, setNewItemInput] = useState('');
+
+    const handleAddItemIncluido = (textToAdd?: string) => {
+        const text = (textToAdd !== undefined ? textToAdd : newItemInput).trim();
+        if (!text) return;
+        if (itemsIncluidos.includes(text)) return;
+        setItemsIncluidos(prev => [...prev, text]);
+        if (textToAdd === undefined) setNewItemInput('');
+    };
+
+    const handleRemoveItemIncluido = (index: number) => {
+        setItemsIncluidos(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleUpdateItemIncluido = (index: number, val: string) => {
+        setItemsIncluidos(prev => prev.map((item, i) => i === index ? val : item));
+    };
 
     // Estado para imágenes de galería temporales
     const [tempGalleryMedia, setTempGalleryMedia] = useState<any[]>([]);
@@ -157,6 +197,26 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                 setLoadingStaff(false);
             })
             .catch(() => setLoadingStaff(false));
+
+        fetch('/api/negocio')
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (data) {
+                    const tipoUpper = (data.tipoNegocio || '').toUpperCase();
+                    let cfg: any = {};
+                    if (typeof data.configuracion === 'string') {
+                        try { cfg = JSON.parse(data.configuracion); } catch { cfg = {}; }
+                    } else {
+                        cfg = data.configuracion || {};
+                    }
+                    const bp = (cfg.blueprintId || cfg.tipoNegocio || '').toUpperCase();
+                    const isL = tipoUpper === 'LAVANDERIA' || tipoUpper === 'SHOE_CARE' || 
+                                bp === 'LAVANDERIA' || bp === 'SHOE_CARE' ||
+                                tipoUpper.includes('LAVAND') || bp.includes('LAVAND');
+                    setIsLaundry(isL);
+                }
+            })
+            .catch(() => {});
     }, [initialData]);
 
     const handleTipoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -219,8 +279,8 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
         setLoading(true);
         setError(null);
 
-        if (selectedStaffIds.length === 0) {
-            setError("Debes asignar al menos un profesional (staff) a este servicio.");
+        if (!isLaundry && selectedStaffIds.length === 0) {
+            setError("Debes asignar al menos un especialista a este servicio.");
             setLoading(false);
             return;
         }
@@ -241,13 +301,18 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                 nombre,
                 tipo,
                 categoryId: categoryId || null,
-                duracion: parseInt(duracion),
+                duracion: isLaundry ? (parseInt(duracion) || 2880) : parseInt(duracion),
                 precio: parseFloat(precio),
                 estaActivo,
                 ubicacionId: ubicacionId || null,
                 imageMediaId,
                 extraInfo: {
+                    ...(initialData?.extraInfo || {}),
+                    descripcion: descripcion.trim(),
+                    tiempoEntrega: isLaundry ? tiempoEntrega : (initialData?.extraInfo?.tiempoEntrega || undefined),
                     features: features.filter(f => f.title.trim() || f.content.trim()),
+                    itemsIncluidos: itemsIncluidos.map(i => i.trim()).filter(Boolean),
+                    queIncluye: itemsIncluidos.map(i => i.trim()).filter(Boolean),
                     puntosOtorgados: parseInt(puntosOtorgados) || 0
                 },
                 staffIds: selectedStaffIds
@@ -360,7 +425,9 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                     <div>
                         <h2 className="text-xl font-bold !text-white">{initialData ? 'Editar Servicio' : 'Nuevo Servicio'}</h2>
                         <p className="!text-white/80 text-xs">
-                            {initialData ? 'Actualiza los datos de tu servicio' : 'Registra un nuevo servicio de belleza'}
+                            {initialData 
+                                ? 'Actualiza los datos de tu servicio' 
+                                : (isLaundry ? 'Registra un nuevo servicio de lavado y cuidado' : 'Registra un nuevo servicio o tratamiento')}
                         </p>
                     </div>
                     <button type="button" onClick={handleCancel} className="p-2 hover:bg-white/20 rounded-full transition !text-white">
@@ -378,7 +445,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                         <ShieldAlert size={18} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-black text-rose-900 leading-tight">Acción bloqueada</p>
+                                        <p className="text-sm font-bold text-rose-900 leading-tight">Acción bloqueada</p>
                                         <p className="text-xs text-rose-700/80 mt-1 font-bold leading-relaxed">{error}</p>
                                     </div>
                                     <button
@@ -394,7 +461,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                     <div className="flex items-center gap-2 pt-1 border-t border-rose-100 mt-1">
                                         <Link
                                             href="/admin/plan"
-                                            className="group/btn flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-[10px] font-black rounded-xl hover:bg-slate-900 transition-all shadow-md shadow-rose-600/20 active:scale-95 uppercase tracking-widest"
+                                            className="group/btn flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-xl hover:bg-slate-900 transition-all shadow-md shadow-rose-600/20 active:scale-95 uppercase tracking-wide"
                                         >
                                             <ArrowUpCircle size={14} className="group-hover/btn:rotate-12 transition-transform" />
                                             Mejorar mi Plan ahora
@@ -413,24 +480,38 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                         id="nombre"
                                         type="text"
                                         required
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none transition-colors text-gray-900"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none transition-colors text-gray-900 font-bold"
                                         onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
                                         onBlur={(e) => e.target.style.borderColor = 'rgb(243, 244, 246)'}
-                                        placeholder="Ej: Masaje Relajante 60 min"
+                                        placeholder={isLaundry ? "Ej: Lavado Completo Sneakers" : "Ej: Masaje Relajante 60 min"}
                                         value={nombre}
                                         onChange={e => setNombre(e.target.value)}
                                     />
                                 </div>
 
+                                <div>
+                                    <label htmlFor="descripcion" className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Descripción del servicio</label>
+                                    <textarea
+                                        id="descripcion"
+                                        rows={3}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none transition-colors text-gray-900 resize-none font-medium text-sm"
+                                        onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
+                                        onBlur={(e) => e.target.style.borderColor = 'rgb(243, 244, 246)'}
+                                        placeholder={isLaundry ? "Describe el proceso de lavado, materiales, desinfección o acabados..." : "Describe en qué consiste el servicio o tratamiento..."}
+                                        value={descripcion}
+                                        onChange={e => setDescripcion(e.target.value)}
+                                    />
+                                </div>
+
                                 {/* ══ SECCIÓN IMÁGENES (portada + galería juntas) ══ */}
                                 <div className="space-y-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
                                         <ImageIcon size={11} /> Imágenes del servicio
                                     </p>
 
                                     {/* Portada */}
                                     <div>
-                                        <p className="text-[10px] text-gray-400 font-bold mb-1.5">Portada principal</p>
+                                        <p className="text-xs text-gray-400 font-bold mb-1.5">Portada principal</p>
                                         <ImageUploader
                                             category="service"
                                             currentUrl={imagenUrl}
@@ -449,7 +530,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
 
                                     {/* Galería adicional */}
                                     <div>
-                                        <p className="text-[10px] text-gray-400 font-bold mb-1.5">Fotos adicionales · Galería</p>
+                                        <p className="text-xs text-gray-400 font-bold mb-1.5">Fotos adicionales · Galería</p>
                                         {initialData ? (
                                             <GalleryAdmin 
                                                 serviceId={initialData.id} 
@@ -474,7 +555,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                             <label htmlFor="ubicacion" className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                                                 <MapPin size={12} /> Sede / Ubicación
                                             </label>
-                                            <Link href="/admin/config" className="text-[10px] font-black text-violet-600 hover:text-violet-700 uppercase tracking-widest flex items-center gap-1">
+                                            <Link href="/admin/config" className="text-xs font-bold text-violet-600 hover:text-violet-700 uppercase tracking-wide flex items-center gap-1">
                                                 <Plus size={10} /> Gestionar sedes
                                             </Link>
                                         </div>
@@ -498,7 +579,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                     <div>
                                         <div className="flex justify-between items-center mb-2">
                                             <label htmlFor="tipo" className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Categoría</label>
-                                            <Link href="/admin/config" className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1" style={{ color: 'var(--primary-color)' }}>
+                                            <Link href="/admin/config" className="text-xs font-bold uppercase tracking-wide flex items-center gap-1" style={{ color: 'var(--primary-color)' }}>
                                                 <Plus size={10} /> Editar categorías
                                             </Link>
                                         </div>
@@ -512,6 +593,14 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                                 tiposCancha.map(t => (
                                                     <option key={t.id} value={t.id}>{t.nombre}</option>
                                                 ))
+                                            ) : isLaundry ? (
+                                                <>
+                                                    <option>Limpieza Sneakers</option>
+                                                    <option>Lavado Completo</option>
+                                                    <option>Gamuza / Delicados</option>
+                                                    <option>Restauración</option>
+                                                    <option>Impermeabilización</option>
+                                                </>
                                             ) : (
                                                 <>
                                                     <option>Masaje</option>
@@ -523,18 +612,51 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                             )}
                                         </select>
                                     </div>
-                                    <div>
-                                        <label htmlFor="duracion" className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Duración (min.)</label>
-                                        <input
-                                            id="duracion"
-                                            type="number"
-                                            required
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-gray-900 font-medium"
-                                            placeholder="60"
-                                            value={duracion}
-                                            onChange={e => setDuracion(e.target.value)}
-                                        />
-                                    </div>
+                                    {isLaundry ? (
+                                        <div>
+                                            <label htmlFor="tiempoEntrega" className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">
+                                                Tiempo Estimado de Entrega
+                                            </label>
+                                            <select
+                                                id="tiempoEntrega"
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-gray-900 font-medium"
+                                                value={tiempoEntrega}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    setTiempoEntrega(val);
+                                                    const minsMap: Record<string, number> = {
+                                                        'Mismo día / Express (4-6 hrs)': 360,
+                                                        '24 horas (1 día)': 1440,
+                                                        '48 horas (2 días)': 2880,
+                                                        '72 horas (3 días)': 4320,
+                                                        '3 a 5 días (Restauración)': 5760,
+                                                        '5 a 7 días': 8640
+                                                    };
+                                                    setDuracion(String(minsMap[val] || 2880));
+                                                }}
+                                            >
+                                                <option value="48 horas (2 días)">48 horas (2 días) - Estándar</option>
+                                                <option value="24 horas (1 día)">24 horas (1 día)</option>
+                                                <option value="Mismo día / Express (4-6 hrs)">Mismo día / Express (4-6 hrs)</option>
+                                                <option value="72 horas (3 días)">72 horas (3 días)</option>
+                                                <option value="3 a 5 días (Restauración)">3 a 5 días (Restauración)</option>
+                                                <option value="5 a 7 días">5 a 7 días</option>
+                                            </select>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <label htmlFor="duracion" className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Duración (min.)</label>
+                                            <input
+                                                id="duracion"
+                                                type="number"
+                                                required
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-gray-900 font-medium"
+                                                placeholder="60"
+                                                value={duracion}
+                                                onChange={e => setDuracion(e.target.value)}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -551,21 +673,154 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                     />
                                 </div>
 
+                                {/* ══ ¿QUÉ INCLUYE ESTE SERVICIO? (Editable por el Administrador) ══ */}
+                                <div className="space-y-4 p-5 bg-purple-50/50 rounded-3xl border border-purple-100">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <label className="text-xs font-bold text-purple-950 uppercase tracking-wider flex items-center gap-1.5">
+                                                <Sparkles size={14} className="text-purple-600" /> ¿Qué incluye este servicio?
+                                            </label>
+                                            <p className="text-xs text-purple-900/70 font-medium mt-0.5">
+                                                Puntos destacados que se mostrarán al cliente en el catálogo y modal de detalles
+                                            </p>
+                                        </div>
+                                        <span className="text-xs font-bold text-purple-700 bg-purple-100/70 px-2.5 py-0.5 rounded-full border border-purple-200">
+                                            {itemsIncluidos.length} {itemsIncluidos.length === 1 ? 'ítem' : 'ítems'}
+                                        </span>
+                                    </div>
+
+                                    {/* Sugerencias Rápidas / Presets con 1 Clic */}
+                                    <div>
+                                        <p className="text-xs text-purple-900/60 font-bold uppercase tracking-wider mb-1.5">
+                                            Sugerencias rápidas (clic para añadir):
+                                        </p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {[
+                                                'Lavado artesanal exterior e interior',
+                                                'Desinfección antibacteriana y desodorización',
+                                                'Limpieza profunda de suela y entresuela',
+                                                'Lavado de cordones y plantillas',
+                                                'Protector repelente / Hidrofóbico',
+                                                'Esterilización interna con luz UV',
+                                                'Peinado y renovación de textura',
+                                                'Empaque protector y presentación final'
+                                            ].map(preset => {
+                                                const isAdded = itemsIncluidos.includes(preset);
+                                                return (
+                                                    <button
+                                                        key={preset}
+                                                        type="button"
+                                                        onClick={() => handleAddItemIncluido(preset)}
+                                                        disabled={isAdded}
+                                                        className={`text-xs font-bold px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 ${
+ isAdded
+ ? 'bg-purple-200/50 text-purple-400 cursor-not-allowed'
+ : 'bg-white text-purple-700 border border-purple-200 hover:bg-purple-100/80 active:scale-95 cursor-pointer shadow-xs'
+ }`}
+                                                    >
+                                                        <Plus size={10} /> {preset}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Lista de Ítems Agregados */}
+                                    <div className="space-y-2">
+                                        {itemsIncluidos.map((item, idx) => (
+                                            <div key={idx} className="flex items-center gap-2 bg-white p-2.5 rounded-2xl border border-purple-100 shadow-xs">
+                                                <CheckCircle2 size={16} className="text-purple-600 shrink-0 ml-1" />
+                                                <input
+                                                    type="text"
+                                                    value={item}
+                                                    onChange={(e) => handleUpdateItemIncluido(idx, e.target.value)}
+                                                    placeholder="Describe el beneficio o proceso..."
+                                                    className="flex-1 bg-transparent border-0 outline-none text-xs font-semibold text-slate-800 focus:ring-0"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveItemIncluido(idx)}
+                                                    className="size-7 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-all cursor-pointer shrink-0"
+                                                    title="Eliminar este ítem"
+                                                >
+                                                    <Trash2 size={13} />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {itemsIncluidos.length === 0 && (
+                                            <div className="text-center py-4 bg-white/70 rounded-2xl border border-dashed border-purple-200 p-3">
+                                                <p className="text-xs text-purple-800/60 font-semibold">
+                                                    No has agregado puntos incluidos todavía. Escribe uno abajo o selecciona de las sugerencias rápidas.
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Input para Agregar Nuevo Ítem Personalizado */}
+                                    <div className="flex items-center gap-2 pt-1">
+                                        <input
+                                            type="text"
+                                            placeholder="Escribe otro ítem o beneficio (ej. Sellado térmico)..."
+                                            value={newItemInput}
+                                            onChange={(e) => setNewItemInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleAddItemIncluido();
+                                                }
+                                            }}
+                                            className="flex-1 px-4 py-2.5 bg-white border border-purple-200 rounded-xl outline-none text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:border-purple-500 shadow-xs"
+                                        />
+                                        <button
+                                            type="button"
+                                            disabled={!newItemInput.trim()}
+                                            onClick={() => handleAddItemIncluido()}
+                                            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5 shrink-0 shadow-sm shadow-purple-600/20 cursor-pointer"
+                                        >
+                                            <Plus size={13} /> Añadir
+                                        </button>
+                                    </div>
+                                </div>
+
                                 {/* Profesionales / Staff Asignados */}
+                                {!isLaundry && (
                                 <div className="space-y-4 p-5 bg-gray-50 rounded-3xl border border-gray-100">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
-                                            <Users size={14} className="text-slate-500" /> Profesionales Asignados
-                                        </label>
-                                        <span className="text-[9px] font-black uppercase text-pink-500 bg-pink-50 px-2.5 py-1 rounded-full">
-                                            Requerido
-                                        </span>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+                                                <Users size={14} className="text-slate-500" /> Especialistas Asignados
+                                            </label>
+                                            <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                                Selecciona quiénes pueden realizar este servicio o tratamiento
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {allStaff.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (selectedStaffIds.length === allStaff.length) {
+                                                            setSelectedStaffIds([]);
+                                                        } else {
+                                                            setSelectedStaffIds(allStaff.map(s => s.id));
+                                                        }
+                                                    }}
+                                                    className="text-xs font-bold text-sky-600 hover:text-sky-800 uppercase tracking-wider underline cursor-pointer"
+                                                >
+                                                    {selectedStaffIds.length === allStaff.length ? 'Deseleccionar' : 'Todos'}
+                                                </button>
+                                            )}
+                                            <span className="text-xs font-bold uppercase text-pink-500 bg-pink-50 px-2.5 py-1 rounded-full">
+                                                Requerido
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {loadingStaff ? (
                                         <div className="flex items-center gap-2 py-4 justify-center">
                                             <Loader2 className="animate-spin text-gray-400" size={16} />
-                                            <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Cargando profesionales...</span>
+                                            <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Cargando especialistas...</span>
                                         </div>
                                     ) : (
                                         <>
@@ -592,14 +847,14 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                                                 }`}
                                                             >
                                                                 <div 
-                                                                    className="size-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 text-white"
+                                                                    className="size-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 text-white"
                                                                     style={{ backgroundColor: isSelected ? 'var(--primary-color)' : '#94a3b8' }}
                                                                 >
                                                                     {staff.name.slice(0, 2).toUpperCase()}
                                                                 </div>
                                                                 <div className="min-w-0 flex-1">
-                                                                    <p className="text-xs font-black text-slate-800 truncate uppercase tracking-tight">{staff.name}</p>
-                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{staff.role || 'Profesional'}</p>
+                                                                    <p className="text-xs font-bold text-slate-800 truncate uppercase tracking-tight">{staff.name}</p>
+                                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">{staff.role || 'Profesional'}</p>
                                                                 </div>
                                                             </button>
                                                         );
@@ -608,7 +863,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                             ) : (
                                                 <div className="text-center py-6 bg-white rounded-2xl border border-dashed border-gray-200 p-4 space-y-2">
                                                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">No hay profesionales registrados</p>
-                                                    <p className="text-[10px] text-gray-400 max-w-[280px] mx-auto leading-relaxed">
+                                                    <p className="text-xs text-gray-400 max-w-[280px] mx-auto leading-relaxed">
                                                         Registra a tu primer profesional a continuación para poder crear este servicio.
                                                      </p>
                                                 </div>
@@ -630,7 +885,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                                         type="button"
                                                         disabled={isCreatingQuickStaff || !quickStaffName.trim()}
                                                         onClick={handleCreateQuickStaff}
-                                                        className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5 shrink-0"
+                                                        className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wide rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5 shrink-0"
                                                     >
                                                         {isCreatingQuickStaff ? (
                                                             <Loader2 className="animate-spin" size={12} />
@@ -644,9 +899,10 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                          </>
                                      )}
                                  </div>
+                                )}
 
                                 <div>
-                                    <label htmlFor="puntosOtorgados" className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Puntos Otorgados por Cita</label>
+                                    <label htmlFor="puntosOtorgados" className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">{isLaundry ? 'Puntos Otorgados por Servicio' : 'Puntos Otorgados por Cita'}</label>
                                     <input
                                         id="puntosOtorgados"
                                         type="number"
@@ -663,7 +919,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                         <div className="flex-1">
                                             <p className="text-sm font-bold text-gray-900 leading-none">Estado del servicio</p>
-                                            <p className="text-[10px] text-gray-500 font-medium">Determina si estará disponible para reservar</p>
+                                            <p className="text-xs text-gray-500 font-medium">Determina si estará disponible para reservar</p>
                                         </div>
                                         <button
                                             type="button"
@@ -683,28 +939,28 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="h-6 w-1 rounded-full" style={{ backgroundColor: 'var(--primary-color)' }} />
-                                    <h3 className="text-xs font-black text-gray-900 uppercase tracking-[0.2em]">Por qué elegir este servicio</h3>
+                                    <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide">Por qué elegir este servicio</h3>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={addBlock}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all active:scale-95"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wide text-white transition-all active:scale-95"
                                     style={{ backgroundColor: 'var(--primary-color)' }}
                                 >
                                     <Plus size={12} /> Añadir bloque
                                 </button>
                             </div>
 
-                            <p className="text-[10px] text-gray-400 font-medium italic -mt-2">
+                            <p className="text-xs text-gray-400 font-medium -mt-2">
                                 Resalta las ventajas de tu servicio en el portal público. Puedes añadir o quitar bloques.
                             </p>
 
                             <div className="grid gap-4">
                                 {features.map((block, idx) => (
-                                    <div key={idx} className="p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 space-y-3 relative">
+                                    <div key={idx} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-3 relative">
                                         <div className="flex items-center justify-between mb-1">
                                             <span
-                                                className="size-5 rounded-full text-[10px] font-black flex items-center justify-center"
+                                                className="size-5 rounded-full text-xs font-bold flex items-center justify-center"
                                                 style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
                                             >
                                                 {idx + 1}
@@ -745,7 +1001,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                 <button
                                     type="button"
                                     onClick={addBlock}
-                                    className="w-full py-3 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:border-gray-300 hover:text-gray-500 transition-all"
+                                    className="w-full py-3 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 hover:border-gray-300 hover:text-gray-500 transition-all"
                                 >
                                     <Plus size={14} /> Añadir otro bloque
                                 </button>
@@ -758,14 +1014,14 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                 <button
                                     type="button"
                                     onClick={handleCancel}
-                                    className="flex-1 px-4 py-4 border border-gray-200 text-gray-500 font-bold rounded-2xl hover:bg-gray-50 transition uppercase text-[10px] tracking-widest"
+                                    className="flex-1 px-4 py-4 border border-gray-200 text-gray-500 font-bold rounded-2xl hover:bg-gray-50 transition uppercase text-xs tracking-wide"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="flex-[2] px-4 py-4 text-white font-bold rounded-2xl transition shadow-lg flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest"
+                                    className="flex-[2] px-4 py-4 text-white font-bold rounded-2xl transition shadow-lg flex items-center justify-center gap-2 uppercase text-xs tracking-wide"
                                     style={{ backgroundColor: 'var(--primary-color)' }}
                                 >
                                     {loading ? <Loader2 className="animate-spin" size={20} /> : (initialData ? 'Guardar Cambios' : 'Registrar Servicio')}
@@ -777,7 +1033,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                     type="button"
                                     onClick={handleDelete}
                                     disabled={loading}
-                                    className="w-full py-3 text-red-500 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-red-50 rounded-2xl transition-all"
+                                    className="w-full py-3 text-red-500 font-bold text-xs uppercase tracking-wide hover:bg-red-50 rounded-2xl transition-all"
                                 >
                                     ELIMINAR ESTE SERVICIO
                                 </button>

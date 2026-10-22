@@ -129,7 +129,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
         return (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
                 <Loader2 className="animate-spin" size={24} style={{ color: primaryColor }} />
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Cargando desafíos...</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide animate-pulse">Cargando desafíos...</span>
             </div>
         );
     }
@@ -148,8 +148,8 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                         <Award size={20} />
                     </div>
                     <div>
-                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-snug">Completa desafíos y sube de nivel</h4>
-                        <p className="text-[10px] text-slate-500 font-bold leading-normal">Acumula puntos y desbloquea recompensas exclusivas</p>
+                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-tight leading-snug">Completa desafíos y sube de nivel</h4>
+                        <p className="text-xs text-slate-500 font-bold leading-normal">Acumula puntos y desbloquea recompensas exclusivas</p>
                     </div>
                 </div>
                 <ChevronRight size={18} className="text-slate-400" />
@@ -159,44 +159,44 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
             <div className="bg-slate-100/60 p-1 rounded-2xl flex items-center justify-between gap-1">
                 <button
                     onClick={() => setActiveTab('enProgreso')}
-                    className={`flex-1 py-2 px-1 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border-0 flex items-center justify-center gap-1.5 ${
-                        activeTab === 'enProgreso' 
-                            ? 'bg-white text-slate-850 shadow-sm' 
-                            : 'text-slate-500 hover:text-slate-700 bg-transparent'
-                    }`}
+                    className={`flex-1 py-2 px-1 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer border-0 flex items-center justify-center gap-1.5 ${
+ activeTab === 'enProgreso' 
+ ? 'bg-white text-slate-850 shadow-sm' 
+ : 'text-slate-500 hover:text-slate-700 bg-transparent'
+ }`}
                 >
                     <Clock size={12} style={{ color: activeTab === 'enProgreso' ? primaryColor : undefined }} />
                     En progreso
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-700 font-bold">
+                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-700 font-bold">
                         {getCount('enProgreso')}
                     </span>
                 </button>
 
                 <button
                     onClick={() => setActiveTab('completados')}
-                    className={`flex-1 py-2 px-1 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border-0 flex items-center justify-center gap-1.5 ${
-                        activeTab === 'completados' 
-                            ? 'bg-white text-slate-850 shadow-sm' 
-                            : 'text-slate-500 hover:text-slate-700 bg-transparent'
-                    }`}
+                    className={`flex-1 py-2 px-1 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer border-0 flex items-center justify-center gap-1.5 ${
+ activeTab === 'completados' 
+ ? 'bg-white text-slate-850 shadow-sm' 
+ : 'text-slate-500 hover:text-slate-700 bg-transparent'
+ }`}
                 >
                     <CheckCircle2 size={12} style={{ color: activeTab === 'completados' ? primaryColor : undefined }} />
                     Completados
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-700 font-bold">
+                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-700 font-bold">
                         {getCount('completados')}
                     </span>
                 </button>
 
                 <button
                     onClick={() => setActiveTab('todos')}
-                    className={`flex-1 py-2 px-1 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border-0 flex items-center justify-center gap-1.5 ${
-                        activeTab === 'todos' 
-                            ? 'bg-white text-slate-850 shadow-sm' 
-                            : 'text-slate-500 hover:text-slate-700 bg-transparent'
-                    }`}
+                    className={`flex-1 py-2 px-1 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer border-0 flex items-center justify-center gap-1.5 ${
+ activeTab === 'todos' 
+ ? 'bg-white text-slate-850 shadow-sm' 
+ : 'text-slate-500 hover:text-slate-700 bg-transparent'
+ }`}
                 >
                     Todos
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-700 font-bold">
+                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-700 font-bold">
                         {getCount('todos')}
                     </span>
                 </button>
@@ -221,15 +221,15 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                             <div 
                                 key={q.id}
                                 onClick={() => router.push(`/${slug}/misiones/detalle/${q.id}`)}
-                                className={`relative bg-white rounded-[2rem] border border-slate-100/60 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.03)] space-y-3.5 overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
-                                    isCelebrating ? 'shadow-[0_0_0_2px_#22c55e]' : ''
-                                }`}
+                                className={`relative bg-white rounded-3xl border border-slate-100/60 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.03)] space-y-3.5 overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
+ isCelebrating ? 'shadow-[0_0_0_2px_#22c55e]' : ''
+ }`}
                             >
                                 {isCelebrating && (
                                     <div className="absolute inset-0 bg-green-50/90 backdrop-blur-[1px] flex items-center justify-center z-20">
                                         <div className="text-center animate-bounce">
                                             <span className="text-3xl">🎉</span>
-                                            <h5 className="font-black text-green-600 text-xs uppercase tracking-widest mt-1">¡Desafío Completado!</h5>
+                                            <h5 className="font-bold text-green-600 text-xs uppercase tracking-wide mt-1">¡Desafío Completado!</h5>
                                         </div>
                                     </div>
                                 )}
@@ -250,10 +250,10 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                     {/* Títulos, Descripción y Premios en orden */}
                                     <div className="flex-1 min-w-0 space-y-2">
                                         <div className="text-left">
-                                            <h3 className="text-[12px] font-black text-slate-800 uppercase tracking-tight leading-tight">
+                                            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-tight leading-tight">
                                                 Campaña: {q.nombre}
                                             </h3>
-                                            <p className="text-[10px] text-slate-500 font-semibold leading-relaxed mt-1">
+                                            <p className="text-xs text-slate-500 font-semibold leading-relaxed mt-1">
                                                 {q.descripcion}
                                             </p>
                                         </div>
@@ -264,7 +264,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                                 {q.recompensas.map((r, i) => (
                                                     <span 
                                                         key={i}
-                                                        className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border text-white shadow-xs"
+                                                        className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-lg border text-white shadow-xs"
                                                         style={{ backgroundColor: primaryColor, borderColor: `${primaryColor}20` }}
                                                     >
                                                         {r.startsWith('+') ? r : `+${r}`}
@@ -288,9 +288,9 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
 
                                 {/* Barra de Progreso Actual */}
                                 <div className="space-y-1">
-                                    <div className="flex justify-between items-center text-[8px] font-black text-slate-500 uppercase tracking-widest">
-                                        <span>PROGRESO ACTUAL</span>
-                                        <span className="text-[9px] font-black text-slate-700">{q.progresoActual} / {q.progresoRequerido}</span>
+                                    <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wide">
+                                        <span>Progreso actual</span>
+                                        <span className="text-xs font-bold text-slate-700">{q.progresoActual} / {q.progresoRequerido}</span>
                                     </div>
                                     <div className="w-full h-3 bg-slate-50 rounded-full overflow-hidden p-0.5 border border-slate-100">
                                         <div 
@@ -306,12 +306,12 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                 <div className="bg-slate-50/80 border border-slate-100 rounded-2xl px-3 py-2.5 flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-1.5 text-slate-500">
                                         <Award size={13} style={{ color: q.color }} />
-                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Estado del desafío</span>
+                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estado del desafío</span>
                                     </div>
 
                                     {isComplete ? (
                                         <div className="flex items-center justify-between w-full gap-2">
-                                            <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg flex items-center gap-1 border border-emerald-100">
+                                            <span className="text-xs font-bold uppercase tracking-wide px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg flex items-center gap-1 border border-emerald-100">
                                                 ✓ COMPLETADA
                                             </span>
                                             <button
@@ -319,14 +319,14 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                                     e.stopPropagation();
                                                     router.push(`/${slug}/mis-premios?questId=${q.id}`);
                                                 }}
-                                                className="px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-white rounded-lg shadow-sm border-0 cursor-pointer active:scale-95 transition-transform flex items-center gap-1"
+                                                className="px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white rounded-lg shadow-sm border-0 cursor-pointer active:scale-95 transition-transform flex items-center gap-1"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 🎁 Ver premio obtenido
                                             </button>
                                         </div>
                                     ) : q.estado === 'PENDIENTE_APROBACION' ? (
-                                        <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1 bg-amber-50 text-amber-600 rounded-lg flex items-center gap-1 border border-amber-100">
+                                        <span className="text-xs font-bold uppercase tracking-wide px-3 py-1 bg-amber-50 text-amber-600 rounded-lg flex items-center gap-1 border border-amber-100">
                                             ⏳ EN REVISIÓN
                                         </span>
                                     ) : (
@@ -337,13 +337,13 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                                         e.stopPropagation();
                                                         handleConfirmQuest(q.id);
                                                     }}
-                                                    className="px-3 py-1 text-[8px] font-black uppercase tracking-widest text-white rounded-lg shadow-sm border-0 cursor-pointer active:scale-95 transition-transform"
+                                                    className="px-3 py-1 text-xs font-bold uppercase tracking-wide text-white rounded-lg shadow-sm border-0 cursor-pointer active:scale-95 transition-transform"
                                                     style={{ backgroundColor: primaryColor }}
                                                 >
                                                     ✓ Hacer Desafío
                                                 </button>
                                             ) : (
-                                                <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
+                                                <span className="text-xs font-bold uppercase tracking-wide px-3 py-1 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
                                                     ● EN PROGRESO
                                                 </span>
                                             )}
@@ -362,12 +362,12 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                 style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, color-mix(in srgb, ${primaryColor}, #000 25%) 100%)` }}
             >
                 <div className="space-y-1 relative z-10">
-                    <h4 className="text-[11px] font-black uppercase tracking-wider">¡Tú puedes!</h4>
-                    <p className="text-[9px] text-white/80 font-bold max-w-[80%] leading-tight">Completa más desafíos para ganar puntos y subir de nivel.</p>
+                    <h4 className="text-xs font-bold uppercase tracking-wider">¡Tú puedes!</h4>
+                    <p className="text-xs text-white/80 font-bold max-w-[80%] leading-tight">Completa más desafíos para ganar puntos y subir de nivel.</p>
                 </div>
                 <button
                     onClick={() => router.push(`/${slug}/misiones`)}
-                    className="bg-white text-slate-800 text-[8px] font-black uppercase tracking-widest px-3 py-2.5 rounded-xl border-0 shadow-md active:scale-95 transition-transform cursor-pointer flex items-center gap-1"
+                    className="bg-white text-slate-800 text-xs font-bold uppercase tracking-wide px-3 py-2.5 rounded-xl border-0 shadow-md active:scale-95 transition-transform cursor-pointer flex items-center gap-1"
                     style={{ color: primaryColor }}
                 >
                     <Clock size={11} /> Ver mis puntos &rsaquo;

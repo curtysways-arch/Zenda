@@ -1,4 +1,5 @@
 import prisma from '../prisma';
+import { GRACE_DAYS } from '@/lib/subscription/lifecycle';
 import { getBusinessTimeZone, getMonthRangeInTimeZone } from '@/lib/dateUtils';
 
 export const subscriptionService = {
@@ -19,10 +20,12 @@ export const subscriptionService = {
         const now = new Date();
         const estadoLower = sub.estado.toLowerCase();
 
+        // Solo se marca como vencida al terminar los 7 días de gracia (ver lib/subscription/lifecycle).
+        // Durante la gracia conserva su estado (trial/activa) y sigue funcionando.
         if (
-            (estadoLower === 'trial' || estadoLower === 'active' || estadoLower === 'activa') &&
+            (estadoLower === 'trial' || estadoLower === 'trial_pending' || estadoLower === 'active' || estadoLower === 'activa') &&
             sub.fechaFin &&
-            now > new Date(sub.fechaFin)
+            now > new Date(new Date(sub.fechaFin).getTime() + GRACE_DAYS * 24 * 60 * 60 * 1000)
         ) {
             await (prisma.suscripcion as any).update({
                 where: { id: sub.id },
@@ -89,7 +92,11 @@ export const subscriptionService = {
             planStatus: sub.estado,
             startDate: sub.fechaInicio,
             endDate: sub.fechaFin,
+            isFounder: Boolean((sub as any).isFounder),
+            founderPosition: (sub as any).founderPosition || null,
             lockedPrice: sub.lockedPrice,
+            pagoPendiente: Boolean((sub as any).pagoPendiente),
+            customFeatures: (sub as any).customFeatures || null,
             limits: {
                 staff: {
                     used: business.Staff?.length || 0,

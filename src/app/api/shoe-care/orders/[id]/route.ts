@@ -1,7 +1,9 @@
+import { getCanonicalLogistics } from '@/core/logistics/CanonicalLogisticsService';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { requireOrderAccess } from '@/lib/laundry/orderAccess';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +11,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    const access = await requireOrderAccess(id);
+    if (!access.ok) return access.response;
 
     const order = await prisma.pedido.findUnique({
       where: { id },
@@ -113,6 +117,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
     }
 
+    // Solo el personal del negocio. (El cliente aprueba o rechaza el precio en /api/public/laundry/[id].)
+    const access = await requireOrderAccess(id);
+    if (!access.ok) return access.response;
+
     const userName = session?.user?.name || 'Administrador';
     const currentExtra = (existingOrder.extraInfo as any) || {};
 
@@ -162,7 +170,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       });
     }
 
-    if (repartidorId && repartidorId !== currentExtra.repartidorId) {
+    const productionStates = ['RECIBIDO', 'EN_PROCESO', 'LAVANDO', 'SECANDO', 'DETALLADO', 'LISTO'];
+    const isNowInProduction = estado ? productionStates.includes(estado) : productionStates.includes(existingOrder.estado);
+
+    if (isNowInProduction) {
+      // Las prendas están en taller bajo cuidado del negocio; no hay repartidor de entrega activo
+      newExtra.assignedDriverId = null;
+      newExtra.assignedDriverName = null;
+      newExtra.assignedDriver = null;
+      newExtra.assignedDriverPhone = null;
+      newExtra.repartidorId = null;
+      newExtra.driverAcceptedAt = null;
+    } else if (repartidorId && repartidorId !== currentExtra.repartidorId) {
       currentTimeline.push({
         id: `tl_${Date.now()}`,
         type: 'LOGISTICS',
@@ -171,6 +190,99 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         timestamp: new Date().toISOString(),
       });
       newExtra.repartidorId = repartidorId;
+      newExtra.assignedDriverId = repartidorId;
+    } else if (repartidorId === null || repartidorId === '') {
+      newExtra.repartidorId = null;
+      newExtra.assignedDriverId = null;
+      newExtra.assignedDriverName = null;
+      newExtra.assignedDriver = null;
+    }
+
+    // Si se envían PINs de retiro o entrega o actualización de pins
+    if (body.pinRetiro !== undefined) {
+      newExtra.pinRetiro = body.pinRetiro;
+    }
+    if (body.pinEntrega !== undefined) {
+      newExtra.pinEntrega = body.pinEntrega;
+    }
+    if (body.pinRetiroValidado !== undefined) {
+      newExtra.pinRetiroValidado = body.pinRetiroValidado;
+    }
+    if (body.pinEntregaValidado !== undefined) {
+      newExtra.pinEntregaValidado = body.pinEntregaValidado;
+    }
+
+    // Acciones de compensación y liquidación en órdenes de servicio
+    if (body.markPickupPaid || body.markDeliveryPaid || body.markCollectionLiquidated) {
+      let assignment: any = null;
+      try {
+        assignment = await (prisma as any).deliveryAssignment.findFirst({
+          where: { ordenReferenciaId: id },
+          include: { resource: true },
+        });
+      } catch {}
+
+      const canonical = getCanonicalLogistics({ ...existingOrder, extraInfo: newExtra });
+
+      if (body.markPickupPaid) {
+        if (!canonical.pickupDriver) {
+          const dName = assignment?.tipo === 'RETIRO' ? assignment?.resource?.name : (newExtra.assignedDriverName || newExtra.assignedDriver || 'Chofer Retiro');
+          const dId = assignment?.tipo === 'RETIRO' ? assignment?.resourceId : (newExtra.assignedDriverId || newExtra.repartidorId || null);
+          canonical.pickupDriver = {
+            driverId: dId,
+            driverName: dName || 'Chofer Retiro',
+            misionTipo: 'RECOGIDA',
+            compensacion: canonical.pickupFee || 2.00,
+            estadoCompensacion: 'PENDING',
+          };
+        }
+        canonical.pickupDriver.estadoCompensacion = 'PAID';
+        canonical.pickupDriver.pagadoAt = new Date().toISOString();
+        canonical.pickupDriver.pagadoPor = userName;
+        newExtra.pickupCompensacionEstado = 'PAID';
+
+        currentTimeline.push({
+          id: `tl_${Date.now()}`,
+          type: 'LOGISTICS',
+          action: `Compensación de retiro ($${(canonical.pickupFee || 2.0).toFixed(2)}) pagada al chofer (${canonical.pickupDriver.driverName || 'Chofer'})`,
+          user: userName,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      if (body.markDeliveryPaid) {
+        if (!canonical.deliveryDriver) {
+          const dName = assignment?.tipo === 'ENTREGA' ? assignment?.resource?.name : (newExtra.assignedDriverName || newExtra.assignedDriver || 'Chofer Entrega');
+          const dId = assignment?.tipo === 'ENTREGA' ? assignment?.resourceId : (newExtra.assignedDriverId || newExtra.repartidorId || null);
+          canonical.deliveryDriver = {
+            driverId: dId,
+            driverName: dName || 'Chofer Entrega',
+            misionTipo: 'ENTREGA',
+            compensacion: canonical.deliveryFee || 2.00,
+            estadoCompensacion: 'PENDING',
+          };
+        }
+        canonical.deliveryDriver.estadoCompensacion = 'PAID';
+        canonical.deliveryDriver.pagadoAt = new Date().toISOString();
+        canonical.deliveryDriver.pagadoPor = userName;
+        newExtra.deliveryCompensacionEstado = 'PAID';
+
+        currentTimeline.push({
+          id: `tl_${Date.now()}`,
+          type: 'LOGISTICS',
+          action: `Compensación de entrega ($${(canonical.deliveryFee || 2.0).toFixed(2)}) pagada al chofer (${canonical.deliveryDriver.driverName || 'Chofer'})`,
+          user: userName,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      if (body.markCollectionLiquidated) {
+        canonical.recaudacion.estado = 'LIQUIDATED';
+        canonical.recaudacion.liquidadoAt = new Date().toISOString();
+        canonical.recaudacion.liquidadoPor = userName;
+      }
+
+      newExtra.canonicalLogistics = canonical;
     }
 
     newExtra.timeline = currentTimeline;
@@ -202,35 +314,68 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       });
     }
 
-    // Si se envían PINs de retiro o entrega o actualización de pins
-    if (body.pinRetiro !== undefined) {
-      newExtra.pinRetiro = body.pinRetiro;
-    }
-    if (body.pinEntrega !== undefined) {
-      newExtra.pinEntrega = body.pinEntrega;
-    }
-    if (body.pinRetiroValidado !== undefined) {
-      newExtra.pinRetiroValidado = body.pinRetiroValidado;
-    }
-    if (body.pinEntregaValidado !== undefined) {
-      newExtra.pinEntregaValidado = body.pinEntregaValidado;
-    }
+    // 3. Si hay cambio de repartidor o estado logístico, sincronizar DeliveryAssignment
+    try {
+      const existingAssigment = await (prisma as any).deliveryAssignment.findFirst({
+        where: { ordenReferenciaId: id },
+      });
 
-    // 3. Si hay cambio de repartidor y capability delivery está activa, actualizar o crear DeliveryAssignment
-    if (repartidorId) {
-      try {
-        // Generar PINs automáticos de 6 dígitos si no existen
-        if (!newExtra.pinRetiro) {
-          newExtra.pinRetiro = Math.floor(100000 + Math.random() * 900000).toString();
+      if (isNowInProduction) {
+        // En producción de taller, si existía una asignación de RETIRO, se marca como COMPLETADO
+        if (existingAssigment && existingAssigment.tipo === 'RETIRO' && existingAssigment.estado !== 'COMPLETADO') {
+          await (prisma as any).deliveryAssignment.update({
+            where: { id: existingAssigment.id },
+            data: { estado: 'COMPLETADO' },
+          });
         }
-        if (!newExtra.pinEntrega) {
-          newExtra.pinEntrega = Math.floor(100000 + Math.random() * 900000).toString();
+      } else if (estado === 'ESPERANDO_REPARTIDOR_ENTREGA') {
+        // Publicación de entrega final a domicilio
+        if (repartidorId) {
+          // Asignado a un repartidor específico
+          if (existingAssigment) {
+            await (prisma as any).deliveryAssignment.update({
+              where: { id: existingAssigment.id },
+              data: { resourceId: repartidorId, estado: 'ASIGNADO', tipo: 'ENTREGA' },
+            });
+          } else {
+            await (prisma as any).deliveryAssignment.create({
+              data: {
+                negocioId: existingOrder.negocioId,
+                resourceId: repartidorId,
+                tipo: 'ENTREGA',
+                estado: 'ASIGNADO',
+                ordenReferenciaId: id,
+                ordenReferenciaTipo: 'SERVICE_ORDER',
+                clienteNombre: existingOrder.nombreCliente,
+                clienteTelefono: existingOrder.telefonoCliente,
+                clienteDireccion: existingOrder.direccionCliente || 'Local',
+              },
+            });
+          }
+        } else {
+          // Bolsa Abierta (/driver) para cualquier repartidor (sin chofer preasignado)
+          if (existingAssigment) {
+            await (prisma as any).deliveryAssignment.update({
+              where: { id: existingAssigment.id },
+              data: { resourceId: null, estado: 'PENDIENTE', tipo: 'ENTREGA' },
+            });
+          } else {
+            await (prisma as any).deliveryAssignment.create({
+              data: {
+                negocioId: existingOrder.negocioId,
+                resourceId: null,
+                tipo: 'ENTREGA',
+                estado: 'PENDIENTE',
+                ordenReferenciaId: id,
+                ordenReferenciaTipo: 'SERVICE_ORDER',
+                clienteNombre: existingOrder.nombreCliente,
+                clienteTelefono: existingOrder.telefonoCliente,
+                clienteDireccion: existingOrder.direccionCliente || 'Local',
+              },
+            });
+          }
         }
-
-        const existingAssigment = await (prisma as any).deliveryAssignment.findFirst({
-          where: { ordenReferenciaId: id },
-        });
-
+      } else if (repartidorId) {
         if (existingAssigment) {
           await (prisma as any).deliveryAssignment.update({
             where: { id: existingAssigment.id },
@@ -251,9 +396,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             },
           });
         }
-      } catch (err) {
-        console.error('Error sincronizando DeliveryAssignment:', err);
       }
+    } catch (err) {
+      console.error('Error sincronizando DeliveryAssignment:', err);
     }
 
     // 4. Si se registra o actualiza Pago

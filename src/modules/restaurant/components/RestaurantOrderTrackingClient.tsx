@@ -245,7 +245,7 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                     <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: 16, marginTop: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                             <div>
-                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>CÓDIGO DE ORDEN</span>
+                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Código de orden</span>
                                 <h1 style={{ color: '#fff', fontWeight: 900, fontSize: 22, margin: '2px 0 0', letterSpacing: '-0.02em' }}>
                                     Pedido #{order.numeroPedido || order.codigo || order.id.slice(0, 8).toUpperCase()}
                                 </h1>
@@ -349,7 +349,7 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                                     </div>
                                 )}
                                 <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 900 }}>
-                                    <span style={{ fontSize: 14, color: '#fff' }}>NUEVO TOTAL REVISADO DE LA ORDEN:</span>
+                                    <span style={{ fontSize: 14, color: '#fff' }}>Nuevo total revisado de la orden:</span>
                                     <span style={{ color: cp, fontSize: 22 }}>${fmt(proposedGrandTotal)}</span>
                                 </div>
                             </div>
@@ -497,7 +497,7 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                             </div>
                         )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
-                            <span style={{ color: '#fff', fontWeight: 900, fontSize: 17 }}>TOTAL OFICIAL DE LA ORDEN:</span>
+                            <span style={{ color: '#fff', fontWeight: 900, fontSize: 17 }}>Total oficial de la orden:</span>
                             <span style={{ color: cp, fontWeight: 900, fontSize: 24, padding: '4px 12px', background: 'rgba(255,255,255,0.06)', borderRadius: 12, border: `1px solid ${cp}40` }}>
                                 ${fmt(grandTotal)}
                             </span>

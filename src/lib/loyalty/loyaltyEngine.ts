@@ -643,6 +643,13 @@ async function processReferralForAppointment(appointmentId: string): Promise<voi
 
         console.log(`[Referidos] ✅ Evento validado: ${referrerId} → ${referredId}`);
 
+        // Avisar al motor de misiones (para misiones de "recomienda a un amigo")
+        publishGrowthEvent(negocioId, referrerId, 'REFERRAL_COMPLETED', {
+            referralEventId: referralEvent.id,
+            referredId,
+            appointmentId,
+        }).catch(err => console.error('[Referidos] Error publicando REFERRAL_COMPLETED:', err.message));
+
         // Sumar puntos al referidor si tiene puntos activos
         const config = appointment.negocio.configuracion
             ? (typeof appointment.negocio.configuracion === 'string'

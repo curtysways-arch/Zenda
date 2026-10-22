@@ -34,11 +34,24 @@ export const DEFAULT_CONFIGS_DENTAL = {
     REMINDER_2H_MSG: '⏰ ¡Hola {{nombre}}! En 2 horas es tu cita odontológica en *{{negocio}}*. ¡Te esperamos! 🦷'
 };
 
+export const DEFAULT_CONFIGS_LAUNDRY = {
+    CONFIRMATION_MSG: '✅ ¡Hola {{nombre}}! Tu orden en *{{negocio}}* ha sido *CONFIRMADA* y está en proceso de lavado y cuidado. 🧺🫧\n\n✨ *Servicio:* {{servicio}}\n📅 *Fecha estimada:* {{fecha}}\n\n📲 *Sigue el estado en vivo de tu orden:*\n{{link_reserva}}\n\n¡Gracias por confiar en nosotros!',
+    PENDING_MSG: '👋 ¡Hola {{nombre}}! Hemos recibido tu solicitud de servicio en *{{negocio}}*. 🧺🫧\n\n📋 *Servicio:* {{servicio}}\n📅 *Fecha programada de retiro:* {{fecha}} {{hora}}\n⏳ *Estado:* Pendiente de confirmación / retiro.\n\n📲 *Consulta los detalles y estado aquí:*\n{{link_reserva}}\n\nTe notificaremos en cuanto nuestro repartidor esté en camino.',
+    REMINDER_MSG: '⏰ Recordatorio: Hoy tenemos programado el retiro/entrega de tus prendas en *{{negocio}}*. ¡Ten listo tu pedido! 🧺🫧',
+    BOOKING_TIMEOUT: '10',
+    REMINDER_DAY_ENABLED: '1',
+    REMINDER_DAY_TIME: '08:00',
+    REMINDER_DAY_MSG: '☀️ ¡Buen día {{nombre}}! Te recordamos que hoy está programado el retiro/entrega de tus prendas en *{{negocio}}*. ¡Ten listo tu pedido! 🧺🫧',
+    REMINDER_2H_ENABLED: '1',
+    REMINDER_2H_MSG: '⏰ ¡Hola {{nombre}}! Nuestro repartidor pasará en aproximadamente 2 horas por tu pedido en *{{negocio}}*. 🛵🧺'
+};
+
 export const DEFAULT_CONFIGS = DEFAULT_CONFIGS_GENERAL;
 
 export function getDefaultConfigs(tipo?: string) {
     const t = (tipo || '').toUpperCase().trim();
     if (t === 'GYM' || t === 'GIMNASIO' || t === 'FITNESS') return DEFAULT_CONFIGS_GYM;
     if (t === 'DENTAL' || t === 'ODONTOLOGIA' || t === 'DENTISTA') return DEFAULT_CONFIGS_DENTAL;
+    if (t === 'LAVANDERIA' || t === 'SHOE_CARE' || t === 'ORDENES-SERVICIO' || t.includes('LAVAD') || t.includes('WASH') || t.includes('SHOE') || t.includes('BUBBLE')) return DEFAULT_CONFIGS_LAUNDRY;
     return DEFAULT_CONFIGS_GENERAL;
 }

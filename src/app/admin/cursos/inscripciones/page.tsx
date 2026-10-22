@@ -122,21 +122,21 @@ export default function InscripcionesPage() {
                     <Link href="/admin/cursos" className="text-emerald-600 font-bold text-xs flex items-center gap-1 hover:underline mb-2">
                         <ArrowLeft size={14} /> Volver a Cursos
                     </Link>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3 uppercase">
+                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3 ">
                         <Users className="text-emerald-600" size={32} />
                         Inscripciones
                         {pendingCount > 0 && (
-                            <span className="bg-amber-500 text-white text-sm px-3 py-1 rounded-full font-black animate-pulse">
+                            <span className="bg-amber-500 text-white text-sm px-3 py-1 rounded-full font-bold animate-pulse">
                                 {pendingCount}
                             </span>
                         )}
                     </h1>
-                    <p className="text-gray-500 font-medium italic">Revisa y gestiona las solicitudes de inscripción a tus cursos.</p>
+                    <p className="text-gray-500 font-medium ">Revisa y gestiona las solicitudes de inscripción a tus cursos.</p>
                 </div>
                 <button
                     type="button"
                     onClick={fetchEnrollments}
-                    className="flex items-center gap-2 bg-white border border-gray-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm self-start cursor-pointer"
+                    className="flex items-center gap-2 bg-white border border-gray-200 text-slate-700 px-5 py-3 rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-gray-50 transition-all shadow-sm self-start cursor-pointer"
                 >
                     <RefreshCw size={16} />
                     Actualizar
@@ -157,7 +157,7 @@ export default function InscripcionesPage() {
                                 key={s}
                                 type="button"
                                 onClick={() => setFilterStatus(s)}
-                                className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all cursor-pointer ${isActive ? (s === 'all' ? 'bg-slate-800 text-white border-slate-800' : cfg.color + ' ring-2 ring-offset-1 ring-current') : 'bg-white ' + cfg.color}`}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-all cursor-pointer ${isActive ? (s === 'all' ? 'bg-slate-800 text-white border-slate-800' : cfg.color + ' ring-2 ring-offset-1 ring-current') : 'bg-white ' + cfg.color}`}
                             >
                                 {cfg.label}
                             </button>
@@ -182,7 +182,7 @@ export default function InscripcionesPage() {
             </div>
 
             {/* Search */}
-            <div className="bg-white p-4 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center gap-3">
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
                 <Search className="text-gray-400 ml-2" size={20} />
                 <input
                     type="text"
@@ -200,13 +200,13 @@ export default function InscripcionesPage() {
                     <p className="text-gray-400 font-bold animate-pulse">Cargando inscripciones...</p>
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="bg-white rounded-[3rem] border-2 border-dashed border-gray-100 p-20 text-center space-y-4">
-                    <div className="w-20 h-20 bg-gray-50 rounded-[2rem] flex items-center justify-center mx-auto text-gray-300">
+                <div className="bg-white rounded-2xl border-2 border-dashed border-gray-100 p-20 text-center space-y-4">
+                    <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto text-gray-300">
                         <Users size={40} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-gray-900 uppercase">Sin inscripciones</h3>
-                        <p className="text-gray-400 font-bold max-w-xs mx-auto italic mt-1">
+                        <h3 className="text-xl font-bold text-gray-900 ">Sin inscripciones</h3>
+                        <p className="text-gray-400 font-bold max-w-xs mx-auto mt-1">
                             {filterStatus === 'pending' ? 'No hay solicitudes pendientes por revisar.' : 'No se encontraron resultados.'}
                         </p>
                     </div>
@@ -221,20 +221,20 @@ export default function InscripcionesPage() {
                         return (
                             <div
                                 key={enrollment.id}
-                                className={`bg-white rounded-[2rem] border shadow-sm transition-all ${isPending ? 'border-amber-200 shadow-amber-50' : 'border-gray-100'}`}
+                                className={`bg-white rounded-2xl border shadow-sm transition-all ${isPending ? 'border-amber-200 shadow-amber-50' : 'border-gray-100'}`}
                             >
                                 <div className="p-6 flex flex-col md:flex-row md:items-center gap-4">
                                     {/* Avatar + Info */}
                                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 font-black text-xl ${isPending ? 'bg-amber-100 text-amber-600' : enrollment.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
+                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 font-bold text-xl ${isPending ? 'bg-amber-100 text-amber-600' : enrollment.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
                                             {enrollment.student?.name ? enrollment.student.name.charAt(0).toUpperCase() : 'A'}
                                         </div>
 
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <h3 className="font-black text-gray-900 uppercase text-sm truncate">{enrollment.student?.name}</h3>
+                                                <h3 className="font-bold text-gray-900 uppercase text-sm truncate">{enrollment.student?.name}</h3>
                                                 {enrollment.student?.age && (
-                                                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                                                    <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
                                                         {enrollment.student.age} años
                                                     </span>
                                                 )}
@@ -248,12 +248,12 @@ export default function InscripcionesPage() {
 
                                             <div className="flex flex-wrap gap-3 mt-1.5">
                                                 {enrollment.student?.phone && (
-                                                    <a href={`tel:${enrollment.student.phone}`} className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:underline">
+                                                    <a href={`tel:${enrollment.student.phone}`} className="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:underline">
                                                         <Phone size={11} /> {enrollment.student.phone}
                                                     </a>
                                                 )}
                                                 {enrollment.student?.email && (
-                                                    <a href={`mailto:${enrollment.student.email}`} className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:underline">
+                                                    <a href={`mailto:${enrollment.student.email}`} className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline">
                                                         <Mail size={11} /> {enrollment.student.email}
                                                     </a>
                                                 )}
@@ -265,14 +265,14 @@ export default function InscripcionesPage() {
                                     <div className="flex flex-col gap-1 min-w-[180px]">
                                         <div className="flex items-center gap-2">
                                             <Dribbble size={14} className="text-emerald-500 shrink-0" />
-                                            <span className="text-sm font-black text-gray-800 truncate">{enrollment.course?.name}</span>
+                                            <span className="text-sm font-bold text-gray-800 truncate">{enrollment.course?.name}</span>
                                         </div>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest pl-5">
+                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-wide pl-5">
                                             {enrollment.createdAt ? new Date(enrollment.createdAt).toLocaleDateString('es-ES', {
                                                 day: '2-digit', month: 'short', year: 'numeric'
                                             }) : ''}
                                         </p>
-                                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase border w-fit ${cfg.color}`}>
+                                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase border w-fit ${cfg.color}`}>
                                             <StatusIcon size={11} />
                                             {cfg.label}
                                         </div>
@@ -285,7 +285,7 @@ export default function InscripcionesPage() {
                                                 type="button"
                                                 onClick={() => handleAction(enrollment.id, 'approved')}
                                                 disabled={actionLoading !== null}
-                                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-emerald-100 disabled:opacity-50 cursor-pointer"
+                                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-md shadow-emerald-100 disabled:opacity-50 cursor-pointer"
                                             >
                                                 {actionLoading === enrollment.id + 'approved'
                                                     ? <Loader2 size={14} className="animate-spin" />
@@ -297,7 +297,7 @@ export default function InscripcionesPage() {
                                                 type="button"
                                                 onClick={() => handleAction(enrollment.id, 'rejected')}
                                                 disabled={actionLoading !== null}
-                                                className="flex items-center gap-2 bg-white hover:bg-red-50 text-red-500 border border-red-200 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 cursor-pointer"
+                                                className="flex items-center gap-2 bg-white hover:bg-red-50 text-red-500 border border-red-200 px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-50 cursor-pointer"
                                             >
                                                 {actionLoading === enrollment.id + 'rejected'
                                                     ? <Loader2 size={14} className="animate-spin" />
@@ -314,7 +314,7 @@ export default function InscripcionesPage() {
                                     <div className="px-6 pb-5">
                                         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex items-start gap-2">
                                             <FileText size={14} className="text-slate-400 mt-0.5 shrink-0" />
-                                            <p className="text-xs font-medium text-slate-600 italic">"{enrollment.comments}"</p>
+                                            <p className="text-xs font-medium text-slate-600 ">"{enrollment.comments}"</p>
                                         </div>
                                     </div>
                                 )}

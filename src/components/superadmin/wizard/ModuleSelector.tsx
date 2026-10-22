@@ -25,10 +25,10 @@ export default function ModuleSelector({ activeModules, onToggleModule, onNext, 
   return (
     <div className="space-y-6 text-left">
       <div className="text-center space-y-2 max-w-xl mx-auto">
-        <span className="text-[10px] font-black tracking-widest text-purple-500 uppercase px-3 py-1 bg-purple-500/10 rounded-full border border-purple-500/20">
+        <span className="text-xs font-bold tracking-wide text-purple-500 uppercase px-3 py-1 bg-purple-500/10 rounded-full border border-purple-500/20">
           Paso 7 — Módulos Opcionales
         </span>
-        <h2 className="text-2xl font-black text-white italic">Activar Módulos Opcionales</h2>
+        <h2 className="text-2xl font-bold text-white ">Activar Módulos Opcionales</h2>
         <p className="text-xs text-slate-400">Selecciona los módulos adicionales que enriquecerán la experiencia de tu negocio.</p>
       </div>
 
@@ -48,12 +48,12 @@ export default function ModuleSelector({ activeModules, onToggleModule, onNext, 
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl ${isActive ? 'bg-purple-500 text-slate-950 font-black' : 'bg-slate-900 text-slate-500'}`}>
+                <div className={`p-2.5 rounded-xl ${isActive ? 'bg-purple-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-500'}`}>
                   <Icon size={18} />
                 </div>
                 <div>
                   <h4 className="font-bold text-xs text-white">{m.name}</h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{m.desc}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{m.desc}</p>
                 </div>
               </div>
 
@@ -72,7 +72,7 @@ export default function ModuleSelector({ activeModules, onToggleModule, onNext, 
         <button
           type="button"
           onClick={onPrev}
-          className="flex items-center gap-2 bg-slate-900 border border-slate-800 text-slate-400 font-bold text-xs uppercase tracking-widest px-6 py-3.5 rounded-2xl hover:text-white transition"
+          className="flex items-center gap-2 bg-slate-900 border border-slate-800 text-slate-400 font-bold text-xs uppercase tracking-wide px-6 py-3.5 rounded-2xl hover:text-white transition"
         >
           <ArrowLeft size={16} />
           Anterior
@@ -80,7 +80,7 @@ export default function ModuleSelector({ activeModules, onToggleModule, onNext, 
         <button
           type="button"
           onClick={onNext}
-          className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest px-8 py-3.5 rounded-2xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+          className="flex items-center gap-2 bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wide px-8 py-3.5 rounded-2xl hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
         >
           Continuar
           <ArrowRight size={16} />

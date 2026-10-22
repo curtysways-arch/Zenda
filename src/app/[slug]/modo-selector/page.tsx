@@ -48,7 +48,7 @@ export default function ModoSelectorPage() {
         <div className="min-h-screen bg-[#f8faf9] flex items-center justify-center p-6">
             <div className="max-w-md w-full space-y-8">
                 <div className="text-center space-y-2">
-                    <h1 className="text-3xl font-black uppercase tracking-tighter">Selecciona Modo</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Selecciona Modo</h1>
                     <p className="text-slate-500 font-medium">¿Cómo quieres usar el sistema hoy?</p>
                 </div>
 
@@ -63,7 +63,7 @@ export default function ModoSelectorPage() {
                                     <User size={24} />
                                 </div>
                                 <div>
-                                    <h2 className="font-black uppercase tracking-tight">Modo Usuario</h2>
+                                    <h2 className="font-bold uppercase tracking-tight">Modo Usuario</h2>
                                     <p className="text-xs text-slate-400 font-bold uppercase">Ver mis cursos y reservas</p>
                                 </div>
                             </div>
@@ -81,7 +81,7 @@ export default function ModoSelectorPage() {
                                     <GraduationCap size={24} />
                                 </div>
                                 <div>
-                                    <h2 className="font-black uppercase tracking-tight">Modo Profesor</h2>
+                                    <h2 className="font-bold uppercase tracking-tight">Modo Profesor</h2>
                                     <p className="text-xs text-slate-400 font-bold uppercase">Gestionar mis clases y alumnos</p>
                                 </div>
                             </div>
@@ -99,7 +99,7 @@ export default function ModoSelectorPage() {
                                     <Trophy size={24} />
                                 </div>
                                 <div>
-                                    <h2 className="font-black uppercase tracking-tight">Modo Admin</h2>
+                                    <h2 className="font-bold uppercase tracking-tight">Modo Admin</h2>
                                     <p className="text-xs text-slate-400 font-bold uppercase">Panel de administración</p>
                                 </div>
                             </div>

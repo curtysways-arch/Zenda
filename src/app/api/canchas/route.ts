@@ -37,6 +37,7 @@ export async function GET(req: Request) {
                 tipoId: extra.tipoId || '',
                 capacidad: extra.capacidad || 10,
                 precioHora: s.precio || 0,
+                duracionMin: s.duracion || 60,
                 estaActiva: s.estaActivo ?? true,
                 ubicacionId: s.ubicacionId || null,
                 negocioId: s.negocioId,
@@ -60,11 +61,15 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { nombre, tipo, tipoId, capacidad, precioHora, estaActiva, ubicacionId, extraInfo, imagenes, negocioId } = body;
 
+        // Solo el personal del negocio (o el equipo Citiox para un negocio indicado)
+        const { requireBusinessAccess } = await import('@/lib/auth/requireBusinessAccess');
         const realNegocioId = sessionNegocioId || negocioId;
-
         if (!realNegocioId) {
-            return NextResponse.json({ error: 'Negocio ID es requerido' }, { status: 400 });
+            return NextResponse.json({ error: 'Inicia sesión para continuar.' }, { status: 401 });
         }
+        const access = await requireBusinessAccess(realNegocioId);
+        if (!access.ok) return access.response;
+        const duracionMin = [60, 90, 120].includes(Number(body.duracionMin)) ? Number(body.duracionMin) : 60;
 
         const canchaId = `cancha-${Date.now()}`;
 
@@ -74,7 +79,7 @@ export async function POST(req: Request) {
                 negocioId: realNegocioId,
                 nombre,
                 precio: parseFloat(precioHora || '0'),
-                duracion: 60,
+                duracion: duracionMin,
                 estaActivo: estaActiva ?? true,
                 ubicacionId: ubicacionId || null,
                 updatedAt: new Date(),

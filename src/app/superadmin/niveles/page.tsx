@@ -248,11 +248,11 @@ export default function SuperAdminNivelesPage() {
                       <LevelIcon size={24} />
                     </div>
                     <div>
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Orden {level.orden} · v{level.version}</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Orden {level.orden} · v{level.version}</span>
                       <h3 className="font-extrabold text-slate-800 text-lg leading-tight">{level.nombre}</h3>
                     </div>
                   </div>
-                  <span className={`px-2.5 py-1 text-[9px] font-bold rounded-full uppercase tracking-wider ${level.activo ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400'}`}>
+                  <span className={`px-2.5 py-1 text-xs font-bold rounded-full uppercase tracking-wider ${level.activo ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400'}`}>
                     {level.activo ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
@@ -260,7 +260,7 @@ export default function SuperAdminNivelesPage() {
                 {/* Content body */}
                 <div className="p-6 flex-1 space-y-4">
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Título de Rango</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-1">Título de Rango</span>
                     <p className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
                       <Sparkles size={14} className="text-amber-500" />
                       {level.titulo}
@@ -268,21 +268,21 @@ export default function SuperAdminNivelesPage() {
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">XP Requerida</span>
-                    <p className="text-2xl font-black text-slate-900">{level.xpRequerida.toLocaleString()} <span className="text-xs font-semibold text-slate-500">XP</span></p>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-1">XP Requerida</span>
+                    <p className="text-2xl font-bold text-slate-900">{level.xpRequerida.toLocaleString()} <span className="text-xs font-semibold text-slate-500">XP</span></p>
                   </div>
 
                   {level.descripcion && (
-                    <p className="text-xs text-slate-500 italic line-clamp-2">"{level.descripcion}"</p>
+                    <p className="text-xs text-slate-500 line-clamp-2">"{level.descripcion}"</p>
                   )}
 
                   {/* Rewards List */}
                   {level.Rewards && level.Rewards.length > 0 && (
                     <div className="pt-3 border-t border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Premios al Desbloquear ({level.Rewards.length})</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-2">Premios al Desbloquear ({level.Rewards.length})</span>
                       <div className="flex flex-wrap gap-1.5">
                         {level.Rewards.map((r: any) => (
-                          <span key={r.id} className="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold border border-indigo-100">
+                          <span key={r.id} className="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold border border-indigo-100">
                             🎁 {r.Reward?.nombre}
                           </span>
                         ))}
@@ -334,7 +334,7 @@ export default function SuperAdminNivelesPage() {
             <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-8 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Nombre del Nivel</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Nombre del Nivel</label>
                   <input 
                     type="text" 
                     value={nombre} 
@@ -345,7 +345,7 @@ export default function SuperAdminNivelesPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Título de Rango</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Título de Rango</label>
                   <input 
                     type="text" 
                     value={titulo} 
@@ -358,7 +358,7 @@ export default function SuperAdminNivelesPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Descripción</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Descripción</label>
                 <textarea 
                   value={descripcion} 
                   onChange={e => setDescripcion(e.target.value)} 
@@ -369,7 +369,7 @@ export default function SuperAdminNivelesPage() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">XP Requerida</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">XP Requerida</label>
                   <input 
                     type="number" 
                     value={xpRequerida} 
@@ -380,7 +380,7 @@ export default function SuperAdminNivelesPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Orden</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Orden</label>
                   <input 
                     type="number" 
                     value={orden} 
@@ -391,7 +391,7 @@ export default function SuperAdminNivelesPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Versión</label>
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-2">Versión</label>
                   <input 
                     type="text" 
                     value={version} 
@@ -411,7 +411,7 @@ export default function SuperAdminNivelesPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Color del Nivel (Hex)</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-1.5">Color del Nivel (Hex)</label>
                     <div className="flex gap-2">
                       <input 
                         type="color" 
@@ -428,7 +428,7 @@ export default function SuperAdminNivelesPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Icono Lucide</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-1.5">Icono Lucide</label>
                     <select 
                       value={icono} 
                       onChange={e => setIcono(e.target.value)}
@@ -446,7 +446,7 @@ export default function SuperAdminNivelesPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Título UI Personalizado</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-1.5">Título UI Personalizado</label>
                     <input 
                       type="text" 
                       value={tituloUi} 
@@ -456,7 +456,7 @@ export default function SuperAdminNivelesPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Descripción UI</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-1.5">Descripción UI</label>
                     <input 
                       type="text" 
                       value={descripcionUi} 
@@ -470,7 +470,7 @@ export default function SuperAdminNivelesPage() {
 
               {/* Rewards Checklist */}
               <div>
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-3 flex items-center gap-1.5">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-3 flex items-center gap-1.5">
                   <Info size={14} className="text-indigo-500" />
                   Premios del Catálogo al Alcanzar este Nivel
                 </label>
@@ -498,7 +498,7 @@ export default function SuperAdminNivelesPage() {
                         />
                         <div className="flex flex-col">
                           <span className="text-xs font-bold">{r.nombre}</span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">{r.tipo} · v{r.version}</span>
+                          <span className="text-xs text-slate-400 dark:text-slate-500 leading-tight">{r.tipo} · v{r.version}</span>
                         </div>
                       </label>
                     ))}

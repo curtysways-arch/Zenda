@@ -1,0 +1,32 @@
+{
+  "name": "Citiox Driver",
+  "short_name": "Citiox Driver",
+  "description": "Aplicación y Portal Oficial del Repartidor Citiox",
+  "start_url": "/driver?source=pwa",
+  "id": "/driver-pwa",
+  "scope": "/driver",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/icons/driver-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/driver-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/driver-icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

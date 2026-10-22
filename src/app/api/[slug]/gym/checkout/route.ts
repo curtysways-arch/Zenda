@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { guardCustomerIntake } from '@/lib/subscription/receiveGuard';
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
 import { publishBusinessEvent } from '@/lib/growth/eventBus';
@@ -64,6 +65,9 @@ export async function POST(
     if (!negocio) {
       return NextResponse.json({ error: 'Gimnasio no encontrado' }, { status: 404 });
     }
+
+    const intakeBlocked = await guardCustomerIntake(negocio.id);
+    if (intakeBlocked) return intakeBlocked;
 
     const body = await req.json();
     const { 

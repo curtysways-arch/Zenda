@@ -113,12 +113,12 @@ export default function PlanUpgradeModal({
     if (successMessage) {
         return (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg p-12 flex flex-col items-center text-center">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-12 flex flex-col items-center text-center">
                     <div className="size-20 rounded-full flex items-center justify-center mb-6 ring-8"
                          style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)', ringColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)' } as any}>
                         <Check size={40} strokeWidth={3} />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 mb-2">¡Solicitud Enviada!</h3>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">¡Solicitud Enviada!</h3>
                     <p className="text-slate-500 font-medium">Hemos notificado al equipo de administración para activar tu plan <b>{selectedPlan?.name}</b>.</p>
                 </div>
             </div>
@@ -128,11 +128,11 @@ export default function PlanUpgradeModal({
     if (selectedPlan) {
         return (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
                     <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                         <div>
-                            <h3 className="text-xl font-black text-slate-900">Confirmar Activación</h3>
-                            <p className="text-slate-500 text-sm font-medium mt-1">Plan: <b style={{ color: 'var(--primary-color)' }}>{selectedPlan.name}</b> <span className="text-[10px] px-2 py-0.5 rounded-full ml-1 uppercase" style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>{billingPeriod === 'annual' ? 'Anual' : 'Mensual'}</span></p>
+                            <h3 className="text-xl font-bold text-slate-900">Confirmar Activación</h3>
+                            <p className="text-slate-500 text-sm font-medium mt-1">Plan: <b style={{ color: 'var(--primary-color)' }}>{selectedPlan.name}</b> <span className="text-xs px-2 py-0.5 rounded-full ml-1 uppercase" style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>{billingPeriod === 'annual' ? 'Anual' : 'Mensual'}</span></p>
                         </div>
                         <button
                             onClick={onClose}
@@ -144,12 +144,12 @@ export default function PlanUpgradeModal({
                     </div>
 
                     <div className="p-8 bg-slate-50 space-y-6">
-                        <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-sm text-blue-800 font-medium leading-relaxed italic">
+                        <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-sm text-blue-800 font-medium leading-relaxed ">
                             El equipo administrador validará tu pago y activará tu plan al instante.
                         </div>
 
                         <div>
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Método de Pago</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-4">Método de Pago</label>
                             <div className="grid grid-cols-2 gap-4">
                                  <button
                                     onClick={() => setPaymentMethod('transferencia')}
@@ -160,7 +160,7 @@ export default function PlanUpgradeModal({
                                          style={paymentMethod === 'transferencia' ? { backgroundColor: 'var(--primary-color)', color: 'white' } : { backgroundColor: 'rgb(241, 245, 249)', color: 'rgb(148, 163, 184)' }}>
                                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg>
                                     </div>
-                                    <span className="font-black text-[10px] uppercase">Transferencia</span>
+                                    <span className="font-bold text-xs uppercase">Transferencia</span>
                                 </button>
                                  <button
                                     onClick={() => setPaymentMethod('tarjeta')}
@@ -171,7 +171,7 @@ export default function PlanUpgradeModal({
                                          style={paymentMethod === 'tarjeta' ? { backgroundColor: 'var(--primary-color)', color: 'white' } : { backgroundColor: 'rgb(241, 245, 249)', color: 'rgb(148, 163, 184)' }}>
                                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                                     </div>
-                                    <span className="font-black text-[10px] uppercase">Tarjeta</span>
+                                    <span className="font-bold text-xs uppercase">Tarjeta</span>
                                 </button>
                             </div>
                         </div>
@@ -179,7 +179,7 @@ export default function PlanUpgradeModal({
                          <button
                             onClick={handleConfirmUpgrade}
                             disabled={!paymentMethod || loading}
-                            className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${!paymentMethod || loading ? 'bg-slate-200 text-slate-400' : 'text-white shadow-xl active:scale-95'}`}
+                            className={`w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wide transition-all ${!paymentMethod || loading ? 'bg-slate-200 text-slate-400' : 'text-white shadow-xl active:scale-95'}`}
                             style={!paymentMethod || loading ? {} : { backgroundColor: 'var(--primary-color)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--primary-color), transparent 80%)' }}
                             onMouseEnter={(e) => { if (paymentMethod && !loading) e.currentTarget.style.filter = 'brightness(1.1)'; }}
                             onMouseLeave={(e) => { if (paymentMethod && !loading) e.currentTarget.style.filter = 'none'; }}

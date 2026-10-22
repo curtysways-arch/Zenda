@@ -34,16 +34,18 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
 
     useEffect(() => {
         const fetchServices = async () => {
-            if (!session?.user) return;
-            const negocioId = (session.user as any).negocioId;
-            const res = await fetch(`/api/services?negocioId=${negocioId}`);
-            if (res.ok) {
-                 const data = await res.json();
-                 setAllServices(data);
+            try {
+                const res = await fetch('/api/services');
+                if (res.ok) {
+                    const data = await res.json();
+                    setAllServices(Array.isArray(data) ? data : []);
+                }
+            } catch (e) {
+                console.error("Error cargando servicios para staff:", e);
             }
         };
         fetchServices();
-    }, [session]);
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -119,11 +121,11 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
 
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-            <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+            <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
                 <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
                     <div>
-                        <h2 className="text-2xl font-black uppercase tracking-tighter italic">{modalTitle}</h2>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">{modalSub}</p>
+                        <h2 className="text-2xl font-bold tracking-tight ">{modalTitle}</h2>
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-wide">{modalSub}</p>
                     </div>
                     <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition">
                         <X size={20} />
@@ -134,7 +136,7 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
                     {/* Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
                                 <User size={12} /> Nombre Completo
                             </label>
                             <input 
@@ -149,7 +151,7 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
                             />
                         </div>
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
                                 <Briefcase size={12} /> {roleLabel}
                             </label>
                             <input 
@@ -166,7 +168,7 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
                     </div>
 
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
                             <ImageIcon size={12} /> Avatar del Profesional
                         </label>
                         <ImageUploader
@@ -187,11 +189,11 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
 
                     {/* Creación de Usuario / Login (Solo para nuevo staff o si aún no tiene usuario) */}
                     {(!staff || !staff.usuario) && (
-                        <div className="p-6 bg-slate-50 border-2 border-slate-100 rounded-[2rem] space-y-5">
+                        <div className="p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl space-y-5">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h4 className="text-sm font-black text-slate-900 uppercase italic">Acceso al Sistema</h4>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Crear credenciales para este profesional</p>
+                                    <h4 className="text-sm font-bold text-slate-900 uppercase ">Acceso al Sistema</h4>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Crear credenciales para este profesional</p>
                                 </div>
                                 <button
                                     type="button"
@@ -206,7 +208,7 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
                             {createLogin && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200 animate-in fade-in duration-300">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
                                             Email (Usuario)
                                         </label>
                                         <input 
@@ -222,7 +224,7 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
                                             Contraseña
                                         </label>
                                         <input 
@@ -238,7 +240,7 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
                                         />
                                     </div>
                                     <div className="col-span-1 md:col-span-2">
-                                        <p className="text-[10px] font-bold p-2 rounded-lg italic"
+                                        <p className="text-xs font-bold p-2 rounded-lg "
                                            style={{ color: 'var(--primary-color)', backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)' }}>
                                             * Con estas credenciales el profesional podrá acceder a "Modo Staff" para ver su agenda.
                                         </p>
@@ -250,7 +252,7 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
 
                     {/* Services multi-select */}
                     <div className="space-y-4">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
                             <Scissors size={12} /> Servicios que puede realizar
                         </label>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -259,11 +261,11 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
                                     key={service.id}
                                     type="button"
                                     onClick={() => toggleService(service.id)}
-                                    className={`p-4 rounded-2xl text-[10px] font-black uppercase tracking-tight transition-all border-2 text-left ${
-                                        selectedServices.includes(service.id)
-                                            ? "shadow-md"
-                                            : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200"
-                                    }`}
+                                    className={`p-4 rounded-2xl text-xs font-bold uppercase tracking-tight transition-all border-2 text-left ${
+ selectedServices.includes(service.id)
+ ? "shadow-md"
+ : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200"
+ }`}
                                     style={selectedServices.includes(service.id) ? { backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', borderColor: 'var(--primary-color)', color: 'var(--primary-color)' } : {}}
                                 >
                                     {service.nombre}
@@ -272,10 +274,10 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem]">
+                    <div className="flex items-center justify-between p-6 bg-slate-50 rounded-2xl">
                         <div>
-                            <p className="text-xs font-black text-slate-900">Estado Activo</p>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Habilita o deshabilita a este profesional</p>
+                            <p className="text-xs font-bold text-slate-900">Estado Activo</p>
+                            <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Habilita o deshabilita a este profesional</p>
                         </div>
                         <button
                             type="button"
@@ -291,14 +293,14 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType 
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-8 py-5 border-2 border-slate-100 text-slate-400 font-black rounded-3xl hover:bg-slate-50 transition uppercase text-xs tracking-widest"
+                            className="flex-1 px-8 py-5 border-2 border-slate-100 text-slate-400 font-bold rounded-3xl hover:bg-slate-50 transition uppercase text-xs tracking-wide"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-[2] px-8 py-5 text-white font-black rounded-3xl transition shadow-xl shadow-slate-200 flex items-center justify-center gap-2 uppercase text-xs tracking-widest disabled:opacity-50"
+                            className="flex-[2] px-8 py-5 text-white font-bold rounded-3xl transition shadow-xl shadow-slate-200 flex items-center justify-center gap-2 uppercase text-xs tracking-wide disabled:opacity-50"
                             style={{ backgroundColor: 'var(--primary-color)' }}
                         >
                             {loading ? <Loader2 className="animate-spin" size={18} /> : (staff ? 'Guardar Cambios' : 'Registrar Profesional')}

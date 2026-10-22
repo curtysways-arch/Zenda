@@ -123,7 +123,7 @@ export default function GymAttendancePage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <CalendarCheck className="w-8 h-8 text-emerald-500" />
             Registro de Asistencias
           </h1>
@@ -188,7 +188,7 @@ export default function GymAttendancePage() {
               <CalendarCheck className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-slate-900 dark:text-white mt-2">
+          <div className="text-3xl font-bold text-slate-900 dark:text-white mt-2">
             {attendances.length}
           </div>
           <span className="text-xs text-slate-400 mt-1 block">En el período seleccionado</span>
@@ -201,7 +201,7 @@ export default function GymAttendancePage() {
               <User className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-slate-900 dark:text-white mt-2">
+          <div className="text-3xl font-bold text-slate-900 dark:text-white mt-2">
             {new Set(attendances.map(a => a.cliente?.id)).size}
           </div>
           <span className="text-xs text-slate-400 mt-1 block">Personas diferentes entrenando</span>
@@ -214,7 +214,7 @@ export default function GymAttendancePage() {
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-base font-black text-emerald-500 mt-2 flex items-center gap-1.5">
+          <div className="text-base font-bold text-emerald-500 mt-2 flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4" /> En Línea
           </div>
           <span className="text-xs text-slate-400 mt-1 block">Sincronizado con eventos de gamificación</span>
@@ -266,7 +266,7 @@ export default function GymAttendancePage() {
                             <div className="font-bold text-slate-900 dark:text-white">
                               {att.cliente?.nombre || 'Socio sin nombre'}
                             </div>
-                            <div className="text-[10px] text-slate-400">
+                            <div className="text-xs text-slate-400">
                               {att.cliente?.telefono || att.cliente?.email || 'ID: ' + att.cliente?.id?.substring(0, 8)}
                             </div>
                           </div>
@@ -281,11 +281,11 @@ export default function GymAttendancePage() {
 
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-slate-800 dark:text-slate-200">{timeStr}</div>
-                        <div className="text-[10px] text-slate-400">{dateStr}</div>
+                        <div className="text-xs text-slate-400">{dateStr}</div>
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">
                           {att.method || 'QR_CODE'}
                         </span>
                       </td>

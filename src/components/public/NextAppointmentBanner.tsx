@@ -77,7 +77,7 @@ export default function NextAppointmentBanner({ appointment, slug, primaryColor 
         <div className="fixed top-[80px] left-6 right-6 z-[45] animate-in slide-in-from-top-full duration-700">
             <Link 
                 href={`/${slug}/mis-reservas?reservaId=${appointment.id}`}
-                className="block overflow-hidden rounded-[2rem] shadow-2xl group border border-white/20 relative transition-all active:scale-[0.98]"
+                className="block overflow-hidden rounded-3xl shadow-2xl group border border-white/20 relative transition-all active:scale-[0.98]"
                 style={{ backgroundColor: primaryColor }}
             >
                 {/* Animated background highlights */}
@@ -91,15 +91,15 @@ export default function NextAppointmentBanner({ appointment, slug, primaryColor 
                         </div>
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2 text-white/70 leading-none mb-2">
-                                <span className="text-[8px] font-black uppercase tracking-[0.3em]">{timeLeft.includes(':') ? 'Empieza en' : 'Faltan'}</span>
+                                <span className="text-xs font-bold uppercase tracking-wide">{timeLeft.includes(':') ? 'Empieza en' : 'Faltan'}</span>
                                 <div className="size-1 bg-white/40 rounded-full" />
-                                <span className="text-[12px] font-black text-white tabular-nums tracking-widest animate-pulse">
+                                <span className="text-xs font-bold text-white tabular-nums tracking-wide animate-pulse">
                                     {timeLeft}
                                 </span>
                             </div>
                             
                             <div className="flex flex-col gap-1.5">
-                                <h4 className="text-[13px] font-black text-white leading-none uppercase italic tracking-tighter">
+                                <h4 className="text-sm font-bold text-white leading-none uppercase tracking-tight">
                                     {appointment.service?.nombre}
                                 </h4>
                                 
@@ -108,7 +108,7 @@ export default function NextAppointmentBanner({ appointment, slug, primaryColor 
                                         {appointment.extraServices.map((extra: any, i: number) => (
                                             <div key={i} className="flex items-center gap-1.5 bg-black/20 px-2 py-0.5 rounded-md">
                                                 <div className="size-1 bg-emerald-400 rounded-full" />
-                                                <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">
+                                                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide">
                                                     {extra.nombre}
                                                 </span>
                                             </div>
@@ -117,7 +117,7 @@ export default function NextAppointmentBanner({ appointment, slug, primaryColor 
                                 )}
                                 
                                 {appointment.staff?.name && (
-                                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                                    <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5 mt-0.5">
                                         {appointment.staff.name}
                                     </span>
                                 )}
@@ -127,8 +127,8 @@ export default function NextAppointmentBanner({ appointment, slug, primaryColor 
                     
                     <div className="flex items-center gap-3">
                         <div className="text-right flex flex-col items-end">
-                            <p className="text-[8px] font-black text-white leading-none tracking-tighter bg-white/20 px-2 py-1 rounded-lg border border-white/10">{appointment.horaInicio}</p>
-                            <p className="text-[7px] font-black text-white/50 uppercase tracking-widest leading-none mt-1.5">{dayLabel}</p>
+                            <p className="text-xs font-bold text-white leading-none tracking-tight bg-white/20 px-2 py-1 rounded-lg border border-white/10">{appointment.horaInicio}</p>
+                            <p className="text-xs font-bold text-white/50 uppercase tracking-wide leading-none mt-1.5">{dayLabel}</p>
                         </div>
                         <div className="size-9 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-lg group-hover:translate-x-1 transition-all duration-300">
                             <ArrowUpRight size={18} />

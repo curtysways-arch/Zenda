@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getTeamContext, canAccessBusinessId, outsidePortfolio } from "@/lib/admin/teamGuard";
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
@@ -13,41 +14,12 @@ export async function POST(
         const session = await getServerSession(authOptions);
         let user = session?.user as any;
 
-        // Fallback resiliente si getServerSession no encuentra el token en producción (ej. cookies HTTPS)
-        if (!user) {
-            const adminUser = await prisma.adminUser.findFirst({
-                where: { activo: true },
-                orderBy: { createdAt: 'asc' }
-            });
-            if (adminUser) {
-                user = {
-                    id: adminUser.id,
-                    email: adminUser.email,
-                    name: `${adminUser.nombre} ${adminUser.apellido || ''}`.trim(),
-                    isAdminUser: true,
-                    role: 'SUPERADMIN',
-                    roles: ['SUPERADMIN']
-                };
-            } else {
-                const superUser = await prisma.usuario.findFirst({
-                    where: { role: { in: ['SUPERADMIN', 'SUPER_ADMIN', 'ADMIN'] } }
-                });
-                if (superUser) {
-                    user = {
-                        id: superUser.id,
-                        email: superUser.email,
-                        name: superUser.nombre,
-                        isAdminUser: false,
-                        role: 'SUPERADMIN',
-                        roles: ['SUPERADMIN']
-                    };
-                }
-            }
-        }
-
+        // Sin sesión no hay acceso (antes se usaba la primera cuenta de admin como "respaldo")
         if (!user) {
             return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
         }
+        const team = await getTeamContext();
+        if (!team || !(await canAccessBusinessId(team, businessId))) return outsidePortfolio();
 
         // Verificar existencia del negocio objetivo
         const negocio = await prisma.negocio.findUnique({

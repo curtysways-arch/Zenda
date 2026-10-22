@@ -51,7 +51,7 @@ function OrderCard({ order, slug, onAdvance }: { order: KDSOrder; slug: string; 
 
   return (
     <div style={{ background: stage?.bg || '#fff', border: `2px solid ${urgent ? '#dc2626' : (stage?.color || '#e0e0e0')}`, borderRadius: 16, padding: 20, animation: urgent ? 'pulse 2s infinite' : 'none', boxShadow: urgent ? '0 0 20px rgba(220,38,38,0.3)' : '0 4px 20px rgba(0,0,0,0.08)', position: 'relative', overflow: 'hidden' }}>
-      {urgent && <div style={{ position: 'absolute', top: 8, right: 8, background: '#dc2626', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>⚠️ URGENTE</div>}
+      {urgent && <div style={{ position: 'absolute', top: 8, right: 8, background: '#dc2626', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>⚠️ Urgente</div>}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div>
           <span style={{ background: stage?.color, color: '#fff', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>{stage?.label || order.estado}</span>

@@ -158,14 +158,14 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
     return createPortal(
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
             {/* Modal Container */}
-            <div className="bg-[#07090f] w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-lg shadow-2xl relative overflow-hidden sm:rounded-[2.5rem] flex flex-col border-t border-white/5 sm:border text-left">
+            <div className="bg-[#07090f] w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-lg shadow-2xl relative overflow-hidden sm:rounded-3xl flex flex-col border-t border-white/5 sm:border text-left">
                 
                 {/* Header Navbar */}
                 <div className="flex items-center justify-between p-6 sm:px-8 pb-4 shrink-0 relative z-20 border-b border-white/5">
                     <button onClick={onClose} className="size-10 bg-white/5 rounded-2xl flex items-center justify-center text-white/50 hover:text-white transition-all border border-white/5 cursor-pointer">
                         <X size={20} />
                     </button>
-                    <div className="px-4 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 text-[10px] font-black tracking-widest uppercase">
+                    <div className="px-4 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 text-xs font-bold tracking-wide uppercase">
                         PASO FINAL
                     </div>
                 </div>
@@ -174,10 +174,10 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                 <div className="flex-1 overflow-y-auto px-6 sm:px-8 pt-4 pb-44 space-y-6 hide-scrollbar relative z-10">
                     {/* Header Texts */}
                     <div>
-                        <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-none mb-1">
+                        <h2 className="text-3xl font-bold text-white tracking-tight leading-none mb-1">
                             CONFIRMAR RESERVA
                         </h2>
-                        <p className="text-[10px] font-medium text-white/40 tracking-widest uppercase italic">
+                        <p className="text-xs font-medium text-white/40 tracking-wide uppercase ">
                             COMPLETA TU INFORMACIÓN PARA AGENDAR TU TURNO.
                         </p>
                     </div>
@@ -187,22 +187,22 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                         <div className="flex justify-between items-center border-b border-white/5 pb-2">
                             <div className="flex items-center gap-2">
                                 <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(29,201,92,0.6)]" />
-                                <span className="text-xs font-black italic text-white uppercase truncate max-w-[200px]">
+                                <span className="text-xs font-bold text-white uppercase truncate max-w-[200px]">
                                     {bookingData.canchaNombre}
                                 </span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-bold text-slate-400">{duracionMin} min</span>
-                                <span className="text-sm font-black text-emerald-400">${precioTotal}</span>
+                                <span className="text-xs font-bold text-slate-400">{duracionMin} min</span>
+                                <span className="text-sm font-bold text-emerald-400">${precioTotal}</span>
                             </div>
                         </div>
 
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col">
-                                <span className="flex items-center gap-1 text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">
+                                <span className="flex items-center gap-1 text-xs font-bold text-emerald-500/60 uppercase tracking-wide">
                                     <Calendar size={10} className="text-emerald-500" /> FECHA
                                 </span>
-                                <span className="text-[12px] font-black text-white italic uppercase">
+                                <span className="text-xs font-bold text-white uppercase">
                                     {format(bookingData.date, "EEEE d MMM", { locale: es })}
                                 </span>
                             </div>
@@ -210,10 +210,10 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                             <div className="w-px h-6 bg-white/5" />
                             
                             <div className="flex flex-col items-end text-right">
-                                <span className="flex items-center gap-1 text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">
+                                <span className="flex items-center gap-1 text-xs font-bold text-emerald-500/60 uppercase tracking-wide">
                                     <Clock size={10} className="text-emerald-500" /> HORARIO
                                 </span>
-                                <span className="text-[12px] font-black text-white italic uppercase">
+                                <span className="text-xs font-bold text-white uppercase">
                                     {bookingData.hour} — {horaFin} HS
                                 </span>
                             </div>
@@ -221,8 +221,8 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
 
                         {bookingData.staffName && (
                             <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Especialista</span>
-                                <span className="font-black text-white italic uppercase">{bookingData.staffName}</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Especialista</span>
+                                <span className="font-bold text-white uppercase">{bookingData.staffName}</span>
                             </div>
                         )}
                     </div>
@@ -231,7 +231,7 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                     <form onSubmit={handleSubmit} id="booking-modal-form" className="space-y-4">
                         {/* Nombre */}
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Nombre Completo</label>
+                            <label className="text-xs font-bold text-white/40 uppercase tracking-wide ml-1">Nombre Completo</label>
                             <input
                                 required
                                 value={formData.nombre}
@@ -243,7 +243,7 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
 
                         {/* Telefono */}
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Celular de Contacto</label>
+                            <label className="text-xs font-bold text-white/40 uppercase tracking-wide ml-1">Celular de Contacto</label>
                             <PhoneInput
                                 value={formData.telefono}
                                 onChange={(val) => setFormData({ ...formData, telefono: val })}
@@ -254,7 +254,7 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
 
                         {/* Notas */}
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Notas (Opcional)</label>
+                            <label className="text-xs font-bold text-white/40 uppercase tracking-wide ml-1">Notas (Opcional)</label>
                             <textarea
                                 value={formData.comentarios}
                                 rows={2}
@@ -270,11 +270,11 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                 <div className="absolute bottom-0 left-0 right-0 bg-[#07090f]/95 backdrop-blur-xl border-t border-white/5 p-5 sm:px-8 shrink-0 flex flex-col gap-3 z-30 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-[9px] font-black text-emerald-500/60 uppercase tracking-[0.2em] italic mb-0.5">TOTAL DE RESERVA</span>
+                            <span className="text-xs font-bold text-emerald-500/60 uppercase tracking-wide mb-0.5">Total de reserva</span>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-emerald-400 italic tracking-tighter leading-none">${precioTotal}</span>
+                                <span className="text-3xl font-bold text-emerald-400 tracking-tight leading-none">${precioTotal}</span>
                                 {bookingData?.pagoPorcentaje && (
-                                    <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wide bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
                                         SEÑA: {bookingData.pagoPorcentaje}% (${((precioTotal * bookingData.pagoPorcentaje) / 100).toFixed(2)})
                                     </span>
                                 )}
@@ -286,22 +286,22 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                         type="button"
                         onClick={() => handleSubmit()}
                         disabled={loading || success}
-                        className={`w-full h-15 rounded-2xl text-[12px] font-black text-white uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-xl cursor-pointer active:scale-[0.98] ${
-                            success 
-                                ? 'bg-emerald-500 shadow-emerald-500/20' 
-                                : 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20'
-                        }`}
+                        className={`w-full h-15 rounded-2xl text-xs font-bold text-white uppercase tracking-wide flex items-center justify-center gap-3 transition-all shadow-xl cursor-pointer active:scale-[0.98] ${
+ success 
+ ? 'bg-emerald-500 shadow-emerald-500/20' 
+ : 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20'
+ }`}
                     >
                         {loading ? (
                             <Loader2 size={20} className="animate-spin" />
                         ) : success ? (
                             <>
-                                <span>RESERVA EXITOSA</span>
+                                <span>Reserva exitosa</span>
                                 <CheckCircle2 size={20} />
                             </>
                         ) : (
                             <>
-                                <span>CONFIRMAR RESERVA</span>
+                                <span>Confirmar reserva</span>
                                 <CheckCircle2 size={20} />
                             </>
                         )}

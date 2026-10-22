@@ -37,10 +37,10 @@ export default function TemplatesMarketplacePage() {
             <Store className="size-7" />
           </div>
           <div>
-            <span className="text-[10px] font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest bg-pink-500/10 px-2.5 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-pink-600 dark:text-pink-400 uppercase tracking-wide bg-pink-500/10 px-2.5 py-0.5 rounded-full">
               Citiox Marketplace 1-Click
             </span>
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white italic tracking-tight mt-1">
+            <h1 className="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
               Marketplace de Templates Comerciales
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">

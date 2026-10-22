@@ -1,9 +1,8 @@
 import prisma from '@/lib/prisma';
-import { Plus, Users, Target, Activity, Calendar, DollarSign, TrendingUp, Clock, Rocket, AlertTriangle, ChevronRight, Scissors, Gift } from 'lucide-react';
+import { Plus, Users, Calendar, DollarSign, TrendingUp, Clock, AlertTriangle, ChevronRight, Gift, Lock, ExternalLink, MessageCircle, CalendarX2, Scissors, Tags, MessageSquare, Trophy, Palette } from 'lucide-react';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { startOfMonth, startOfToday, endOfToday, startOfWeek, endOfWeek, addDays } from 'date-fns';
-import { clsx } from 'clsx';
+import { startOfMonth, startOfWeek, endOfWeek, subMonths } from 'date-fns';
 import Link from 'next/link';
 import { headers } from 'next/headers';
 import { ShareWidget } from './ShareWidget';
@@ -15,6 +14,9 @@ import PlanStatusCard from '@/components/ui/PlanStatusCard';
 import { featureService } from '@/lib/services/featureService';
 import { calculateOnboardingProgress } from '@/lib/onboarding';
 import OnboardingChecklist from '@/components/admin/OnboardingChecklist';
+import CitioxMissionWidget from '@/components/admin/CitioxMissionWidget';
+import MyPageCard from '@/components/admin/MyPageCard';
+import { getLandingDesign, readLandingState } from '@/lib/landingDesigns';
 import { formatUTCDate } from '@/lib/utils';
 import RealtimeDashboardReloader from '@/components/admin/RealtimeDashboardReloader';
 import ProductsDashboard from '@/components/admin/ProductsDashboard';
@@ -54,36 +56,68 @@ export default async function AdminDashboard() {
         }
     });
 
-    const rawType = (negocioObj?.tipoNegocio || tipoNegocio || '').toUpperCase().trim();
+    const { 
+        normalizeBusinessConfig,
+        isLaundryOrShoeCareBusiness,
+        isRestaurantBusiness,
+        isStoreBusiness,
+        isSportsCourtsBusiness,
+        isDentalBusiness,
+        isGymBusiness
+    } = await import('@/lib/businessTypeHelper');
 
-    if (rawType === 'SHOE_CARE' || rawType === 'ORDENES-SERVICIO') {
-        const { default: ShoeCareBackoffice } = await import('@/modules/shoe-care/components/ShoeCareBackoffice');
-        return <ShoeCareBackoffice negocio={{ ...negocioObj, services: (negocioObj as any)?.Service || [] }} />;
+    const cleanConfig = normalizeBusinessConfig(negocioObj?.configuracion);
+    const resolvedNegocio = negocioObj ? { ...negocioObj, configuracion: cleanConfig } : null;
+
+    // Misión de Citiox más cercana (solo para dueños/administradores)
+    const canSeeMissions = !(role === 'STAFF' || role === 'PROFESIONAL');
+    const withMission = (node: React.ReactNode) => canSeeMissions ? (
+        <>
+            <CitioxMissionWidget variant="strip" className="mb-4" />
+            {node}
+        </>
+    ) : node;
+
+    if (isLaundryOrShoeCareBusiness(resolvedNegocio)) {
+        const { default: LaundryOperationsBoard } = await import('@/modules/shoe-care/components/LaundryOperationsBoard');
+        const n: any = negocioObj || {};
+        return withMission(
+            <LaundryOperationsBoard
+                negocio={{
+                    id: n.id,
+                    nombre: n.nombre,
+                    slug: n.slug,
+                    logoUrl: n.logoUrl || null,
+                    colorPrimario: n.colorPrimario || null,
+                    tipoNegocio: n.tipoNegocio || null,
+                    configuracion: JSON.parse(JSON.stringify(cleanConfig || {})),
+                }}
+            />
+        );
     }
 
-    if (['RESTAURANTE', 'RESTAURANT', 'BAR', 'GASTRONOMIA', 'COMIDA'].includes(rawType)) {
+    if (isRestaurantBusiness(resolvedNegocio)) {
         const { default: RestaurantDashboard } = await import('@/components/admin/RestaurantDashboard');
-        return <RestaurantDashboard negocioId={negocioId} role={role} />;
+        return withMission(<RestaurantDashboard negocioId={negocioId} role={role} />);
     }
 
-    if (rawType === 'TIENDA' || rawType === 'STORE') {
+    if (isStoreBusiness(resolvedNegocio)) {
+        const rawType = (negocioObj?.tipoNegocio || tipoNegocio || '').toUpperCase().trim();
+        if (rawType === 'PRODUCTOS') {
+            return withMission(<ProductsDashboard negocioId={negocioId} role={role} />);
+        }
         const { default: StoreDashboard } = await import('@/modules/store/components/StoreDashboard');
-        return <StoreDashboard negocioId={negocioId} role={role} />;
+        return withMission(<StoreDashboard negocioId={negocioId} role={role} />);
     }
 
-    if (rawType === 'PRODUCTOS') {
-        return <ProductsDashboard negocioId={negocioId} role={role} />;
-    }
-
-    if (rawType === 'SPORTS_COURTS' || rawType === 'CANCHAS' || rawType === 'SPORTS') {
+    if (isSportsCourtsBusiness(resolvedNegocio)) {
         const { default: CanchaAdminDashboard } = await import('@/modules/sports-courts/components/CanchaAdminDashboard');
-        return <CanchaAdminDashboard negocio={negocioObj} />;
+        return withMission(<CanchaAdminDashboard negocio={resolvedNegocio} />);
     }
 
-    const { isDentalBusiness } = await import('@/modules/dental/utils/dentalHelper');
-    if (isDentalBusiness(negocioObj)) {
+    if (isDentalBusiness(resolvedNegocio)) {
         const { default: DentalAdminDashboard } = await import('@/modules/dental/components/admin/DentalAdminDashboard');
-        return (
+        return withMission(
             <DentalAdminDashboard 
                 negocioNombre={negocioObj?.nombre} 
                 primaryColor={negocioObj?.colorPrimario || '#0284c7'} 
@@ -91,18 +125,21 @@ export default async function AdminDashboard() {
         );
     }
 
-    const { isGymBusiness } = await import('@/modules/gym/utils/gymHelper');
-    if (isGymBusiness(negocioObj) || ['GIMNASIO', 'GYM', 'FITNESS'].includes(rawType)) {
+    if (isGymBusiness(resolvedNegocio)) {
         const { default: GymAdminDashboard } = await import('@/modules/gym/components/GymAdminDashboard');
-        return <GymAdminDashboard businessSlug={negocioObj?.slug} negocioNombre={negocioObj?.nombre} />;
+        return withMission(<GymAdminDashboard businessSlug={negocioObj?.slug} negocioNombre={negocioObj?.nombre} />);
     }
 
     const isStaff = role === 'STAFF' || role === 'PROFESIONAL';
 
     const now = new Date();
-    // Ajuste para que coincida con el almacenamiento UTC de la DB
-    const startToday = new Date(new Date().setUTCHours(0, 0, 0, 0));
-    const endToday = new Date(new Date().setUTCHours(23, 59, 59, 999));
+    // Las citas se guardan con la fecha local del negocio a medianoche UTC.
+    // "Hoy" debe calcularse con la zona horaria del negocio, no con UTC
+    // (si no, después de las 19:00 en Ecuador el panel mostraba las citas de mañana como "hoy").
+    const bizTimeZone = (cleanConfig as any)?.timeZone || (cleanConfig as any)?.timezone || 'America/Guayaquil';
+    const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: bizTimeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+    const startToday = new Date(`${todayKey}T00:00:00.000Z`);
+    const endToday = new Date(`${todayKey}T23:59:59.999Z`);
     const startMonth = startOfMonth(now);
 
     const inicioSemana = startOfWeek(now, { weekStartsOn: 1 });
@@ -146,6 +183,7 @@ export default async function AdminDashboard() {
                 estado: true,
                 horarioApertura: true,
                 horarioCierre: true,
+                heroTitulo: true,
                 configuracion: true,
                 slug: true,
                 colorPrimario: true,
@@ -180,6 +218,28 @@ export default async function AdminDashboard() {
     ]);
 
     const pendingDeliveriesCount = (loyaltyPendingCount || 0) + (referralPendingCount || 0);
+
+    // Comparación honesta: mismo tramo del mes anterior (del día 1 a hoy)
+    const startPrevMonth = startOfMonth(subMonths(now, 1));
+    const samePointPrevMonth = subMonths(now, 1);
+    const [citasMesAnterior, ingresosMesAnterior, clientesNuevosMes] = await Promise.all([
+        prisma.appointment.count({
+            where: {
+                ...commonFilter,
+                fecha: { gte: startPrevMonth, lte: samePointPrevMonth },
+                estado: { in: ['confirmed', 'completed', 'finalizada', 'finalizado'] }
+            }
+        }),
+        prisma.appointment.aggregate({
+            where: {
+                ...commonFilter,
+                estado: { in: ['completed', 'finalizada', 'finalizado'] },
+                fecha: { gte: startPrevMonth, lte: samePointPrevMonth }
+            },
+            _sum: { total: true }
+        }),
+        prisma.cliente.count({ where: { negocioId, createdAt: { gte: startMonth } } })
+    ]);
     const servicesData = servicesResult.map(c => ({ id: c.id, nombre: c.nombre }));
 
     const citasSemana = await prisma.appointment.findMany({
@@ -227,7 +287,7 @@ export default async function AdminDashboard() {
     });
 
     const timeZone = (() => {
-        let tz = 'America/Bogota';
+        let tz = bizTimeZone;
         if (negocioData?.configuracion) {
             try {
                 const config = typeof negocioData.configuracion === 'string'
@@ -271,24 +331,42 @@ export default async function AdminDashboard() {
 
     if (!negocioData) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200">
-                <AlertTriangle className="text-amber-500 mb-6" size={48} />
-                <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter italic">Información no disponible</h2>
-                <p className="text-slate-500 font-medium mt-2">No se pudo cargar la configuración de tu negocio. Por favor, contacta al soporte.</p>
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-300 text-center px-6">
+                <AlertTriangle className="text-amber-500 mb-4" size={40} />
+                <h2 className="text-xl font-semibold text-slate-900">No pudimos cargar tu negocio</h2>
+                <p className="text-slate-500 mt-2">Recarga la página. Si el problema sigue, escríbenos a soporte.</p>
             </div>
         );
     }
+
+
+    const ingresosMesTotal = Number(ingresosMes?._sum?.total || 0);
+    const ingresosPrevTotal = Number(ingresosMesAnterior?._sum?.total || 0);
+    const firstName = (session?.user?.name || '').split(' ')[0] || '';
+    const todayLabel = new Intl.DateTimeFormat('es-EC', { weekday: 'long', day: 'numeric', month: 'long', timeZone }).format(new Date());
+    const citasDeHoy = proximasCitas.filter(r => isSameUTCDay(r.fecha, nowTime));
+    const designName = getLandingDesign(readLandingState(negocioData?.configuracion).activo)?.nombre || 'Clásico';
+
+    const shortcuts = [
+        { href: '/admin/servicios', label: 'Servicios', icon: <Scissors size={18} /> },
+        { href: '/admin/bloqueos', label: 'Bloquear horario', icon: <Lock size={18} /> },
+        { href: '/admin/promociones', label: 'Promociones', icon: <Tags size={18} /> },
+        { href: '/admin/comunicacion', label: 'Mensajes', icon: <MessageSquare size={18} /> },
+        { href: '/admin/misiones', label: 'Club', icon: <Trophy size={18} /> },
+        { href: '/admin/diseno', label: 'Diseño de página', icon: <Palette size={18} /> },
+    ];
 
     return (
         <>
             {/* VISTA MÓVIL */}
             <div className="md:hidden">
-                <MobileDashboard 
-                    stats={{ 
-                        citasHoy, 
-                        citasMes, 
-                        ingresosMes: ingresosMes?._sum?.total || 0, 
-                        totalClientes 
+                {!isStaff && <CitioxMissionWidget variant="strip" className="mx-4 mt-4" />}
+                <MobileDashboard
+                    stats={{
+                        citasHoy,
+                        citasMes,
+                        ingresosMes: ingresosMesTotal,
+                        totalClientes
                     }}
                     proximasCitas={proximasCitas}
                     isTrial={isTrial}
@@ -296,178 +374,203 @@ export default async function AdminDashboard() {
                     primaryColor={primaryColor}
                     slug={negocioData?.slug || ''}
                     negocioNombre={negocioData?.nombre}
-                    usuarioNombre={session?.user?.name || 'Admin'}
+                    usuarioNombre={session?.user?.name || ''}
                     pendingDeliveriesCount={pendingDeliveriesCount}
+                    onboarding={!isStaff ? onboarding : undefined}
+                    isStaff={isStaff}
+                    designName={designName}
+                    shortcuts={!isStaff ? shortcuts.map(({ href, label }) => ({ href, label })) : []}
                 />
             </div>
 
             {/* VISTA ESCRITORIO */}
-            <div className="hidden md:block space-y-12 animate-in fade-in duration-500">
-                {/* Banner Premium Light */}
+            <div className="hidden md:block space-y-5 max-w-7xl">
                 {isTrial && !isStaff && (
                     <UpgradeBanner type="trial_expiring" daysLeft={daysLeft > 0 ? daysLeft : 0} />
                 )}
-
-                {/* Banner de Downgrade */}
                 {isDowngraded && !isStaff && (
                     <UpgradeBanner type="downgraded" />
                 )}
 
-                {/* Banner de Premios Pendientes */}
                 {pendingDeliveriesCount > 0 && (
-                    <div className="bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-[2rem] p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div className="absolute top-0 right-0 w-36 h-36 bg-white rounded-full blur-[100px] opacity-15" />
-                        <div className="flex items-center gap-4 relative z-10">
-                            <div className="size-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 shrink-0">
-                                <Gift size={24} className="text-white animate-bounce" />
+                    <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="size-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                                <Gift size={20} />
                             </div>
                             <div>
-                                <h4 className="text-sm font-black uppercase tracking-wider leading-none">🎁 ¡Premios y Recompensas Pendientes de Entrega!</h4>
-                                <p className="text-white/90 text-xs mt-1.5">Tienes {pendingDeliveriesCount} entregas de premios o recompensas de misiones esperando en recepción.</p>
+                                <p className="text-sm font-semibold text-slate-900">
+                                    {pendingDeliveriesCount === 1 ? 'Tienes 1 premio por entregar' : `Tienes ${pendingDeliveriesCount} premios por entregar`}
+                                </p>
+                                <p className="text-sm text-slate-600">Clientes que canjearon recompensas y esperan en recepción.</p>
                             </div>
                         </div>
-                        <Link 
-                            href="/admin/misiones?tab=rewards" 
-                            className="px-6 py-3.5 bg-white text-rose-600 hover:bg-slate-50 font-black uppercase tracking-widest text-[10px] rounded-2xl transition-all shadow-md active:scale-95 shrink-0 z-10"
+                        <Link
+                            href="/admin/misiones?tab=rewards"
+                            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-xl shrink-0"
                         >
-                            Entregar Premios
+                            Ver premios
                         </Link>
                     </div>
                 )}
 
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 px-4">
-                    <div className="space-y-2">
-                        <span className="text-[11px] font-black uppercase tracking-[0.4em] block italic" style={{ color: 'var(--primary-color)' }}>{isStaff ? 'MODO PROFESIONAL' : 'VISTA ESTRATÉGICA'}</span>
-                        <h1 className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter uppercase leading-none italic">{isStaff ? 'Mi Agenda' : 'Dashboard'}</h1>
-                        <p className="text-slate-400 text-base font-bold uppercase italic flex items-center gap-3">
-                            <Activity size={20} style={{ color: 'var(--primary-color)' }} />
-                            {isStaff ? 'Gestiona tus citas y disponibilidad personal.' : 'Tráfico de red optimizado. Datos en tiempo real.'}
+                {/* Encabezado */}
+                <header className="flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                        <p className="text-sm text-slate-500 first-letter:uppercase">{todayLabel}</p>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
+                            {firstName ? `Hola, ${firstName}` : (isStaff ? 'Mi agenda' : 'Inicio')}
+                        </h1>
+                        <p className="text-slate-600 mt-1">
+                            {citasHoy === 0
+                                ? 'No tienes citas para hoy.'
+                                : `Hoy tienes ${citasHoy} ${citasHoy === 1 ? 'cita' : 'citas'}.`}
                         </p>
                     </div>
-                    {!isStaff && (
-                        <div className="flex bg-white p-2 rounded-3xl border border-slate-200 shadow-md">
-                            <div className="py-3 px-6 flex items-center gap-4">
-                                <div className="relative">
-                                    <div className="size-3 rounded-full animate-ping absolute inset-0" style={{ backgroundColor: 'var(--primary-color)' }} />
-                                    <div className="size-3 rounded-full relative" style={{ backgroundColor: 'var(--primary-color)' }} />
-                                </div>
-                                <span className="text-[11px] font-black text-slate-800 uppercase tracking-widest leading-none italic">WhatsApp Activo</span>
-                            </div>
-                        </div>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                            href="/admin/bloqueos"
+                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            <Lock size={16} />
+                            Bloquear horario
+                        </Link>
+                        <Link
+                            href="/admin/citas/nueva"
+                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold text-white hover:brightness-110"
+                            style={{ backgroundColor: 'var(--primary-color)' }}
+                        >
+                            <Plus size={16} />
+                            Nueva cita
+                        </Link>
+                    </div>
                 </header>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    <StatCard 
-                        title={isStaff ? "MIS CITAS HOY" : "HOY"} 
-                        value={citasHoy} 
-                        icon={<Calendar size={20} />} 
-                        color="blue"
-                        change="+12%" 
-                        detail={isStaff ? "Tu carga de trabajo" : "Citas Agendadas"} 
+                {/* Números del negocio (todos reales) */}
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                    <StatCard
+                        title={isStaff ? 'Mis citas hoy' : 'Citas hoy'}
+                        value={String(citasHoy)}
+                        icon={<Calendar size={18} />}
+                        detail={citasDeHoy.length > 0 ? `Próxima a las ${citasDeHoy[0].horaInicio}` : 'Agenda libre'}
                         href="/admin/citas"
                     />
-                    <StatCard 
-                        title={isStaff ? "PRODUCCIÓN MES" : "RECAUDADO"} 
-                        value={`$${ingresosMes._sum.total?.toString() || '0'}`} 
-                        icon={<DollarSign size={20} />} 
-                        color="primary"
-                        change="+8.5%" 
-                        detail={isStaff ? "Tus servicios facturados" : "Cerrado este mes"} 
+                    <StatCard
+                        title={isStaff ? 'Mis servicios cobrados (mes)' : 'Cobrado este mes'}
+                        value={formatMoney(ingresosMesTotal)}
+                        icon={<DollarSign size={18} />}
+                        change={percentChange(ingresosMesTotal, ingresosPrevTotal)}
+                        detail="vs. mismo periodo del mes pasado"
                         href="/admin/recaudado"
                     />
-                    <StatCard 
-                        title="CLIENTES" 
-                        value={totalClientes} 
-                        icon={<Users size={20} />} 
-                        color="violet"
-                        change="+20%" 
-                        detail="Fichas Activas" 
-                        href="/admin/clientes"
-                    />
-                    <StatCard 
-                        title="RENDIMIENTO" 
-                        value={`${citasMes}`} 
-                        icon={<TrendingUp size={20} />} 
-                        color="orange"
-                        change="+15%" 
-                        detail="Confirmadas" 
+                    <StatCard
+                        title="Citas confirmadas (mes)"
+                        value={String(citasMes)}
+                        icon={<TrendingUp size={18} />}
+                        change={percentChange(citasMes, citasMesAnterior)}
+                        detail="vs. mismo periodo del mes pasado"
                         href="/admin/reportes"
                     />
-                </div>
-
-                <div className="px-2">
-                    <WeeklyCalendar 
-                        reservas={citasFormateadas} 
-                        canchas={servicesData} 
+                    <StatCard
+                        title="Clientes"
+                        value={String(totalClientes)}
+                        icon={<Users size={18} />}
+                        detail={clientesNuevosMes > 0 ? `${clientesNuevosMes} nuevos este mes` : 'Sin clientes nuevos este mes'}
+                        href="/admin/clientes"
                     />
                 </div>
 
-                <div className="px-2">
-                    <WaitingRoomWidget primaryColor={primaryColor} />
-                </div>
+                {/* Atajos: lo que el dueño hace seguido, a un clic */}
+                {!isStaff && (
+                    <nav aria-label="Atajos" className="grid grid-cols-3 xl:grid-cols-6 gap-3">
+                        {shortcuts.map((sc) => (
+                            <Link
+                                key={sc.href}
+                                href={sc.href}
+                                className="group flex items-center gap-2.5 px-3 py-2.5 bg-white border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-sm transition"
+                            >
+                                <span className="size-7 rounded-lg flex items-center justify-center shrink-0 bg-slate-100 text-slate-600 group-hover:text-white transition-colors group-hover:[background-color:var(--primary-color)]">
+                                    {sc.icon}
+                                </span>
+                                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 leading-tight">{sc.label}</span>
+                            </Link>
+                        ))}
+                    </nav>
+                )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                    <div className="lg:col-span-2 space-y-10">
-                        <div className="flex justify-between items-center px-6">
-                            <div className="flex items-center gap-4">
-                                <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: 'var(--primary-color)' }} />
-                                <h3 className="font-black text-slate-800 uppercase tracking-[0.2em] text-[13px] italic">CITAS ENTRANTES</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+                    {/* Columna principal */}
+                    <div className="lg:col-span-2 space-y-5">
+                        <section className="bg-white border border-slate-200 rounded-2xl">
+                            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                                <h2 className="text-base font-semibold text-slate-900">Próximas citas</h2>
+                                <Link href="/admin/citas" className="text-sm font-medium text-slate-500 hover:text-slate-900">
+                                    Ver agenda completa
+                                </Link>
                             </div>
-                            <Link href="/admin/citas" className="px-6 py-3 bg-white border border-slate-200 text-slate-400 hover:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Ver Historial</Link>
-                        </div>
 
-                        <div className="space-y-6">
-                            {proximasCitas.length > 0 ? proximasCitas.map(r => (
-                                <div key={r.id} className="bg-white border border-slate-200 p-8 rounded-[3rem] flex flex-col sm:flex-row items-center justify-between gap-8 hover:border-emerald-500/30 group transition-all duration-500 shadow-sm hover:shadow-xl">
-                                    <div className="flex items-center gap-6">
-                                        <div className="size-16 rounded-[1.5rem] bg-slate-50 border border-slate-100 text-slate-400 flex items-center justify-center font-black text-2xl group-hover:text-white transition-all transform group-hover:rotate-6"
-                                             style={ { '--hover-bg': 'var(--primary-color)' } as any }>
-                                            {r.cliente.nombre.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <p className="font-black text-xl text-slate-800 uppercase leading-none italic">{r.cliente.nombre}</p>
-                                            <div className="flex items-center gap-4">
-                                                <p className="text-[11px] font-black uppercase tracking-widest italic" style={{ color: 'var(--primary-color)' }}>{r.service.nombre}</p>
-                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter flex items-center gap-2">
-                                                    {formatUTCDate(r.fecha)}
-                                                </span>
-                                                <span className="text-[11px] font-black text-slate-300 uppercase tracking-tighter flex items-center gap-2">
-                                                    <Clock size={14} className="text-slate-200" />
-                                                    {r.horaInicio} HS
-                                                </span>
-                                            </div>
-                                        </div>
+                            {proximasCitas.length > 0 ? (
+                                <ul className="divide-y divide-slate-100">
+                                    {proximasCitas.map(r => {
+                                        const status = appointmentStatus(r.estado);
+                                        return (
+                                            <li key={r.id}>
+                                                <Link href={`/admin/citas/${r.id}`} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 group">
+                                                    <div className="w-16 shrink-0 text-center">
+                                                        <p className="text-base font-semibold text-slate-900 leading-tight">{r.horaInicio}</p>
+                                                        <p className="text-xs text-slate-500">{dayLabel(r.fecha, nowTime)}</p>
+                                                    </div>
+                                                    <div className="size-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-semibold shrink-0">
+                                                        {r.cliente.nombre.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm font-semibold text-slate-900 truncate">{r.cliente.nombre}</p>
+                                                        <p className="text-sm text-slate-500 truncate">{r.service.nombre}</p>
+                                                    </div>
+                                                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${status.className}`}>
+                                                        {status.label}
+                                                    </span>
+                                                    <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-600 shrink-0" />
+                                                </Link>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            ) : (
+                                <div className="px-6 py-12 text-center">
+                                    <div className="size-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
+                                        <CalendarX2 size={22} />
                                     </div>
-                                    <div className="flex items-center gap-6">
-                                        <div className="text-right hidden sm:block">
-                                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">ID CITA</p>
-                                            <p className="text-sm font-black text-slate-400 tracking-tighter uppercase italic">#{r.id.slice(-6)}</p>
-                                        </div>
-                                        <Link 
-                                            href={`/admin/citas/${r.id}`}
-                                            className="px-8 py-5 bg-slate-900 text-white hover:bg-black rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-200 active:scale-95 transition-all flex items-center gap-3"
+                                    <p className="font-semibold text-slate-900">No tienes citas próximas</p>
+                                    <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+                                        Comparte tu página para que tus clientes reserven, o agenda una cita tú mismo.
+                                    </p>
+                                    <div className="flex justify-center gap-2 mt-4">
+                                        <Link
+                                            href="/admin/citas/nueva"
+                                            className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
+                                            style={{ backgroundColor: 'var(--primary-color)' }}
                                         >
-                                            GESTIONAR
-                                            <ChevronRight size={16} />
+                                            Nueva cita
                                         </Link>
                                     </div>
                                 </div>
-                            )) : (
-                                <div className="bg-white border-2 border-dashed border-slate-200 p-32 rounded-[4rem] text-center">
-                                    <div className="size-24 rounded-[2.5rem] bg-slate-50 mx-auto flex items-center justify-center text-slate-200 mb-8 border border-slate-100">
-                                        <Activity size={48} />
-                                    </div>
-                                    <h3 className="text-2xl font-black text-slate-800 uppercase italic tracking-tighter">Sin Pendientes</h3>
-                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-4 italic">El centro está operando al 100%.</p>
-                                </div>
                             )}
-                        </div>
+                        </section>
+
+                        <WaitingRoomWidget primaryColor={primaryColor} />
                     </div>
 
-                    <aside className="space-y-10 lg:sticky lg:top-24 h-fit">
+                    {/* Columna lateral */}
+                    <aside className="space-y-4">
+                        {!isStaff && negocioData?.slug && (
+                            <MyPageCard slug={negocioData.slug} designName={designName} primaryColor={primaryColor} />
+                        )}
+
+                        {!isStaff && <CitioxMissionWidget />}
+
                         {!isStaff && onboarding.percentage < 100 && (
-                            <OnboardingChecklist 
+                            <OnboardingChecklist
                                 percentage={onboarding.percentage}
                                 checks={onboarding.checks}
                                 primaryColor={primaryColor}
@@ -475,7 +578,28 @@ export default async function AdminDashboard() {
                         )}
 
                         {!isStaff && (
-                            <PlanStatusCard 
+                            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-3">
+                                <div className={`size-9 rounded-xl flex items-center justify-center shrink-0 ${negocioData?.whatsapp ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                    <MessageCircle size={18} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold text-slate-900">
+                                        {negocioData?.whatsapp ? 'WhatsApp registrado' : 'Falta tu WhatsApp'}
+                                    </p>
+                                    <p className="text-xs text-slate-500 truncate">
+                                        {negocioData?.whatsapp ? negocioData.whatsapp : 'Agrégalo para recibir y confirmar reservas.'}
+                                    </p>
+                                </div>
+                                <Link href="/admin/perfil" className="text-sm font-medium text-slate-500 hover:text-slate-900 shrink-0">
+                                    {negocioData?.whatsapp ? 'Cambiar' : 'Agregar'}
+                                </Link>
+                            </div>
+                        )}
+
+                        {negocioData?.slug && !isStaff && <ShareWidget url={shareUrl} negocio={negocioData} />}
+
+                        {!isStaff && (
+                            <PlanStatusCard
                                 planName={planName}
                                 estado={planEstado}
                                 daysLeft={daysLeft}
@@ -487,119 +611,93 @@ export default async function AdminDashboard() {
                                 tipoNegocio={negocioData?.tipoNegocio || 'RESERVA'}
                             />
                         )}
-                        <div className="relative rounded-[3.5rem] p-10 bg-slate-900 text-white shadow-2xl overflow-hidden group">
-                            <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full blur-[60px] group-hover:scale-150 transition-transform duration-1000"
-                                 style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)' }} />
-                            <div className="relative space-y-10">
-                                <div className="space-y-2">
-                                    <span className="text-[11px] font-black uppercase tracking-[0.4em] italic leading-none" style={{ color: 'color-mix(in srgb, var(--primary-color), transparent 40%)' }}>GESTOR RÁPIDO</span>
-                                    <h3 className="text-4xl font-black uppercase tracking-tighter leading-none italic">ACCIONES</h3>
-                                </div>
-                                <div className="relative grid gap-5">
-                                    <Link
-                                        href={negocioData ? `/${(negocioData as any)?.slug || ''}` : "/"}
-                                        target="_blank"
-                                        className="group/btn w-full flex items-center justify-between p-6 text-white rounded-[2rem] transition-all font-black shadow-2xl active:scale-95 hover:brightness-110"
-                                        style={{ backgroundColor: 'var(--primary-color)', boxShadow: '0 20px 25px -5px color-mix(in srgb, var(--primary-color), transparent 60%)' }}
-                                    >
-                                        <div className="flex flex-col">
-                                            <span className="text-xs uppercase tracking-[0.1em] italic">Panel Público</span>
-                                            <span className="text-[10px] font-medium" style={{ color: 'color-mix(in srgb, var(--primary-color), white 80%)' }}>Crear Reserva</span>
-                                        </div>
-                                        <Plus size={24} strokeWidth={3} className="group-hover/btn:rotate-90 transition-transform" />
-                                    </Link>
-                                    <Link
-                                        href="/admin/bloqueos"
-                                        className="w-full flex items-center justify-between p-6 bg-white/5 border border-white/10 rounded-[2rem] hover:bg-white/10 transition-all font-black text-white/50 active:scale-95"
-                                    >
-                                        <span className="text-xs uppercase tracking-widest italic">Bloquear Horario</span>
-                                        <Scissors size={24} className="opacity-40" />
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-
-                        {negocioData?.slug && <ShareWidget url={shareUrl} negocio={negocioData} />}
-
-                        <div className="p-10 bg-white border border-slate-200 rounded-[3.5rem] relative overflow-hidden group shadow-sm hover:shadow-xl transition-all">
-                            <div className="absolute -right-8 -bottom-8 group-hover:scale-110 transition-transform duration-1000" style={{ color: 'color-mix(in srgb, var(--primary-color), transparent 95%)' }}>
-                                <TrendingUp size={160} strokeWidth={3} />
-                            </div>
-                            <div className="size-12 rounded-[1.25rem] flex items-center justify-center mb-6 border"
-                                 style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)', color: 'var(--primary-color)', borderColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)' }}>
-                                <Activity size={24} strokeWidth={3} />
-                            </div>
-                            <p className="text-[11px] font-black uppercase tracking-[0.2em] mb-3 italic" style={{ color: 'var(--primary-color)' }}>Tip de Gestión</p>
-                            <p className="text-lg font-black leading-tight text-slate-800 uppercase tracking-tighter italic">Optimiza tu caja registrando cada anticipo al instante.</p>
-                        </div>
                     </aside>
                 </div>
+
+                {/* Semana */}
+                <section>
+                    <WeeklyCalendar
+                        reservas={citasFormateadas}
+                        canchas={servicesData}
+                    />
+                </section>
             </div>
             <RealtimeDashboardReloader />
         </>
     );
 }
 
-function StatCard({ title, value, icon, color, change, detail, href }: any) {
-    const colors: any = {
-        primary: {
-            bg: "color-mix(in srgb, var(--primary-color), transparent 95%)",
-            border: "color-mix(in srgb, var(--primary-color), transparent 90%)",
-            text: "var(--primary-color)"
-        },
-        emerald: {
-            bg: "bg-emerald-50",
-            border: "border-emerald-100",
-            text: "text-emerald-600"
-        },
-        blue: {
-            bg: "bg-blue-50",
-            border: "border-blue-100",
-            text: "text-blue-600"
-        },
-        violet: {
-            bg: "bg-violet-50",
-            border: "border-violet-100",
-            text: "text-violet-600"
-        },
-        orange: {
-            bg: "bg-orange-50",
-            border: "border-orange-100",
-            text: "text-orange-600"
-        },
-    };
+// ── Helpers de presentación ─────────────────────────────────────────
 
-    const isPrimary = color === 'primary';
-    const colorConfig = colors[color];
+function formatMoney(value: number): string {
+    return new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', maximumFractionDigits: value % 1 === 0 ? 0 : 2 }).format(value);
+}
 
+/** Variación porcentual real. Devuelve null si no hay base de comparación. */
+function percentChange(current: number, previous: number): number | null {
+    if (!previous || previous <= 0) return null;
+    return Math.round(((current - previous) / previous) * 100);
+}
+
+function toUTCDateKey(d: Date | string): string {
+    const date = d instanceof Date ? d : new Date(d);
+    return date.toISOString().split('T')[0];
+}
+
+function isSameUTCDay(fecha: Date | string, localNow: Date): boolean {
+    const nowKey = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
+    return toUTCDateKey(fecha) === nowKey;
+}
+
+function dayLabel(fecha: Date | string, localNow: Date): string {
+    if (isSameUTCDay(fecha, localNow)) return 'Hoy';
+    const tomorrow = new Date(localNow);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (isSameUTCDay(fecha, tomorrow)) return 'Mañana';
+    return formatUTCDate(fecha as any);
+}
+
+function appointmentStatus(estado: string): { label: string; className: string } {
+    switch (estado) {
+        case 'pending':
+            return { label: 'Por confirmar', className: 'bg-amber-50 text-amber-700' };
+        case 'confirmed':
+            return { label: 'Confirmada', className: 'bg-emerald-50 text-emerald-700' };
+        case 'client_checked_in':
+            return { label: 'Ya llegó', className: 'bg-sky-50 text-sky-700' };
+        case 'in_progress':
+            return { label: 'En atención', className: 'bg-violet-50 text-violet-700' };
+        default:
+            return { label: estado, className: 'bg-slate-100 text-slate-600' };
+    }
+}
+
+function StatCard({ title, value, icon, change, detail, href }: {
+    title: string;
+    value: string;
+    icon: React.ReactNode;
+    change?: number | null;
+    detail?: string;
+    href?: string;
+}) {
     const content = (
-        <div className="bg-white border border-slate-200 p-5 sm:p-6 rounded-2xl sm:rounded-3xl space-y-4 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group overflow-hidden relative shadow-sm hover:shadow-xl">
-            <div className={`absolute -right-6 -top-6 size-24 rounded-full blur-[40px] opacity-20 transition-all duration-700 group-hover:scale-150`}
-                 style={{ backgroundColor: isPrimary ? colorConfig.bg : undefined }} />
-            
-            <div className="flex justify-between items-start relative z-10">
-                <div className={clsx(
-                    "p-3 rounded-xl border shadow-inner transition-all duration-500 group-hover:scale-110",
-                    !isPrimary && `${colorConfig.bg} ${colorConfig.border} ${colorConfig.text}`
-                )} style={isPrimary ? { backgroundColor: colorConfig.bg, borderColor: colorConfig.border, color: colorConfig.text } : {}}>
+        <div className="bg-white border border-slate-200 rounded-xl p-4 h-full hover:border-slate-300 hover:shadow-sm transition">
+            <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-600">{title}</p>
+                <span className="size-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>
                     {icon}
-                </div>
-                <div className={clsx(
-                    "text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border shadow-sm",
-                    change.startsWith('+') ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-red-50 text-red-700 border-red-100"
-                )} style={change.startsWith('+') ? { backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)', color: 'var(--primary-color)', borderColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)' } : {}}>
-                    {change}
-                </div>
+                </span>
             </div>
-            
-            <div className="relative z-10 space-y-1">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] italic leading-none">{title}</p>
-                <div className="flex items-baseline gap-2.5">
-                    <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-none italic uppercase">{value}</p>
-                    <div className="h-1.5 w-1.5 rounded-full bg-slate-200" />
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none italic">{detail.split(' ')[0]}</p>
-                </div>
+            <div className="flex items-baseline gap-2 mt-2">
+                <p className="text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
+                {typeof change === 'number' && (
+                    <span className={`text-sm font-semibold ${change >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {change >= 0 ? '+' : ''}{change}%
+                    </span>
+                )}
             </div>
+            {detail && <p className="text-xs text-slate-500 mt-1">{detail}</p>}
         </div>
     );
 
@@ -608,3 +706,4 @@ function StatCard({ title, value, icon, color, change, detail, href }: any) {
     }
     return content;
 }
+

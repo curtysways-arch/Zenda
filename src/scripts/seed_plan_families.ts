@@ -83,7 +83,6 @@ export const CANONICAL_DEPENDENCIES = [
     { moduleCode: 'QR_TABLE', dependsOnCode: 'PRODUCTS' },
     { moduleCode: 'DELIVERY', dependsOnCode: 'ORDERS' },
     { moduleCode: 'PICKUP', dependsOnCode: 'ORDERS' },
-    { moduleCode: 'COURSES', dependsOnCode: 'COURTS' },
     { moduleCode: 'COURSES', dependsOnCode: 'CUSTOMERS' },
     { moduleCode: 'COMMUNICATION_CENTER', dependsOnCode: 'CUSTOMERS' },
     { moduleCode: 'ODONTOGRAM', dependsOnCode: 'CLINICAL_RECORDS' },

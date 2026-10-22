@@ -26,49 +26,8 @@ export async function GET(
             }
         });
 
-        // 2. Fallback: Búsqueda flexible por LIKE (contains)
-        if (!appointment) {
-            appointment = await prisma.appointment.findFirst({
-                where: {
-                    id: {
-                        contains: id
-                    }
-                },
-                include: {
-                    cliente: true,
-                    staff: true,
-                    service: {
-                        include: {
-                            Imagen: true
-                        }
-                    },
-                    ratings: true,
-                    pagoReserva: true,
-                    negocio: true
-                }
-            });
-        }
-
-        // 3. Fallback: Última reserva (para evitar errores en pruebas)
-        if (!appointment) {
-            appointment = await prisma.appointment.findFirst({
-                orderBy: {
-                    createdAt: 'desc'
-                },
-                include: {
-                    cliente: true,
-                    staff: true,
-                    service: {
-                        include: {
-                            Imagen: true
-                        }
-                    },
-                    ratings: true,
-                    pagoReserva: true,
-                    negocio: true
-                }
-            });
-        }
+        // Solo búsqueda exacta: el id funciona como enlace privado de la reserva.
+        // (Antes, si no la encontraba, devolvía una reserva parecida o la última de CUALQUIER negocio.)
 
         if (!appointment) {
             return NextResponse.json({ error: "Reserva no encontrada" }, { status: 404 });
@@ -105,7 +64,11 @@ export async function GET(
             ratings: appointment.ratings || [],
             pagos: appointment.pagoReserva || [],
             pagoReserva: appointment.pagoReserva || [],
-            negocio: appointment.negocio,
+            negocio: (() => {
+                const n: any = { ...(appointment.negocio as any) };
+                for (const k of ['mercadoPagoAccessToken', 'mercadoPagoPublicKey', 'propietario', 'pagoPorcentaje', 'statusNote', 'billingStatus']) delete n[k];
+                return n;
+            })(),
             referralInfo: referralEvent ? {
                 referidorNombre: referralEvent.Usuario?.nombre || "Un amigo",
                 valorIncentivo: referralEvent.Campaign?.valorIncentivo || null,
@@ -141,49 +104,47 @@ export async function PATCH(
     try {
         const { id } = await params;
         const body = await req.json();
-        const { estado } = body;
+        const { estado, pagoEstado } = body || {};
 
-        if (!estado) {
-            return NextResponse.json({ error: "Estado no proporcionado" }, { status: 400 });
+        if (!estado && !pagoEstado) {
+            return NextResponse.json({ error: "Nada para actualizar" }, { status: 400 });
         }
 
-        // Búsqueda flexible para encontrar la ID real (por si viene truncada o con LIKE)
-        let targetId = id;
-        const exact = await prisma.appointment.findUnique({
-            where: { id }
-        });
-        if (!exact) {
-            const fallback = await prisma.appointment.findFirst({
-                where: {
-                    id: {
-                        contains: id
-                    }
-                }
-            });
-            if (fallback) {
-                targetId = fallback.id;
+        const appointment = await prisma.appointment.findUnique({ where: { id } });
+        if (!appointment) {
+            return NextResponse.json({ error: "Reserva no encontrada" }, { status: 404 });
+        }
+
+        // Solo el personal del negocio dueño de la reserva
+        const { requireBusinessAccess } = await import('@/lib/auth/requireBusinessAccess');
+        const access = await requireBusinessAccess(appointment.negocioId);
+        if (!access.ok) return access.response;
+
+        const data: any = { updatedAt: new Date() };
+        if (estado) {
+            data.estado = estado;
+            if (estado === 'confirmed' || estado === 'cancelled') data.expiresAt = null;
+        }
+        if (pagoEstado) {
+            if (!['PENDIENTE', 'PARCIAL', 'PAGADO'].includes(String(pagoEstado))) {
+                return NextResponse.json({ error: "Estado de pago inválido" }, { status: 400 });
+            }
+            data.pagoEstado = pagoEstado;
+        }
+        await prisma.appointment.update({ where: { id: appointment.id }, data });
+
+        if (estado) {
+            try {
+                const { clientCouponService } = await import('@/lib/services/couponService');
+                await clientCouponService.syncCouponWithAppointmentStatus(appointment.id, estado);
+            } catch (e) {
+                console.error("Error al sincronizar cupón con el estado de la reserva:", e);
             }
         }
 
-        await prisma.appointment.update({
-            where: { id: targetId },
-            data: {
-                estado,
-                updatedAt: new Date()
-            }
-        });
-
-        // Sincronizar estado de cupones de cliente asociados
-        try {
-            const { clientCouponService } = await import('@/lib/services/couponService');
-            await clientCouponService.syncCouponWithAppointmentStatus(targetId, estado);
-        } catch (e) {
-            console.error("Error al sincronizar cupón con el estado de la reserva:", e);
-        }
-
-        return NextResponse.json({ success: true, estado });
+        return NextResponse.json({ success: true, estado: data.estado, pagoEstado: data.pagoEstado });
     } catch (error: any) {
         console.error("CRITICAL ERROR in PATCH appointment:", error);
-        return NextResponse.json({ error: "Error al actualizar reserva", details: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Error al actualizar reserva" }, { status: 500 });
     }
 }

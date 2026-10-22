@@ -112,7 +112,7 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
         return (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
                 <Loader2 className="animate-spin" size={24} style={{ color: primaryColor }} />
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cargando catálogo...</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Cargando catálogo...</span>
             </div>
         );
     }
@@ -231,10 +231,10 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                     </button>
                     <div className="flex-1 px-4">
-                        <h2 className="text-[17px] font-black tracking-tight leading-none uppercase">
+                        <h2 className="text-[17px] font-bold tracking-tight leading-none ">
                             Catálogo de Premios
                         </h2>
-                        <p className="text-[10px] text-white/80 font-bold mt-1 leading-none">
+                        <p className="text-xs text-white/80 font-bold mt-1 leading-none">
                             Canjea tus diamantes por beneficios increíbles
                         </p>
                     </div>
@@ -248,7 +248,7 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                 </div>
                 
                 {/* Efecto de curva decorativa en el fondo */}
-                <div className="absolute inset-x-0 bottom-0 h-4 bg-slate-50/60 rounded-t-[1.5rem]" />
+                <div className="absolute inset-x-0 bottom-0 h-4 bg-slate-50/60 rounded-t-2xl" />
             </div>
 
             {/* Contenido interactivo */}
@@ -262,11 +262,11 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                                 <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${primaryColor}15` }}>
                                     <Gem size={11} style={{ color: primaryColor }} className="animate-pulse" />
                                 </div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none">Mi Balance</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block leading-none">Mi Balance</span>
                             </div>
                             <div className="mt-2 flex items-baseline gap-0.5">
-                                <span className="text-2xl font-black text-slate-900 leading-none">{diamantesActuales}</span>
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-wide ml-1">💎</span>
+                                <span className="text-2xl font-bold text-slate-900 leading-none">{diamantesActuales}</span>
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">💎</span>
                             </div>
                         </div>
 
@@ -280,12 +280,12 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                                     <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${primaryColor}15` }}>
                                         <Trophy size={11} style={{ color: primaryColor }} />
                                     </div>
-                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none truncate">Mi Nivel</span>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block leading-none truncate">Mi Nivel</span>
                                 </div>
                                 <ChevronRight size={10} className="text-slate-400 shrink-0" />
                             </div>
                             <div className="mt-2 min-w-0">
-                                <h4 className="text-[12.5px] font-black text-slate-800 leading-none uppercase truncate">
+                                <h4 className="text-[12.5px] font-bold text-slate-800 leading-none uppercase truncate">
                                     {nivelNombre.replace('Nivel ', '')}
                                 </h4>
                                 <p className="text-[7.5px] font-bold text-slate-400 mt-1 leading-none">Ver beneficios</p>
@@ -294,10 +294,10 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                     </div>
 
                     {/* Sub-barra de navegación interactiva */}
-                    <div className="border-t border-slate-100 pt-3 flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-wider px-2">
+                    <div className="border-t border-slate-100 pt-3 flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wider px-2">
                         <button 
                             onClick={() => alert('¡Canjea tus diamantes acumulados por fabulosos cupones y servicios gratis! Presenta el código QR de tu cupón en recepción.')}
-                            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors bg-transparent border-0 cursor-pointer p-0 font-black"
+                            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors bg-transparent border-0 cursor-pointer p-0 font-bold"
                         >
                             <Info size={13} style={{ color: primaryColor }} />
                             Cómo funciona
@@ -305,7 +305,7 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                         <div className="w-px h-3 bg-slate-200" />
                         <button 
                             onClick={() => router.push(`/${slug}/mis-premios`)}
-                            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors bg-transparent border-0 cursor-pointer p-0 font-black"
+                            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors bg-transparent border-0 cursor-pointer p-0 font-bold"
                         >
                             <Gift size={13} style={{ color: primaryColor }} />
                             Mis canjes
@@ -313,7 +313,7 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                         <div className="w-px h-3 bg-slate-200" />
                         <button 
                             onClick={() => router.push(`/${slug}/mis-premios`)}
-                            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors bg-transparent border-0 cursor-pointer p-0 font-black"
+                            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors bg-transparent border-0 cursor-pointer p-0 font-bold"
                         >
                             <Clock size={13} style={{ color: primaryColor }} />
                             Historial
@@ -329,7 +329,7 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                             <button
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
-                                className="px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shrink-0 cursor-pointer border-0 shadow-sm"
+                                className="px-4 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shrink-0 cursor-pointer border-0 shadow-sm"
                                 style={{
                                     backgroundColor: active ? primaryColor : '#ffffff',
                                     color: active ? '#ffffff' : '#64748b'
@@ -375,7 +375,7 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                                     {/* Cinta Gratis */}
                                     {esGratis && (
                                         <div className="absolute top-0 right-0 overflow-hidden w-16 h-16 pointer-events-none z-10">
-                                            <div className="absolute top-2.5 right-[-24px] w-20 bg-pink-500 text-white text-[7px] font-black uppercase text-center py-0.5 rotate-45 tracking-widest shadow-xs" style={{ backgroundColor: primaryColor }}>
+                                            <div className="absolute top-2.5 right-[-24px] w-20 bg-pink-500 text-white text-xs font-bold uppercase text-center py-0.5 rotate-45 tracking-wide shadow-xs" style={{ backgroundColor: primaryColor }}>
                                                 ¡GRATIS!
                                             </div>
                                         </div>
@@ -394,7 +394,7 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                                             <div className="min-w-0 flex-1 space-y-1">
                                                 <div className="flex items-center">
                                                     <span 
-                                                        className="text-[7.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none inline-block"
+                                                        className="text-[7.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none inline-block"
                                                         style={{ 
                                                             color: primaryColor, 
                                                             backgroundColor: `${primaryColor}08`, 
@@ -404,11 +404,11 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                                                         {getTipoTexto(reward.tipo)}
                                                     </span>
                                                 </div>
-                                                <h4 className="text-[13.5px] font-black text-slate-800 tracking-tight leading-tight uppercase">
+                                                <h4 className="text-[13.5px] font-bold text-slate-800 tracking-tight leading-tight uppercase">
                                                     {reward.nombre}
                                                 </h4>
                                                 {reward.descripcion && (
-                                                    <p className="text-[10px] text-slate-400 font-bold leading-normal line-clamp-2">
+                                                    <p className="text-xs text-slate-400 font-bold leading-normal line-clamp-2">
                                                         {reward.descripcion}
                                                     </p>
                                                 )}
@@ -418,7 +418,7 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                                         {/* Botón de canje / Lock con el costo encima */}
                                         <div className="shrink-0 flex flex-col items-center gap-1.5 pl-1 z-10 w-[100px]">
                                             {/* Costo de diamantes */}
-                                            <div className="flex items-center gap-1 text-[10px] font-black text-slate-700 bg-slate-50 border border-slate-100 rounded-full px-2.5 py-1">
+                                            <div className="flex items-center gap-1 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-100 rounded-full px-2.5 py-1">
                                                 <Gem size={9} className="text-cyan-500 fill-cyan-100 shrink-0 animate-pulse" style={{ color: primaryColor }} />
                                                 <span style={{ color: primaryColor }}>{reward.costoPuntos} 💎</span>
                                             </div>
@@ -427,7 +427,7 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                                                 <button
                                                     onClick={() => handleRedeem(reward)}
                                                     disabled={redeemLoading === reward.id}
-                                                    className="w-full py-2.5 bg-pink-600 text-white rounded-2xl font-black text-[9.5px] uppercase tracking-widest flex items-center justify-center gap-1 hover:brightness-110 active:scale-95 transition-all border-0 cursor-pointer shadow-md"
+                                                    className="w-full py-2.5 bg-pink-600 text-white rounded-2xl font-bold text-[9.5px] uppercase tracking-wide flex items-center justify-center gap-1 hover:brightness-110 active:scale-95 transition-all border-0 cursor-pointer shadow-md"
                                                     style={{ 
                                                         backgroundColor: primaryColor,
                                                         boxShadow: `0 4px 8px ${primaryColor}20`
@@ -446,9 +446,9 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                                                 <div className="w-full bg-slate-50/50 border border-slate-100/80 rounded-2xl py-1.5 flex flex-col items-center justify-center text-center select-none">
                                                     <div className="flex items-center gap-0.5 text-slate-400">
                                                         <Lock size={8} />
-                                                        <span className="text-[7.5px] font-black uppercase tracking-wider">Faltan</span>
+                                                        <span className="text-[7.5px] font-bold uppercase tracking-wider">Faltan</span>
                                                     </div>
-                                                    <span className="text-[9.5px] font-black text-slate-500 flex items-center gap-0.5 justify-center leading-none mt-0.5">
+                                                    <span className="text-[9.5px] font-bold text-slate-500 flex items-center gap-0.5 justify-center leading-none mt-0.5">
                                                         <Gem size={8} className="text-slate-400 shrink-0" />
                                                         {reward.costoPuntos - diamantesActuales}
                                                     </span>
@@ -459,7 +459,7 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
 
                                     {/* Barra de Progreso de Diamantes */}
                                     <div className="space-y-2 border-t border-slate-50 pt-3 mt-1.5">
-                                        <div className="flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                                        <div className="flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-wide leading-none">
                                             <span>Progreso de Canje</span>
                                             <span 
                                                 className="flex items-center gap-0.5"
@@ -492,13 +492,13 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                             <Trophy size={16} style={{ color: primaryColor }} />
                         </div>
                         <div className="min-w-0">
-                            <h4 className="text-[11px] font-black text-slate-900 leading-none">Nuevos premios cada semana</h4>
-                            <p className="text-[9px] font-semibold text-slate-400 mt-0.5 leading-tight">Vuelve pronto y descubre beneficios exclusivos.</p>
+                            <h4 className="text-xs font-bold text-slate-900 leading-none">Nuevos premios cada semana</h4>
+                            <p className="text-xs font-semibold text-slate-400 mt-0.5 leading-tight">Vuelve pronto y descubre beneficios exclusivos.</p>
                         </div>
                     </div>
                     <button 
                         onClick={() => alert('¡Estaremos publicando nuevos e increíbles beneficios de canje muy pronto!')}
-                        className="px-3.5 py-2 text-[8px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer bg-white border shrink-0 flex items-center gap-1"
+                        className="px-3.5 py-2 text-xs font-bold uppercase tracking-wide rounded-xl transition-all cursor-pointer bg-white border shrink-0 flex items-center gap-1"
                         style={{ color: primaryColor, borderColor: `${primaryColor}40` }}
                     >
                         Ver novedades

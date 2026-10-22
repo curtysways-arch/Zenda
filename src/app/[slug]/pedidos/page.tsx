@@ -2,7 +2,7 @@ import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
 import ClientOrdersClient from '@/components/public/ClientOrdersClient';
-import { hasModule } from '@/lib/business/BusinessModuleResolver';
+import { getCommerceAccess } from '@/lib/business/commerceAccess';
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
     const { slug } = await props.params;
@@ -38,7 +38,9 @@ export default async function MisPedidosPage(props: { params: Promise<{ slug: st
     }
 
     // 🟢 Protección de Módulo: Si el negocio no cuenta con módulo de Pedidos, redirigir a mis-reservas
-    if (!hasModule(negocio.tipoNegocio, 'ORDERS')) {
+    // Con pedidos por tipo de negocio o por el add-on "Venta de productos"
+    const access = negocio.id === 'sneaker-wash-id' ? { orders: true } : await getCommerceAccess(negocio as any);
+    if (!access.orders) {
         redirect(`/${slug}/mis-reservas`);
     }
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { getCanonicalLogistics } from '@/core/logistics/CanonicalLogisticsService';
 import { useState, useEffect } from 'react';
 import { 
   Globe, PackageCheck, Bike, ShoppingBag, Check, X, Clock, MapPin, Phone,
@@ -537,10 +538,10 @@ export default function PedidosOnlinePage() {
           <p><strong>Tipo:</strong> ${pedido.tipoEntrega}</p>
           ${pedido.direccionCliente ? `<p><strong>Dirección:</strong> ${pedido.direccionCliente}</p>` : ''}
           <div class="line"></div>
-          <p class="bold">PRODUCTOS:</p>
+          <p class="bold">Productos:</p>
           ${(pedido.items || []).map(i => `<div class="flex"><span>${i.cantidad}x ${i.nombreProducto}</span><span>$${((Number(i.precioUnitario) || 0) * i.cantidad).toFixed(2)}</span></div>`).join('')}
           <div class="line"></div>
-          <div class="flex bold"><span>TOTAL:</span><span>$${(Number(pedido.total) || 0).toFixed(2)}</span></div>
+          <div class="flex bold"><span>Total:</span><span>$${(Number(pedido.total) || 0).toFixed(2)}</span></div>
           <div class="line"></div>
           <p style="text-align:center; font-size:10px;">¡Gracias por tu compra!</p>
         </body>
@@ -639,11 +640,11 @@ export default function PedidosOnlinePage() {
       {/* HEADER PRINCIPAL */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 text-white p-5 rounded-3xl shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold">
             <Bike className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-white !text-white">Pedidos App & Online</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white !text-white">Pedidos App & Online</h1>
             <p className="text-xs text-slate-400 font-medium">Bandeja de pedidos recibidos desde la Landing/App (Delivery y Retiro en local) para revisión y despacho.</p>
           </div>
         </div>
@@ -651,14 +652,14 @@ export default function PedidosOnlinePage() {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchOnlineOrders}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer"
+            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Actualizar
           </button>
           <button
             onClick={handleCleanTestOrders}
             disabled={loading}
-            className="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+            className="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
           >
             <X className="w-3.5 h-3.5" /> Vaciar Pedidos de Prueba
           </button>
@@ -680,7 +681,7 @@ export default function PedidosOnlinePage() {
 
       {/* FILTROS & TABS */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl gap-1 text-xs font-black">
+        <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl gap-1 text-xs font-bold">
           <button
             onClick={() => setFilterState('ALL')}
             className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer ${filterState === 'ALL' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
@@ -705,7 +706,7 @@ export default function PedidosOnlinePage() {
           >
             🔴 Reembolsos Pendientes
             {pendingRefundsCount > 0 && (
-              <span className="ml-1.5 bg-white text-rose-700 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+              <span className="ml-1.5 bg-white text-rose-700 px-1.5 py-0.2 rounded-full text-xs font-bold">
                 {pendingRefundsCount}
               </span>
             )}
@@ -725,7 +726,7 @@ export default function PedidosOnlinePage() {
       {loading ? (
         <div className="py-20 text-center text-slate-400 space-y-3">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-amber-500" />
-          <p className="text-xs font-black uppercase tracking-widest">Cargando pedidos online...</p>
+          <p className="text-xs font-bold uppercase tracking-wide">Cargando pedidos online...</p>
         </div>
       ) : filteredOrders.length === 0 ? (
         <div className="py-16 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center space-y-2">
@@ -753,20 +754,20 @@ export default function PedidosOnlinePage() {
                   {/* Encabezado del Reembolso */}
                   <div className="flex items-center justify-between border-b border-rose-100 pb-3">
                     <div>
-                      <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 bg-rose-100 px-2.5 py-0.5 rounded-full">
+                      <span className="text-xs font-bold uppercase tracking-wider text-rose-800 bg-rose-100 px-2.5 py-0.5 rounded-full">
                         Reembolso {refundInfo.codigoReembolso}
                       </span>
-                      <h3 className="text-base font-black text-slate-900 leading-tight mt-1">
+                      <h3 className="text-base font-bold text-slate-900 leading-tight mt-1">
                         Pedido #{pedido.codigo || pedido.numeroPedido || pedido.id.slice(-6).toUpperCase()}
                       </h3>
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 mt-1">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mt-1">
                         <Clock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                         <span>{pedido.createdAt ? new Date(pedido.createdAt).toLocaleDateString('es-EC', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Sin fecha'}</span>
                       </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                      refundInfo.isRefunded ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white shadow-sm'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+ refundInfo.isRefunded ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white shadow-sm'
+ }`}>
                       {refundInfo.isRefunded ? '✅ REEMBOLSADO' : '🔴 REEMBOLSO_PENDIENTE'}
                     </span>
                   </div>
@@ -774,10 +775,10 @@ export default function PedidosOnlinePage() {
                   {/* Datos del Cliente y Motivo */}
                   <div className="space-y-1 text-xs">
                     <p className="font-bold text-slate-800">
-                      👤 <span className="font-black text-slate-900">{pedido.nombreCliente}</span> ({pedido.telefonoCliente})
+                      👤 <span className="font-bold text-slate-900">{pedido.nombreCliente}</span> ({pedido.telefonoCliente})
                     </p>
                     <p className="text-rose-950 font-bold bg-rose-50 border border-rose-200 p-2 rounded-xl">
-                      📌 <span className="font-black">Motivo:</span> {refundInfo.motivo}
+                      📌 <span className="font-bold">Motivo:</span> {refundInfo.motivo}
                     </p>
                   </div>
 
@@ -785,13 +786,13 @@ export default function PedidosOnlinePage() {
                   <div className="bg-rose-50/50 rounded-2xl border border-rose-200/80 p-4 space-y-2 text-xs">
                     <div className="flex justify-between text-slate-700 font-medium">
                       <span>Monto originalmente pagado por productos:</span>
-                      <span className="font-mono font-black text-slate-900">${refundInfo.originalProdSubtotal.toFixed(2)}</span>
+                      <span className="font-mono font-bold text-slate-900">${refundInfo.originalProdSubtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-slate-700 font-medium">
                       <span>Nuevo total de productos:</span>
-                      <span className="font-mono font-black text-slate-900">${refundInfo.currentProdSubtotal.toFixed(2)}</span>
+                      <span className="font-mono font-bold text-slate-900">${refundInfo.currentProdSubtotal.toFixed(2)}</span>
                     </div>
-                    <div className="border-t border-dashed border-rose-300 pt-2 flex justify-between font-black text-sm text-rose-700">
+                    <div className="border-t border-dashed border-rose-300 pt-2 flex justify-between font-bold text-sm text-rose-700">
                       <span>💰 Monto a devolver:</span>
                       <span className="font-mono text-base text-rose-700">${refundInfo.montoDevolver.toFixed(2)}</span>
                     </div>
@@ -800,7 +801,7 @@ export default function PedidosOnlinePage() {
                   {/* Info de Envío (Independiente) */}
                   <div className="bg-slate-100/90 rounded-xl p-2.5 flex items-center justify-between text-xs border border-slate-200">
                     <span className="font-bold text-slate-600">🛵 Envío (Fulfillment): ${refundInfo.envio.toFixed(2)}</span>
-                    <span className="text-[10px] text-slate-500 font-semibold">Estado: Independiente</span>
+                    <span className="text-xs text-slate-500 font-semibold">Estado: Independiente</span>
                   </div>
 
                   {/* Formulario de Procesar Devolución */}
@@ -808,7 +809,7 @@ export default function PedidosOnlinePage() {
                     <div className="pt-2 border-t border-rose-100 space-y-2.5">
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10px] font-black uppercase text-rose-900 block mb-1">Método</label>
+                          <label className="text-xs font-bold uppercase text-rose-900 block mb-1">Método</label>
                           <select
                             value={refundMethod}
                             onChange={e => setRefundMethod(e.target.value)}
@@ -820,7 +821,7 @@ export default function PedidosOnlinePage() {
                           </select>
                         </div>
                         <div>
-                          <label className="text-[10px] font-black uppercase text-rose-900 block mb-1">Comprobante / Ref.</label>
+                          <label className="text-xs font-bold uppercase text-rose-900 block mb-1">Comprobante / Ref.</label>
                           <input
                             type="text"
                             value={refundRef}
@@ -835,7 +836,7 @@ export default function PedidosOnlinePage() {
                         type="button"
                         onClick={() => handleConfirmRefund(pedido)}
                         disabled={processingId === pedido.id}
-                        className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-black text-xs uppercase rounded-2xl shadow-lg shadow-rose-600/20 cursor-pointer flex items-center justify-center gap-2 transition-all active:scale-98"
+                        className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold text-xs uppercase rounded-2xl shadow-lg shadow-rose-600/20 cursor-pointer flex items-center justify-center gap-2 transition-all active:scale-98"
                       >
                         <Check className="w-4 h-4 stroke-[3]" />
                         <span>Procesar Devolución (${refundInfo.montoDevolver.toFixed(2)})</span>
@@ -844,14 +845,14 @@ export default function PedidosOnlinePage() {
                   ) : (
                     <div className="bg-emerald-100/80 p-3 rounded-2xl border border-emerald-300 text-emerald-950 text-xs space-y-1 font-bold">
                       <div className="flex items-center justify-between">
-                        <span>✅ REEMBOLSADO</span>
+                        <span>✅ Reembolsado</span>
                         <span>${refundInfo.montoDevolver.toFixed(2)}</span>
                       </div>
-                      <p className="text-[10px] text-emerald-800">
+                      <p className="text-xs text-emerald-800">
                         Método: {refundInfo.metodoDevolucion || refundMethod} {refundInfo.referenciaDevolucion ? `| Comprobante: ${refundInfo.referenciaDevolucion}` : ''}
                       </p>
                       {refundInfo.devolucionUser && (
-                        <p className="text-[10px] text-emerald-700 font-semibold">
+                        <p className="text-xs text-emerald-700 font-semibold">
                           Procesado por: {refundInfo.devolucionUser}
                         </p>
                       )}
@@ -862,7 +863,7 @@ export default function PedidosOnlinePage() {
                   <button
                     type="button"
                     onClick={() => handleOpenFullscreenOrder(pedido)}
-                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[11px] rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
                   >
                     <Maximize2 className="w-3.5 h-3.5 text-slate-500" />
                     <span>Ver Pedido Completo</span>
@@ -886,14 +887,14 @@ export default function PedidosOnlinePage() {
                 {/* Header Pedido */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 flex items-center gap-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1">
                       {isDelivery ? '🛵 Delivery Online' : '🏬 Para Retirar'}
                       <Maximize2 className="w-3 h-3 text-slate-400 group-hover:text-amber-600 transition-colors ml-1" />
                     </span>
-                    <h3 className="text-lg font-black text-slate-900 leading-tight">
+                    <h3 className="text-lg font-bold text-slate-900 leading-tight">
                       #{pedido.codigo || pedido.numeroPedido || pedido.id.slice(-6).toUpperCase()}
                     </h3>
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 mt-0.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mt-0.5">
                       <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                       <span>{pedido.createdAt ? new Date(pedido.createdAt).toLocaleDateString('es-EC', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Sin fecha'}</span>
                     </div>
@@ -907,7 +908,7 @@ export default function PedidosOnlinePage() {
 
                       if (isReady) {
                         return (
-                          <span className="px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 border bg-emerald-100 text-emerald-900 border-emerald-300">
+                          <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold uppercase flex items-center gap-1 border bg-emerald-100 text-emerald-900 border-emerald-300">
                             <ChefHat className="w-3 h-3 text-emerald-600" />
                             Cocina: Listo
                           </span>
@@ -916,7 +917,7 @@ export default function PedidosOnlinePage() {
 
                       if (isPreparing) {
                         return (
-                          <span className="px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 border bg-amber-100 text-amber-900 border-amber-300 animate-pulse">
+                          <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold uppercase flex items-center gap-1 border bg-amber-100 text-amber-900 border-amber-300 animate-pulse">
                             <ChefHat className="w-3 h-3 text-amber-600" />
                             Cocina: En Preparación
                           </span>
@@ -924,7 +925,7 @@ export default function PedidosOnlinePage() {
                       }
 
                       return (
-                        <span className="px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 border bg-slate-100 text-slate-700 border-slate-300">
+                        <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold uppercase flex items-center gap-1 border bg-slate-100 text-slate-700 border-slate-300">
                           <ChefHat className="w-3 h-3 text-slate-400" />
                           Cocina: Por Aceptar
                         </span>
@@ -932,17 +933,17 @@ export default function PedidosOnlinePage() {
                     })()}
 
                     {/* Badge de Estado General / Repartidor */}
-                    <span className={`px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase border ${
-                      pedido.estado === 'EN_PREPARACION'
-                        ? 'bg-blue-100 border-blue-300 text-blue-800'
-                        : (pedido.estado === 'REPARTIDOR_ASIGNADO' || pedido.extraInfo?.assignedDriver)
-                        ? 'bg-indigo-100 border-indigo-300 text-indigo-900'
-                        : pedido.estado === 'CAMBIOS_SOLICITADOS'
-                        ? 'bg-amber-100 border-amber-300 text-amber-900'
-                        : pedido.estado === 'RECIBIDO'
-                        ? 'bg-amber-400 text-slate-950 border-amber-500'
-                        : 'bg-slate-100 border-slate-200 text-slate-700'
-                    }`}>
+                    <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold uppercase border ${
+ pedido.estado === 'EN_PREPARACION'
+ ? 'bg-blue-100 border-blue-300 text-blue-800'
+ : (pedido.estado === 'REPARTIDOR_ASIGNADO' || pedido.extraInfo?.assignedDriver)
+ ? 'bg-indigo-100 border-indigo-300 text-indigo-900'
+ : pedido.estado === 'CAMBIOS_SOLICITADOS'
+ ? 'bg-amber-100 border-amber-300 text-amber-900'
+ : pedido.estado === 'RECIBIDO'
+ ? 'bg-amber-400 text-slate-950 border-amber-500'
+ : 'bg-slate-100 border-slate-200 text-slate-700'
+ }`}>
                       {pedido.estado}
                     </span>
                   </div>
@@ -953,24 +954,24 @@ export default function PedidosOnlinePage() {
                   <p className="font-extrabold text-slate-900">{pedido.nombreCliente}</p>
                   <p className="font-semibold text-slate-500">{pedido.telefonoCliente}</p>
                   {pedido.direccionCliente && (
-                    <p className="text-[11px] text-slate-500 truncate">📍 {pedido.direccionCliente}</p>
+                    <p className="text-xs text-slate-500 truncate">📍 {pedido.direccionCliente}</p>
                   )}
                 </div>
 
                 {/* Ítems del Pedido */}
                 <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1 text-xs">
-                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Productos</span>
+                  <span className="text-xs font-bold uppercase text-slate-400 tracking-wider block">Productos</span>
                   {pedido.items?.map(it => (
                     <div key={it.id} className="flex justify-between font-bold text-slate-800">
                       <div>
                         <span>{it.cantidad || 1}x {it.nombreProducto}</span>
                         {it.varianteNombre && (
-                          <span className="text-[10px] text-cyan-700 bg-cyan-50 border border-cyan-200 px-1.5 py-0.5 rounded font-semibold ml-1.5">
+                          <span className="text-xs text-cyan-700 bg-cyan-50 border border-cyan-200 px-1.5 py-0.5 rounded font-semibold ml-1.5">
                             {it.varianteNombre}
                           </span>
                         )}
                         {it.sku && (
-                          <span className="text-[10px] text-slate-400 font-mono font-normal ml-1">
+                          <span className="text-xs text-slate-400 font-mono font-normal ml-1">
                             [{it.sku}]
                           </span>
                         )}
@@ -979,13 +980,13 @@ export default function PedidosOnlinePage() {
                     </div>
                   ))}
                   {Number(extra?.discountAmount || extra?.descuento || 0) > 0 && (
-                    <div className="flex justify-between font-extrabold text-emerald-600 text-[11px] pt-1 border-t border-emerald-100/80">
+                    <div className="flex justify-between font-extrabold text-emerald-600 text-xs pt-1 border-t border-emerald-100/80">
                       <span>🎁 Promo ({extra?.promotionTitle || '2x1'}):</span>
                       <span>-${(Number(extra?.discountAmount || extra?.descuento) || 0).toFixed(2)}</span>
                     </div>
                   )}
                   {Number(extra?.merchantShippingSubsidy || extra?.shippingDiscount || 0) > 0 && (
-                    <div className="pt-1.5 mt-1 border-t border-amber-200/80 text-[10px] space-y-0.5 font-bold text-slate-700">
+                    <div className="pt-1.5 mt-1 border-t border-amber-200/80 text-xs space-y-0.5 font-bold text-slate-700">
                       <div className="flex justify-between text-slate-500">
                         <span>🛵 Tarifa Real Driver:</span>
                         <span>${(Number(extra?.shippingAmount || extra?.driverEarnings || 4.00)).toFixed(2)}</span>
@@ -1000,7 +1001,7 @@ export default function PedidosOnlinePage() {
                       </div>
                     </div>
                   )}
-                  <div className="pt-2 mt-1 border-t border-slate-200 flex justify-between font-black text-slate-900">
+                  <div className="pt-2 mt-1 border-t border-slate-200 flex justify-between font-bold text-slate-900">
                     <span>Total:</span>
                     <span className="text-emerald-600 text-sm">
                       ${(() => {
@@ -1016,11 +1017,11 @@ export default function PedidosOnlinePage() {
 
                 {/* ESTADO PAGO & REEMBOLSO */}
                 <div className="space-y-1 text-xs">
-                  <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100 border border-slate-200 text-[11px] font-extrabold">
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-extrabold">
                     <span>Pago:</span>
-                    <span className={`px-2 py-0.5 rounded-md uppercase text-[10px] ${
-                      isPaymentVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
-                    }`}>
+                    <span className={`px-2 py-0.5 rounded-md uppercase text-xs ${
+ isPaymentVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+ }`}>
                       {pedido.payment?.estado || 'PENDIENTE'}
                     </span>
                   </div>
@@ -1028,16 +1029,16 @@ export default function PedidosOnlinePage() {
                   {hasPendingRefund && (
                     <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-300 text-rose-950 text-xs space-y-2 shadow-sm">
                       <div className="flex items-center justify-between border-b border-rose-200/80 pb-2">
-                        <span className="text-[10px] font-black uppercase text-rose-800 bg-rose-200/70 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-bold uppercase text-rose-800 bg-rose-200/70 px-2 py-0.5 rounded-md">
                           {refundInfo.codigoReembolso}
                         </span>
-                        <span className="text-[10px] font-black uppercase text-rose-700 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span className="text-xs font-bold uppercase text-rose-700 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded-md flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3 text-rose-600 animate-bounce" />
                           🔴 REEMBOLSO PENDIENTE
                         </span>
                       </div>
 
-                      <div className="space-y-1 text-[11px] font-medium text-slate-700">
+                      <div className="space-y-1 text-xs font-medium text-slate-700">
                         <div className="flex justify-between">
                           <span>Productos pagados originalmente:</span>
                           <span className="font-mono font-bold text-slate-900">${refundInfo.originalProdSubtotal.toFixed(2)}</span>
@@ -1046,13 +1047,13 @@ export default function PedidosOnlinePage() {
                           <span>Productos después de cambios:</span>
                           <span className="font-mono font-bold text-slate-900">${refundInfo.currentProdSubtotal.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between font-black text-rose-700 pt-1 border-t border-dashed border-rose-200">
+                        <div className="flex justify-between font-bold text-rose-700 pt-1 border-t border-dashed border-rose-200">
                           <span>💰 Reembolso por productos:</span>
                           <span className="font-mono text-sm">${refundInfo.montoDevolver.toFixed(2)}</span>
                         </div>
                       </div>
 
-                      <div className="bg-slate-100/90 rounded-lg p-1.5 flex justify-between text-[10px] text-slate-600 font-bold border border-slate-200">
+                      <div className="bg-slate-100/90 rounded-lg p-1.5 flex justify-between text-xs text-slate-600 font-bold border border-slate-200">
                         <span>🛵 Envío (Fulfillment): ${refundInfo.envio.toFixed(2)}</span>
                         <span className="text-slate-500">Estado: Independiente</span>
                       </div>
@@ -1068,7 +1069,7 @@ export default function PedidosOnlinePage() {
                       e.stopPropagation();
                       handleOpenFullscreenOrder(pedido);
                     }}
-                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Maximize2 className="w-4 h-4 text-amber-400" />
                     <span>Gestionar a Pantalla Completa</span>
@@ -1111,29 +1112,29 @@ export default function PedidosOnlinePage() {
                   </button>
                   <div className="h-6 w-px bg-slate-700" />
                   <div>
-                    <span className="text-[10px] font-black uppercase text-amber-400 tracking-widest block">
+                    <span className="text-xs font-bold uppercase text-amber-400 tracking-wide block">
                       {isDelivery ? '🛵 PEDIDO DELIVERY ONLINE' : '🏬 PEDIDO PARA RETIRAR'}
                     </span>
-                    <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
                       Gestión Pedido #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
                     </h2>
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 mt-1">
                       <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>Realizado el: <strong className="text-white font-mono font-black">{order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Sin fecha'}</strong></span>
+                      <span>Realizado el: <strong className="text-white font-mono font-bold">{order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Sin fecha'}</strong></span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1.5 rounded-2xl text-xs font-black uppercase border ${
-                    order.estado === 'EN_PREPARACION'
-                      ? 'bg-blue-600 border-blue-400 text-white'
-                      : order.estado === 'LISTO'
-                      ? 'bg-emerald-600 border-emerald-400 text-white'
-                      : order.estado === 'RECIBIDO'
-                      ? 'bg-amber-500 text-slate-950 border-amber-400'
-                      : 'bg-slate-800 border-slate-700 text-slate-200'
-                  }`}>
+                  <span className={`px-3 py-1.5 rounded-2xl text-xs font-bold uppercase border ${
+ order.estado === 'EN_PREPARACION'
+ ? 'bg-blue-600 border-blue-400 text-white'
+ : order.estado === 'LISTO'
+ ? 'bg-emerald-600 border-emerald-400 text-white'
+ : order.estado === 'RECIBIDO'
+ ? 'bg-amber-500 text-slate-950 border-amber-400'
+ : 'bg-slate-800 border-slate-700 text-slate-200'
+ }`}>
                     Estado: {order.estado}
                   </span>
                   <button
@@ -1151,7 +1152,7 @@ export default function PedidosOnlinePage() {
                 
                 {/* COLUMNA 1: INFORMACIÓN DEL CLIENTE Y LOGÍSTICA */}
                 <div className="space-y-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs h-fit">
-                  <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
+                  <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider flex items-center gap-2">
                     <User className="w-4 h-4 text-amber-500" />
                     1. Información del Cliente
                   </h3>
@@ -1162,7 +1163,7 @@ export default function PedidosOnlinePage() {
                       <button
                         type="button"
                         onClick={() => openWhatsApp(order.telefonoCliente, order.nombreCliente, order.codigo || order.id.slice(-6))}
-                        className="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-xl text-[10px] font-black flex items-center gap-1 cursor-pointer transition-colors"
+                        className="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         <MessageCircle className="w-3.5 h-3.5 text-emerald-600" /> WhatsApp
                       </button>
@@ -1185,7 +1186,7 @@ export default function PedidosOnlinePage() {
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.direccionCliente)}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-[10px] font-black text-amber-600 hover:underline pt-1"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 hover:underline pt-1"
                         >
                           Abrir Ubicación en Google Maps <ExternalLink className="w-3 h-3" />
                         </a>
@@ -1198,7 +1199,7 @@ export default function PedidosOnlinePage() {
                     <button
                       type="button"
                       onClick={() => handlePrintTicket(order)}
-                      className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all"
+                      className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all"
                     >
                       <Printer className="w-4 h-4" />
                       Imprimir Ticket Comanda
@@ -1208,7 +1209,7 @@ export default function PedidosOnlinePage() {
 
                 {/* COLUMNA 2: GESTIÓN DE DISPONIBILIDAD DE PRODUCTOS (BLOQUEADO SI YA FUE ACEPTADO) */}
                 <div className="space-y-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
-                  <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
+                  <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider flex items-center gap-2">
                     <PackageCheck className="w-4 h-4 text-amber-500" />
                     2. Disponibilidad de Productos en Cocina
                   </h3>
@@ -1225,9 +1226,9 @@ export default function PedidosOnlinePage() {
                           <div key={item.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
                             <div>
                               <span className="font-extrabold text-slate-900 block">{item.cantidad}x {item.nombreProducto}</span>
-                              <span className="text-[10px] text-slate-400">${(Number(item.precioUnitario) || 0).toFixed(2)} c/u</span>
+                              <span className="text-xs text-slate-400">${(Number(item.precioUnitario) || 0).toFixed(2)} c/u</span>
                             </div>
-                            <span className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase bg-emerald-500 text-white shadow-xs">
+                            <span className="px-3 py-1.5 rounded-xl text-xs font-bold uppercase bg-emerald-500 text-white shadow-xs">
                               ✓ Confirmado
                             </span>
                           </div>
@@ -1270,10 +1271,10 @@ export default function PedidosOnlinePage() {
                                   className="w-5 h-5 text-emerald-600 rounded-md border-slate-300 cursor-pointer accent-emerald-600 focus:ring-emerald-500 shrink-0"
                                 />
                                 <label htmlFor={`check-avail-${item.id}`} className="cursor-pointer select-none">
-                                  <span className={`font-black text-xs block ${isAvail ? 'text-slate-900' : 'text-slate-500 line-through'}`}>
+                                  <span className={`font-bold text-xs block ${isAvail ? 'text-slate-900' : 'text-slate-500 line-through'}`}>
                                     {item.nombreProducto}
                                   </span>
-                                  <span className="text-[10px] font-semibold text-slate-400">
+                                  <span className="text-xs font-semibold text-slate-400">
                                     ${(Number(item.precioUnitario) || 0).toFixed(2)} c/u
                                   </span>
                                 </label>
@@ -1281,7 +1282,7 @@ export default function PedidosOnlinePage() {
 
                               {/* CONTROLES DE MODIFICAR CANTIDAD (MÁXIMO = SOLICITADO) */}
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-black uppercase text-slate-500">Cant:</span>
+                                <span className="text-xs font-bold uppercase text-slate-500">Cant:</span>
                                 <div className="flex items-center border border-slate-300 rounded-xl bg-slate-100 overflow-hidden shadow-xs">
                                   <button
                                     type="button"
@@ -1297,7 +1298,7 @@ export default function PedidosOnlinePage() {
                                       }
                                     }}
                                     disabled={(itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : (item.cantidad || 1)) <= 0}
-                                    className="w-8 h-8 bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-sm flex items-center justify-center cursor-pointer transition-all active:scale-90 select-none disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="w-8 h-8 bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold text-sm flex items-center justify-center cursor-pointer transition-all active:scale-90 select-none disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
                                     -
                                   </button>
@@ -1312,7 +1313,7 @@ export default function PedidosOnlinePage() {
                                       setItemsQuantities(prev => ({ ...prev, [item.id]: val }));
                                       setItemsAvailability(prev => ({ ...prev, [item.id]: val > 0 }));
                                     }}
-                                    className="w-10 text-center font-mono font-black text-sm py-1 border-x border-slate-300 outline-none"
+                                    className="w-10 text-center font-mono font-bold text-sm py-1 border-x border-slate-300 outline-none"
                                     style={{ color: '#09090b', backgroundColor: '#ffffff', WebkitTextFillColor: '#09090b' }}
                                   />
                                   <button
@@ -1329,7 +1330,7 @@ export default function PedidosOnlinePage() {
                                       }
                                     }}
                                     disabled={(itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : (item.cantidad || 1)) >= (item.cantidad || 1)}
-                                    className="w-8 h-8 bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-sm flex items-center justify-center cursor-pointer transition-all active:scale-90 select-none disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="w-8 h-8 bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold text-sm flex items-center justify-center cursor-pointer transition-all active:scale-90 select-none disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
                                     +
                                   </button>
@@ -1357,7 +1358,7 @@ export default function PedidosOnlinePage() {
                         type="button"
                         onClick={() => handleSaveDisponibilidad(order)}
                         disabled={processingId === order.id}
-                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-95 disabled:opacity-50"
+                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-95 disabled:opacity-50"
                       >
                         <Check className="w-4 h-4" /> Guardar Disponibilidad / Enviar Cambios
                       </button>
@@ -1368,7 +1369,7 @@ export default function PedidosOnlinePage() {
                 {/* COLUMNA 3: VERIFICACIÓN / DESPACHO DE PEDIDO */}
                 <div className="space-y-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
                   <div className="space-y-4">
-                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
+                    <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider flex items-center gap-2">
                       {isOrderAcceptedOrPrepared ? <Truck className="w-4 h-4 text-amber-500" /> : <ShieldCheck className="w-4 h-4 text-amber-500" />}
                       {isOrderAcceptedOrPrepared ? '3. Despacho & Asignación de Repartidor' : '3. Pago & Aceptación del Pedido'}
                     </h3>
@@ -1377,54 +1378,144 @@ export default function PedidosOnlinePage() {
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2.5 text-xs">
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500 font-bold">Estado del Pago:</span>
-                        <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase ${
-                          isPaymentVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
-                        }`}>
+                        <span className={`px-2.5 py-1 rounded-xl text-xs font-bold uppercase ${
+ isPaymentVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+ }`}>
                           {isPaymentVerified ? '✅ PAGO CONFIRMADO' : ((order as any).metodoPago === 'EFECTIVO' ? '💵 EFECTIVO CONTRA ENTREGA' : order.payment?.estado || 'PENDIENTE')}
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between font-black text-slate-900 pt-1 border-t border-slate-200">
+                      <div className="flex items-center justify-between font-bold text-slate-900 pt-1 border-t border-slate-200">
                         <span>Total del Pedido:</span>
                         <span className="text-emerald-600 text-base">${totalVal.toFixed(2)}</span>
                       </div>
 
-                      {/* DESGLOSE FINANCIERO DE COBRO Y LIQUIDACIÓN CON DRIVER */}
+                      {/* DESGLOSE CANÓNICO: 1. PAGO CLIENTE | 2. RECAUDACIÓN DRIVER | 3. COMPENSACIÓN */}
                       {(() => {
-                        const drvFee = Number(order.costoEnvio) || 0;
-                        const netCashToRestaurant = Math.max(0, totalVal - drvFee);
-                        const isCashOrder = (order as any).metodoPago === 'EFECTIVO' || (!isPaymentVerified && (order as any).payment?.metodo === 'EFECTIVO');
+                        const canonical = getCanonicalLogistics(order);
+                        const rec = canonical.recaudacion;
+                        const drvComp = canonical.deliveryDriver;
+                        const drvFee = Number(order.costoEnvio) || canonical.deliveryFee;
+                        const netCash = Math.max(0, totalVal - drvFee);
 
-                        return isCashOrder ? (
-                          <div className="pt-2 border-t border-amber-200/80 bg-amber-50/80 p-3 rounded-xl space-y-1.5 text-[11px]">
-                            <span className="font-black text-amber-950 block uppercase tracking-wider">
-                              💵 Liquidación de Cobro en Efectivo (Driver):
-                            </span>
-                            <div className="flex justify-between text-slate-700 font-semibold">
-                              <span>Cobro en puerta al cliente:</span>
-                              <span className="font-bold text-slate-900">${totalVal.toFixed(2)}</span>
+                        const handleSettleCollection = async () => {
+                          try {
+                            const res = await fetch(`/api/public/${(order as any).negocio?.slug || 'restaurante'}/driver`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ action: 'SETTLE_DRIVER_COLLECTION', orderId: order.id })
+                            });
+                            if (res.ok) {
+                              fetchOnlineOrders();
+                            }
+                          } catch (e) { console.error(e); }
+                        };
+
+                        const handlePayDriverComp = async () => {
+                          try {
+                            const res = await fetch(`/api/public/${(order as any).negocio?.slug || 'restaurante'}/driver`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ action: 'PAY_DRIVER_COMPENSATION', orderId: order.id, missionType: 'ENTREGA' })
+                            });
+                            if (res.ok) {
+                              fetchOnlineOrders();
+                            }
+                          } catch (e) { console.error(e); }
+                        };
+
+                        const handleSettleNet = async () => {
+                          try {
+                            const res = await fetch(`/api/public/${(order as any).negocio?.slug || 'restaurante'}/driver`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ action: 'SETTLE_NET_COLLECTION', orderId: order.id })
+                            });
+                            if (res.ok) {
+                              fetchOnlineOrders();
+                            }
+                          } catch (e) { console.error(e); }
+                        };
+
+                        return (
+                          <div className="space-y-2.5 pt-2 border-t border-slate-200 text-xs">
+                            {/* DIMENSIÓN 2: RECAUDACIÓN DEL DRIVER */}
+                            <div className={`p-3 rounded-2xl border space-y-1.5 ${
+                              rec.requerida ? 'bg-amber-50/80 border-amber-200 text-amber-950' : 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                            }`}>
+                              <div className="flex items-center justify-between font-bold uppercase tracking-wider text-xs">
+                                <span>2. Recaudación del Driver:</span>
+                                <span className="px-2 py-0.5 rounded-full bg-white font-mono text-xs border">
+                                  {rec.requerida ? rec.estado : 'NO_REQUERIDA'}
+                                </span>
+                              </div>
+
+                              {rec.requerida ? (
+                                <>
+                                  <div className="flex justify-between text-slate-700 font-semibold">
+                                    <span>Cobro en puerta al cliente:</span>
+                                    <span className="font-bold text-slate-900">${totalVal.toFixed(2)}</span>
+                                  </div>
+                                  <p className="text-xs text-amber-800 font-medium">
+                                    {rec.estado === 'LIQUIDATED'
+                                      ? '✅ Dinero ingresado y liquidado en caja.'
+                                      : (rec.estado === 'COLLECTED'
+                                          ? '🛵 Dinero recaudado por el repartidor. Pendiente de ingreso a caja.'
+                                          : '⏳ Cobro pendiente de realizar en entrega.')}
+                                  </p>
+
+                                  {rec.estado !== 'LIQUIDATED' && (
+                                    <div className="pt-1.5 flex gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={handleSettleCollection}
+                                        className="flex-1 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold uppercase cursor-pointer transition-all shadow-xs"
+                                      >
+                                        Ingresar ${totalVal.toFixed(2)} a Caja
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={handleSettleNet}
+                                        className="flex-1 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-400 rounded-xl text-xs font-bold uppercase cursor-pointer transition-all shadow-xs"
+                                        title="Driver descuenta su ganancia y rinde el neto a caja"
+                                      >
+                                        Liquidación Neta (${netCash.toFixed(2)})
+                                      </button>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <p className="text-emerald-800 font-semibold">
+                                  ✅ No requiere recaudación ($0.00 en puerta). El cliente pagó directamente al negocio.
+                                </p>
+                              )}
                             </div>
-                            <div className="flex justify-between text-slate-700 font-semibold">
-                              <span>(-) Tarifa de Envío Driver:</span>
-                              <span className="font-bold text-rose-600">-${drvFee.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between text-amber-950 font-black pt-1 border-t border-amber-200/60 text-xs">
-                              <span>(=) Pendiente Ingreso a Caja:</span>
-                              <span className="text-emerald-700">${netCashToRestaurant.toFixed(2)}</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="pt-2 border-t border-emerald-200/80 bg-emerald-50/80 p-3 rounded-xl space-y-1.5 text-[11px]">
-                            <span className="font-black text-emerald-950 block uppercase tracking-wider">
-                              💳 Pago Online Verificado:
-                            </span>
-                            <div className="flex justify-between text-emerald-900 font-semibold">
-                              <span>Ingreso Neto a Cuenta/Caja:</span>
-                              <span className="font-black text-emerald-700">${netCashToRestaurant.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between text-slate-600 font-semibold">
-                              <span>Envío pagado por negocio a driver:</span>
-                              <span className="font-bold text-slate-900">${drvFee.toFixed(2)}</span>
+
+                            {/* DIMENSIÓN 3: COMPENSACIÓN DEL DRIVER */}
+                            <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl space-y-1.5 text-blue-950">
+                              <div className="flex items-center justify-between font-bold uppercase tracking-wider text-xs">
+                                <span>3. Compensación del Driver:</span>
+                                <span className="px-2 py-0.5 rounded-full bg-white font-mono text-xs border border-blue-200 text-blue-700">
+                                  {drvComp?.estadoCompensacion === 'PAID' ? '✅ PAGADO' : '⏳ PENDIENTE'}
+                                </span>
+                              </div>
+                              <div className="flex justify-between font-bold text-slate-700">
+                                <span>Tarifa de servicio logístico:</span>
+                                <span className="text-blue-700 font-mono text-xs font-bold">+${drvFee.toFixed(2)}</span>
+                              </div>
+                              {drvComp?.estadoCompensacion !== 'PAID' ? (
+                                <button
+                                  type="button"
+                                  onClick={handlePayDriverComp}
+                                  className="w-full py-1.5 mt-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold uppercase cursor-pointer transition-all shadow-xs"
+                                >
+                                  Registrar Pago de Envío a Driver (+${drvFee.toFixed(2)})
+                                </button>
+                              ) : (
+                                <p className="text-xs text-blue-800 font-semibold">
+                                  ✅ Costo de envío pagado al chofer.
+                                </p>
+                              )}
                             </div>
                           </div>
                         );
@@ -1467,12 +1558,12 @@ export default function PedidosOnlinePage() {
                         <div className="bg-slate-900 text-white p-3.5 rounded-2xl space-y-2 shadow-md border border-slate-800">
                           <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
-                              <span className="text-[10px] font-black uppercase text-amber-400 block tracking-wider">
+                              <span className="text-xs font-bold uppercase text-amber-400 block tracking-wider">
                                 🔑 PIN Retiro en Local:
                               </span>
-                              <span className="text-[10px] text-slate-400">Repartidor dicta este PIN al restaurante al recoger</span>
+                              <span className="text-xs text-slate-400">Repartidor dicta este PIN al restaurante al recoger</span>
                             </div>
-                            <span className="px-3.5 py-1 bg-amber-500 text-slate-950 font-black text-base rounded-xl tracking-widest shadow-sm">
+                            <span className="px-3.5 py-1 bg-amber-500 text-slate-950 font-bold text-base rounded-xl tracking-wide shadow-sm">
                               {pCode}
                             </span>
                           </div>
@@ -1511,30 +1602,30 @@ export default function PedidosOnlinePage() {
                                   <div className="space-y-2 border-b border-slate-100 pb-3.5">
                                     <div className="flex items-center justify-between gap-2">
                                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-base shadow-md shadow-blue-500/20 shrink-0">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center font-bold text-base shadow-md shadow-blue-500/20 shrink-0">
                                           {assignedDriverName.charAt(0).toUpperCase()}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                          <h4 className="font-black text-slate-900 text-sm truncate leading-tight">
+                                          <h4 className="font-bold text-slate-900 text-sm truncate leading-tight">
                                             {assignedDriverName}
                                           </h4>
-                                          <p className="text-[11px] text-slate-500 font-bold truncate mt-0.5">
+                                          <p className="text-xs text-slate-500 font-bold truncate mt-0.5">
                                             {currentAsgn?.resource?.profile?.vehiculo || currentAsgn?.resource?.profile?.tipoVehiculo || '🛵 Repartidor de Entregas'}
                                           </p>
                                         </div>
                                       </div>
 
-                                      <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider shrink-0 whitespace-nowrap shadow-sm ${
-                                        asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE'
-                                          ? 'bg-amber-100 text-amber-900 border border-amber-200 animate-pulse'
-                                          : asgnState === 'REPARTIDOR_EN_LOCAL'
-                                          ? 'bg-amber-500 text-slate-950 font-black'
-                                          : asgnState === 'ACEPTADO'
-                                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-200'
-                                          : asgnState === 'EN_RUTA' || asgnState === 'EN_CAMINO'
-                                          ? 'bg-blue-100 text-blue-900 border border-blue-200'
-                                          : 'bg-slate-100 text-slate-700'
-                                      }`}>
+                                      <span className={`px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider shrink-0 whitespace-nowrap shadow-sm ${
+ asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE'
+ ? 'bg-amber-100 text-amber-900 border border-amber-200 animate-pulse'
+ : asgnState === 'REPARTIDOR_EN_LOCAL'
+ ? 'bg-amber-500 text-slate-950 font-bold'
+ : asgnState === 'ACEPTADO'
+ ? 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+ : asgnState === 'EN_RUTA' || asgnState === 'EN_CAMINO'
+ ? 'bg-blue-100 text-blue-900 border border-blue-200'
+ : 'bg-slate-100 text-slate-700'
+ }`}>
                                         {asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE'
                                           ? '⏳ PENDIENTE' 
                                           : asgnState === 'REPARTIDOR_EN_LOCAL' 
@@ -1554,11 +1645,11 @@ export default function PedidosOnlinePage() {
                                       <ChefHat className={`w-4 h-4 shrink-0 ${isKitchenFinished ? 'text-emerald-600' : 'text-amber-600 animate-pulse'}`} />
                                       <span className="font-extrabold text-slate-800 text-xs">Estado Cocina:</span>
                                     </div>
-                                    <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase shrink-0 whitespace-nowrap ${
-                                      isKitchenFinished 
-                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
-                                        : 'bg-amber-100 text-amber-900 border border-amber-200'
-                                    }`}>
+                                    <span className={`px-2.5 py-1 rounded-xl text-xs font-bold uppercase shrink-0 whitespace-nowrap ${
+ isKitchenFinished 
+ ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+ : 'bg-amber-100 text-amber-900 border border-amber-200'
+ }`}>
                                       {isKitchenFinished ? '✅ LISTO EN COCINA' : '🍳 EN PREPARACIÓN'}
                                     </span>
                                   </div>
@@ -1566,11 +1657,11 @@ export default function PedidosOnlinePage() {
                                   {/* MENSAJES AUTOMÁTICOS Y BOTONES DE DESPACHO */}
                                   {(asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE') && (
                                     <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3.5 text-xs space-y-2">
-                                      <div className="flex items-center gap-2 text-amber-950 font-black">
+                                      <div className="flex items-center gap-2 text-amber-950 font-bold">
                                         <Loader2 className="w-4 h-4 text-amber-600 animate-spin shrink-0" />
                                         <span>Esperando a que el repartidor acepte la orden...</span>
                                       </div>
-                                      <p className="text-[11px] text-amber-800 font-semibold">
+                                      <p className="text-xs text-amber-800 font-semibold">
                                         Se notificó a {assignedDriverName}. En cuanto presione Aceptar, verás la actualización en vivo.
                                       </p>
                                     </div>
@@ -1578,16 +1669,16 @@ export default function PedidosOnlinePage() {
 
                                   {asgnState === 'ACEPTADO' && (
                                     <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 text-xs space-y-3">
-                                      <div className="flex items-center gap-2 text-emerald-950 font-black">
+                                      <div className="flex items-center gap-2 text-emerald-950 font-bold">
                                         <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[3]" />
                                         <span>✅ ¡{assignedDriverName} ACEPTÓ el pedido!</span>
                                       </div>
-                                      <p className="text-[11px] text-emerald-800 font-medium">
+                                      <p className="text-xs text-emerald-800 font-medium">
                                         El repartidor va en camino al local para retirar la orden.
                                       </p>
 
                                       {!isKitchenFinished && (
-                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 font-semibold flex items-start gap-2">
+                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 font-semibold flex items-start gap-2">
                                           <ChefHat className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
                                           <span>🔒 Cocina aún está preparando los platos. El botón de despacho se activará cuando cocina marque "Listo".</span>
                                         </div>
@@ -1597,11 +1688,11 @@ export default function PedidosOnlinePage() {
                                         type="button"
                                         onClick={() => handleUpdateAssignmentStatus(currentAsgn?.id, order.id, 'ENTREGADO_A_REPARTIDOR')}
                                         disabled={processingId === order.id || !isKitchenFinished}
-                                        className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase shadow-lg flex items-center justify-center gap-2 transition-all ${
-                                          isKitchenFinished
-                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
-                                            : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                                        }`}
+                                        className={`w-full py-3.5 rounded-2xl text-xs font-bold uppercase shadow-lg flex items-center justify-center gap-2 transition-all ${
+ isKitchenFinished
+ ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
+ : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+ }`}
                                       >
                                         {isKitchenFinished ? (
                                           <>
@@ -1618,16 +1709,16 @@ export default function PedidosOnlinePage() {
 
                                   {asgnState === 'REPARTIDOR_EN_LOCAL' && (
                                     <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 text-xs space-y-3">
-                                      <div className="flex items-center gap-2 text-amber-950 font-black">
+                                      <div className="flex items-center gap-2 text-amber-950 font-bold">
                                         <Check className="w-4 h-4 text-amber-600 shrink-0 stroke-[3]" />
                                         <span>📍 ¡{assignedDriverName} YA LLEGÓ al local!</span>
                                       </div>
-                                      <p className="text-[11px] text-amber-800 font-medium">
+                                      <p className="text-xs text-amber-800 font-medium">
                                         El repartidor está esperando la comanda lista en puerta.
                                       </p>
 
                                       {!isKitchenFinished && (
-                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 font-semibold flex items-start gap-2">
+                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 font-semibold flex items-start gap-2">
                                           <ChefHat className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
                                           <span>🔒 Cocina aún está preparando los platos. El botón de despacho se activará cuando cocina marque "Listo".</span>
                                         </div>
@@ -1637,11 +1728,11 @@ export default function PedidosOnlinePage() {
                                         type="button"
                                         onClick={() => handleUpdateAssignmentStatus(currentAsgn?.id, order.id, 'ENTREGADO_A_REPARTIDOR')}
                                         disabled={processingId === order.id || !isKitchenFinished}
-                                        className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase shadow-lg flex items-center justify-center gap-2 transition-all ${
-                                          isKitchenFinished
-                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
-                                            : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                                        }`}
+                                        className={`w-full py-3.5 rounded-2xl text-xs font-bold uppercase shadow-lg flex items-center justify-center gap-2 transition-all ${
+ isKitchenFinished
+ ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
+ : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+ }`}
                                       >
                                         {isKitchenFinished ? (
                                           <>
@@ -1658,18 +1749,18 @@ export default function PedidosOnlinePage() {
 
                                   {(asgnState === 'EN_RUTA' || asgnState === 'EN_CAMINO' || order.estado === 'EN_CAMINO' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (
                                     <div className="bg-blue-50/70 border border-blue-200/80 rounded-2xl p-4 text-xs space-y-3">
-                                      <div className="flex items-center gap-2 text-blue-950 font-black">
+                                      <div className="flex items-center gap-2 text-blue-950 font-bold">
                                         <Truck className="w-4 h-4 text-blue-600 shrink-0 animate-bounce" />
                                         <span>🛵 Pedido entregado al repartidor {assignedDriverName}.</span>
                                       </div>
-                                      <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                                      <p className="text-xs text-slate-600 leading-relaxed font-medium">
                                         El repartidor se desplaza hacia el domicilio del cliente. Al ser entregado, presiona abajo para finalizar.
                                       </p>
                                       <button
                                         type="button"
                                         onClick={() => handleUpdateAssignmentStatus(currentAsgn?.id, order.id, 'COMPLETADO')}
                                         disabled={processingId === order.id}
-                                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-emerald-600/20 cursor-pointer flex items-center justify-center gap-2 transition-all active:scale-98"
+                                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-2xl text-xs font-bold uppercase shadow-lg shadow-emerald-600/20 cursor-pointer flex items-center justify-center gap-2 transition-all active:scale-98"
                                       >
                                         <Check className="w-4 h-4 stroke-[3]" />
                                         <span>Confirmar Entrega Definitiva (ENTREGADO)</span>
@@ -1678,7 +1769,7 @@ export default function PedidosOnlinePage() {
                                   )}
 
                                   {asgnState === 'COMPLETADO' && (
-                                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-950 rounded-2xl p-3.5 text-xs font-black text-center shadow-sm">
+                                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-950 rounded-2xl p-3.5 text-xs font-bold text-center shadow-sm">
                                       🎉 Pedido Entregado Correctamente por {assignedDriverName}
                                     </div>
                                   )}
@@ -1690,9 +1781,9 @@ export default function PedidosOnlinePage() {
                                     <div className="flex items-center justify-between">
                                       <div className="flex items-center gap-2 text-amber-900 font-extrabold text-xs">
                                         <Loader2 className="w-4 h-4 text-amber-600 animate-spin shrink-0" />
-                                        <span>⏳ ESPERANDO ACEPTACIÓN DEL REPARTIDOR...</span>
+                                        <span>⏳ Esperando aceptación del repartidor...</span>
                                       </div>
-                                      <span className="px-2.5 py-0.5 bg-amber-200 text-amber-950 text-[10px] font-black rounded-full animate-pulse">
+                                      <span className="px-2.5 py-0.5 bg-amber-200 text-amber-950 text-xs font-bold rounded-full animate-pulse">
                                         EN ESPERA
                                       </span>
                                     </div>
@@ -1709,7 +1800,7 @@ export default function PedidosOnlinePage() {
                                       </div>
 
                                       <div className="space-y-2 pt-1 border-t border-slate-100">
-                                        <label className="block text-[10px] font-black uppercase text-slate-500">
+                                        <label className="block text-xs font-bold uppercase text-slate-500">
                                           1. Seleccionar Repartidor Registrado:
                                         </label>
                                         <div className="flex gap-2">
@@ -1729,11 +1820,11 @@ export default function PedidosOnlinePage() {
                                             type="button"
                                             onClick={() => handleAssignDriverToOrder(order, selectedDriverId)}
                                             disabled={!selectedDriverId || processingId === order.id}
-                                            className={`px-3 py-2 text-xs font-black rounded-xl shrink-0 ${
-                                              selectedDriverId
-                                                ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-500'
-                                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                            }`}
+                                            className={`px-3 py-2 text-xs font-bold rounded-xl shrink-0 ${
+ selectedDriverId
+ ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-500'
+ : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+ }`}
                                           >
                                             Asignar
                                           </button>
@@ -1741,7 +1832,7 @@ export default function PedidosOnlinePage() {
                                       </div>
 
                                       <div className="space-y-2 pt-2 border-t border-slate-100">
-                                        <label className="block text-[10px] font-black uppercase text-slate-500">
+                                        <label className="block text-xs font-bold uppercase text-slate-500">
                                           2. O Despachar con Repartidor del Local:
                                         </label>
                                         <div className="flex gap-2">
@@ -1756,7 +1847,7 @@ export default function PedidosOnlinePage() {
                                             type="button"
                                             onClick={() => handleDispatchOrder(order, order.estado === 'LISTO' ? 'EN_CAMINO' : 'LISTO')}
                                             disabled={processingId === order.id}
-                                            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black shrink-0 cursor-pointer uppercase"
+                                            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold shrink-0 cursor-pointer uppercase"
                                           >
                                             Despachar
                                           </button>
@@ -1779,7 +1870,7 @@ export default function PedidosOnlinePage() {
                               type="button"
                               onClick={() => handleVerifyPayment(order.id)}
                               disabled={processingId === order.id}
-                              className="py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all"
+                              className="py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all"
                             >
                               ✓ Verificar Pago
                             </button>
@@ -1787,7 +1878,7 @@ export default function PedidosOnlinePage() {
                               type="button"
                               onClick={() => handleRejectPayment(order.id)}
                               disabled={processingId === order.id}
-                              className="py-3 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all"
+                              className="py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all"
                             >
                               ✕ Rechazar Pago
                             </button>
@@ -1796,7 +1887,7 @@ export default function PedidosOnlinePage() {
 
                         {/* Selector de Tiempo de Preparación */}
                         <div className="space-y-2 pt-2 border-t border-slate-100">
-                          <label className="block text-[11px] font-black uppercase text-slate-500 tracking-wider">
+                          <label className="block text-xs font-bold uppercase text-slate-500 tracking-wider">
                             ⏰ Tiempo Estimado de Preparación
                           </label>
                           <div className="grid grid-cols-5 gap-1.5">
@@ -1805,11 +1896,11 @@ export default function PedidosOnlinePage() {
                                 key={mins}
                                 type="button"
                                 onClick={() => setSelectedPrepTime(mins)}
-                                className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                                  selectedPrepTime === mins
-                                    ? 'bg-amber-500 text-white shadow-md scale-[1.05]'
-                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                }`}
+                                className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+ selectedPrepTime === mins
+ ? 'bg-amber-500 text-white shadow-md scale-[1.05]'
+ : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+ }`}
                               >
                                 {mins}m
                               </button>
@@ -1829,26 +1920,26 @@ export default function PedidosOnlinePage() {
                             }`}>
                               <div className="flex items-center justify-between border-b pb-3 border-rose-200/80">
                                 <div>
-                                  <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 bg-rose-200/70 px-2.5 py-0.5 rounded-full">
+                                  <span className="text-xs font-bold uppercase tracking-wider text-rose-800 bg-rose-200/70 px-2.5 py-0.5 rounded-full">
                                     Reembolso {fsRefundInfo.codigoReembolso}
                                   </span>
-                                  <h4 className="text-sm font-black text-rose-950 mt-1">
+                                  <h4 className="text-sm font-bold text-rose-950 mt-1">
                                     Pedido #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
                                   </h4>
                                 </div>
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                  fsRefundInfo.isRefunded ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white shadow-sm'
-                                }`}>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+ fsRefundInfo.isRefunded ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white shadow-sm'
+ }`}>
                                   {fsRefundInfo.isRefunded ? '✅ REEMBOLSADO' : '🔴 REEMBOLSO PENDIENTE'}
                                 </span>
                               </div>
 
                               <div className="space-y-1 text-xs text-slate-800">
                                 <p className="font-bold">
-                                  👤 <span className="font-black text-slate-900">{order.nombreCliente}</span> ({order.telefonoCliente})
+                                  👤 <span className="font-bold text-slate-900">{order.nombreCliente}</span> ({order.telefonoCliente})
                                 </p>
                                 <p className="text-rose-900 font-semibold">
-                                  📌 <span className="font-black">Motivo:</span> {fsRefundInfo.motivo}
+                                  📌 <span className="font-bold">Motivo:</span> {fsRefundInfo.motivo}
                                 </p>
                               </div>
 
@@ -1861,7 +1952,7 @@ export default function PedidosOnlinePage() {
                                   <span>Nuevo total de productos:</span>
                                   <span className="font-mono font-bold text-slate-900">${fsRefundInfo.currentProdSubtotal.toFixed(2)}</span>
                                 </div>
-                                <div className="border-t border-dashed border-rose-200 pt-2 flex justify-between font-black text-sm text-rose-700">
+                                <div className="border-t border-dashed border-rose-200 pt-2 flex justify-between font-bold text-sm text-rose-700">
                                   <span>💰 Monto a devolver (Productos):</span>
                                   <span className="font-mono text-base text-rose-700">${fsRefundInfo.montoDevolver.toFixed(2)}</span>
                                 </div>
@@ -1869,14 +1960,14 @@ export default function PedidosOnlinePage() {
 
                               <div className="bg-slate-100/80 rounded-xl p-2.5 flex items-center justify-between text-xs border border-slate-200">
                                 <span className="font-bold text-slate-600">🛵 Envío (Fulfillment): ${fsRefundInfo.envio.toFixed(2)}</span>
-                                <span className="text-[10px] text-slate-500 font-semibold">Estado: Independiente</span>
+                                <span className="text-xs text-slate-500 font-semibold">Estado: Independiente</span>
                               </div>
 
                               {!fsRefundInfo.isRefunded ? (
                                 <div className="space-y-2 pt-2 border-t border-rose-200/80">
                                   <div className="grid grid-cols-2 gap-2">
                                     <div>
-                                      <label className="text-[10px] font-black uppercase text-rose-900 block mb-1">Método de Devolución</label>
+                                      <label className="text-xs font-bold uppercase text-rose-900 block mb-1">Método de Devolución</label>
                                       <select
                                         value={refundMethod}
                                         onChange={e => setRefundMethod(e.target.value)}
@@ -1888,7 +1979,7 @@ export default function PedidosOnlinePage() {
                                       </select>
                                     </div>
                                     <div>
-                                      <label className="text-[10px] font-black uppercase text-rose-900 block mb-1">Nº Comprobante / Ref.</label>
+                                      <label className="text-xs font-bold uppercase text-rose-900 block mb-1">Nº Comprobante / Ref.</label>
                                       <input
                                         type="text"
                                         value={refundRef}
@@ -1902,7 +1993,7 @@ export default function PedidosOnlinePage() {
                                     type="button"
                                     onClick={() => handleConfirmRefund(order)}
                                     disabled={processingId === order.id}
-                                    className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-black text-xs uppercase rounded-2xl shadow-lg shadow-rose-600/20 cursor-pointer flex items-center justify-center gap-2 transition-all"
+                                    className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold text-xs uppercase rounded-2xl shadow-lg shadow-rose-600/20 cursor-pointer flex items-center justify-center gap-2 transition-all"
                                   >
                                     <Check className="w-4 h-4 stroke-[3]" />
                                     <span>Procesar Devolución (${fsRefundInfo.montoDevolver.toFixed(2)})</span>
@@ -1911,14 +2002,14 @@ export default function PedidosOnlinePage() {
                               ) : (
                                 <div className="bg-emerald-100/80 p-3 rounded-2xl border border-emerald-300 text-emerald-950 text-xs space-y-1 font-bold">
                                   <div className="flex items-center justify-between">
-                                    <span>✅ DEVOLUCIÓN COMPLETADA</span>
+                                    <span>✅ Devolución completada</span>
                                     <span>${fsRefundInfo.montoDevolver.toFixed(2)}</span>
                                   </div>
-                                  <p className="text-[10px] text-emerald-800">
+                                  <p className="text-xs text-emerald-800">
                                     Método: {fsRefundInfo.metodoDevolucion || refundMethod} {fsRefundInfo.referenciaDevolucion ? `| Comprobante: ${fsRefundInfo.referenciaDevolucion}` : ''}
                                   </p>
                                   {fsRefundInfo.devolucionUser && (
-                                    <p className="text-[10px] text-emerald-700 font-semibold">
+                                    <p className="text-xs text-emerald-700 font-semibold">
                                       Procesado por: {fsRefundInfo.devolucionUser}
                                     </p>
                                   )}
@@ -1941,13 +2032,13 @@ export default function PedidosOnlinePage() {
                                 <button
                                   type="button"
                                   onClick={() => setShowCustomRefundInput(true)}
-                                  className="text-[11px] font-black text-rose-600 hover:text-rose-800 underline flex items-center gap-1 cursor-pointer"
+                                  className="text-xs font-bold text-rose-600 hover:text-rose-800 underline flex items-center gap-1 cursor-pointer"
                                 >
                                   💸 ¿Este pedido requiere devolución/reembolso? Registrar monto manual
                                 </button>
                               ) : (
                                 <div className="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl space-y-2 text-xs">
-                                  <label className="text-[10px] font-black uppercase text-rose-900 block">
+                                  <label className="text-xs font-bold uppercase text-rose-900 block">
                                     Monto a Reembolsar al Cliente ($)
                                   </label>
                                   <div className="flex items-center gap-2">
@@ -1957,13 +2048,13 @@ export default function PedidosOnlinePage() {
                                       value={customRefundAmount}
                                       onChange={e => setCustomRefundAmount(e.target.value)}
                                       placeholder="Ej: 6.00"
-                                      className="p-2.5 bg-white border border-rose-300 rounded-xl text-xs font-black text-slate-900 flex-1"
+                                      className="p-2.5 bg-white border border-rose-300 rounded-xl text-xs font-bold text-slate-900 flex-1"
                                     />
                                     <button
                                       type="button"
                                       onClick={() => handleRegisterCustomRefund(order.id)}
                                       disabled={processingId === order.id}
-                                      className="px-3.5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black text-xs cursor-pointer shadow-sm"
+                                      className="px-3.5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold text-xs cursor-pointer shadow-sm"
                                     >
                                       Guardar
                                     </button>
@@ -1991,11 +2082,11 @@ export default function PedidosOnlinePage() {
                         type="button"
                         onClick={() => handleAcceptOrderToKitchen(order)}
                         disabled={!canAcceptOrder || processingId === order.id}
-                        className={`w-full py-4 text-xs font-black uppercase rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-all ${
-                          canAcceptOrder
-                            ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-emerald-500/20 active:scale-98 cursor-pointer'
-                            : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
-                        }`}
+                        className={`w-full py-4 text-xs font-bold uppercase rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-all ${
+ canAcceptOrder
+ ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-emerald-500/20 active:scale-98 cursor-pointer'
+ : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+ }`}
                       >
                         {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         Aceptar Pedido (Requiere Productos OK + Pago Verificado)

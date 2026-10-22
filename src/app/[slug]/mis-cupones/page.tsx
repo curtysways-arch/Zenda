@@ -155,7 +155,7 @@ export default function MisCuponesPage() {
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
                 <div className="animate-pulse flex flex-col items-center gap-3">
                     <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-pink-600 animate-spin" />
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Cargando tus cupones...</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Cargando tus cupones...</p>
                 </div>
             </div>
         );
@@ -176,13 +176,13 @@ export default function MisCuponesPage() {
                     <button onClick={() => router.back()} className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-all border-0 cursor-pointer">
                         <ArrowLeft size={18} style={{ color: textColor }} />
                     </button>
-                    <span className="text-[11px] font-black uppercase tracking-[0.2em] opacity-80">MIS BENEFICIOS</span>
+                    <span className="text-xs font-bold uppercase tracking-wide opacity-80">Mis beneficios</span>
                     <div className="w-9 h-9" />
                 </div>
 
                 <div className="max-w-md mx-auto relative z-10 mt-8 text-center space-y-2">
-                    <h1 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Mis Cupones</h1>
-                    <p className="text-[10px] uppercase font-black tracking-widest opacity-85 leading-relaxed">
+                    <h1 className="text-4xl font-bold tracking-tight leading-none">Mis Cupones</h1>
+                    <p className="text-xs uppercase font-bold tracking-wide opacity-85 leading-relaxed">
                         Aquí verás todos los cupones que has ganado y puedes usar en tus reservas.
                     </p>
                 </div>
@@ -203,9 +203,9 @@ export default function MisCuponesPage() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
-                                className={`flex-1 min-w-[80px] py-3 px-2 rounded-2xl text-[10px] font-black uppercase tracking-wider text-center transition-all border-0 cursor-pointer snap-start ${
-                                    isTabActive ? 'text-white shadow-md' : 'text-slate-400 hover:text-slate-600 bg-transparent'
-                                }`}
+                                className={`flex-1 min-w-[80px] py-3 px-2 rounded-2xl text-xs font-bold uppercase tracking-wider text-center transition-all border-0 cursor-pointer snap-start ${
+ isTabActive ? 'text-white shadow-md' : 'text-slate-400 hover:text-slate-600 bg-transparent'
+ }`}
                                 style={isTabActive ? { backgroundColor: primaryColor } : {}}
                             >
                                 {tab.label} {tab.count > 0 && `(${tab.count})`}
@@ -217,13 +217,13 @@ export default function MisCuponesPage() {
                 {/* Listado de Cupones */}
                 <div className="space-y-4">
                     {filteredCupones.length === 0 ? (
-                        <div className="bg-white border border-slate-100 rounded-[2rem] p-12 text-center shadow-sm space-y-4">
+                        <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm space-y-4">
                             <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto" style={{ color: primaryColor }}>
                                 <Percent size={28} />
                             </div>
                             <div className="space-y-1">
-                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">No hay cupones</h3>
-                                <p className="text-[10px] text-slate-400 font-semibold leading-relaxed max-w-[240px] mx-auto">
+                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">No hay cupones</h3>
+                                <p className="text-xs text-slate-400 font-semibold leading-relaxed max-w-[240px] mx-auto">
                                     {activeTab === 'disponibles' && 'Aún no tienes cupones disponibles. Completa misiones o canjea tus puntos para obtenerlos.'}
                                     {activeTab === 'urgentes' && '¡Excelente! No tienes cupones a punto de vencer.'}
                                     {activeTab === 'usados' && 'No tienes un historial de cupones usados.'}
@@ -258,18 +258,18 @@ export default function MisCuponesPage() {
                                             }} />
                                             <div className="relative z-10 flex justify-between items-start">
                                                 <div>
-                                                    <span className="text-[8px] font-black uppercase tracking-widest opacity-80 block mb-1">
+                                                    <span className="text-xs font-bold uppercase tracking-wide opacity-80 block mb-1">
                                                         🎟️ {coupon.sourceType === 'LOYALTY_REWARD' ? 'Canje de diamantes' : 'Beneficio obtenido'}
                                                     </span>
-                                                    <h3 className="text-xl font-black uppercase tracking-tight leading-tight">
+                                                    <h3 className="text-xl font-bold tracking-tight leading-tight">
                                                         {coupon.nombre || 'Cupón Descuento'}
                                                     </h3>
                                                 </div>
                                                 <div className="text-right">
-                                                    <div className="text-3xl font-black leading-none tracking-tighter">
+                                                    <div className="text-3xl font-bold leading-none tracking-tight">
                                                         {coupon.tipo === 'PORCENTAJE' ? `${coupon.descuento}%` : `$${coupon.descuento}`}
                                                     </div>
-                                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-80">DCTO.</span>
+                                                    <span className="text-xs font-bold uppercase tracking-wide opacity-80">DCTO.</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -291,13 +291,13 @@ export default function MisCuponesPage() {
                                         {/* Parte inferior del ticket */}
                                         <div className="px-6 pb-5 pt-1 space-y-4">
                                             <div className="text-center space-y-2">
-                                                <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest leading-none">Código Único de Cupón</p>
+                                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wide leading-none">Código Único de Cupón</p>
                                                 <div 
                                                     onClick={() => handleCopyCode(coupon.codigo)}
                                                     className="inline-flex items-center justify-center gap-2.5 px-5 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-dashed border-slate-200 rounded-2xl cursor-pointer transition-all active:scale-95 group w-full max-w-[240px]"
                                                     title="Copiar código"
                                                 >
-                                                    <span className="text-lg font-black uppercase tracking-widest text-slate-800 font-mono">
+                                                    <span className="text-lg font-bold tracking-wide text-slate-800 font-mono">
                                                         {coupon.codigo}
                                                     </span>
                                                     {coupon.estado === 'DISPONIBLE' && (
@@ -306,17 +306,17 @@ export default function MisCuponesPage() {
                                                 </div>
                                             </div>
 
-                                            <p className="text-[10px] text-slate-500 font-semibold leading-relaxed text-center">
+                                            <p className="text-xs text-slate-500 font-semibold leading-relaxed text-center">
                                                 {coupon.descripcion}
                                             </p>
 
-                                            <div className="border-t border-dashed border-slate-100 pt-3 flex items-center justify-between text-[9px] font-black uppercase tracking-wider text-slate-400">
+                                            <div className="border-t border-dashed border-slate-100 pt-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
                                                 {coupon.estado === 'DISPONIBLE' && (
                                                     <>
                                                         <span className="flex items-center gap-1.5">
                                                             <Clock size={11} style={{ color: primaryColor }} /> Vence: {expDateFormatted}
                                                         </span>
-                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 flex items-center gap-1">
+                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 flex items-center gap-1">
                                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                                             DISPONIBLE
                                                         </span>
@@ -327,7 +327,7 @@ export default function MisCuponesPage() {
                                                         <span className="text-amber-500 flex items-center gap-1.5">
                                                             <Clock size={11} /> RESERVA PENDIENTE
                                                         </span>
-                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-black text-amber-600 bg-amber-50 border border-amber-100 flex items-center gap-1">
+                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-bold text-amber-600 bg-amber-50 border border-amber-100 flex items-center gap-1">
                                                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                                                             EN RESERVA
                                                         </span>
@@ -338,7 +338,7 @@ export default function MisCuponesPage() {
                                                         <span className="text-emerald-600 flex items-center gap-1.5">
                                                             <CheckCircle size={11} /> Usado: {usageDateFormatted}
                                                         </span>
-                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-black text-slate-500 bg-slate-50 border border-slate-200">
+                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-bold text-slate-500 bg-slate-50 border border-slate-200">
                                                             USADO
                                                         </span>
                                                     </>
@@ -348,7 +348,7 @@ export default function MisCuponesPage() {
                                                         <span className="text-red-500 flex items-center gap-1.5">
                                                             <AlertTriangle size={11} /> VENCIDO
                                                         </span>
-                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-black text-red-600 bg-red-50 border border-red-100">
+                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-bold text-red-600 bg-red-50 border border-red-100">
                                                             VENCIDO
                                                         </span>
                                                     </>

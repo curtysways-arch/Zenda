@@ -366,7 +366,7 @@ export default function MiGymDashboardPage() {
           <div className="w-16 h-16 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-3xl mx-auto flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
             {authStep === 'phone' ? <Dumbbell className="w-8 h-8" /> : <Key className="w-8 h-8" />}
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             {authStep === 'phone' ? 'Portal del Socio' : 'Verificación de Acceso'}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -386,7 +386,7 @@ export default function MiGymDashboardPage() {
                 label="WhatsApp / Móvil Registrado *" 
                 placeholder="099 123 4567" 
               />
-              <p className="text-[10px] text-slate-400 ml-1">
+              <p className="text-xs text-slate-400 ml-1">
                 Te enviaremos un código de un solo uso para verificar tu cuenta de socio.
               </p>
             </div>
@@ -401,7 +401,7 @@ export default function MiGymDashboardPage() {
             <button
               type="submit"
               disabled={sendingOtp}
-              className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-black rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm tracking-wide"
+              className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm tracking-wide"
             >
               {sendingOtp ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -432,11 +432,11 @@ export default function MiGymDashboardPage() {
                   return (
                     <div
                       key={idx}
-                      className={`flex-1 h-14 bg-white dark:bg-slate-800 border-2 rounded-2xl flex items-center justify-center text-2xl font-black transition-all ${
-                        char 
-                          ? 'text-slate-900 dark:text-white border-emerald-500 shadow-sm' 
-                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-300'
-                      } ${isActive ? 'border-emerald-500 ring-2 ring-emerald-500/20' : ''}`}
+                      className={`flex-1 h-14 bg-white dark:bg-slate-800 border-2 rounded-2xl flex items-center justify-center text-2xl font-bold transition-all ${
+ char 
+ ? 'text-slate-900 dark:text-white border-emerald-500 shadow-sm' 
+ : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-300'
+ } ${isActive ? 'border-emerald-500 ring-2 ring-emerald-500/20' : ''}`}
                     >
                       {char}
                     </div>
@@ -466,7 +466,7 @@ export default function MiGymDashboardPage() {
             <button
               type="submit"
               disabled={verifyingOtp || otpCode.replace(/\D/g, '').length < 4}
-              className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-black rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm tracking-wide"
+              className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm tracking-wide"
             >
               {verifyingOtp ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -518,18 +518,18 @@ export default function MiGymDashboardPage() {
       {/* 1. Header del Socio */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-emerald-500/20 border-2 border-white/20">
+          <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-emerald-500/20 border-2 border-white/20">
             {initial}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-emerald-500 dark:text-emerald-400">
+              <span className="text-xs font-bold uppercase tracking-wide text-emerald-500 dark:text-emerald-400">
                 Mi Gym
               </span>
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span className="text-xs text-slate-400 font-medium">Socio Activo</span>
             </div>
-            <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               ¡Hola, {firstName}!
             </h1>
           </div>
@@ -550,15 +550,15 @@ export default function MiGymDashboardPage() {
           <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           <div className="flex items-center justify-between gap-3 relative z-10">
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider text-emerald-100">
+              <div className="inline-flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider text-emerald-100">
                 <span className="w-2 h-2 rounded-full bg-emerald-300 animate-ping" />
                 <span>Dentro del Gym</span>
               </div>
-              <div className="text-2xl font-black tracking-tight flex items-baseline gap-2">
+              <div className="text-2xl font-bold tracking-tight flex items-baseline gap-2">
                 <span>{formatElapsed(insideSeconds)}</span>
-                <span className="text-xs font-semibold text-emerald-100 uppercase tracking-widest">entrenando</span>
+                <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wide">entrenando</span>
               </div>
-              <p className="text-[11px] text-emerald-100/90 font-medium">
+              <p className="text-xs text-emerald-100/90 font-medium">
                 Ingresaste hoy a las {new Date(memberData.currentAttendance?.checkedInAt || Date.now()).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
@@ -579,10 +579,10 @@ export default function MiGymDashboardPage() {
       <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Plan Contratado
             </span>
-            <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               {activeMembership ? activeMembership.planName : 'Sin Membresía Activa'}
             </h2>
           </div>
@@ -640,7 +640,7 @@ export default function MiGymDashboardPage() {
 
               <Link
                 href={`/${slug}/mi-gym/acceso`}
-                className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-black shadow hover:opacity-90 flex items-center gap-1.5 transition-all"
+                className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow hover:opacity-90 flex items-center gap-1.5 transition-all"
               >
                 <QrCode className="w-3.5 h-3.5" />
                 <span>Pase QR</span>
@@ -666,10 +666,10 @@ export default function MiGymDashboardPage() {
           <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-1">
             <Flame className="w-4 h-4" />
           </div>
-          <div className="text-xl font-black text-slate-900 dark:text-white">
+          <div className="text-xl font-bold text-slate-900 dark:text-white">
             {metrics.weeklyStreak} <span className="text-xs font-normal text-slate-400">días</span>
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
             Racha Semana
           </div>
         </div>
@@ -678,10 +678,10 @@ export default function MiGymDashboardPage() {
           <div className="w-8 h-8 rounded-full bg-teal-500/10 text-teal-500 flex items-center justify-center mx-auto mb-1">
             <CalendarCheck className="w-4 h-4" />
           </div>
-          <div className="text-xl font-black text-slate-900 dark:text-white">
+          <div className="text-xl font-bold text-slate-900 dark:text-white">
             {metrics.visitsThisMonth}
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
             Visitas Mes
           </div>
         </div>
@@ -690,10 +690,10 @@ export default function MiGymDashboardPage() {
           <div className="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto mb-1">
             <Clock className="w-4 h-4" />
           </div>
-          <div className="text-xl font-black text-slate-900 dark:text-white">
+          <div className="text-xl font-bold text-slate-900 dark:text-white">
             {Math.round(metrics.totalMinutesThisMonth / 60)} <span className="text-xs font-normal text-slate-400">hrs</span>
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
             Tiempo Total
           </div>
         </div>
@@ -701,7 +701,7 @@ export default function MiGymDashboardPage() {
 
       {/* 5. Menú Táctil de Accesos Rápidos */}
       <div className="space-y-3">
-        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">
+        <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400 px-1">
           Panel de Actividades
         </h3>
 
@@ -715,8 +715,8 @@ export default function MiGymDashboardPage() {
               <QrCode className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-sm text-slate-900 dark:text-white">Mi Acceso</h4>
-              <p className="text-[11px] text-slate-400">Pase QR & Escáner Tótem</p>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white">Mi Acceso</h4>
+              <p className="text-xs text-slate-400">Pase QR & Escáner Tótem</p>
             </div>
           </Link>
 
@@ -729,8 +729,8 @@ export default function MiGymDashboardPage() {
               <CalendarCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-sm text-slate-900 dark:text-white">Asistencias</h4>
-              <p className="text-[11px] text-slate-400">Historial y permanencia</p>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white">Asistencias</h4>
+              <p className="text-xs text-slate-400">Historial y permanencia</p>
             </div>
           </Link>
 
@@ -743,8 +743,8 @@ export default function MiGymDashboardPage() {
               <Dumbbell className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-sm text-slate-900 dark:text-white">Entrenar</h4>
-              <p className="text-[11px] text-slate-400">Rutinas guiadas del día</p>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white">Entrenar</h4>
+              <p className="text-xs text-slate-400">Rutinas guiadas del día</p>
             </div>
           </Link>
 
@@ -757,8 +757,8 @@ export default function MiGymDashboardPage() {
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-sm text-slate-900 dark:text-white">Clases</h4>
-              <p className="text-[11px] text-slate-400">Horarios y reservas</p>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white">Clases</h4>
+              <p className="text-xs text-slate-400">Horarios y reservas</p>
             </div>
           </Link>
 
@@ -771,8 +771,8 @@ export default function MiGymDashboardPage() {
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-sm text-slate-900 dark:text-white">Mi Progreso</h4>
-              <p className="text-[11px] text-slate-400">Constancia y evolución</p>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white">Mi Progreso</h4>
+              <p className="text-xs text-slate-400">Constancia y evolución</p>
             </div>
           </Link>
 
@@ -785,8 +785,8 @@ export default function MiGymDashboardPage() {
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-black text-sm text-slate-900 dark:text-white">Membresía</h4>
-              <p className="text-[11px] text-slate-400">Beneficios y renovación</p>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white">Membresía</h4>
+              <p className="text-xs text-slate-400">Beneficios y renovación</p>
             </div>
           </Link>
         </div>

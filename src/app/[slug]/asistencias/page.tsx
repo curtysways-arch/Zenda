@@ -90,7 +90,7 @@ export default function MisAsistenciasPage() {
           <ArrowLeft className="w-4 h-4" />
           <span>Mi Membresía</span>
         </Link>
-        <span className="text-xs font-black uppercase tracking-widest text-orange-400 flex items-center gap-1.5">
+        <span className="text-xs font-bold uppercase tracking-wide text-orange-400 flex items-center gap-1.5">
           <Flame className="w-3.5 h-3.5" /> Mis Entrenamientos
         </span>
       </header>
@@ -102,7 +102,7 @@ export default function MisAsistenciasPage() {
               <CalendarCheck className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-white">Historial de Asistencias</h1>
+              <h1 className="text-xl font-bold text-white">Historial de Asistencias</h1>
               <p className="text-xs text-slate-400 mt-1">
                 Consulta los días que has entrenado y tu constancia mensual.
               </p>
@@ -122,7 +122,7 @@ export default function MisAsistenciasPage() {
               </div>
               <button
                 type="submit"
-                className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-orange-500/20 hover:opacity-95 transition-all"
+                className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-orange-500/20 hover:opacity-95 transition-all"
               >
                 Ver Mi Progreso
               </button>
@@ -155,7 +155,7 @@ export default function MisAsistenciasPage() {
                 <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center mb-3">
                   <Flame className="w-4 h-4" />
                 </div>
-                <div className="text-3xl font-black text-white">
+                <div className="text-3xl font-bold text-white">
                   {data.stats?.thisMonth || 0}
                 </div>
                 <span className="text-xs font-bold text-slate-400 mt-1 block">
@@ -167,7 +167,7 @@ export default function MisAsistenciasPage() {
                 <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-3">
                   <Trophy className="w-4 h-4" />
                 </div>
-                <div className="text-3xl font-black text-white">
+                <div className="text-3xl font-bold text-white">
                   {data.stats?.total || 0}
                 </div>
                 <span className="text-xs font-bold text-slate-400 mt-1 block">
@@ -193,7 +193,7 @@ export default function MisAsistenciasPage() {
                   <CalendarCheck className="w-4 h-4 text-emerald-400" />
                   Historial de Accesos
                 </h3>
-                <span className="text-[10px] text-slate-400">Últimos entrenamientos</span>
+                <span className="text-xs text-slate-400">Últimos entrenamientos</span>
               </div>
 
               {(!data.attendances || data.attendances.length === 0) ? (
@@ -218,13 +218,13 @@ export default function MisAsistenciasPage() {
                           </div>
                           <div>
                             <div className="font-bold text-xs text-white capitalize">{dateStr}</div>
-                            <div className="text-[10px] text-slate-400">{att.branchName}</div>
+                            <div className="text-xs text-slate-400">{att.branchName}</div>
                           </div>
                         </div>
 
                         <div className="text-right">
                           <span className="font-mono text-xs font-bold text-slate-300 block">{timeStr}</span>
-                          <span className="text-[9px] uppercase tracking-wider text-slate-500 block">Check-in</span>
+                          <span className="text-xs uppercase tracking-wider text-slate-500 block">Check-in</span>
                         </div>
                       </div>
                     );

@@ -21,9 +21,9 @@ export default async function RewardClaimPage({
     if (!sig || !RewardService.verifySignature(claimToken, sig)) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
-                <div className="max-w-md w-full bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-xl text-center space-y-4">
+                <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-100 shadow-xl text-center space-y-4">
                     <AlertTriangle className="mx-auto text-rose-500" size={48} />
-                    <h2 className="text-lg font-black uppercase text-slate-800 tracking-tight">QR Inválido</h2>
+                    <h2 className="text-lg font-bold text-slate-800 tracking-tight">QR Inválido</h2>
                     <p className="text-slate-500 text-xs font-semibold uppercase leading-relaxed">
                         Firma digital de seguridad ausente o inválida. El código QR ha sido alterado o es obsoleto.
                     </p>
@@ -37,9 +37,9 @@ export default async function RewardClaimPage({
     if (!reward) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
-                <div className="max-w-md w-full bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-xl text-center space-y-4">
+                <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-100 shadow-xl text-center space-y-4">
                     <AlertTriangle className="mx-auto text-rose-500" size={48} />
-                    <h2 className="text-lg font-black uppercase text-slate-800 tracking-tight">Premio No Encontrado</h2>
+                    <h2 className="text-lg font-bold text-slate-800 tracking-tight">Premio No Encontrado</h2>
                     <p className="text-slate-500 text-xs font-semibold uppercase leading-relaxed">
                         El premio no existe o su código QR es inválido.
                     </p>
@@ -60,9 +60,9 @@ export default async function RewardClaimPage({
     if (reward.negocioId !== negocioId) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
-                <div className="max-w-md w-full bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-xl text-center space-y-4">
+                <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-100 shadow-xl text-center space-y-4">
                     <AlertTriangle className="mx-auto text-rose-500" size={48} />
-                    <h2 className="text-lg font-black uppercase text-slate-800 tracking-tight">Acceso Denegado</h2>
+                    <h2 className="text-lg font-bold text-slate-800 tracking-tight">Acceso Denegado</h2>
                     <p className="text-slate-500 text-xs font-semibold uppercase leading-relaxed">
                         Este premio pertenece a otro negocio y no estás autorizado para gestionarlo.
                     </p>

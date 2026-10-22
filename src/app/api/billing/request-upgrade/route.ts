@@ -1,41 +1,84 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const session = await getEffectiveAdminSession();
+        if (!session?.user) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
 
-        const negocioId = (session.user as any).negocioId;
-        const { planId, metodoPago, referencia, comprobanteUrl, monto } = await req.json();
+        const body = await req.json();
+        const { planId, metodoPago, referencia, comprobanteUrl, monto, businessId } = body;
 
-        // Obtener plan para verificar
-        const plan = await prisma.plan.findUnique({ where: { id: planId } });
-        if (!plan) return NextResponse.json({ error: 'Plan no encontrado' }, { status: 404 });
+        let negocioId = (session.user as any).negocioId;
+        const isAdmin = (session.user as any).role === 'SUPERADMIN' || (session.user as any).isAdminUser;
+
+        if (!negocioId && isAdmin && businessId) {
+            negocioId = businessId;
+        }
+
+        if (!negocioId) {
+            return NextResponse.json({ error: 'No se pudo identificar el negocio asociado' }, { status: 400 });
+        }
+
+        if (!planId) {
+            return NextResponse.json({ error: 'Debes seleccionar un plan' }, { status: 400 });
+        }
+
+        // Obtener plan para verificar (por id o por slug)
+        const plan = await prisma.plan.findFirst({
+            where: {
+                OR: [
+                    { id: planId },
+                    { slug: planId }
+                ]
+            }
+        });
+
+        if (!plan) {
+            return NextResponse.json({ error: 'Plan no encontrado en el sistema' }, { status: 404 });
+        }
 
         // Crear registro en Payment
         const payment = await prisma.payment.create({
             data: {
                 id: crypto.randomUUID(),
                 negocio_id: negocioId,
-                plan_id: planId,
-                monto: monto || plan.price,
-                metodo_pago: metodoPago,
-                referencia: referencia || null,
+                plan_id: plan.id,
+                monto: monto !== undefined && monto !== null ? Number(monto) : plan.price,
+                metodo_pago: metodoPago || 'TRANSFERENCIA',
+                referencia: referencia ? String(referencia).trim() : null,
                 comprobante: comprobanteUrl || null,
                 estado_pago: 'pending'
             }
         });
 
-        // Actualizar suscripción
-        await prisma.suscripcion.update({
+        // Actualizar o crear suscripción de forma segura con upsert
+        await prisma.suscripcion.upsert({
             where: { negocioId },
-            data: {
+            update: {
                 estado: 'payment_pending',
-                solicitudPlanId: planId
+                solicitudPlanId: plan.id,
+                metodoPago: metodoPago || 'TRANSFERENCIA',
+                pagoPendiente: true,
+                updatedAt: new Date()
+            },
+            create: {
+                id: crypto.randomUUID(),
+                negocioId,
+                planId: plan.id,
+                estado: 'payment_pending',
+                solicitudPlanId: plan.id,
+                metodoPago: metodoPago || 'TRANSFERENCIA',
+                pagoPendiente: true,
+                fechaInicio: new Date(),
+                fechaFin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                updatedAt: new Date()
             }
         });
 
@@ -66,9 +109,13 @@ export async function POST(req: Request) {
             console.error('Error enviando WhatsApp de solicitud al admin:', err);
         }
 
-        return NextResponse.json({ success: true, payment });
-    } catch (error) {
-        console.error('Error request upgrade:', error);
-        return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+        return NextResponse.json({
+            success: true,
+            message: 'Solicitud enviada correctamente',
+            payment
+        });
+    } catch (error: any) {
+        console.error('[API_BILLING_REQUEST_UPGRADE] Error:', error);
+        return NextResponse.json({ error: error?.message || 'Error interno al procesar la solicitud' }, { status: 500 });
     }
 }

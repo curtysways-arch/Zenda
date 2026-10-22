@@ -59,10 +59,18 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const rawBuffer = Buffer.from(arrayBuffer);
 
-    // 3. Detectar tipo MIME real
-    const { fileTypeFromBuffer } = await import('file-type');
-    const type = await fileTypeFromBuffer(rawBuffer);
-    if (!type || !ALLOWED_MIME.includes(type.mime)) {
+    // 3. Detectar tipo MIME real de forma segura
+    let format = '';
+    try {
+      const meta = await sharp(rawBuffer).metadata();
+      format = meta.format || '';
+    } catch (_) {
+      if (rawBuffer[0] === 0xff && rawBuffer[1] === 0xd8 && rawBuffer[2] === 0xff) format = 'jpeg';
+      else if (rawBuffer[0] === 0x89 && rawBuffer[1] === 0x50 && rawBuffer[2] === 0x4e && rawBuffer[3] === 0x47) format = 'png';
+      else if (rawBuffer.toString('utf8', 8, 12) === 'WEBP') format = 'webp';
+    }
+
+    if (!format || !['jpeg', 'jpg', 'png', 'webp'].includes(format)) {
       return NextResponse.json({ error: 'Formato de imagen no soportado. Usa JPG, PNG o WEBP.' }, { status: 400 });
     }
 

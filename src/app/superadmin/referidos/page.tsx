@@ -25,7 +25,7 @@ export default function SuperAdminReferidosPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-slate-400">
                 <Loader2 className="animate-spin mb-4 text-emerald-500" size={36} />
-                <span className="text-[10px] font-black uppercase tracking-widest">Cargando métricas de red...</span>
+                <span className="text-xs font-bold uppercase tracking-wide">Cargando métricas de red...</span>
             </div>
         );
     }
@@ -37,7 +37,7 @@ export default function SuperAdminReferidosPage() {
         <div className="space-y-8 animate-in fade-in duration-300">
             {/* Title */}
             <div>
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                     <Gift className="text-emerald-500" size={24} />
                     Métricas de Referidos
                 </h1>
@@ -50,41 +50,41 @@ export default function SuperAdminReferidosPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[120px]">
                     <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-black uppercase tracking-widest">Total Referidos Válidos</span>
+                        <span className="text-xs font-bold uppercase tracking-wide">Total Referidos Válidos</span>
                         <Check size={18} className="text-emerald-500" />
                     </div>
-                    <span className="text-3xl font-black text-slate-900 dark:text-white mt-2">{stats.totalValidos}</span>
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{stats.totalValidos}</span>
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[120px]">
                     <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-black uppercase tracking-widest">Invitaciones en Progreso</span>
+                        <span className="text-xs font-bold uppercase tracking-wide">Invitaciones en Progreso</span>
                         <Users size={18} className="text-cyan-500" />
                     </div>
-                    <span className="text-3xl font-black text-slate-900 dark:text-white mt-2">{stats.totalPendientes}</span>
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{stats.totalPendientes}</span>
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[120px]">
                     <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-black uppercase tracking-widest">Campañas Activas</span>
+                        <span className="text-xs font-bold uppercase tracking-wide">Campañas Activas</span>
                         <Gift size={18} className="text-amber-500" />
                     </div>
-                    <span className="text-3xl font-black text-slate-900 dark:text-white mt-2">{stats.totalCampaigns}</span>
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{stats.totalCampaigns}</span>
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[120px]">
                     <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-black uppercase tracking-widest">Total Premios Reclamados</span>
+                        <span className="text-xs font-bold uppercase tracking-wide">Total Premios Reclamados</span>
                         <Award size={18} className="text-purple-500" />
                     </div>
-                    <span className="text-3xl font-black text-slate-900 dark:text-white mt-2">{stats.totalRewards}</span>
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{stats.totalRewards}</span>
                 </div>
             </div>
 
             {/* Ranking Negocios */}
             <div className="grid grid-cols-1 gap-6">
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-[2.5rem] p-6 lg:p-8 shadow-sm">
-                    <h3 className="text-base font-black text-slate-900 dark:text-white uppercase italic tracking-tight mb-6 flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl p-6 lg:p-8 shadow-sm">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-6 flex items-center gap-2">
                         <BarChart3 className="text-emerald-500" size={20} />
                         Ranking de Negocios más recomendados
                     </h3>
@@ -98,7 +98,7 @@ export default function SuperAdminReferidosPage() {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="border-b border-slate-100 dark:border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 pb-3">
+                                    <tr className="border-b border-slate-100 dark:border-white/5 text-xs font-bold uppercase tracking-wide text-slate-400 pb-3">
                                         <th className="pb-3 w-16">Puesto</th>
                                         <th className="pb-3">Negocio</th>
                                         <th className="pb-3">Slug</th>
@@ -110,11 +110,11 @@ export default function SuperAdminReferidosPage() {
                                     {negocios.map((neg: any, idx: number) => (
                                         <tr key={neg.id} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
                                             <td className="py-4">
-                                                <span className={`size-7 rounded-full flex items-center justify-center font-black text-[11px] ${
-                                                    idx === 0 ? 'bg-amber-100 text-amber-800' :
-                                                    idx === 1 ? 'bg-slate-200 text-slate-800' :
-                                                    idx === 2 ? 'bg-orange-100 text-orange-800' : 'bg-slate-100 dark:bg-white/5 text-slate-500'
-                                                }`}>
+                                                <span className={`size-7 rounded-full flex items-center justify-center font-bold text-xs ${
+ idx === 0 ? 'bg-amber-100 text-amber-800' :
+ idx === 1 ? 'bg-slate-200 text-slate-800' :
+ idx === 2 ? 'bg-orange-100 text-orange-800' : 'bg-slate-100 dark:bg-white/5 text-slate-500'
+ }`}>
                                                     {idx + 1}
                                                 </span>
                                             </td>
@@ -124,7 +124,7 @@ export default function SuperAdminReferidosPage() {
                                             <td className="py-4 font-medium text-slate-400 font-mono">
                                                 /{neg.slug}
                                             </td>
-                                            <td className="py-4 font-black text-slate-900 dark:text-white text-sm">
+                                            <td className="py-4 font-bold text-slate-900 dark:text-white text-sm">
                                                 {neg.referidosValidos}
                                             </td>
                                             <td className="py-4 text-right">

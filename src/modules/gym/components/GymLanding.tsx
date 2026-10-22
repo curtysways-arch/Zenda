@@ -237,12 +237,12 @@ export default function GymLanding({
             </div>
 
             {/* Nombre del Gimnasio */}
-            <h2 className="text-sm md:text-base uppercase tracking-widest font-black text-orange-400 mb-3 drop-shadow">
+            <h2 className="text-sm md:text-base uppercase tracking-wide font-bold text-orange-400 mb-3 drop-shadow">
               {negocio?.nombre || 'VORTEX FITNESS CLUB'}
             </h2>
 
             {/* Título Principal de Alto Impacto */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight leading-tight text-white max-w-4xl drop-shadow-lg mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-5xl lg:text-5xl font-bold tracking-tight leading-tight text-white max-w-4xl drop-shadow-lg mb-6">
               {heroTitulo}
             </h1>
 
@@ -255,7 +255,7 @@ export default function GymLanding({
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
               <a
                 href="#planes"
-                className="w-full sm:w-auto px-8 py-4 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-sm uppercase tracking-wider text-white shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                 style={{
                   backgroundColor: primaryColor,
                   boxShadow: `0 10px 25px -5px ${primaryColor}88`
@@ -278,7 +278,7 @@ export default function GymLanding({
             <div className="grid grid-cols-3 gap-4 sm:gap-8 mt-14 pt-8 border-t border-slate-800/80 w-full max-w-2xl">
               {heroStats.map((st: any, idx: number) => (
                 <div key={idx} className="flex flex-col items-center">
-                  <span className="text-2xl sm:text-3xl font-black text-white drop-shadow">{st.value}</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-white drop-shadow">{st.value}</span>
                   <span className="text-xs text-slate-300 font-medium mt-0.5">{st.label}</span>
                 </div>
               ))}
@@ -294,7 +294,7 @@ export default function GymLanding({
             <Sparkles size={14} />
             Membresías Disponibles
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
             ELIGE TU MEMBRESÍA
           </h2>
           <p className="text-slate-400 text-sm sm:text-base">
@@ -330,7 +330,7 @@ export default function GymLanding({
                   {/* Badge Destacado */}
                   {isFeatured && (
                     <div 
-                      className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest text-white shadow-md"
+                      className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide text-white shadow-md"
                       style={{ backgroundColor: primaryColor }}
                     >
                       Más Recomendado
@@ -339,7 +339,7 @@ export default function GymLanding({
 
                   {/* Cabecera del Plan */}
                   <div className="mb-6">
-                    <h3 className="text-xl sm:text-2xl font-black uppercase text-white tracking-wide">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white tracking-wide">
                       {plan.name}
                     </h3>
                     {plan.description && (
@@ -351,7 +351,7 @@ export default function GymLanding({
 
                   {/* Precio Dinámico (Regla 9) */}
                   <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-slate-800">
-                    <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+                    <span className="text-4xl sm:text-5xl font-bold text-white tracking-tight">
                       ${plan.price}
                     </span>
                     <span className="text-xs sm:text-sm font-semibold text-slate-400 uppercase">
@@ -375,11 +375,11 @@ export default function GymLanding({
                   {/* CTA Principal de Compra (Regla 7: "Adquirir membresía") */}
                   <button
                     onClick={() => handleOpenCheckout(plan)}
-                    className={`w-full py-3.5 px-6 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                      isFeatured
-                        ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/30'
-                        : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
-                    }`}
+                    className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+ isFeatured
+ ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/30'
+ : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
+ }`}
                   >
                     Adquirir Membresía
                     <ArrowRight size={14} />
@@ -398,7 +398,7 @@ export default function GymLanding({
             <Flame size={14} />
             Entrenamiento Dirigido
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
             CLASES & HORARIOS
           </h2>
           <p className="text-slate-400 text-sm sm:text-base">
@@ -420,11 +420,11 @@ export default function GymLanding({
               <button
                 key={day.key}
                 onClick={() => setSelectedDayFilter(day.key)}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                  selectedDayFilter === day.key
-                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/25 scale-105'
-                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+ selectedDayFilter === day.key
+ ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/25 scale-105'
+ : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
+ }`}
               >
                 {day.label}
               </button>
@@ -461,7 +461,7 @@ export default function GymLanding({
                       {/* Categoría y Aforo */}
                       <div className="flex items-center justify-between gap-2 mb-4">
                         <span 
-                          className="px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider"
+                          className="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
                           style={{
                             backgroundColor: `${c.color || '#ea580c'}22`,
                             color: c.color || '#ea580c',
@@ -477,7 +477,7 @@ export default function GymLanding({
                       </div>
 
                       {/* Nombre y Descripción */}
-                      <h3 className="text-xl font-black uppercase text-white group-hover:text-orange-400 transition-colors">
+                      <h3 className="text-xl font-bold text-white group-hover:text-orange-400 transition-colors">
                         {c.name}
                       </h3>
                       {c.description && (
@@ -510,7 +510,7 @@ export default function GymLanding({
                         {daysArray.map((day: string, idx: number) => (
                           <span
                             key={idx}
-                            className="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-[10px] font-mono font-bold text-slate-300"
+                            className="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-xs font-mono font-bold text-slate-300"
                           >
                             {day}
                           </span>
@@ -543,7 +543,7 @@ export default function GymLanding({
               <Building2 size={14} />
               Instalaciones
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
               CONOCE NUESTRO GIMNASIO
             </h2>
             <p className="text-slate-400 text-sm sm:text-base">
@@ -554,7 +554,7 @@ export default function GymLanding({
           {/* Áreas del Gimnasio */}
           {gymAreas.length > 0 && (
             <div className="mb-14">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-5 flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-5 flex items-center gap-2">
                 <Layers size={14} /> Áreas y Espacios
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -577,7 +577,7 @@ export default function GymLanding({
                     {/* Info superpuesta */}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
                     <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h4 className="text-base font-black text-white uppercase tracking-wide drop-shadow">
+                      <h4 className="text-base font-bold text-white uppercase tracking-wide drop-shadow">
                         {area.name}
                       </h4>
                       {area.description && (
@@ -592,12 +592,12 @@ export default function GymLanding({
                             .filter((e: any) => e.areaId === area.id)
                             .slice(0, 3)
                             .map((e: any) => (
-                              <span key={e.id} className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-[10px] font-semibold border border-orange-500/20">
+                              <span key={e.id} className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-xs font-semibold border border-orange-500/20">
                                 {e.name}
                               </span>
                             ))}
                           {gymEquipment.filter((e: any) => e.areaId === area.id).length > 3 && (
-                            <span className="px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 text-[10px] font-semibold">
+                            <span className="px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 text-xs font-semibold">
                               +{gymEquipment.filter((e: any) => e.areaId === area.id).length - 3} más
                             </span>
                           )}
@@ -613,7 +613,7 @@ export default function GymLanding({
           {/* Equipamiento sin área asignada */}
           {gymEquipment.filter((e: any) => !e.areaId).length > 0 && (
             <div>
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-5 flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-5 flex items-center gap-2">
                 <Dumbbell size={14} /> Equipamiento General
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -637,7 +637,7 @@ export default function GymLanding({
                       <div className="p-3">
                         <p className="text-xs font-bold text-white truncate">{equip.name}</p>
                         {equip.description && (
-                          <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">{equip.description}</p>
+                          <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{equip.description}</p>
                         )}
                       </div>
                     </div>
@@ -677,11 +677,11 @@ export default function GymLanding({
 
                 {/* Contenido */}
                 <div className="flex-1">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-black uppercase tracking-widest mb-3 border border-orange-500/25">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-400 text-xs font-bold uppercase tracking-wide mb-3 border border-orange-500/25">
                     <Flame size={12} />
                     Oferta Especial
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-black uppercase text-white mb-2 leading-tight">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight">
                     {activePromo.titulo}
                   </h2>
                   {promoDesc && (
@@ -690,7 +690,7 @@ export default function GymLanding({
 
                   {/* Precio */}
                   <div className="flex items-baseline gap-3 mb-5">
-                    <span className="text-4xl font-black text-white">
+                    <span className="text-4xl font-bold text-white">
                       ${activePromo.precioPromo}
                     </span>
                     {activePromo.precioAnterior && activePromo.precioAnterior > activePromo.precioPromo && (
@@ -711,7 +711,7 @@ export default function GymLanding({
 
                   <a
                     href="#planes"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-lg transition-all hover:scale-105 active:scale-95"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm uppercase tracking-wider text-white shadow-lg transition-all hover:scale-105 active:scale-95"
                     style={{ backgroundColor: primaryColor }}
                   >
                     <Dumbbell size={16} />
@@ -733,7 +733,7 @@ export default function GymLanding({
                 <Shield size={14} className="text-orange-400" />
                 {facilitiesBadge}
               </div>
-              <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-white mb-6">
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-6">
                 {facilitiesTitle}
               </h2>
               <p className="text-slate-400 text-sm sm:text-base leading-relaxed mb-8">
@@ -778,7 +778,7 @@ export default function GymLanding({
       {/* ── 4. UBICACIÓN Y HORARIOS (CONFIGURABLES) ───────────────────────── */}
       <section className="py-16 max-w-6xl mx-auto px-4 sm:px-6">
         <div className="p-8 sm:p-12 rounded-3xl bg-slate-900/60 border border-slate-800 text-center max-w-3xl mx-auto">
-          <h3 className="text-2xl sm:text-3xl font-black uppercase text-white mb-6">
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mb-6">
             HORARIOS & UBICACIÓN
           </h3>
 
@@ -808,7 +808,7 @@ export default function GymLanding({
 
           {/* CTA FINAL (Regla 38) */}
           <div className="pt-6 border-t border-slate-800/80">
-            <h4 className="text-xl sm:text-2xl font-black uppercase text-white mb-2">
+            <h4 className="text-xl sm:text-2xl font-bold text-white mb-2">
               ¿LISTO PARA EMPEZAR?
             </h4>
             <p className="text-xs sm:text-sm text-slate-400 mb-6">
@@ -816,7 +816,7 @@ export default function GymLanding({
             </p>
             <a
               href="#membresias"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-black text-xs sm:text-sm uppercase tracking-wider text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-xs sm:text-sm uppercase tracking-wider text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
               style={{ backgroundColor: primaryColor }}
             >
               <Dumbbell size={16} />
@@ -844,7 +844,7 @@ export default function GymLanding({
                   <span className="text-xs font-bold uppercase tracking-wider text-orange-400">
                     Adquirir Membresía
                   </span>
-                  <h3 className="text-2xl font-black uppercase text-white mt-1">
+                  <h3 className="text-2xl font-bold text-white mt-1">
                     {selectedPlan.name}
                   </h3>
                   <p className="text-sm font-bold text-slate-300 mt-1">
@@ -904,7 +904,7 @@ export default function GymLanding({
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full py-4 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full py-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
                       style={{ backgroundColor: primaryColor }}
                     >
                       {isSubmitting ? (
@@ -924,7 +924,7 @@ export default function GymLanding({
                 <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4">
                   <Check size={32} />
                 </div>
-                <h3 className="text-2xl font-black uppercase text-white mb-2">
+                <h3 className="text-2xl font-bold text-white mb-2">
                   ¡BIENVENIDO AL GIMNASIO!
                 </h3>
                 <p className="text-sm text-slate-300 mb-6">
@@ -934,7 +934,7 @@ export default function GymLanding({
                 <div className="space-y-3">
                   <Link
                     href={`/${negocio.slug}/mi-qr`}
-                    className="block w-full py-3.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 font-black text-xs uppercase tracking-wider text-white text-center shadow-lg transition-all"
+                    className="block w-full py-3.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 font-bold text-xs uppercase tracking-wider text-white text-center shadow-lg transition-all"
                   >
                     Ver Mi Código QR de Acceso
                   </Link>

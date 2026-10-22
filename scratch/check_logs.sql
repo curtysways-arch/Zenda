@@ -1,2 +1,0 @@
-SELECT * FROM BotLog ORDER BY timestamp DESC LIMIT 10;
-SELECT * FROM RetryMessage ORDER BY created_at DESC LIMIT 10;

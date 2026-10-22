@@ -1,22 +1,30 @@
+'use client';
+
 /**
  * @file page.tsx
  * @module app/driver
- * @description App Web de Repartidores NATIVA EDGE-TO-EDGE para Citiox Enterprise vNext.
+ * @description App web de repartidores Citiox.
+ *
+ * Un repartidor puede trabajar para varios negocios a la vez: la app usa la marca Citiox
+ * (azul) y cada pedido lleva el logo y el color de SU negocio, para que siempre sepa
+ * para quién está trabajando.
  */
 
-'use client';
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Truck, CheckCircle, XCircle, Navigation, MapPin, Phone,
-  Clock, ShieldAlert, PackageCheck, AlertCircle, RefreshCw, Power, DollarSign,
-  Map, Sparkles, Store, Building2, ExternalLink, Lock, ArrowLeft, Share2,
-  MessageCircle, MoreHorizontal, ChefHat, AlertTriangle, Check,
-  TrendingUp, History, User, LogOut, ChevronRight, Star, Award, FileText,
-  Filter, Search, Calendar, CreditCard, ShieldCheck, ThumbsUp, Eye, ArrowRight, Key, ChevronLeft
+  getCanonicalLogistics,
+  getActiveDriverCompensation,
+  isLaundryType,
+} from '@/core/logistics/CanonicalLogisticsService';
+import {
+  Truck, Check, X, Navigation, Phone, Clock, PackageCheck, AlertCircle, RefreshCw,
+  Power, Store, Lock, MessageCircle, AlertTriangle, History, User, LogOut,
+  ChevronRight, ShieldCheck, ArrowRight, Search, Coffee, Wallet, Map as MapIcon, Bike, Eye, Star,
 } from 'lucide-react';
+import { wordsFor } from '@/lib/laundry/wording';
 import DriverOrderMapModal from '@/components/driver/DriverOrderMapModal';
-import PhoneInput from '@/components/ui/PhoneInput';
+
+/* ─────────────────────────────── Tipos ─────────────────────────────── */
 
 interface DbOrder {
   id: string;
@@ -41,198 +49,390 @@ interface DbOrder {
     slug: string;
     logoUrl?: string;
     direccion?: string;
+    tipoNegocio?: string;
+    colorPrimario?: string;
+    whatsapp?: string;
+    branches?: any[];
   };
-  items: Array<{
-    id?: string;
-    nombreProducto: string;
-    cantidad: number;
-    precioUnitario: number;
-  }>;
+  items: Array<{ id?: string; nombreProducto: string; cantidad: number; precioUnitario: number }>;
 }
 
+type DriverStatus = 'DISPONIBLE' | 'DESCANSO' | 'DESCONECTADO';
+type Tab = 'PEDIDOS' | 'GANANCIAS' | 'HISTORIAL' | 'PERFIL';
+
+/* ─────────────────────────────── Utilidades ─────────────────────────────── */
+
+const BRAND = '#0066FF';
+const API = '/api/public/_app/driver';
+const HEADERS = { 'Content-Type': 'application/json', 'x-citiox-app': 'driver' };
+
+const money = (n: number | string) => `$${Number(n || 0).toFixed(2)}`;
+
+/** Color del negocio, solo si sirve como fondo con texto blanco (si es muy claro, usamos el azul Citiox). */
+function safeColor(c?: string | null) {
+  if (!c || !/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) return BRAND;
+  let h = c.slice(1);
+  if (h.length === 3) h = h.split('').map((x) => x + x).join('');
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return lum > 0.62 ? BRAND : `#${h}`;
+}
+
+function parseExtra(extra: any) {
+  if (!extra) return {};
+  if (typeof extra === 'string') {
+    try { return JSON.parse(extra); } catch { return {}; }
+  }
+  return extra;
+}
+
+function initials(name?: string) {
+  return (name || 'R').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+}
+
+function timeAgo(iso?: string) {
+  if (!iso) return '';
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (m < 1) return 'ahora';
+  if (m < 60) return `hace ${m} min`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `hace ${h} h`;
+  return new Date(iso).toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
+}
+
+function orderCode(o: DbOrder) {
+  return o.codigo || (o.numeroPedido ? String(o.numeroPedido) : o.id.slice(-6).toUpperCase());
+}
+
+function waLink(phone?: string) {
+  let d = (phone || '').replace(/\D/g, '');
+  if (d.startsWith('0') && d.length === 10) d = '593' + d.slice(1);
+  else if (d.length === 9 && d.startsWith('9')) d = '593' + d;
+  return d ? `https://wa.me/${d}` : '';
+}
+
+function mapsLink(o: DbOrder, toBusiness = false) {
+  if (toBusiness) {
+    const addr = o.negocio?.direccion;
+    return addr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}` : '';
+  }
+  if (o.latitud && o.longitud) return `https://www.google.com/maps/dir/?api=1&destination=${o.latitud},${o.longitud}`;
+  if (o.direccionCliente) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.direccionCliente)}`;
+  return '';
+}
+
+function distanceOf(o: DbOrder): string | null {
+  const ex = parseExtra(o.extraInfo);
+  const d = Number(ex?.pricingBreakdown?.distanceKm || ex?.distanceKm || 0);
+  return d > 0 ? `${d.toFixed(1)} km` : null;
+}
+
+function isLaundryOrder(o: DbOrder) {
+  const ex = parseExtra(o.extraInfo);
+  return (
+    isLaundryType(o.negocio?.tipoNegocio, ex, `${o.negocio?.slug || ''} ${o.negocio?.nombre || ''}`) ||
+    (o as any).isLaundry ||
+    ex?.isLaundry ||
+    Boolean(ex?.servicioNombre || ex?.articulos || ex?.cantidadPares) ||
+    ['ESPERANDO_REPARTIDOR_RETIRO', 'ESPERANDO_ACEPTACION_REPARTIDOR', 'ESPERANDO_REPARTIDOR_ENTREGA', 'LISTO_PARA_ENTREGA', 'REPARTIDOR_EN_CAMINO', 'RECOGIDO', 'EN_RUTA_ENTREGA'].includes(o.estado)
+  );
+}
+
+function isRetiroOrder(o: DbOrder) {
+  const ex = parseExtra(o.extraInfo);
+  return (
+    (o as any).tipoMision === 'RETIRO' ||
+    ex?.tipoMision === 'RETIRO' ||
+    ['ESPERANDO_REPARTIDOR_RETIRO', 'ESPERANDO_ACEPTACION_REPARTIDOR', 'PENDIENTE_RETIRO', 'REPARTIDOR_EN_CAMINO', 'RECOGIDO'].includes(o.estado)
+  );
+}
+
+/** Pasos de la misión según el tipo, para la barra de progreso. */
+function missionSteps(o: DbOrder, laundry: boolean, retiro: boolean): { steps: string[]; current: number } {
+  if (laundry && retiro) {
+    const map: Record<string, number> = { REPARTIDOR_ASIGNADO: 0, REPARTIDOR_EN_CAMINO: 0, RECOGIDO: 1 };
+    return { steps: ['Ir donde el cliente', 'Retiro confirmado', 'Entregar en el local'], current: map[o.estado] ?? 0 };
+  }
+  if (laundry) {
+    // Entrega de lavandería: el repartidor recoge las prendas listas en el local y las lleva al cliente
+    const map: Record<string, number> = {
+      REPARTIDOR_ASIGNADO: 0, REPARTIDOR_EN_LOCAL: 1, ENTREGADO_A_REPARTIDOR: 1,
+      EN_RUTA_ENTREGA: 2, ESPERANDO_CLIENTE: 3, WAITING_CLIENT: 3,
+    };
+    return { steps: ['Ir al local', 'Recibir pedido', 'En camino', 'Entregar'], current: map[o.estado] ?? 0 };
+  }
+  const map: Record<string, number> = {
+    REPARTIDOR_ASIGNADO: 0,
+    REPARTIDOR_EN_LOCAL: 1,
+    ENTREGADO_A_REPARTIDOR: 1,
+    EN_CAMINO: 2,
+    EN_RUTA: 2,
+    ESPERANDO_CLIENTE: 3,
+    WAITING_CLIENT: 3,
+  };
+  return { steps: ['Ir al local', 'Retirar pedido', 'En camino', 'Entregar'], current: map[o.estado] ?? 0 };
+}
+
+/** Restaurante: código que el repartidor dice en el local. (En lavandería el código lo tiene el cliente.) */
+function pickupCodeFor(o: DbOrder) {
+  const ex = parseExtra(o.extraInfo);
+  return ex?.pickupCode ? String(ex.pickupCode) : '';
+}
+
+const CANCELLATION_REASONS = [
+  { code: 'CLIENT_NO_ANSWER', title: 'El cliente no responde', desc: 'No contesta llamadas ni WhatsApp' },
+  { code: 'WRONG_ADDRESS', title: 'Dirección incorrecta o inaccesible', desc: 'Ubicación errónea o calle cerrada' },
+  { code: 'CLIENT_POSTPONED', title: 'El cliente pidió otra fecha u hora', desc: 'No está listo para recibir o entregar' },
+  { code: 'VEHICLE_EMERGENCY', title: 'Emergencia o avería', desc: 'Problema con tu vehículo o fuerza mayor' },
+  { code: 'SECURITY_ZONE', title: 'Zona insegura', desc: 'No hay condiciones seguras para llegar' },
+  { code: 'OTHER', title: 'Otro motivo', desc: 'Escribe el detalle abajo' },
+];
+
+/* ─────────────────────────────── Piezas visuales ─────────────────────────────── */
+
+function BizLogo({ biz, size = 'w-9 h-9' }: { biz?: { nombre?: string; logoUrl?: string | null; colorPrimario?: string | null; color?: string | null }; size?: string }) {
+  const [err, setErr] = useState(false);
+  const color = safeColor(biz?.colorPrimario || biz?.color);
+  if (biz?.logoUrl && !err) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={biz.logoUrl} alt="" onError={() => setErr(true)} className={`${size} rounded-xl object-cover bg-white ring-1 ring-black/5 shrink-0`} />;
+  }
+  return (
+    <div className={`${size} rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0`} style={{ background: color }}>
+      {initials(biz?.nombre)}
+    </div>
+  );
+}
+
+function Sheet({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
+  return (
+    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center">
+      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
+      <div className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="sticky top-0 bg-white px-5 pt-4 pb-3 flex items-center justify-between border-b border-slate-100">
+          <h3 className="font-bold text-slate-900">{title}</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Cerrar">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────── Página ─────────────────────────────── */
+
 export default function DriverAppPage() {
-  const slug = 'parrilla-citiox-demo'; // Negocio piloto por defecto
-  // Estado de Sesión Dinámica de Repartidor
   const [driverSession, setDriverSession] = useState<{
     driverId: string;
     driverName: string;
     driverPhone: string;
     vehicleType: string;
   } | null>(null);
-
-  const [loginForm, setLoginForm] = useState({
-    name: '',
-    phone: '',
-    vehicleType: 'MOTO'
-  });
-
   const [isInitializingSession, setIsInitializingSession] = useState(true);
-
-  // Inicializar Sesión desde localStorage o Parámetros URL
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const searchParams = new URLSearchParams(window.location.search);
-        const qId = searchParams.get('driverId');
-        const qName = searchParams.get('name');
-        const qPhone = searchParams.get('phone');
-
-        if (qId && qName) {
-          const newS = {
-            driverId: qId,
-            driverName: qName,
-            driverPhone: qPhone || '0991234567',
-            vehicleType: 'MOTO'
-          };
-          localStorage.setItem('citiox_driver_session', JSON.stringify(newS));
-          setDriverSession(newS);
-        } else {
-          const saved = localStorage.getItem('citiox_driver_session');
-          if (saved) {
-            try {
-              setDriverSession(JSON.parse(saved));
-            } catch (_) {}
-          }
-        }
-      }
-    } finally {
-      setIsInitializingSession(false);
-    }
-  }, []);
 
   const driverId = driverSession?.driverId || '';
   const driverName = driverSession?.driverName || '';
   const driverPhone = driverSession?.driverPhone || '';
 
-  const [status, setStatus] = useState<'DISPONIBLE' | 'DESCANSO' | 'DESCONECTADO'>('DISPONIBLE');
-  const [activeTab, setActiveTab] = useState<'INICIO' | 'GANANCIAS' | 'HISTORIAL' | 'NEGOCIOS' | 'PERFIL'>('INICIO');
-
-  const [availableDbOrders, setAvailableDbOrders] = useState<DbOrder[]>([]);
+  const [status, setStatus] = useState<DriverStatus>('DISPONIBLE');
+  const [tab, setTab] = useState<Tab>('PEDIDOS');
+  const [orders, setOrders] = useState<DbOrder[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [nowTime, setNowTime] = useState<number>(Date.now());
-  const [inputPins, setInputPins] = useState<{ [orderId: string]: string }>({});
-
-  const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<DbOrder | null>(null);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [nowTime, setNowTime] = useState(Date.now());
+  const [inputPins, setInputPins] = useState<Record<string, string>>({});
+  const [detailOrder, setDetailOrder] = useState<DbOrder | null>(null);
+  const [showLogout, setShowLogout] = useState(false);
   const [historySearch, setHistorySearch] = useState('');
+  const [bizFilter, setBizFilter] = useState<string>('ALL');
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [toast, setToast] = useState<{ msg: string; tone: 'ok' | 'err' } | null>(null);
+  const [savingNetwork, setSavingNetwork] = useState(false);
 
-  // Availability for new businesses switch
-  const [availableForNewBusinesses, setAvailableForNewBusinesses] = useState<boolean>(true);
-  const [ratingModalOrderId, setRatingModalOrderId] = useState<string | null>(null);
-  const [customerStar, setCustomerStar] = useState<number>(5);
-  const [customerComment, setCustomerComment] = useState<string>('');
+  // Cancelación
+  const [cancelOrder, setCancelOrder] = useState<DbOrder | null>(null);
+  const [cancelReason, setCancelReason] = useState('CLIENT_NO_ANSWER');
+  const [cancelNotes, setCancelNotes] = useState('');
+  const [cancelLoading, setCancelLoading] = useState(false);
 
-  // Estado de Login OTP
+  // Calificación al cliente
+  const [ratingOrderId, setRatingOrderId] = useState<string | null>(null);
+  const [customerStar, setCustomerStar] = useState(5);
+  const [customerComment, setCustomerComment] = useState('');
+
+  // Ingreso con WhatsApp
   const [otpStep, setOtpStep] = useState<'PHONE' | 'OTP'>('PHONE');
   const [otpPhone, setOtpPhone] = useState('');
-  const [otpPin, setOtpPin] = useState(['', '', '', '']);
-  const [otpSentDemoCode, setOtpSentDemoCode] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState('');
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpLoading, setOtpLoading] = useState(false);
+  const [otpName, setOtpName] = useState<string | null>(null);
+  const [resendIn, setResendIn] = useState(0);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otpPhone || otpPhone.length < 7) {
-      setOtpError('Por favor ingresa un número de teléfono / WhatsApp válido.');
+  const notify = (msg: string, tone: 'ok' | 'err' = 'ok') => {
+    setToast({ msg, tone });
+    window.setTimeout(() => setToast((t) => (t?.msg === msg ? null : t)), 3500);
+  };
+
+  /* ── Sesión ─────────────────────────────────────────────────────────── */
+
+  // La sesión real es la cookie del servidor; localStorage solo guarda datos de pantalla.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        let saved: any = null;
+        try { saved = JSON.parse(localStorage.getItem('citiox_driver_session') || 'null'); } catch {}
+        try {
+          const st = localStorage.getItem('citiox_driver_status') as DriverStatus | null;
+          if (st === 'DISPONIBLE' || st === 'DESCANSO' || st === 'DESCONECTADO') setStatus(st);
+        } catch {}
+        if (window.location.search.includes('driverId=')) window.history.replaceState(null, '', window.location.pathname);
+        const res = await fetch(API, { cache: 'no-store', headers: { 'x-citiox-app': 'driver' } });
+        if (cancelled) return;
+        if (res.ok) {
+          const data = await res.json();
+          const p = data.driverProfile;
+          if (p?.driverId) {
+            const s = {
+              driverId: p.driverId,
+              driverName: p.driverName || saved?.driverName || '',
+              driverPhone: p.driverPhone || saved?.driverPhone || '',
+              vehicleType: p.vehicleType || saved?.vehicleType || 'MOTO',
+            };
+            try { localStorage.setItem('citiox_driver_session', JSON.stringify(s)); } catch {}
+            setDriverSession(s);
+            setProfile(p);
+            setOrders(data.availableDbOrders || []);
+            return;
+          }
+        }
+        try { localStorage.removeItem('citiox_driver_session'); } catch {}
+        setDriverSession(null);
+      } catch {
+        try {
+          const saved = localStorage.getItem('citiox_driver_session');
+          if (saved && !cancelled) setDriverSession(JSON.parse(saved));
+        } catch {}
+      } finally {
+        if (!cancelled) setIsInitializingSession(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = window.setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [resendIn]);
+
+  const normalizedPhone = () => {
+    const d = otpPhone.replace(/\D/g, '');
+    if (d.length === 9 && d.startsWith('9')) return '0' + d;
+    if (d.startsWith('593') && d.length === 12) return '0' + d.slice(3);
+    return d;
+  };
+
+  const requestOtp = async () => {
+    const phone = normalizedPhone();
+    if (phone.length < 9) {
+      setOtpError('Escribe tu número de celular completo.');
       return;
     }
     setOtpLoading(true);
     setOtpError(null);
-
     try {
-      const res = await fetch(`/api/public/${slug}/driver`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'REQUEST_OTP',
-          phone: otpPhone
-        })
-      });
+      const res = await fetch(API, { method: 'POST', headers: HEADERS, body: JSON.stringify({ action: 'REQUEST_OTP', phone }) });
       const data = await res.json();
       if (res.ok && data.success) {
-        setOtpSentDemoCode(data.otp || '1234');
+        setOtpName(data.driverName || null);
         setOtpStep('OTP');
-        setOtpPin(['', '', '', '']);
+        setOtpCode('');
+        setResendIn(30);
       } else {
-        setOtpError(data.error || 'No se pudo enviar el código OTP.');
+        setOtpError(data.error || 'No pudimos enviarte el código.');
       }
-    } catch (err) {
-      setOtpError('Error de red al solicitar el código OTP.');
+    } catch {
+      setOtpError('Sin conexión. Revisa tu internet e intenta de nuevo.');
     } finally {
       setOtpLoading(false);
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const code = otpPin.join('');
-    if (code.length < 4) {
-      setOtpError('Ingresa el código completo de 4 dígitos.');
-      return;
-    }
+  const verifyOtp = async (code: string) => {
+    if (code.length < 4) return;
     setOtpLoading(true);
     setOtpError(null);
-
     try {
-      const res = await fetch(`/api/public/${slug}/driver`, {
+      const res = await fetch(API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'VERIFY_OTP',
-          phone: otpPhone,
-          otp: code
-        })
+        headers: HEADERS,
+        body: JSON.stringify({ action: 'VERIFY_OTP', phone: normalizedPhone(), otp: code }),
       });
       const data = await res.json();
       if (res.ok && data.success && data.session) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('citiox_driver_session', JSON.stringify(data.session));
-        }
+        try { localStorage.setItem('citiox_driver_session', JSON.stringify(data.session)); } catch {}
         setDriverSession(data.session);
+        setTab('PEDIDOS');
       } else {
-        setOtpError(data.error || 'Código OTP incorrecto. Intenta de nuevo.');
+        setOtpError(data.error || 'Código incorrecto.');
+        setOtpCode('');
       }
-    } catch (err) {
-      setOtpError('Error de red al verificar el código OTP.');
+    } catch {
+      setOtpError('Sin conexión. Revisa tu internet e intenta de nuevo.');
     } finally {
       setOtpLoading(false);
     }
   };
 
-  const handlePinChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const nextPin = [...otpPin];
-    nextPin[index] = value.slice(-1);
-    setOtpPin(nextPin);
-
-    if (value && index < 3) {
-      const nextInput = document.getElementById(`otp-input-${index + 1}`);
-      if (nextInput) nextInput.focus();
-    }
+  const endLocalSession = () => {
+    try { localStorage.removeItem('citiox_driver_session'); } catch {}
+    setDriverSession(null);
+    setOrders([]);
+    setProfile(null);
+    setOtpStep('PHONE');
+    setOtpCode('');
   };
 
-  const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otpPin[index] && index > 0) {
-      const prevInput = document.getElementById(`otp-input-${index - 1}`);
-      if (prevInput) prevInput.focus();
-    }
+  const handleLogout = async () => {
+    setShowLogout(false);
+    try { await fetch(API, { method: 'POST', headers: HEADERS, body: JSON.stringify({ action: 'LOGOUT' }) }); } catch {}
+    endLocalSession();
   };
 
-  // Cargar estado inicial y registrar repartidor cuando haya sesión activa
-  useEffect(() => {
+  /* ── Datos ─────────────────────────────────────────────────────────── */
+
+  const fetchDriverData = async () => {
     if (!driverId) return;
-    registerDriver();
-    const interval = setInterval(fetchDriverData, 4000); // Polling cada 4s
-    return () => clearInterval(interval);
-  }, [driverId, driverName, driverPhone]);
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}?driverId=${driverId}`, { cache: 'no-store', headers: { 'x-citiox-app': 'driver' } });
+      if (res.status === 401 || res.status === 403) {
+        endLocalSession();
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.availableDbOrders || []);
+        if (data.driverProfile) setProfile(data.driverProfile);
+      }
+    } catch {
+      // sin conexión: se reintenta en el siguiente ciclo
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const registerDriver = async () => {
     if (!driverId || !driverName) return;
     try {
-      await fetch(`/api/public/${slug}/driver`, {
+      await fetch(API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: HEADERS,
         body: JSON.stringify({
           action: 'REGISTER_OR_UPDATE_DRIVER',
           driverId,
@@ -242,1502 +442,1315 @@ export default function DriverAppPage() {
           status,
         }),
       });
-      await fetchDriverData();
-    } catch (e) {
-      console.error('Error registrando repartidor:', e);
-    }
+    } catch {}
+    fetchDriverData();
   };
 
-  const fetchDriverData = async () => {
+  useEffect(() => {
     if (!driverId) return;
-    setLoading(true);
+    registerDriver();
+    const interval = window.setInterval(fetchDriverData, 5000);
+    return () => window.clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [driverId]);
+
+  useEffect(() => {
+    const t = window.setInterval(() => setNowTime(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  /* ── Acciones ─────────────────────────────────────────────────────────── */
+
+  const post = async (body: any) => {
+    const res = await fetch(API, { method: 'POST', headers: HEADERS, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) endLocalSession();
+    return { ok: res.ok && data.success !== false, data };
+  };
+
+  const changeStatus = async (next: DriverStatus) => {
+    setStatus(next);
+    try { localStorage.setItem('citiox_driver_status', next); } catch {}
+    await post({ action: 'SET_STATUS', driverId, status: next }).catch(() => {});
+    fetchDriverData();
+  };
+
+  const acceptOrder = async (orderId: string) => {
+    setActionLoading(orderId);
     try {
-      const res = await fetch(`/api/public/${slug}/driver?driverId=${driverId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setAvailableDbOrders(data.availableDbOrders || []);
-        if (data.driverProfile) {
-          setDriverSession(prev => prev ? {
-            ...prev,
-            driverName: data.driverProfile.driverName || prev.driverName,
-            vehicleType: data.driverProfile.vehicleType || prev.vehicleType,
-            vehicleName: data.driverProfile.vehicleName || (prev as any).vehicleName,
-            placa: data.driverProfile.placa || (prev as any).placa,
-            verificationStatus: data.driverProfile.verificationStatus || (prev as any).verificationStatus
-          } : prev);
-        }
+      const { ok, data } = await post({ action: 'ACCEPT_TASK', orderId, driverId, name: driverName, phone: driverPhone });
+      if (!ok) notify(data.error || 'No se pudo aceptar el pedido.', 'err');
+      else {
+        notify('¡Pedido aceptado! Ve a retirarlo.');
+        setDetailOrder(null);
+        setActiveIdx(0);
       }
-    } catch (e) {
-      console.error('Error cargando pedidos de repartidor:', e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Función de Login Manual de Repartidor
-  const handleDriverLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!loginForm.name || !loginForm.phone) return;
-
-    const cleanPhone = loginForm.phone.replace(/\D/g, '');
-    const generatedId = `driver_${cleanPhone || Date.now()}`;
-    const newS = {
-      driverId: generatedId,
-      driverName: loginForm.name,
-      driverPhone: loginForm.phone,
-      vehicleType: loginForm.vehicleType
-    };
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('citiox_driver_session', JSON.stringify(newS));
-    }
-    setDriverSession(newS);
-  };
-
-  const handleStatusChange = async (newStatus: 'DISPONIBLE' | 'DESCANSO' | 'DESCONECTADO') => {
-    setStatus(newStatus);
-    try {
-      await fetch(`/api/public/${slug}/driver`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'SET_STATUS',
-          driverId,
-          status: newStatus,
-        }),
-      });
       fetchDriverData();
-    } catch (e) {
-      console.error('Error cambiando estado:', e);
-    }
-  };
-
-  const handleAcceptOrder = async (orderId: string) => {
-    setActionLoading(orderId);
-    try {
-      await fetch(`/api/public/${slug}/driver`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'ACCEPT_TASK',
-          orderId,
-          driverId,
-          name: driverName,
-          phone: driverPhone,
-        }),
-      });
-      setSelectedOrderForDetail(null);
-      fetchDriverData();
-    } catch (e) {
-      console.error('Error aceptando pedido:', e);
+    } catch {
+      notify('Sin conexión. Intenta de nuevo.', 'err');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleMarkArrived = async (orderId: string) => {
+  const markArrived = async (orderId: string) => {
     setActionLoading(orderId);
     try {
-      await fetch(`/api/public/${slug}/driver`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'MARK_ARRIVED',
-          orderId,
-          driverId,
-          name: driverName,
-          phone: driverPhone,
-        }),
-      });
+      const { ok, data } = await post({ action: 'MARK_ARRIVED', orderId, driverId, name: driverName, phone: driverPhone });
+      if (!ok) notify(data.error || 'No se pudo registrar tu llegada.', 'err');
       fetchDriverData();
-    } catch (e) {
-      console.error('Error marcando llegada:', e);
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleUpdateState = async (orderId: string, nextState: 'ON_ROUTE' | 'DELIVERED') => {
+  const updateState = async (
+    orderId: string,
+    nextState: 'ON_ROUTE' | 'DELIVERED' | 'PICKED_UP' | 'DELIVERED_TO_WORKSHOP' | 'WAITING_CLIENT',
+    pin?: string
+  ) => {
     setActionLoading(orderId);
     try {
-      await fetch(`/api/public/${slug}/driver`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'UPDATE_DELIVERY_STATE',
-          orderId,
-          nextState,
-        }),
-      });
+      const { ok, data } = await post({ action: 'UPDATE_DELIVERY_STATE', orderId, nextState, pin: pin ? pin.trim() : undefined });
+      if (!ok) {
+        notify(data.error || 'No se pudo actualizar la entrega.', 'err');
+        return data;
+      }
       fetchDriverData();
-
       if (nextState === 'DELIVERED') {
-        setRatingModalOrderId(orderId);
+        setRatingOrderId(orderId);
       }
-    } catch (e) {
-      console.error('Error cambiando estado de entrega:', e);
+      if (nextState === 'DELIVERED' || nextState === 'PICKED_UP') {
+        setInputPins((p) => ({ ...p, [orderId]: '' }));
+      }
+      return data;
+    } catch (e: any) {
+      notify('Sin conexión. Intenta de nuevo.', 'err');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const submitCustomerRating = async () => {
-    if (!ratingModalOrderId) return;
+  const resendNotice = async (orderId: string, missionType?: 'RETIRO' | 'ENTREGA') => {
+    const { ok, data } = await post({ action: 'RESEND_CUSTOMER_NOTIFICATION', orderId, ...(missionType ? { missionType } : {}) });
+    notify(ok ? 'Le enviamos el aviso al cliente por WhatsApp.' : data.error || 'No se pudo enviar el aviso.', ok ? 'ok' : 'err');
+  };
+
+  const openCancel = (order: DbOrder) => {
+    if (['RECOGIDO', 'RECIBIDO', 'EN_PROCESO', 'ENTREGADO'].includes(order.estado)) {
+      notify('Ya retiraste los artículos: llévalos al negocio o escríbele al local.', 'err');
+      return;
+    }
+    setCancelOrder(order);
+    setCancelReason('CLIENT_NO_ANSWER');
+    setCancelNotes('');
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelOrder) return;
+    const reason = CANCELLATION_REASONS.find((r) => r.code === cancelReason);
+    setCancelLoading(true);
     try {
-      await fetch(`/api/public/${slug}/orders/${ratingModalOrderId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          driverRating: customerStar,
-          driverComment: customerComment,
-          rater: 'DRIVER'
-        })
+      const { ok, data } = await post({
+        action: 'CANCEL_TASK',
+        orderId: cancelOrder.id,
+        driverId,
+        name: driverName,
+        phone: driverPhone,
+        reasonCode: cancelReason,
+        reasonLabel: reason?.title || cancelReason,
+        notes: cancelNotes,
       });
-      setRatingModalOrderId(null);
-      setCustomerComment('');
+      if (!ok) {
+        notify(data.error || 'No se pudo cancelar.', 'err');
+        return;
+      }
+      notify('Misión cancelada. El pedido volvió a la lista para otro repartidor.');
+      setCancelOrder(null);
+      setDetailOrder(null);
       fetchDriverData();
-    } catch (e) {
-      console.error('Error enviando calificación del cliente:', e);
-      setRatingModalOrderId(null);
+    } finally {
+      setCancelLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('citiox_driver_session');
-    }
-    setDriverSession(null);
-    setShowLogoutModal(false);
-    setAvailableDbOrders([]);
+  const submitRating = async () => {
+    if (!ratingOrderId) return;
+    const order = orders.find((o) => o.id === ratingOrderId);
+    try {
+      await fetch(`/api/public/${order?.negocio?.slug || '_app'}/orders/${ratingOrderId}`, {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({ driverRating: customerStar, driverComment: customerComment, rater: 'DRIVER' }),
+      });
+    } catch {}
+    setRatingOrderId(null);
+    setCustomerComment('');
+    setCustomerStar(5);
+    fetchDriverData();
   };
 
-  const parseExtraInfo = (extra: any) => {
-    if (!extra) return {};
-    if (typeof extra === 'string') {
-      try { return JSON.parse(extra); } catch { return {}; }
+  const toggleNetwork = async () => {
+    const next = !(profile?.disponibleNuevosNegocios !== false);
+    setSavingNetwork(true);
+    const { ok, data } = await post({ action: 'SET_NETWORK_AVAILABILITY', value: next });
+    setSavingNetwork(false);
+    if (!ok) {
+      notify(data.error || 'No se pudo guardar.', 'err');
+      return;
     }
-    return extra;
+    setProfile((p: any) => ({ ...(p || {}), disponibleNuevosNegocios: next }));
+    notify(next ? 'Otros negocios de Citiox podrán invitarte.' : 'Ya no aparecerás como recomendado para nuevos negocios.');
   };
 
-  // Mis pedidos aceptados vs Pedidos disponibles en bolsa de trabajo
-  const myAssignedOrders = availableDbOrders.filter(o => {
-    const extra = parseExtraInfo(o.extraInfo);
-    return extra.assignedDriverId === driverId || 
-      ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'ESPERANDO_CLIENTE', 'WAITING_CLIENT'].includes(o.estado);
-  });
+  /* ── Derivados ─────────────────────────────────────────────────────────── */
 
-  const openUnassignedOrders = availableDbOrders.filter(o => {
-    const extra = parseExtraInfo(o.extraInfo);
-    return !extra.assignedDriverId && 
-      ['EN_PREPARACION', 'ACEPTADO', 'LISTO'].includes(o.estado);
-  });
+  const myAssignedOrders = useMemo(() => orders.filter((o) => {
+    const ex = parseExtra(o.extraInfo);
+    const mine = ex.assignedDriverId === driverId || (ex.repartidorId === driverId && ex.assignedDriverId !== null);
+    if (!mine) return false;
+    return [
+      'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA',
+      'ESPERANDO_CLIENTE', 'WAITING_CLIENT', 'REPARTIDOR_EN_CAMINO', 'RECOGIDO', 'EN_RUTA_ENTREGA',
+    ].includes(o.estado);
+  }), [orders, driverId]);
 
+  const openOrders = useMemo(() => orders.filter((o) => {
+    const ex = parseExtra(o.extraInfo);
+    if (ex.assignedDriverId) return false;
+    return [
+      'EN_PREPARACION', 'ACEPTADO', 'LISTO',
+      'ESPERANDO_REPARTIDOR_RETIRO', 'ESPERANDO_ACEPTACION_REPARTIDOR',
+      'ESPERANDO_REPARTIDOR_ENTREGA', 'LISTO_PARA_ENTREGA',
+    ].includes(o.estado);
+  }), [orders]);
+
+  const businesses: any[] = profile?.negociosAsociados || [];
+  const approvedBiz = businesses.filter((b) => b.isApproved);
+  const pendingBiz = businesses.filter((b) => !b.isApproved);
+  const isBlocked = Boolean(profile?.isGlobalBlocked);
   const hasActiveOrder = myAssignedOrders.length > 0;
+  const activeOrder = hasActiveOrder ? myAssignedOrders[Math.min(activeIdx, myAssignedOrders.length - 1)] : null;
 
-  // Calcular promedio real de calificaciones del driver
-  const ratedOrders = availableDbOrders.filter(o => parseExtraInfo(o.extraInfo)?.clientReview?.driverStars);
-  const totalStars = ratedOrders.reduce((sum, o) => sum + Number(parseExtraInfo(o.extraInfo).clientReview.driverStars), 0);
-  const avgRating = ratedOrders.length > 0 ? (totalStars / ratedOrders.length).toFixed(2) : '4.95';
-  const totalRatingsCount = ratedOrders.length > 0 ? ratedOrders.length : 184;
+  const filteredOpen = bizFilter === 'ALL' ? openOrders : openOrders.filter((o) => o.negocio?.id === bizFilter);
+  const countByBiz = (id: string) => openOrders.filter((o) => o.negocio?.id === id).length;
 
-  // Calcular distancia en Km entre local y cliente
-  const getDistanceString = (order: DbOrder) => {
-    const extra = parseExtraInfo(order.extraInfo);
-    const breakdownDist = extra?.pricingBreakdown?.distanceKm;
-    if (typeof breakdownDist === 'number' && breakdownDist > 0) {
-      return `${breakdownDist.toFixed(1)} km`;
-    }
-    if (order.latitud && order.longitud) {
-      const R = 6371;
-      const lat1 = -0.180653;
-      const lon1 = -78.467838;
-      const dLat = ((order.latitud - lat1) * Math.PI) / 180;
-      const dLon = ((order.longitud - lon1) * Math.PI) / 180;
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos((lat1 * Math.PI) / 180) * Math.cos((order.latitud * Math.PI) / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const dist = Math.round(R * c * 10) / 10;
-      return `${dist > 0 ? dist : 2.5} km`;
-    }
-    return '2.8 km aprox.';
-  };
+  const firstName = driverName.split(' ')[0] || 'Repartidor';
 
-  // Calcular cuenta regresiva
-  const getCountdownString = (estimatedReadyAt?: string) => {
-    if (!estimatedReadyAt) return '15:00';
-    const target = new Date(estimatedReadyAt).getTime();
-    const diff = Math.max(0, Math.floor((target - nowTime) / 1000));
-    const mins = Math.floor(diff / 60);
-    const secs = diff % 60;
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-  };
+  /* ─────────────────────────── Render: cargando ─────────────────────────── */
 
-  // Lista de Negocios Asociados en la red Citiox
-  const registeredBusinesses = [
-    { id: '1', nombre: 'La Parrilla Citiox', direccion: 'Av. Principal 123, Quito', telefono: '0991234567', activo: true, ordenesHoy: 14, logo: '🥩' },
-    { id: '2', nombre: 'Pizzeria Gourmet Citiox', direccion: 'Plaza Central 456, Quito', telefono: '0998765432', activo: true, ordenesHoy: 9, logo: '🍕' },
-    { id: '3', nombre: 'Citiox Burger & Grill', direccion: 'Calle Los Pinos 789, Quito', telefono: '0995554433', activo: true, ordenesHoy: 18, logo: '🍔' },
-    { id: '4', nombre: 'Sushi Roll Express', direccion: 'Av. Amazonas N34, Quito', telefono: '0992221100', activo: true, ordenesHoy: 6, logo: '🍣' },
-  ];
-
-  const getDriverRealFee = (order: DbOrder) => {
-    const extra = parseExtraInfo(order.extraInfo);
-    const pb = extra?.pricingBreakdown || {};
-
-    const explicitFee = Number(
-      pb.realShippingCost ||
-      pb.driverFee ||
-      pb.originalShippingFee ||
-      extra.realDriverFee ||
-      extra.originalCostoEnvio ||
-      0
-    );
-    if (explicitFee > 0) return explicitFee.toFixed(2);
-
-    const orderFee = Number(order.costoEnvio || 0);
-    const subsidy = Number(
-      pb.restaurantSubsidy ||
-      pb.subsidioRestaurante ||
-      extra.restaurantSubsidy ||
-      extra.subsidioRestaurante ||
-      0
-    );
-
-    if (subsidy > 0) {
-      return (orderFee + subsidy).toFixed(2);
-    }
-
-    if (orderFee < 1.50) {
-      if (Math.abs(orderFee - 0.04) < 0.001) {
-        return (0.04 + 3.00).toFixed(2);
-      }
-      const dist = Number(pb.distanceKm || extra.distanceKm || 0);
-      if (dist > 0) {
-        return Math.max(2.50, 1.50 + (dist * 0.30)).toFixed(2);
-      }
-      return '3.04';
-    }
-
-    return (orderFee > 0 ? orderFee : 2.50).toFixed(2);
-  };
-
-  if (!driverSession) {
+  if (isInitializingSession && !driverSession) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col justify-between text-slate-900 font-sans">
-        {/* Header Superior estilo Mi Perfil */}
-        <header className="px-6 py-5 bg-white border-b border-slate-100 flex items-center gap-4">
-          <button 
-            type="button" 
-            onClick={() => window.history.back()} 
-            className="size-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition-colors"
-          >
-            <ChevronLeft className="size-5" />
-          </button>
-          <div>
-            <h1 className="text-base font-black text-slate-900 tracking-tight leading-none">Mi Perfil</h1>
-            <p className="text-[11px] font-semibold text-slate-400 mt-0.5">Gestiona tu cuenta y preferencias</p>
-          </div>
-        </header>
-
-        {/* Cuerpo Principal */}
-        <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 my-auto">
-          {otpStep === 'PHONE' ? (
-            <section className="w-full max-w-sm flex flex-col items-center text-center space-y-6 animate-in fade-in duration-300">
-              <div className="space-y-1">
-                <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none text-slate-900">
-                  HOLA,
-                </h2>
-                <p className="font-black italic tracking-widest text-[11px] uppercase text-slate-500">
-                  IDENTIFÍCATE PARA VER TU PERFIL
-                </p>
-              </div>
-
-              <div className="w-full bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-2xl border border-slate-100 text-left">
-                <div className="flex items-center gap-3 mb-6 justify-center">
-                  <div className="size-10 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center shadow-xs">
-                    <Sparkles className="size-5" />
-                  </div>
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] italic text-pink-600">
-                    VERIFICACIÓN SEGURA
-                  </span>
-                </div>
-
-                <form onSubmit={handleSendOtp} className="space-y-5">
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-2">
-                      NÚMERO MÓVIL
-                    </label>
-                    <PhoneInput
-                      value={otpPhone}
-                      onChange={setOtpPhone}
-                      placeholder="WHATSAPP"
-                      className="w-full"
-                    />
-                  </div>
-
-                  {otpError && (
-                    <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2 border border-rose-200/80">
-                      <AlertCircle className="size-4 shrink-0" />
-                      <span>{otpError}</span>
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={otpLoading || otpPhone.replace(/\D/g, '').length < 7}
-                    className="w-full h-15 bg-gradient-to-r from-pink-400 via-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-pink-500/25 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
-                  >
-                    <span>CONTINUAR</span>
-                    <ArrowRight className="size-5" />
-                  </button>
-                </form>
-              </div>
-            </section>
-          ) : (
-            <section className="w-full max-w-sm flex flex-col items-center text-center space-y-6 animate-in fade-in duration-300">
-              <div className="space-y-3">
-                <div className="mx-auto size-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-xl text-pink-600">
-                  <Key className="size-8 stroke-[2.5]" />
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">
-                    CÓDIGO OTP
-                  </h2>
-                  <p className="text-slate-500 text-xs font-medium">
-                    Revisa tu WhatsApp <strong>{otpPhone}</strong>
-                  </p>
-                </div>
-              </div>
-
-              <div className="w-full p-3.5 bg-emerald-50 border border-emerald-200/80 text-emerald-800 rounded-2xl text-xs font-semibold text-center flex items-center gap-2.5">
-                <Sparkles className="size-4 shrink-0 text-emerald-600" />
-                <span>Código OTP de verificación enviado a tu WhatsApp ({otpPhone}).</span>
-              </div>
-
-              <div className="w-full bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-2xl border border-slate-100">
-                <form onSubmit={handleVerifyOtp} className="space-y-6">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
-                      Ingresa el Código de 4 dígitos
-                    </label>
-                    <div className="flex justify-center gap-2">
-                      {otpPin.map((digit, idx) => (
-                        <input
-                          key={idx}
-                          id={`otp-input-${idx}`}
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={1}
-                          value={digit}
-                          onChange={e => handlePinChange(idx, e.target.value)}
-                          onKeyDown={e => handlePinKeyDown(idx, e)}
-                          className="w-12 h-14 text-center text-2xl font-mono font-black rounded-2xl bg-slate-50 border-2 border-pink-400 text-pink-600 focus:border-pink-600 outline-none transition-colors"
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {otpError && (
-                    <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2 border border-rose-200/80">
-                      <AlertCircle className="size-4 shrink-0" />
-                      <span>{otpError}</span>
-                    </div>
-                  )}
-
-                  <div className="space-y-3">
-                    <button
-                      type="submit"
-                      disabled={otpLoading || otpPin.join('').length < 4}
-                      className="w-full h-14 bg-pink-500 hover:bg-pink-600 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-pink-500/30 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                    >
-                      <span>VERIFICAR CÓDIGO</span>
-                      <ArrowRight className="size-5" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setOtpStep('PHONE')}
-                      className="w-full text-xs font-bold text-slate-500 hover:text-slate-800 uppercase tracking-wider py-2 cursor-pointer"
-                    >
-                      ← Cambiar Número
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </section>
-          )}
-        </main>
-
-        <footer className="py-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          CiTiOX Enterprise Runtime System
-        </footer>
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F8FB]">
+        <div className="w-10 h-10 rounded-full border-[3px] border-slate-200 border-t-[#0066FF] animate-spin" />
       </div>
     );
   }
 
-  return (
-    <div className="w-full min-h-screen bg-slate-100 text-slate-900 font-sans pb-32">
-      {/* HEADER NATIVO EDGE-TO-EDGE CON LOGO COMPLETO CITIOX DRIVER (OCULTO EN ENTREGA ACTIVA) */}
-      {!hasActiveOrder && (
-        <div className="w-full bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-white px-4 py-3.5 sticky top-0 z-50 flex items-center justify-between shadow-lg">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('PERFIL')}>
-            <div className="w-11 h-11 flex items-center justify-center shrink-0">
-              <img src="/citiox-driver-logo.png" alt="CiTiOX Driver Logo" className="w-full h-full object-contain rounded-2xl shadow-md shadow-blue-500/30" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider ${
-                  status === 'DISPONIBLE' ? 'bg-emerald-500/20 text-emerald-300' :
-                  status === 'DESCANSO' ? 'bg-amber-500/20 text-amber-300' :
-                  'bg-rose-500/20 text-rose-300'
-                }`}>
-                  {status}
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 font-bold mt-0.5">{driverName} • Repartidor Oficial</p>
-            </div>
-          </div>
+  /* ─────────────────────────── Render: ingreso ─────────────────────────── */
 
-          <button
-            onClick={fetchDriverData}
-            className="p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-blue-400 transition-all cursor-pointer shadow-md"
-            title="Refrescar datos"
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-      )}
-
-      {/* BANNER AVISO DE BLOQUEO GLOBAL (SI LA CUENTA ESTÁ SUSPENDIDA CENTRALMENTE) */}
-      {(driverSession as any)?.isGlobalBlocked && (
-        <div className="w-full bg-rose-600 text-white px-4 py-3 shadow-md flex items-center justify-between text-xs font-semibold">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 shrink-0 text-white" />
-            <div>
-              <p className="font-black uppercase tracking-wider text-[11px]">⛔ CUENTA INHABILITADA EN PLATAFORMA</p>
-              <p className="text-[11px] opacity-90">{(driverSession as any)?.globalBlockReason || 'No puedes tomar nuevos pedidos. Contacta a administración central.'}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 1: INICIO Y GESTIÓN DE CARRERAS (EDGE-TO-EDGE FULL WIDTH) */}
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'INICIO' && (
-        <>
-          {hasActiveOrder ? (
-            myAssignedOrders.map(order => {
-              const extra = parseExtraInfo(order.extraInfo);
-              const paymentState = (order.paymentStatus || (order as any).payment?.estado || extra?.paymentStatus || '').toUpperCase();
-              const paymentMethod = ((order as any).metodoPago || (order as any).payment?.metodo || extra?.metodoPago || '').toUpperCase();
-
-              const isOrderPaid = ['CONFIRMADO', 'PAGO_VERIFICADO', 'VERIFICADO', 'PAID'].includes(paymentState) ||
-                                  (['TRANSFERENCIA', 'TARJETA', 'STRIPE', 'PAYPHONE', 'DATAFAT', 'TRANSFER', 'ONLINE'].includes(paymentMethod) && paymentState !== 'PENDIENTE');
-
-              const isCashOnDelivery = !isOrderPaid;
-
-              const deliveryFeeNum = Number(getDriverRealFee(order));
-              const deliveryFee = deliveryFeeNum.toFixed(2);
-              const totalOrderNum = Number(order.total || 0);
-
-              const totalToCollect = isCashOnDelivery ? totalOrderNum.toFixed(2) : '0.00';
-              const netToRestaurantCash = Math.max(0, totalOrderNum - deliveryFeeNum).toFixed(2);
-              const distanceStr = getDistanceString(order);
-              const isHandedOver = (order.estado as string) === 'ENTREGADO_A_REPARTIDOR' || (order.estado as string) === 'EN_CAMINO' || (order.estado as string) === 'EN_RUTA' || Boolean(extra?.isHandedOver || extra?.dispatchStatus === 'DESPACHADO');
-
-              let expectedPickupCode = extra?.pickupCode;
-              let expectedDeliveryCode = extra?.deliveryCode;
-              if (!expectedPickupCode) {
-                let num = 0; const str = (order.id || '') + 'pickup';
-                for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
-                expectedPickupCode = String(1000 + Math.abs(num));
-              }
-              if (!expectedDeliveryCode) {
-                let num = 0; const str = (order.id || '') + 'delivery';
-                for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
-                expectedDeliveryCode = String(1000 + Math.abs(num));
-              }
-
-              const enteredPin = inputPins[order.id] || '';
-              const isPinValid = enteredPin.trim() === expectedDeliveryCode;
-
-              return (
-                <div key={order.id} className="w-full space-y-4">
-                  {/* CABECERA CURVADA AZUL EDGE-TO-EDGE PANTALLA COMPLETA */}
-                  <div className="w-full bg-gradient-to-b from-blue-700 via-blue-800 to-indigo-900 text-white pt-6 pb-16 px-5 rounded-b-[2.5rem] shadow-xl relative">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
-                          <Truck className="w-5 h-5 text-blue-200" />
-                        </div>
-                        <span className="text-xs font-black uppercase text-blue-200 tracking-wider">Entrega Activa</span>
-                      </div>
-                      <div className="text-center">
-                        <h2 className="text-xl font-black tracking-tight">Entrega en curso</h2>
-                        <p className="text-sm text-blue-200 font-bold mt-0.5">Pedido #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}</p>
-                      </div>
-                      <a 
-                        href={`tel:${order.telefonoCliente}`}
-                        className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer"
-                        title="Llamar al cliente"
-                      >
-                        <Phone className="w-6 h-6" />
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* TARJETA HERO FLOTANTE DE ESTADO (FULL WIDTH) */}
-                  <div className="w-full px-4 -mt-12 relative z-10">
-                    <div className="w-full bg-white rounded-3xl p-5 shadow-xl shadow-slate-200/80 space-y-3 text-left">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-sm">
-                            <Truck className="w-6 h-6 stroke-[2.5]" />
-                          </div>
-                          <div>
-                            <span className="text-sm font-black text-slate-900 block">
-                              {order.estado === 'REPARTIDOR_ASIGNADO' ? 'Repartidor Asignado' :
-                               order.estado === 'REPARTIDOR_EN_LOCAL' ? 'Repartidor en Local' :
-                               order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA' ? 'En Camino al Cliente' :
-                               order.estado === 'WAITING_CLIENT' ? 'Esperando al Cliente' : 'Entrega en Proceso'}
-                            </span>
-                            <span className="text-xs text-slate-500 font-medium">Lleva tu pedido de forma segura</span>
-                          </div>
-                        </div>
-                        <div className="px-3 py-1.5 bg-blue-50 rounded-2xl text-center">
-                          <span className="font-mono text-xs font-black text-blue-600 block">{getCountdownString(extra?.estimatedReadyAt)}</span>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase">min restantes</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CONTENIDO PRINCIPAL DE DETALLES */}
-                  <div className="w-full px-4 space-y-4">
-                    
-                    {/* BANNER DE COBRO / ESTADO DE PAGO DESTACADO */}
-                    {isOrderPaid ? (
-                      <div className="w-full bg-emerald-50 border border-emerald-200/80 rounded-3xl p-5 shadow-sm text-left flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
-                            <Check className="w-6 h-6 stroke-[3]" />
-                          </div>
-                          <div>
-                            <span className="text-xs font-black uppercase text-emerald-950 block">✅ PEDIDO YA PAGADO POR EL CLIENTE</span>
-                            <span className="text-xs font-bold text-emerald-700">NO COBRAR NADA AL CLIENTE ($0.00 A COBRAR EN PUERTA)</span>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-3xl p-5 shadow-lg shadow-orange-500/20 text-left space-y-1.5">
-                        <span className="text-xs font-black uppercase tracking-wider block opacity-90">💵 COBRAR EN EFECTIVO AL CLIENTE:</span>
-                        <div className="flex items-center justify-between">
-                          <span className="text-2xl font-black font-mono">${totalToCollect}</span>
-                          <span className="px-3.5 py-1 bg-slate-950/20 rounded-full text-xs font-black uppercase">Cobrar en Puerta</span>
-                        </div>
-                        <p className="text-xs font-bold opacity-90 pt-1 border-t border-slate-950/10">
-                          Recaudar ${totalToCollect} en puerta. Tu ganancia de envío es +${deliveryFee}. (Monto a ingresar a caja local: ${netToRestaurantCash}).
-                        </p>
-                      </div>
-                    )}
-
-                    {/* TARJETA 1: DESTINO */}
-                    <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
-                          <MapPin className="w-4 h-4 text-blue-600" /> DESTINO
-                        </span>
-                        {order.direccionCliente && (
-                          <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.direccionCliente)}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full text-xs font-black flex items-center gap-1 transition-all"
-                          >
-                            <Navigation className="w-3.5 h-3.5" /> NAVEGAR
-                          </a>
-                        )}
-                      </div>
-
-                      <div className="space-y-1">
-                        <h3 className="text-base font-black text-slate-900">{order.nombreCliente}</h3>
-                        <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                          {order.direccionCliente || 'Sin dirección de cliente registrada'}
-                        </p>
-                        {order.referenciaCliente && (
-                          <p className="text-[11px] text-slate-400 font-semibold pt-0.5">Ref: {order.referenciaCliente}</p>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
-                        <a
-                          href={`tel:${order.telefonoCliente}`}
-                          className="p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all cursor-pointer group"
-                        >
-                          <Phone className="w-5 h-5 text-blue-600 mx-auto group-hover:scale-110 transition-transform" />
-                          <span className="text-xs font-black text-slate-800 block mt-1.5">Llamar</span>
-                        </a>
-
-                        <div className="p-2.5 rounded-2xl bg-slate-50 text-slate-700">
-                          <span className="text-xs font-black text-slate-900 block">{distanceStr}</span>
-                          <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">Distancia</span>
-                        </div>
-
-                        <a
-                          href={`https://wa.me/${order.telefonoCliente?.replace(/[^0-9]/g, '')}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all cursor-pointer group"
-                        >
-                          <MessageCircle className="w-5 h-5 text-blue-600 mx-auto group-hover:scale-110 transition-transform" />
-                          <span className="text-xs font-black text-slate-800 block mt-1.5">Mensaje</span>
-                        </a>
-                      </div>
-                    </div>
-
-                    {/* TARJETA 2: 🛍️ DETALLES DEL PEDIDO */}
-                    <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
-                          <PackageCheck className="w-4 h-4 text-blue-600" /> DETALLES DEL PEDIDO
-                        </span>
-                        {isOrderPaid && (
-                          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-black text-[10px] uppercase rounded-full">
-                            ✓ PAGADO ONLINE
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="space-y-3 text-sm pt-1">
-                        {(order.items || []).map((it, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-slate-800 font-semibold">
-                            <span>{it.cantidad}x {it.nombreProducto}</span>
-                            <span className="font-black text-slate-900">${(Number(it.precioUnitario) * it.cantidad).toFixed(2)}</span>
-                          </div>
-                        ))}
-                        <div className="flex justify-between items-center text-slate-500 text-xs font-medium">
-                          <span>Empaque</span>
-                          <span className="font-bold">${(Number(extra?.packagingCost || 0)).toFixed(2)}</span>
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-base font-black text-slate-900">
-                        <span>Total a cobrar en entrega</span>
-                        <span className={`text-lg font-mono font-black ${isOrderPaid ? 'text-emerald-600' : 'text-amber-600'}`}>
-                          {isOrderPaid ? '$0.00 (Pagado)' : `$${totalToCollect}`}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* TARJETA 3: 🛵 INFORMACIÓN DE ENTREGA */}
-                    <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
-                      <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
-                        <Truck className="w-4 h-4 text-blue-600" /> INFORMACIÓN DE ENTREGA
-                      </span>
-
-                      <div className="space-y-3 text-sm">
-                        <div className="flex justify-between items-center">
-                          <span className="text-slate-600 font-semibold flex items-center gap-2">
-                            <DollarSign className="w-5 h-5 text-blue-600" /> Tu ganancia de envío
-                          </span>
-                          <span className="font-black text-blue-600 text-lg">+${deliveryFee}</span>
-                        </div>
-
-                        <div className="flex justify-between items-center border-t border-slate-100 pt-3">
-                          <span className="text-slate-600 font-semibold flex items-center gap-2">
-                            <ShieldAlert className="w-5 h-5 text-slate-400" /> Pago del cliente
-                          </span>
-                          <span className="font-bold text-slate-900">
-                            {isOrderPaid ? '💳 Pagado Online ($0.00 a cobrar)' : `💰 Efectivo ($${totalToCollect})`}
-                          </span>
-                        </div>
-
-                        {isCashOnDelivery && (
-                          <div className="flex justify-between items-center border-t border-slate-100 pt-3 text-xs">
-                            <span className="text-slate-600 font-semibold">Monto a rendir a caja local:</span>
-                            <span className="font-black text-emerald-700 text-sm">${netToRestaurantCash}</span>
-                          </div>
-                        )}
-
-                        <div className="flex justify-between items-center border-t border-slate-100 pt-3">
-                          <span className="text-slate-600 font-semibold flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-slate-400" /> Entrega solicitada
-                          </span>
-                          <span className="font-bold text-slate-900">Hoy, {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* TARJETA 4: 🔔 CLIENTE NOTIFICADO */}
-                    <div className="w-full bg-blue-50/90 rounded-3xl p-5 flex items-center justify-between text-left shadow-sm">
-                      <div className="space-y-1">
-                        <span className="text-xs font-black text-blue-900 uppercase tracking-wider block flex items-center gap-1.5">
-                          🔔 CLIENTE NOTIFICADO
-                        </span>
-                        <p className="text-xs text-blue-800 font-semibold">El cliente ha sido notificado que su pedido está en camino.</p>
-                      </div>
-                      <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
-                        <Check className="w-6 h-6 stroke-[3]" />
-                      </div>
-                    </div>
-
-                    {/* TARJETA 5: HERRAMIENTAS */}
-                    <div className="w-full space-y-2 text-left">
-                      <span className="text-xs font-black uppercase text-slate-400 tracking-wider block px-1">
-                        HERRAMIENTAS
-                      </span>
-                      <div className="grid grid-cols-3 gap-3 text-center">
-                        <button 
-                          onClick={() => alert(`Enlace de seguimiento: https://citiox.com/pedido/${order.id}`)}
-                          className="bg-white rounded-2xl p-4 text-xs font-black text-slate-800 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-2 shadow-md shadow-slate-200/50"
-                        >
-                          <Share2 className="w-5 h-5 text-blue-600" />
-                          <span>Compartir</span>
-                        </button>
-
-                        <button 
-                          onClick={() => alert('Soporte notificado. El equipo te contactará de inmediato.')}
-                          className="bg-white rounded-2xl p-4 text-xs font-black text-slate-800 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-2 shadow-md shadow-slate-200/50"
-                        >
-                          <AlertTriangle className="w-5 h-5 text-amber-500" />
-                          <span>Problema</span>
-                        </button>
-
-                        <button 
-                          onClick={() => alert('Para cancelar esta carrera contacta al administrador.')}
-                          className="bg-white rounded-2xl p-4 text-xs font-black text-slate-800 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-2 shadow-md shadow-slate-200/50"
-                        >
-                          <XCircle className="w-5 h-5 text-rose-500" />
-                          <span>Cancelar</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* VISTA Y LÓGICA DE VALIDACIÓN DE PIN SEGÚN ESTADO OPERATIVO */}
-                    {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (
-                      <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3 text-left">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black uppercase text-amber-600 flex items-center gap-1.5">
-                            🔑 PIN Retiro en Local: {expectedPickupCode}
-                          </span>
-                        </div>
-
-                        <div className={`p-4 rounded-2xl text-xs font-black text-center flex items-center justify-center gap-2 ${
-                          isHandedOver 
-                            ? 'bg-emerald-50 text-emerald-800' 
-                            : 'bg-amber-50 text-amber-900'
-                        }`}>
-                          <Clock className="w-5 h-5 text-amber-600 shrink-0" />
-                          <span>
-                            {isHandedOver 
-                              ? '📦 ¡Paquete Despachado por Restaurante! Puedes salir en ruta.' 
-                              : `⏳ Dicta el PIN (${expectedPickupCode}) al local para que entregue la comanda.`}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {(order.estado === 'ESPERANDO_CLIENTE' || order.estado === 'WAITING_CLIENT') && (
-                      <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3 text-left">
-                        <span className="text-xs font-black uppercase text-amber-600 flex items-center gap-1.5">
-                          🔑 PIN DE CONFIRMACIÓN DEL CLIENTE
-                        </span>
-                        <input
-                          type="text"
-                          maxLength={4}
-                          value={enteredPin}
-                          onChange={e => setInputPins(prev => ({ ...prev, [order.id]: e.target.value.trim() }))}
-                          placeholder="Ingresa PIN de 4 dígitos (Ej: 5955)..."
-                          className="w-full p-4 bg-slate-50 border-none rounded-2xl text-center text-xl font-black text-slate-900 tracking-widest outline-none focus:ring-2 focus:ring-blue-600"
-                        />
-                        {enteredPin.length === 4 && !isPinValid && (
-                          <p className="text-xs text-rose-600 font-bold text-center">❌ PIN incorrecto. Pide al cliente su código.</p>
-                        )}
-                        {isPinValid && (
-                          <p className="text-xs text-emerald-600 font-bold text-center">✅ ¡PIN Correcto! Puedes confirmar la entrega.</p>
-                        )}
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* BARRA INFERIOR FIJA CON BOTÓN PRINCIPAL GIGANTE EDGE-TO-EDGE */}
-                  <div className="fixed bottom-0 left-0 right-0 p-4 pb-6 bg-white/95 backdrop-blur-md z-50 flex items-center gap-3 w-full shadow-2xl">
-                    {order.estado === 'REPARTIDOR_ASIGNADO' && (
-                      <button
-                        onClick={() => handleMarkArrived(order.id)}
-                        disabled={actionLoading === order.id}
-                        className="flex-1 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 rounded-2xl text-sm font-black uppercase shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
-                      >
-                        <MapPin className="w-5 h-5 text-slate-950" />
-                        <span>📍 Marcar Llegada al Restaurante</span>
-                      </button>
-                    )}
-
-                    {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (
-                      <button
-                        onClick={() => handleUpdateState(order.id, 'ON_ROUTE')}
-                        disabled={!isHandedOver || actionLoading === order.id}
-                        className={`flex-1 py-4 rounded-2xl text-sm font-black uppercase shadow-xl flex items-center justify-center gap-2 transition-all ${
-                          isHandedOver
-                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
-                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {isHandedOver ? (
-                          <>
-                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                              <Check className="w-5 h-5 text-white stroke-[3]" />
-                            </div>
-                            <span>🛵 INICIAR ENTREGA AL CLIENTE</span>
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="w-5 h-5 text-slate-400 shrink-0" />
-                            <span>🔒 ESPERANDO QUE EL LOCAL MARQUE ENTREGA</span>
-                          </>
-                        )}
-                      </button>
-                    )}
-
-                    {(order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA') && (
-                      <button
-                        onClick={() => handleUpdateState(order.id, 'WAITING_CLIENT' as any)}
-                        disabled={actionLoading === order.id}
-                        className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-sm font-black uppercase shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98 shadow-blue-500/20"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                          <MapPin className="w-5 h-5 text-white" />
-                        </div>
-                        <span>📍 LLEGUÉ AL DESTINO (EN ESPERA)</span>
-                      </button>
-                    )}
-
-                    {(order.estado === 'ESPERANDO_CLIENTE' || order.estado === 'WAITING_CLIENT') && (
-                      <button
-                        onClick={() => handleUpdateState(order.id, 'DELIVERED')}
-                        disabled={!isPinValid || actionLoading === order.id}
-                        className={`flex-1 py-4 rounded-2xl text-sm font-black uppercase shadow-xl flex items-center justify-center gap-2 transition-all ${
-                          isPinValid
-                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
-                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                          <Check className="w-5 h-5 text-white stroke-[3]" />
-                        </div>
-                        <div>
-                          <span className="block leading-tight">PEDIDO ENTREGADO</span>
-                          <span className="text-[10px] font-semibold opacity-90 block">Confirmar entrega al cliente</span>
-                        </div>
-                      </button>
-                    )}
-
-                    <button 
-                      onClick={() => alert(`Acciones adicionales para pedido #${order.numeroPedido}`)}
-                      className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-md shadow-slate-200/60"
-                    >
-                      <MoreHorizontal className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            /* VISTA 2: MODO BÚSQUEDA / BOLSA DE TRABAJO (EDGE-TO-EDGE FULL WIDTH) */
-            <div className="w-full space-y-4 px-4 pt-4">
-              {/* Selector de Estado de Disponibilidad */}
-              <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
-                <label className="block text-xs font-black uppercase text-slate-500 tracking-wider">
-                  MI DISPONIBILIDAD ACTUAL
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  <button
-                    onClick={() => handleStatusChange('DISPONIBLE')}
-                    className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                      status === 'DISPONIBLE'
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    <span>DISPONIBLE</span>
-                  </button>
-                  <button
-                    onClick={() => handleStatusChange('DESCANSO')}
-                    className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                      status === 'DESCANSO'
-                        ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    <Clock className="w-5 h-5" />
-                    <span>DESCANSO</span>
-                  </button>
-                  <button
-                    onClick={() => handleStatusChange('DESCONECTADO')}
-                    className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                      status === 'DESCONECTADO'
-                        ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    <Power className="w-5 h-5" />
-                    <span>OFFLINE</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* PEDIDOS DISPONIBLES EN BOLSA DE TRABAJO */}
-              {status === 'DISPONIBLE' && (
-                <div className="w-full space-y-4 text-left">
-                  <div className="flex items-center justify-between px-1">
-                    <h2 className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-blue-600 animate-spin" />
-                      Bolsa de Pedidos Disponibles ({openUnassignedOrders.length})
-                    </h2>
-                  </div>
-
-                  {openUnassignedOrders.length === 0 ? (
-                    <div className="w-full bg-white rounded-3xl p-10 text-center text-slate-400 space-y-3 shadow-md shadow-slate-200/70">
-                      <PackageCheck className="w-12 h-12 mx-auto text-slate-300" />
-                      <p className="font-black text-sm text-slate-800">No hay pedidos disponibles en este momento.</p>
-                      <p className="text-xs text-slate-500">Nuevos pedidos aparecerán aquí cuando los restaurantes los acepten.</p>
-                    </div>
-                  ) : (
-                    openUnassignedOrders.map(order => {
-                      const deliveryFee = getDriverRealFee(order);
-                      const formattedDate = order.createdAt 
-                        ? new Date(order.createdAt).toLocaleDateString('es-EC', {
-                            day: 'numeric',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
-                          })
-                        : 'Hora no registrada';
-
-                      const isPaidOnline = order.payment?.estado === 'PAGO_VERIFICADO' || order.payment?.estado === 'CONFIRMADO' || order.paymentStatus === 'CONFIRMADO';
-
-                      return (
-                        <div
-                          key={order.id}
-                          onClick={() => setSelectedOrderForDetail(order)}
-                          className="w-full bg-white rounded-3xl p-5 border border-slate-200/80 shadow-md shadow-slate-200/50 space-y-4 hover:shadow-xl hover:border-blue-300 transition-all cursor-pointer text-left relative overflow-hidden"
-                        >
-                          {/* Insignia de Estado Limpia: DISPONIBLE EN BOLSA */}
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div className="flex items-center gap-2">
-                              <span className="px-2.5 py-1 bg-amber-100 text-amber-900 text-[10px] font-black uppercase tracking-wider rounded-lg border border-amber-300/80 flex items-center gap-1">
-                                <Sparkles className="w-3 h-3 text-amber-600 animate-pulse" />
-                                DISPONIBLE EN BOLSA
-                              </span>
-                              <span className="text-xs font-mono font-black text-slate-900">
-                                #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
-                              </span>
-                            </div>
-                            <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-mono font-black text-xs rounded-full border border-emerald-200">
-                              +${deliveryFee} Ganancia
-                            </span>
-                          </div>
-
-                          {/* Fecha y Hora del Pedido */}
-                          <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
-                            <span className="flex items-center gap-1.5 text-slate-600">
-                              <Clock className="w-3.5 h-3.5 text-slate-400" />
-                              <span>Pedido: <strong className="text-slate-900 font-black">{formattedDate}</strong></span>
-                            </span>
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
-                              isPaidOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
-                            }`}>
-                              {isPaidOnline ? '💳 PAGADO ONLINE' : '💵 EFECTIVO AL ENTREGAR'}
-                            </span>
-                          </div>
-
-                          {/* Trayecto Limpio: Punto A (Recogida) -> Punto B (Entrega) */}
-                          <div className="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100 space-y-2.5">
-                            {/* Recogida */}
-                            <div className="flex items-start gap-2.5 text-xs">
-                              <div className="w-6 h-6 rounded-full bg-amber-500 text-white font-black flex items-center justify-center shrink-0 text-[10px] shadow-sm">
-                                A
-                              </div>
-                              <div>
-                                <span className="text-[10px] font-black uppercase text-amber-700 tracking-wider block">Local de Recogida</span>
-                                <p className="font-black text-slate-900 text-sm leading-tight">{order.negocio?.nombre || 'Restaurante Citiox'}</p>
-                                <p className="text-slate-500 font-semibold text-[11px] mt-0.5">{order.negocio?.direccion || 'Dirección de local registrada'}</p>
-                              </div>
-                            </div>
-
-                            <div className="border-t border-dashed border-slate-200 my-1"></div>
-
-                            {/* Entrega */}
-                            <div className="flex items-start gap-2.5 text-xs">
-                              <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-black flex items-center justify-center shrink-0 text-[10px] shadow-sm">
-                                B
-                              </div>
-                              <div>
-                                <span className="text-[10px] font-black uppercase text-blue-700 tracking-wider block">Entrega a Cliente</span>
-                                <p className="font-black text-slate-900 text-sm leading-tight">{order.nombreCliente || 'Cliente Registrado'}</p>
-                                <p className="text-slate-500 font-semibold text-[11px] mt-0.5">{order.direccionCliente || 'Sin dirección de cliente'}</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Botón de Acción Limpio */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedOrderForDetail(order);
-                            }}
-                            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
-                          >
-                            <Eye className="w-4 h-4 text-white" />
-                            <span>Ver Detalles de Carrera (+${deliveryFee})</span>
-                          </button>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 2: GANANCIAS Y MÉTRICAS FINANCIERAS (EDGE-TO-EDGE) */}
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'GANANCIAS' && (
-        <div className="w-full p-4 space-y-4 text-left animate-in fade-in duration-300">
-          <div className="w-full bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-xl space-y-4 relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-blue-300 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-blue-400" /> RESUMEN DE GANANCIAS
-              </span>
-              <span className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-xs font-bold border border-blue-400/30">
-                Esta Semana
-              </span>
-            </div>
-
-            <div>
-              <span className="text-3xl font-black tracking-tight text-white block">$184.50</span>
-              <p className="text-xs text-blue-200 font-semibold mt-1">Total ganado en 24 entregas completadas</p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 pt-4 border-t border-white/10 text-center">
+  if (!driverSession) {
+    const isDev = process.env.NODE_ENV !== 'production';
+    return (
+      <div className="min-h-screen bg-[#F7F8FB] flex flex-col">
+        <div className="bg-[#0066FF] text-white px-6 pt-10 pb-20 relative overflow-hidden">
+          <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10" />
+          <div className="absolute right-10 bottom-[-60px] w-40 h-40 rounded-full bg-white/5" />
+          <div className="max-w-sm mx-auto relative">
+            <div className="flex items-center gap-2.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/citiox-icon.png" alt="" className="w-10 h-10 rounded-xl bg-white p-1" />
               <div>
-                <span className="text-sm font-black text-white block">24</span>
-                <span className="text-[10px] text-blue-300 uppercase font-bold block">Entregas</span>
-              </div>
-              <div>
-                <span className="text-sm font-black text-emerald-400 block">$16.50</span>
-                <span className="text-[10px] text-blue-300 uppercase font-bold block">Propinas</span>
-              </div>
-              <div>
-                <span className="text-sm font-black text-amber-400 block">100%</span>
-                <span className="text-[10px] text-blue-300 uppercase font-bold block">Cumplimiento</span>
+                <p className="font-bold leading-tight">Citiox</p>
+                <p className="text-xs text-white/75 leading-tight">App de repartidores</p>
               </div>
             </div>
-          </div>
-
-          {/* DESGLOSE DIARIO */}
-          <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4">
-            <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider">
-              DESGLOSE DE DÍAS RECIENTES
-            </h3>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
-                <div>
-                  <h4 className="font-black text-sm text-slate-900">Hoy (Domingo)</h4>
-                  <p className="text-xs text-slate-500 font-medium">5 entregas realizadas</p>
-                </div>
-                <span className="text-base font-black text-blue-600">+$34.50</span>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
-                <div>
-                  <h4 className="font-black text-sm text-slate-900">Ayer (Sábado)</h4>
-                  <p className="text-xs text-slate-500 font-medium">8 entregas realizadas</p>
-                </div>
-                <span className="text-base font-black text-slate-800">+$52.00</span>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
-                <div>
-                  <h4 className="font-black text-sm text-slate-900">Viernes</h4>
-                  <p className="text-xs text-slate-500 font-medium">7 entregas realizadas</p>
-                </div>
-                <span className="text-base font-black text-slate-800">+$48.00</span>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
-                <div>
-                  <h4 className="font-black text-sm text-slate-900">Jueves</h4>
-                  <p className="text-xs text-slate-500 font-medium">4 entregas realizadas</p>
-                </div>
-                <span className="text-base font-black text-slate-800">+$50.00</span>
-              </div>
-            </div>
+            <h1 className="text-[1.7rem] font-bold mt-8 leading-tight">
+              {otpStep === 'PHONE' ? 'Entrega pedidos de todos tus negocios en un solo lugar' : 'Revisa tu WhatsApp'}
+            </h1>
           </div>
         </div>
-      )}
 
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 3: HISTORIAL DE ENTREGAS COMPLETADAS (EDGE-TO-EDGE) */}
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'HISTORIAL' && (
-        <div className="w-full p-4 space-y-4 text-left animate-in fade-in duration-300">
-          <div className="w-full bg-white rounded-3xl p-4 shadow-md shadow-slate-200/70 flex items-center gap-3">
-            <Search className="w-5 h-5 text-slate-400 shrink-0" />
-            <input
-              type="text"
-              value={historySearch}
-              onChange={e => setHistorySearch(e.target.value)}
-              placeholder="Buscar por cliente o código de pedido..."
-              className="w-full text-sm font-semibold bg-transparent outline-none text-slate-900"
-            />
-          </div>
-
-          <div className="w-full space-y-3">
-            <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider px-1">
-              HISTORIAL RECIENTE
-            </h3>
-
-            {[
-              { id: '179213', cliente: 'Carlos Caicedo', negocio: 'La Parrilla Citiox', monto: '$12.75', ganancia: '+$3.00', fecha: 'Hoy, 22:15 PM' },
-              { id: '179208', cliente: 'María López', negocio: 'Pizzeria Gourmet Citiox', monto: '$18.50', ganancia: '+$3.50', fecha: 'Hoy, 20:30 PM' },
-              { id: '179199', cliente: 'Juan Pérez', negocio: 'Citiox Burger & Grill', monto: '$15.00', ganancia: '+$2.50', fecha: 'Ayer, 21:10 PM' },
-              { id: '179185', cliente: 'Elena Gómez', negocio: 'La Parrilla Citiox', monto: '$24.00', ganancia: '+$4.00', fecha: 'Ayer, 19:45 PM' },
-            ]
-              .filter(h => h.cliente.toLowerCase().includes(historySearch.toLowerCase()) || h.id.includes(historySearch))
-              .map(h => (
-                <div key={h.id} className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm font-black text-slate-900">Pedido #{h.id}</span>
-                      <p className="text-xs text-slate-500 font-semibold mt-0.5">{h.negocio}</p>
-                    </div>
-                    <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-black text-xs rounded-full">
-                      {h.ganancia}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs text-slate-600 pt-2 border-t border-slate-100 font-semibold">
-                    <span>Cliente: <strong>{h.cliente}</strong></span>
-                    <span className="text-slate-400">{h.fecha}</span>
+        <main className="flex-1 px-4 -mt-12 relative">
+          <div className="max-w-sm mx-auto bg-white rounded-3xl shadow-xl shadow-slate-900/5 ring-1 ring-slate-100 p-6">
+            {otpStep === 'PHONE' ? (
+              <form onSubmit={(e) => { e.preventDefault(); requestOtp(); }} className="space-y-4">
+                <div>
+                  <label htmlFor="drv-phone" className="text-sm font-semibold text-slate-800">Tu número de WhatsApp</label>
+                  <p className="text-xs text-slate-500 mt-0.5">El mismo con el que te registró tu negocio.</p>
+                  <div className="mt-3 flex items-center rounded-2xl border border-slate-200 bg-slate-50 focus-within:border-[#0066FF] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#0066FF]/10 transition">
+                    <span className="pl-4 pr-2 text-sm font-semibold text-slate-600 select-none">🇪🇨 +593</span>
+                    <input
+                      id="drv-phone"
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      autoFocus
+                      value={otpPhone}
+                      onChange={(e) => setOtpPhone(e.target.value.replace(/[^\d\s]/g, '').slice(0, 13))}
+                      placeholder="099 123 4567"
+                      className="flex-1 min-w-0 bg-transparent py-3.5 pr-4 text-base font-semibold text-slate-900 outline-none placeholder:text-slate-400 placeholder:font-normal"
+                    />
                   </div>
                 </div>
-              ))}
-          </div>
-        </div>
-      )}
 
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 4: NEGOCIOS REGISTRADOS Y ASIGNADOS (EDGE-TO-EDGE) */}
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'NEGOCIOS' && (
-        <div className="w-full p-4 space-y-4 text-left animate-in fade-in duration-300">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-2">
-              <Store className="w-5 h-5 text-blue-600" /> Negocios Autorizados & Aliados ({registeredBusinesses.length})
-            </h2>
-          </div>
-
-          <div className="p-3 bg-blue-50 border border-blue-200/80 rounded-2xl text-xs text-blue-900 font-semibold space-y-1">
-            <p className="font-black flex items-center gap-1.5 text-blue-700">
-              <ShieldCheck className="w-4 h-4 text-blue-600" /> Responsabilidad e Inspección por Local
-            </p>
-            <p className="text-[11px] text-blue-800">
-              Cada local verifica la vigencia de tus documentos antes de permitirte tomar sus pedidos.
-            </p>
-          </div>
-
-          <div className="w-full space-y-3">
-            {registeredBusinesses.map(b => {
-              const isAssigned = ((driverSession as any)?.negociosAsignados || []).some((n: any) => n.id === b.id);
-              return (
-                <div key={b.id} className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-2xl flex items-center justify-center shrink-0">
-                        {b.logo}
-                      </div>
-                      <div>
-                        <h3 className="font-black text-slate-900 text-base leading-tight">{b.nombre}</h3>
-                        <p className="text-xs text-slate-500 font-semibold mt-0.5">{b.direccion}</p>
-                      </div>
-                    </div>
-                    <span className={`px-2.5 py-1 font-bold text-[10px] uppercase rounded-full border ${
-                      isAssigned 
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
-                      {isAssigned ? '🟢 Local Verificado' : '⏳ Pendiente Local'}
-                    </span>
+                {otpError && (
+                  <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-sm flex gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{otpError}</span>
                   </div>
+                )}
 
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-600 font-semibold">
-                    <span>📱 Tel: {b.telefono}</span>
-                    <a href={`tel:${b.telefono}`} className="text-blue-600 font-black hover:underline">
-                      Llamar al local
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 5: PERFIL DEL REPARTIDOR CON DATOS REALES DE CALIFICACIÓN */}
-      {/* ───────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'PERFIL' && (
-        <div className="w-full p-4 space-y-4 text-left animate-in fade-in duration-300">
-          {/* FICHA DE REPARTIDOR */}
-          <div className="w-full bg-white rounded-3xl p-6 shadow-md shadow-slate-200/70 text-center space-y-4 relative">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white mx-auto flex items-center justify-center font-black text-2xl shadow-xl shadow-blue-500/20 uppercase">
-              {driverName ? driverName.trim().split(/\s+/).map(n => n[0]).join('').slice(0, 2) : 'DR'}
-            </div>
-
-            <div>
-              <h2 className="text-xl font-black text-slate-900">{driverName}</h2>
-              <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-0.5">
-                Repartidor Oficial • ID: {driverId.slice(-8).toUpperCase()}
-              </p>
-            </div>
-
-            {/* REPUTACIÓN Y DATOS REALES DE CALIFICACIÓN */}
-            <div className="flex items-center justify-center gap-2 text-amber-500 font-black text-lg bg-amber-50/80 p-3 rounded-2xl">
-              <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
-              <span>{avgRating}</span>
-              <span className="text-xs text-slate-500 font-semibold ml-1">({totalRatingsCount} valoraciones reales)</span>
-            </div>
-          </div>
-
-          {/* CONTROL DISPONIBILIDAD PARA NUEVOS NEGOCIOS */}
-          <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3 text-left">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider">
-                  DISPONIBLE PARA NUEVOS NEGOCIOS
-                </h3>
-                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                  Permite que nuevos comercios puedan encontrarte en el directorio y enviarte invitaciones de trabajo.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const nextVal = !availableForNewBusinesses;
-                  setAvailableForNewBusinesses(nextVal);
-                  alert(
-                    nextVal
-                      ? '🟢 ¡Ahora eres visible en el directorio de nuevos negocios Citiox!'
-                      : '⚪ Visibilidad desactivada. Tus negocios actuales siguen operando normalmente.'
-                  );
-                }}
-                className={`w-14 h-8 rounded-full p-1 transition-colors cursor-pointer shrink-0 ${
-                  availableForNewBusinesses ? 'bg-emerald-500' : 'bg-slate-300'
-                }`}
-              >
-                <div
-                  className={`w-6 h-6 rounded-full bg-white shadow-md transition-transform ${
-                    availableForNewBusinesses ? 'translate-x-6' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-
-          {/* INFORMACIÓN DEL VEHÍCULO Y DOCUMENTOS */}
-          <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4">
-            <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider">
-              INFORMACIÓN OPERATIVA Y VEHÍCULO
-            </h3>
-
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center text-slate-700 font-semibold">
-                <span className="flex items-center gap-2">📱 Teléfono Registrado</span>
-                <span className="font-bold text-slate-900">{driverPhone}</span>
-              </div>
-
-              <div className="flex justify-between items-center text-slate-700 font-semibold border-t border-slate-100 pt-3">
-                <span className="flex items-center gap-2">🛵 Vehículo</span>
-                <span className="font-bold text-slate-900">
-                  {(driverSession as any)?.vehicleName || (driverSession?.vehicleType === 'AUTO' ? 'Automóvil' : 'Motocicleta')}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-slate-700 font-semibold border-t border-slate-100 pt-3">
-                <span className="flex items-center gap-2">🔢 Placa</span>
-                <span className="font-bold text-slate-900">{(driverSession as any)?.placa || 'Registrada'}</span>
-              </div>
-
-              <div className="flex justify-between items-center text-slate-700 font-semibold border-t border-slate-100 pt-3">
-                <span className="flex items-center gap-2">🛡️ Estado de Documentos</span>
-                <span className="text-xs font-black text-emerald-600 uppercase flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> Verificados
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* BOTÓN CERRAR SESIÓN */}
-          <button
-            onClick={() => setShowLogoutModal(true)}
-            className="w-full py-4 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-2xl text-sm font-black uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-rose-100"
-          >
-            <LogOut className="w-5 h-5 text-rose-600" />
-            <span>CERRAR SESIÓN DE REPARTIDOR</span>
-          </button>
-        </div>
-      )}
-
-      {/* MODAL SISTEMA DE CALIFICACIÓN DEL REPARTIDOR AL CLIENTE AL TERMINAR */}
-      {ratingModalOrderId && (
-        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 text-center shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-600 mx-auto flex items-center justify-center text-3xl">
-              ⭐
-            </div>
-            <h3 className="text-lg font-black text-slate-900">¿Qué tal la experiencia con el cliente?</h3>
-            <p className="text-xs text-slate-500 font-semibold">
-              Califica la puntualidad y amabilidad del usuario para mantener la calidad en la red.
-            </p>
-
-            {/* SELECCIÓN DE ESTRELLAS */}
-            <div className="flex items-center justify-center gap-2 py-2">
-              {[1, 2, 3, 4, 5].map((star) => (
                 <button
-                  key={star}
-                  onClick={() => setCustomerStar(star)}
-                  className="text-3xl transition-transform hover:scale-125 cursor-pointer"
+                  type="submit"
+                  disabled={otpLoading || otpPhone.replace(/\D/g, '').length < 9}
+                  className="w-full h-13 py-3.5 rounded-2xl bg-[#0066FF] hover:bg-[#0052cc] text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition"
                 >
-                  {star <= customerStar ? '⭐' : '☆'}
+                  {otpLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <>Recibir código <ArrowRight className="w-4 h-4" /></>}
                 </button>
-              ))}
+
+                <p className="text-xs text-slate-500 text-center leading-relaxed">
+                  ¿Aún no eres repartidor? Pídele al negocio que te envíe una invitación desde su panel de Citiox.
+                </p>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-slate-600">
+                    {otpName ? <>Hola <b className="text-slate-900">{otpName}</b>, te</> : 'Te'} enviamos un código de 4 dígitos al{' '}
+                    <b className="text-slate-900">{normalizedPhone()}</b>.
+                  </p>
+                </div>
+
+                <label className="block">
+                  <span className="sr-only">Código</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    maxLength={4}
+                    value={otpCode}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      setOtpCode(v);
+                      if (v.length === 4) verifyOtp(v);
+                    }}
+                    className="w-full text-center text-3xl font-bold tracking-[0.6em] pl-[0.6em] py-3.5 rounded-2xl border border-slate-200 bg-slate-50 outline-none focus:border-[#0066FF] focus:bg-white focus:ring-4 focus:ring-[#0066FF]/10 text-slate-900"
+                    placeholder="····"
+                  />
+                </label>
+
+                {otpError && (
+                  <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-sm flex gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{otpError}</span>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => verifyOtp(otpCode)}
+                  disabled={otpLoading || otpCode.length < 4}
+                  className="w-full py-3.5 rounded-2xl bg-[#0066FF] hover:bg-[#0052cc] text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition"
+                >
+                  {otpLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Entrar'}
+                </button>
+
+                <div className="flex items-center justify-between text-sm">
+                  <button onClick={() => { setOtpStep('PHONE'); setOtpError(null); }} className="text-slate-500 hover:text-slate-800">
+                    Cambiar número
+                  </button>
+                  <button
+                    onClick={requestOtp}
+                    disabled={resendIn > 0 || otpLoading}
+                    className="font-semibold text-[#0066FF] disabled:text-slate-400"
+                  >
+                    {resendIn > 0 ? `Reenviar en ${resendIn}s` : 'Reenviar código'}
+                  </button>
+                </div>
+
+                {isDev && (
+                  <p className="text-[11px] text-center text-amber-700 bg-amber-50 rounded-lg py-1.5">
+                    Modo desarrollo: el código 1234 también funciona.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </main>
+
+        <footer className="py-6 text-center text-xs text-slate-400">Citiox · Repartidores</footer>
+      </div>
+    );
+  }
+
+  /* ─────────────────────────── Render: app ─────────────────────────── */
+
+  return (
+    <div className="min-h-screen bg-[#F7F8FB] text-slate-900 pb-28">
+      {/* Encabezado */}
+      {!activeOrder && (
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-100">
+          <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">
+            <button onClick={() => setTab('PERFIL')} className="shrink-0" aria-label="Mi perfil">
+              {profile?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover bg-slate-100" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-[#0066FF] text-white flex items-center justify-center text-sm font-bold">{initials(driverName)}</div>
+              )}
+            </button>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-500">Hola,</p>
+              <p className="font-bold text-slate-900 leading-tight truncate">{firstName}</p>
             </div>
-
-            {/* COMENTARIO RÁPIDO */}
-            <input
-              type="text"
-              value={customerComment}
-              onChange={e => setCustomerComment(e.target.value)}
-              placeholder="Ej: Puntual, amable y pago exacto 👍"
-              className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-600"
-            />
-
-            <button
-              onClick={submitCustomerRating}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-blue-500/30"
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                status === 'DISPONIBLE' ? 'bg-emerald-50 text-emerald-700' : status === 'DESCANSO' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-500'
+              }`}
             >
-              ENVIAR CALIFICACIÓN Y FINALIZAR
+              <span className={`w-1.5 h-1.5 rounded-full ${status === 'DISPONIBLE' ? 'bg-emerald-500 animate-pulse' : status === 'DESCANSO' ? 'bg-amber-500' : 'bg-slate-400'}`} />
+              {status === 'DISPONIBLE' ? 'Conectado' : status === 'DESCANSO' ? 'En pausa' : 'Desconectado'}
+            </span>
+            <button onClick={fetchDriverData} className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Actualizar">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
-        </div>
+        </header>
       )}
 
-      {/* MODAL DE CONFIRMACIÓN DE CERRAR SESIÓN */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 text-center shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 mx-auto flex items-center justify-center">
-              <LogOut className="w-7 h-7 stroke-[2.5]" />
-            </div>
-            <h3 className="text-lg font-black text-slate-900">¿Cerrar sesión?</h3>
-            <p className="text-xs text-slate-500 font-semibold">
-              Si cierras sesión dejarás de recibir notificaciones de nuevos pedidos en tu zona.
-            </p>
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                onClick={() => setShowLogoutModal(false)}
-                className="py-3.5 bg-slate-100 text-slate-700 rounded-2xl text-xs font-black uppercase hover:bg-slate-200"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleLogout}
-                className="py-3.5 bg-rose-600 text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-rose-500/20 hover:bg-rose-500"
-              >
-                Sí, Salir
-              </button>
+      {isBlocked && (
+        <div className="max-w-xl mx-auto px-4 pt-4">
+          <div className="p-4 rounded-2xl bg-rose-50 ring-1 ring-rose-200 text-rose-800 flex gap-3">
+            <Lock className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-semibold">Tu cuenta está suspendida</p>
+              <p className="text-rose-700/90 mt-0.5">{profile?.globalBlockReason}</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL DE MAPA INTERACTIVO Y RUTA */}
-      {selectedOrderForDetail && (
-        <DriverOrderMapModal
-          order={selectedOrderForDetail}
+      {/* ═════════════ MISIÓN ACTIVA ═════════════ */}
+      {tab === 'PEDIDOS' && activeOrder && (
+        <ActiveMission
+          key={activeOrder.id}
+          order={activeOrder}
           driverId={driverId}
-          hasActiveOrder={hasActiveOrder}
-          actionLoading={actionLoading === selectedOrderForDetail.id}
-          onAccept={handleAcceptOrder}
-          onClose={() => setSelectedOrderForDetail(null)}
+          all={myAssignedOrders}
+          activeIdx={Math.min(activeIdx, myAssignedOrders.length - 1)}
+          setActiveIdx={setActiveIdx}
+          nowTime={nowTime}
+          pin={inputPins[activeOrder.id] || ''}
+          setPin={(v) => setInputPins((p) => ({ ...p, [activeOrder.id]: v }))}
+          busy={actionLoading === activeOrder.id}
+          onMap={() => setDetailOrder(activeOrder)}
+          onArrived={() => markArrived(activeOrder.id)}
+          onState={(s, pin) => updateState(activeOrder.id, s, pin)}
+          onCancel={() => openCancel(activeOrder)}
+          onResend={(m) => resendNotice(activeOrder.id, m)}
         />
       )}
 
-      {/* BARRA NATIVA DE NAVEGACIÓN INFERIOR DE PESTAÑAS EDGE-TO-EDGE (OCULTA EN ENTREGA ACTIVA) */}
-      {!hasActiveOrder && (
-        <div className="fixed bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-50 px-3 py-2 flex items-center justify-around shadow-2xl">
-          <button
-            onClick={() => setActiveTab('INICIO')}
-            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all cursor-pointer ${
-              activeTab === 'INICIO' ? 'text-blue-600 font-black' : 'text-slate-400 font-semibold hover:text-slate-600'
-            }`}
-          >
-            <Truck className={`w-5 h-5 ${activeTab === 'INICIO' ? 'text-blue-600 stroke-[2.5]' : 'text-slate-400'}`} />
-            <span className="text-[10px] uppercase tracking-wider">Carrera</span>
-          </button>
+      {/* ═════════════ BOLSA DE PEDIDOS ═════════════ */}
+      {tab === 'PEDIDOS' && !activeOrder && (
+        <main className="max-w-xl mx-auto px-4 pt-4 space-y-4">
+          {/* Disponibilidad */}
+          <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-1.5 grid grid-cols-3 gap-1">
+            {([
+              { key: 'DISPONIBLE', label: 'Conectado', Icon: Power, on: 'bg-emerald-500 text-white' },
+              { key: 'DESCANSO', label: 'Pausa', Icon: Coffee, on: 'bg-amber-500 text-white' },
+              { key: 'DESCONECTADO', label: 'Inactivo', Icon: X, on: 'bg-slate-700 text-white' },
+            ] as const).map((s) => (
+              <button
+                key={s.key}
+                onClick={() => changeStatus(s.key)}
+                className={`py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition ${
+                  status === s.key ? s.on : 'text-slate-500 hover:bg-slate-50'
+                }`}
+              >
+                <s.Icon className="w-4 h-4" /> {s.label}
+              </button>
+            ))}
+          </section>
+
+          {/* Sin negocios aprobados */}
+          {approvedBiz.length === 0 && (
+            <section className="p-4 rounded-2xl bg-amber-50 ring-1 ring-amber-200 text-amber-900 text-sm flex gap-3">
+              <Clock className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
+              <div>
+                <p className="font-semibold">Aún ningún negocio te aprobó</p>
+                <p className="text-amber-800/90 mt-0.5">
+                  {pendingBiz.length
+                    ? `${pendingBiz.map((b) => b.nombre).join(', ')} está revisando tus documentos. Te avisarán por WhatsApp.`
+                    : 'Cuando un negocio te apruebe verás aquí sus pedidos.'}
+                </p>
+              </div>
+            </section>
+          )}
+
+          {status !== 'DISPONIBLE' ? (
+            <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-8 text-center">
+              <div className="w-14 h-14 rounded-full bg-slate-100 mx-auto flex items-center justify-center">
+                {status === 'DESCANSO' ? <Coffee className="w-6 h-6 text-amber-500" /> : <Power className="w-6 h-6 text-slate-400" />}
+              </div>
+              <p className="font-semibold text-slate-900 mt-3">{status === 'DESCANSO' ? 'Estás en pausa' : 'Estás desconectado'}</p>
+              <p className="text-sm text-slate-500 mt-1">Conéctate para ver los pedidos disponibles.</p>
+              <button onClick={() => changeStatus('DISPONIBLE')} className="mt-4 px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold">
+                Conectarme
+              </button>
+            </section>
+          ) : (
+            <>
+              {/* Filtro por negocio */}
+              {approvedBiz.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1">
+                  <button
+                    onClick={() => setBizFilter('ALL')}
+                    className={`shrink-0 px-3.5 py-2 rounded-full text-sm font-semibold ring-1 transition ${
+                      bizFilter === 'ALL' ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-600 ring-slate-200'
+                    }`}
+                  >
+                    Todos · {openOrders.length}
+                  </button>
+                  {approvedBiz.map((b) => (
+                    <button
+                      key={b.id}
+                      onClick={() => setBizFilter(b.id)}
+                      className={`shrink-0 pl-1.5 pr-3.5 py-1.5 rounded-full text-sm font-semibold ring-1 flex items-center gap-2 transition ${
+                        bizFilter === b.id ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-600 ring-slate-200'
+                      }`}
+                    >
+                      <BizLogo biz={b} size="w-6 h-6" />
+                      <span className="max-w-[120px] truncate">{b.nombre}</span>
+                      <span className="opacity-60">{countByBiz(b.id)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold text-slate-900">Pedidos disponibles</h2>
+                <span className="text-xs text-slate-500 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> En vivo
+                </span>
+              </div>
+
+              {filteredOpen.length === 0 ? (
+                <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-8 text-center">
+                  <div className="w-14 h-14 rounded-full bg-[#0066FF]/10 mx-auto flex items-center justify-center">
+                    <PackageCheck className="w-6 h-6 text-[#0066FF]" />
+                  </div>
+                  <p className="font-semibold text-slate-900 mt-3">No hay pedidos por ahora</p>
+                  <p className="text-sm text-slate-500 mt-1">
+                    {approvedBiz.length
+                      ? `Aparecerán aquí apenas ${approvedBiz.length === 1 ? approvedBiz[0].nombre : 'uno de tus negocios'} tenga un pedido listo para enviar.`
+                      : 'Cuando un negocio te apruebe verás aquí sus pedidos.'}
+                  </p>
+                </section>
+              ) : (
+                <div className="space-y-3">
+                  {filteredOpen.map((o) => (
+                    <PoolCard key={o.id} order={o} onOpen={() => setDetailOrder(o)} disabled={isBlocked} />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </main>
+      )}
+
+      {/* ═════════════ GANANCIAS ═════════════ */}
+      {tab === 'GANANCIAS' && <Earnings profile={profile} />}
+
+      {/* ═════════════ HISTORIAL ═════════════ */}
+      {tab === 'HISTORIAL' && (
+        <main className="max-w-xl mx-auto px-4 pt-4 space-y-3">
+          <h2 className="font-bold text-slate-900 text-lg">Historial</h2>
+          <div className="flex items-center gap-2 bg-white rounded-xl ring-1 ring-slate-200 px-3">
+            <Search className="w-4 h-4 text-slate-400" />
+            <input
+              value={historySearch}
+              onChange={(e) => setHistorySearch(e.target.value)}
+              placeholder="Buscar cliente, pedido o negocio"
+              className="flex-1 py-2.5 text-sm outline-none bg-transparent"
+            />
+          </div>
+          {(() => {
+            const q = historySearch.trim().toLowerCase();
+            const list = (profile?.historialEntregas || []).filter((h: any) =>
+              !q ||
+              String(h.cliente || '').toLowerCase().includes(q) ||
+              String(h.negocio || '').toLowerCase().includes(q) ||
+              String(h.codigo || h.numeroPedido || '').toLowerCase().includes(q)
+            );
+            if (!list.length) {
+              return (
+                <div className="bg-white rounded-2xl ring-1 ring-slate-100 p-8 text-center">
+                  <History className="w-8 h-8 text-slate-300 mx-auto" />
+                  <p className="font-semibold text-slate-800 mt-2">{q ? 'Sin resultados' : 'Aún no tienes entregas'}</p>
+                  <p className="text-sm text-slate-500 mt-1">Tus entregas completadas aparecerán aquí.</p>
+                </div>
+              );
+            }
+            return (
+              <div className="bg-white rounded-2xl ring-1 ring-slate-100 divide-y divide-slate-100">
+                {list.map((h: any) => (
+                  <div key={h.id} className="p-3.5 flex items-center gap-3">
+                    <BizLogo biz={{ nombre: h.negocio, logoUrl: h.negocioLogo, color: h.negocioColor }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{h.cliente}</p>
+                      <p className="text-xs text-slate-500 truncate">
+                        {h.tipoTramo === 'RETIRO' ? 'Retiro · ' : ''}{h.negocio} · #{h.codigo || h.numeroPedido} · {h.fecha}
+                      </p>
+                    </div>
+                    <span className="text-right">
+                      <span className="block text-sm font-bold text-emerald-600">{money(h.gananciaNum ?? 0)}</span>
+                      <span className={`block text-[11px] ${h.pagadoPorNegocio ? 'text-slate-400' : 'text-amber-600'}`}>
+                        {h.pagadoPorNegocio ? 'Pagado' : 'Por cobrar'}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </main>
+      )}
+
+      {/* ═════════════ PERFIL ═════════════ */}
+      {tab === 'PERFIL' && (
+        <main className="max-w-xl mx-auto px-4 pt-4 space-y-4">
+          <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-5 flex items-center gap-4">
+            {profile?.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover bg-slate-100" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-[#0066FF] text-white flex items-center justify-center text-xl font-bold">{initials(driverName)}</div>
+            )}
+            <div className="min-w-0">
+              <p className="font-bold text-lg text-slate-900 truncate">{driverName}</p>
+              <p className="text-sm text-slate-500">{driverPhone}</p>
+              <p className="text-xs mt-1 inline-flex items-center gap-1 text-slate-500">
+                <Bike className="w-3.5 h-3.5" />
+                {[profile?.vehicleType === 'AUTO' ? 'Auto' : profile?.vehicleType === 'BICICLETA' ? 'Bicicleta' : profile?.vehicleType === 'A_PIE' ? 'A pie' : 'Moto', profile?.vehicleName, profile?.placa].filter(Boolean).join(' · ')}
+              </p>
+            </div>
+          </section>
+
+          {/* Negocios */}
+          <section>
+            <h3 className="text-sm font-semibold text-slate-500 mb-2 px-1">Mis negocios</h3>
+            <div className="bg-white rounded-2xl ring-1 ring-slate-100 divide-y divide-slate-100">
+              {businesses.length === 0 ? (
+                <p className="p-4 text-sm text-slate-500">Todavía no trabajas con ningún negocio.</p>
+              ) : (
+                businesses.map((b) => (
+                  <div key={b.id} className="p-3.5 flex items-center gap-3">
+                    <BizLogo biz={b} size="w-10 h-10" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-slate-900 truncate">{b.nombre}</p>
+                      <p className="text-xs text-slate-500 truncate">{[b.direccion, b.ciudad].filter((x: string, i: number, arr: string[]) => x && arr.indexOf(x) === i).join(' · ') || 'Sin dirección'}</p>
+                    </div>
+                    {b.isApproved ? (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Activo</span>
+                    ) : b.pausado ? (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">En pausa</span>
+                    ) : b.status === 'SUSPENDED' ? (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">Suspendido</span>
+                    ) : b.status === 'REJECTED' ? (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700">Corregir datos</span>
+                    ) : (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">En revisión</span>
+                    )}
+                    {b.telefono && (
+                      <a href={waLink(b.telefono)} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center" aria-label={`WhatsApp de ${b.nombre}`}>
+                        <MessageCircle className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          {/* Red Citiox */}
+          <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4 flex items-center gap-3">
+            <div className="flex-1">
+              <p className="font-semibold text-sm text-slate-900">Recibir invitaciones de otros negocios</p>
+              <p className="text-xs text-slate-500 mt-0.5">Citiox puede recomendarte a negocios de tu ciudad que buscan repartidores.</p>
+            </div>
+            <button
+              onClick={toggleNetwork}
+              disabled={savingNetwork}
+              role="switch"
+              aria-checked={profile?.disponibleNuevosNegocios !== false}
+              className={`w-12 h-7 rounded-full p-0.5 transition shrink-0 ${profile?.disponibleNuevosNegocios !== false ? 'bg-emerald-500' : 'bg-slate-300'}`}
+            >
+              <span className={`block w-6 h-6 rounded-full bg-white shadow transition-transform ${profile?.disponibleNuevosNegocios !== false ? 'translate-x-5' : ''}`} />
+            </button>
+          </section>
+
+          <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4 flex items-center gap-3">
+            <ShieldCheck className={`w-5 h-5 ${profile?.documentosCompletos ? 'text-emerald-500' : 'text-amber-500'}`} />
+            <div className="flex-1">
+              <p className="font-semibold text-sm text-slate-900">Documentos</p>
+              <p className="text-xs text-slate-500">
+                {profile?.documentosCompletos ? 'Tus documentos están cargados. Solo los ven los negocios con los que trabajas.' : 'Faltan documentos. Pide al negocio que te reenvíe el enlace de registro.'}
+              </p>
+            </div>
+          </section>
 
           <button
-            onClick={() => setActiveTab('GANANCIAS')}
-            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all cursor-pointer ${
-              activeTab === 'GANANCIAS' ? 'text-blue-600 font-black' : 'text-slate-400 font-semibold hover:text-slate-600'
-            }`}
+            onClick={() => setShowLogout(true)}
+            className="w-full py-3 rounded-2xl bg-white ring-1 ring-slate-200 text-rose-600 font-semibold text-sm flex items-center justify-center gap-2"
           >
-            <TrendingUp className={`w-5 h-5 ${activeTab === 'GANANCIAS' ? 'text-blue-600 stroke-[2.5]' : 'text-slate-400'}`} />
-            <span className="text-[10px] uppercase tracking-wider">Ganancias</span>
+            <LogOut className="w-4 h-4" /> Cerrar sesión
           </button>
+        </main>
+      )}
 
-          <button
-            onClick={() => setActiveTab('HISTORIAL')}
-            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all cursor-pointer ${
-              activeTab === 'HISTORIAL' ? 'text-blue-600 font-black' : 'text-slate-400 font-semibold hover:text-slate-600'
-            }`}
-          >
-            <History className={`w-5 h-5 ${activeTab === 'HISTORIAL' ? 'text-blue-600 stroke-[2.5]' : 'text-slate-400'}`} />
-            <span className="text-[10px] uppercase tracking-wider">Historial</span>
-          </button>
+      {/* ═════════════ NAVEGACIÓN ═════════════ */}
+      {!activeOrder && (
+        <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-100 pb-[env(safe-area-inset-bottom)]">
+          <div className="max-w-xl mx-auto grid grid-cols-4">
+            {([
+              { key: 'PEDIDOS', label: 'Pedidos', Icon: Truck, badge: openOrders.length },
+              { key: 'GANANCIAS', label: 'Ganancias', Icon: Wallet },
+              { key: 'HISTORIAL', label: 'Historial', Icon: History },
+              { key: 'PERFIL', label: 'Perfil', Icon: User },
+            ] as const).map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`relative py-2.5 flex flex-col items-center gap-0.5 text-[11px] font-semibold transition ${tab === t.key ? 'text-[#0066FF]' : 'text-slate-400'}`}
+              >
+                <t.Icon className="w-5 h-5" />
+                {t.label}
+                {'badge' in t && t.badge ? (
+                  <span className="absolute top-1.5 left-1/2 ml-2 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center">{t.badge}</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        </nav>
+      )}
 
-          <button
-            onClick={() => setActiveTab('NEGOCIOS')}
-            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all cursor-pointer ${
-              activeTab === 'NEGOCIOS' ? 'text-blue-600 font-black' : 'text-slate-400 font-semibold hover:text-slate-600'
-            }`}
-          >
-            <Store className={`w-5 h-5 ${activeTab === 'NEGOCIOS' ? 'text-blue-600 stroke-[2.5]' : 'text-slate-400'}`} />
-            <span className="text-[10px] uppercase tracking-wider">Negocios</span>
-          </button>
+      {/* Vuelve a la misión desde otras pestañas */}
+      {activeOrder && tab !== 'PEDIDOS' && (
+        <button onClick={() => setTab('PEDIDOS')} className="fixed bottom-4 inset-x-4 z-40 max-w-xl mx-auto py-3.5 rounded-2xl bg-[#0066FF] text-white font-semibold shadow-lg">
+          Volver a mi entrega en curso
+        </button>
+      )}
 
-          <button
-            onClick={() => setActiveTab('PERFIL')}
-            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all cursor-pointer ${
-              activeTab === 'PERFIL' ? 'text-blue-600 font-black' : 'text-slate-400 font-semibold hover:text-slate-600'
-            }`}
-          >
-            <User className={`w-5 h-5 ${activeTab === 'PERFIL' ? 'text-blue-600 stroke-[2.5]' : 'text-slate-400'}`} />
-            <span className="text-[10px] uppercase tracking-wider">Perfil</span>
-          </button>
+      {/* ═════════════ MODALES ═════════════ */}
+
+      {cancelOrder && (
+        <Sheet title="Cancelar misión" onClose={() => setCancelOrder(null)}>
+          <p className="text-sm text-slate-600 mb-3">El pedido volverá a la lista para que otro repartidor lo tome. ¿Qué pasó?</p>
+          <div className="space-y-2">
+            {CANCELLATION_REASONS.map((r) => (
+              <button
+                key={r.code}
+                onClick={() => setCancelReason(r.code)}
+                className={`w-full text-left p-3 rounded-xl ring-1 transition flex items-start gap-3 ${
+                  cancelReason === r.code ? 'ring-2 ring-rose-500 bg-rose-50/60' : 'ring-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <span className={`mt-0.5 w-4 h-4 rounded-full border-2 shrink-0 ${cancelReason === r.code ? 'border-rose-500 bg-rose-500' : 'border-slate-300'}`} />
+                <span>
+                  <span className="block text-sm font-semibold text-slate-900">{r.title}</span>
+                  <span className="block text-xs text-slate-500">{r.desc}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <textarea
+            rows={2}
+            value={cancelNotes}
+            onChange={(e) => setCancelNotes(e.target.value)}
+            placeholder="Detalle (opcional)"
+            className="mt-3 w-full p-3 rounded-xl ring-1 ring-slate-200 text-sm outline-none focus:ring-2 focus:ring-rose-400"
+          />
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <button onClick={() => setCancelOrder(null)} className="py-3 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Volver</button>
+            <button
+              onClick={confirmCancel}
+              disabled={cancelLoading || (cancelReason === 'OTHER' && !cancelNotes.trim())}
+              className="py-3 rounded-xl bg-rose-600 text-white text-sm font-semibold disabled:opacity-50"
+            >
+              {cancelLoading ? 'Cancelando…' : 'Cancelar misión'}
+            </button>
+          </div>
+        </Sheet>
+      )}
+
+      {ratingOrderId && (
+        <Sheet title="¡Entrega completada!" onClose={() => setRatingOrderId(null)}>
+          <div className="text-center">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 mx-auto flex items-center justify-center">
+              <Check className="w-7 h-7 text-emerald-600" />
+            </div>
+            <p className="text-sm text-slate-600 mt-3">¿Cómo te fue con el cliente?</p>
+            <div className="flex justify-center gap-1.5 my-3">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button key={s} onClick={() => setCustomerStar(s)} aria-label={`${s} estrellas`}>
+                  <Star className={`w-8 h-8 ${s <= customerStar ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
+                </button>
+              ))}
+            </div>
+            <input
+              value={customerComment}
+              onChange={(e) => setCustomerComment(e.target.value)}
+              placeholder="Comentario (opcional)"
+              className="w-full p-3 rounded-xl ring-1 ring-slate-200 text-sm outline-none focus:ring-2 focus:ring-[#0066FF]"
+            />
+            <button onClick={submitRating} className="mt-4 w-full py-3 rounded-xl bg-[#0066FF] text-white text-sm font-semibold">
+              Enviar y continuar
+            </button>
+          </div>
+        </Sheet>
+      )}
+
+      {showLogout && (
+        <Sheet title="¿Cerrar sesión?" onClose={() => setShowLogout(false)}>
+          <p className="text-sm text-slate-600">Dejarás de recibir pedidos hasta que vuelvas a entrar con tu número.</p>
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <button onClick={() => setShowLogout(false)} className="py-3 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Cancelar</button>
+            <button onClick={handleLogout} className="py-3 rounded-xl bg-rose-600 text-white text-sm font-semibold">Cerrar sesión</button>
+          </div>
+        </Sheet>
+      )}
+
+      {detailOrder && (
+        <DriverOrderMapModal
+          order={detailOrder as any}
+          driverId={driverId}
+          hasActiveOrder={hasActiveOrder || isBlocked}
+          actionLoading={actionLoading === detailOrder.id}
+          onAccept={acceptOrder}
+          onUpdateState={updateState}
+          onClose={() => setDetailOrder(null)}
+          onCancel={openCancel as any}
+        />
+      )}
+
+      {toast && (
+        <div className="fixed top-3 inset-x-3 z-[400] flex justify-center pointer-events-none">
+          <div className={`max-w-md w-full px-4 py-3 rounded-2xl shadow-lg text-sm font-medium flex items-center gap-2 ${toast.tone === 'ok' ? 'bg-slate-900 text-white' : 'bg-rose-600 text-white'}`}>
+            {toast.tone === 'ok' ? <Check className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+            {toast.msg}
+          </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────── Tarjeta de pedido disponible ─────────────────────────────── */
+
+function PoolCard({ order, onOpen, disabled }: { order: DbOrder; onOpen: () => void; disabled?: boolean }) {
+  const ex = parseExtra(order.extraInfo);
+  const canonical = getCanonicalLogistics(order);
+  const laundry = isLaundryOrder(order);
+  const retiro = laundry && isRetiroOrder(order);
+  const fee = canonical.tipoMision === 'ROUND_TRIP_SERVICE' ? (retiro ? canonical.pickupFee : canonical.deliveryFee) : canonical.deliveryFee;
+  const comp = getActiveDriverCompensation(order);
+  const color = safeColor(order.negocio?.colorPrimario);
+  const dist = distanceOf(order);
+  const ready = ['LISTO', 'LISTO_PARA_ENTREGA'].includes(order.estado);
+
+  const from = retiro
+    ? { label: 'Retiras en', name: order.nombreCliente || 'Cliente', addr: order.direccionCliente }
+    : { label: 'Retiras en', name: order.negocio?.nombre || 'Local', addr: order.negocio?.direccion };
+  const to = retiro
+    ? { label: 'Entregas en', name: order.negocio?.nombre || 'Taller', addr: order.negocio?.direccion }
+    : { label: 'Entregas a', name: order.nombreCliente || 'Cliente', addr: order.direccionCliente };
+
+  return (
+    <button onClick={onOpen} className="w-full text-left bg-white rounded-2xl ring-1 ring-slate-100 hover:ring-slate-300 overflow-hidden transition shadow-sm">
+      <div className="h-1" style={{ background: color }} />
+      <div className="p-4">
+        <div className="flex items-center gap-3">
+          <BizLogo biz={order.negocio} />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-slate-900 truncate">{order.negocio?.nombre || 'Negocio'}</p>
+            <p className="text-xs text-slate-500">
+              #{orderCode(order)} · {timeAgo(order.createdAt)}
+              {dist ? ` · ${dist}` : ''}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-bold text-emerald-600 leading-none">{money(fee)}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">ganas</p>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <span
+            className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: `${color}14`, color }}
+          >
+            {laundry ? (retiro ? 'Retiro en casa del cliente' : 'Entrega de servicio') : 'Entrega a domicilio'}
+          </span>
+          {!laundry && (
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${ready ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+              {ready ? 'Listo para retirar' : 'En preparación'}
+            </span>
+          )}
+          {comp.puedeCobrarCliente && comp.montoRecaudarCliente > 0 ? (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Cobras {money(comp.montoRecaudarCliente)} en efectivo</span>
+          ) : (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Ya pagado</span>
+          )}
+        </div>
+
+        <div className="mt-3 relative pl-5 space-y-2.5">
+          <span className="absolute left-[5px] top-2 bottom-2 w-px bg-slate-200" />
+          <div className="relative">
+            <span className="absolute -left-5 top-1 w-[11px] h-[11px] rounded-full border-2 bg-white" style={{ borderColor: color }} />
+            <p className="text-[11px] text-slate-400">{from.label}</p>
+            <p className="text-sm font-medium text-slate-800 truncate">{from.name}</p>
+            {from.addr && <p className="text-xs text-slate-500 truncate">{from.addr}</p>}
+          </div>
+          <div className="relative">
+            <span className="absolute -left-5 top-1 w-[11px] h-[11px] rounded-full" style={{ background: color }} />
+            <p className="text-[11px] text-slate-400">{to.label}</p>
+            <p className="text-sm font-medium text-slate-800 truncate">{to.name}</p>
+            {to.addr && <p className="text-xs text-slate-500 truncate">{to.addr}</p>}
+          </div>
+        </div>
+
+        {ex?.notas && <p className="mt-2 text-xs text-slate-500 italic truncate">“{ex.notas}”</p>}
+
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-xs text-slate-500">{disabled ? 'Cuenta suspendida' : 'Toca para ver el mapa y aceptar'}</span>
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#0066FF]">
+            Ver <ChevronRight className="w-4 h-4" />
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/* ─────────────────────────────── Ganancias ─────────────────────────────── */
+
+function Earnings({ profile }: { profile: any }) {
+  const hist: any[] = profile?.historialEntregas || [];
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startWeek = startToday - ((now.getDay() + 6) % 7) * 86400000;
+  const sum = (from: number) =>
+    hist.filter((h) => h.fechaISO && new Date(h.fechaISO).getTime() >= from).reduce((s, h) => s + Number(h.gananciaNum || 0) + Number(h.propinaNum || 0), 0);
+  const countFrom = (from: number) => hist.filter((h) => h.fechaISO && new Date(h.fechaISO).getTime() >= from).length;
+
+  const byBiz = Object.values(
+    hist.reduce((acc: any, h) => {
+      const k = h.negocioId || h.negocio;
+      acc[k] = acc[k] || { nombre: h.negocio, logoUrl: h.negocioLogo, color: h.negocioColor, total: 0, count: 0 };
+      acc[k].total += Number(h.gananciaNum || 0) + Number(h.propinaNum || 0);
+      acc[k].count += 1;
+      return acc;
+    }, {})
+  ).sort((a: any, b: any) => b.total - a.total) as any[];
+
+  const m = profile?.metricas || {};
+  return (
+    <main className="max-w-xl mx-auto px-4 pt-4 space-y-4">
+      <h2 className="font-bold text-slate-900 text-lg">Ganancias</h2>
+      <section className="rounded-2xl bg-[#0066FF] text-white p-5 relative overflow-hidden">
+        <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10" />
+        <p className="text-sm text-white/80">Esta semana</p>
+        <p className="text-4xl font-bold mt-1">{money(sum(startWeek))}</p>
+        <p className="text-sm text-white/80 mt-1">{countFrom(startWeek)} {countFrom(startWeek) === 1 ? 'viaje' : 'viajes'}</p>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          {[
+            { label: 'Hoy', value: money(sum(startToday)) },
+            { label: 'Total', value: money(m.totalGanado || 0) },
+            { label: 'Por cobrar', value: money(m.porCobrarNegocios || 0) },
+          ].map((x) => (
+            <div key={x.label} className="rounded-xl bg-white/10 py-2">
+              <p className="font-bold">{x.value}</p>
+              <p className="text-[11px] text-white/75">{x.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h3 className="text-sm font-semibold text-slate-500 mb-2 px-1">Por negocio</h3>
+        <div className="bg-white rounded-2xl ring-1 ring-slate-100 divide-y divide-slate-100">
+          {byBiz.length === 0 ? (
+            <p className="p-4 text-sm text-slate-500">Cuando completes entregas verás aquí cuánto ganaste con cada negocio.</p>
+          ) : (
+            byBiz.map((b: any) => (
+              <div key={b.nombre} className="p-3.5 flex items-center gap-3">
+                <BizLogo biz={b} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 truncate">{b.nombre}</p>
+                  <p className="text-xs text-slate-500">{b.count} entregas</p>
+                </div>
+                <span className="font-bold text-slate-900">{money(b.total)}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {(m.desgloseDias || []).length > 0 && (
+        <section>
+          <h3 className="text-sm font-semibold text-slate-500 mb-2 px-1">Por día</h3>
+          <div className="bg-white rounded-2xl ring-1 ring-slate-100 divide-y divide-slate-100">
+            {m.desgloseDias.map((d: any, i: number) => (
+              <div key={i} className="p-3.5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{d.label}</p>
+                  <p className="text-xs text-slate-500">{d.count} {d.count === 1 ? 'entrega' : 'entregas'}</p>
+                </div>
+                <span className="font-bold text-emerald-600">{money(d.total)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+      <p className="text-xs text-slate-400 text-center px-4">Cada negocio te paga directamente. En lavanderías el retiro y la entrega se pagan por separado. "Por cobrar" es lo que el negocio aún no marca como pagado.</p>
+    </main>
+  );
+}
+
+/* ─────────────────────────────── Misión en curso ─────────────────────────────── */
+
+function ActiveMission(props: {
+  order: DbOrder;
+  driverId: string;
+  all: DbOrder[];
+  activeIdx: number;
+  setActiveIdx: (i: number) => void;
+  nowTime: number;
+  pin: string;
+  setPin: (v: string) => void;
+  busy: boolean;
+  onMap: () => void;
+  onArrived: () => void;
+  onState: (s: 'ON_ROUTE' | 'DELIVERED' | 'PICKED_UP' | 'DELIVERED_TO_WORKSHOP' | 'WAITING_CLIENT', pin?: string) => void;
+  onCancel: () => void;
+  onResend: (m?: 'RETIRO' | 'ENTREGA') => void;
+}) {
+  const { order, driverId, nowTime, pin, setPin, busy } = props;
+  const ex = parseExtra(order.extraInfo);
+  const comp = getActiveDriverCompensation(order, driverId);
+  const laundry = isLaundryOrder(order);
+  const retiro = laundry && isRetiroOrder(order);
+  const color = safeColor(order.negocio?.colorPrimario);
+  const { steps, current } = missionSteps(order, laundry, retiro);
+  const w = wordsFor(order.negocio);
+  const driverCode: string | null = laundry && ex?.driverCode ? String(ex.driverCode) : null;
+  const pickupCode = pickupCodeFor(order);
+  const handedOver =
+    ['ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA'].includes(order.estado) || Boolean(ex?.isHandedOver || ex?.dispatchStatus === 'DESPACHADO');
+  const pickedUp = !['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'REPARTIDOR_EN_CAMINO'].includes(order.estado) && !(order.estado === 'ENTREGADO_A_REPARTIDOR' && !handedOver);
+  const canCancel = !['RECOGIDO', 'RECIBIDO', 'EN_PROCESO', 'ENTREGADO'].includes(order.estado);
+  const waitingClient = ['ESPERANDO_CLIENTE', 'WAITING_CLIENT'].includes(order.estado);
+  const dist = distanceOf(order);
+
+  // Hacia dónde va ahora el repartidor
+  const goingToBusiness = (!laundry || !retiro) && ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR'].includes(order.estado) && !handedOver;
+  const goingToWorkshop = laundry && retiro && order.estado === 'RECOGIDO';
+  const target = goingToBusiness || goingToWorkshop
+    ? { title: goingToWorkshop ? `Lleva ${w.lasCosas} a` : 'Recoge el pedido en', name: order.negocio?.nombre || 'Local', addr: order.negocio?.direccion || '', phone: order.negocio?.whatsapp || '', maps: mapsLink(order, true) }
+    : { title: retiro ? `Retira ${w.lasCosas} donde` : 'Entrega a', name: order.nombreCliente || 'Cliente', addr: order.direccionCliente || '', ref: order.referenciaCliente, phone: order.telefonoCliente, maps: mapsLink(order) };
+
+  const readyAt = ex?.estimatedReadyAt ? new Date(ex.estimatedReadyAt).getTime() : null;
+  const secsLeft = readyAt ? Math.max(0, Math.floor((readyAt - nowTime) / 1000)) : null;
+
+  // Botón principal según el estado
+  let primary: { label: string; onClick: () => void; disabled?: boolean; hint?: string } | null = null;
+  switch (order.estado) {
+    case 'REPARTIDOR_EN_CAMINO':
+      // El retiro lo confirma el cliente (quien entrega) ingresando el código del repartidor
+      primary = {
+        label: 'Esperando al cliente',
+        onClick: () => {},
+        disabled: true,
+        hint: `Muéstrale tu código al cliente. Cuando lo ingrese en su teléfono, se confirma el retiro de ${w.lasCosas}.`,
+      };
+      break;
+    case 'RECOGIDO':
+      primary = { label: 'Entregué en el local', onClick: () => props.onState('DELIVERED_TO_WORKSHOP') };
+      break;
+    case 'EN_RUTA_ENTREGA':
+    case 'EN_CAMINO':
+    case 'EN_RUTA':
+      primary = { label: 'Llegué donde el cliente', onClick: () => props.onState('WAITING_CLIENT') };
+      break;
+    case 'REPARTIDOR_ASIGNADO':
+      primary = { label: 'Llegué al local', onClick: props.onArrived };
+      break;
+    case 'REPARTIDOR_EN_LOCAL':
+    case 'ENTREGADO_A_REPARTIDOR':
+      primary = handedOver
+        ? { label: 'Salir a entregar', onClick: () => props.onState('ON_ROUTE') }
+        : {
+            label: 'Esperando al local',
+            onClick: () => {},
+            disabled: true,
+            hint: laundry
+              ? `Dale tu código al local. Cuando te entregue ${w.lasCosas} y lo ingrese, se activa este botón.`
+              : 'Dile el código de retiro al local; cuando te entreguen el pedido se activa este botón.',
+          };
+      break;
+    case 'ESPERANDO_CLIENTE':
+    case 'WAITING_CLIENT':
+      primary = {
+        label: 'Confirmar entrega',
+        onClick: () => props.onState('DELIVERED', pin),
+        disabled: pin.trim().length !== 4,
+        hint: pin.trim().length !== 4 ? 'Escribe el código de 4 dígitos que te dicta el cliente.' : undefined,
+      };
+      break;
+  }
+
+  return (
+    <div className="max-w-xl mx-auto pb-40">
+      {/* Cabecera con el color del negocio */}
+      <div className="text-white px-4 pt-4 pb-14 relative overflow-hidden" style={{ background: color }}>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/0 to-black/25" />
+        <div className="relative">
+          {props.all.length > 1 && (
+            <div className="flex gap-1.5 mb-3 overflow-x-auto">
+              {props.all.map((o, i) => (
+                <button
+                  key={o.id}
+                  onClick={() => props.setActiveIdx(i)}
+                  className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${i === props.activeIdx ? 'bg-white text-slate-900' : 'bg-white/20 text-white'}`}
+                >
+                  #{orderCode(o)}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <BizLogo biz={order.negocio} size="w-11 h-11" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-white/80">{laundry ? (retiro ? `Retiro de ${w.cosas}` : `Entrega de ${w.cosas}`) : 'Entrega en curso'}</p>
+              <p className="font-bold truncate">{order.negocio?.nombre} · #{orderCode(order)}</p>
+            </div>
+            {order.negocio?.whatsapp && (
+              <a href={waLink(order.negocio.whatsapp)} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center" aria-label="Escribir al negocio">
+                <Store className="w-5 h-5" />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 -mt-10 relative space-y-3">
+        {/* Progreso */}
+        <section className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 p-4">
+          <div className="flex items-center gap-1.5">
+            {steps.map((s, i) => (
+              <div key={s} className="flex-1">
+                <div className={`h-1.5 rounded-full ${i <= current ? '' : 'bg-slate-200'}`} style={i <= current ? { background: color } : undefined} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <p className="font-semibold text-slate-900">{steps[current]}</p>
+            {secsLeft !== null && !pickedUp && !laundry && (
+              <span className="text-xs text-slate-500">
+                {secsLeft > 0 ? <>Listo en <b className="font-mono text-slate-900">{String(Math.floor(secsLeft / 60)).padStart(2, '0')}:{String(secsLeft % 60).padStart(2, '0')}</b></> : 'Debería estar listo'}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">Paso {current + 1} de {steps.length}</p>
+        </section>
+
+        {/* Dinero */}
+        {comp.puedeCobrarCliente && comp.montoRecaudarCliente > 0 ? (
+          <section className="rounded-2xl bg-amber-50 ring-1 ring-amber-200 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-400 text-white flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-amber-900">Cobra en efectivo al cliente</p>
+              <p className="text-2xl font-bold text-amber-950">{money(comp.montoRecaudarCliente)}</p>
+              <p className="text-xs text-amber-800/90">Este dinero es del negocio: lo entregas al local. Tu pago: {money(comp.monto)}.</p>
+            </div>
+          </section>
+        ) : (
+          <section className="rounded-2xl bg-emerald-50 ring-1 ring-emerald-200 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
+              <Check className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-emerald-900">No cobres nada al cliente</p>
+              <p className="text-xs text-emerald-800">
+                Tu pago por esta {laundry && retiro ? 'recogida' : 'entrega'}: <b>{money(comp.monto)}</b>
+                {comp.estadoCompensacion === 'PAID' ? ' · ya pagado' : ''}
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* Destino actual */}
+        <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4">
+          <p className="text-xs text-slate-500">{target.title}</p>
+          <p className="font-bold text-slate-900 text-lg leading-tight mt-0.5">{target.name}</p>
+          {target.addr && <p className="text-sm text-slate-600 mt-1">{target.addr}</p>}
+          {'ref' in target && target.ref && <p className="text-xs text-slate-500 mt-1">Referencia: {target.ref}</p>}
+          {dist && <p className="text-xs text-slate-400 mt-1">{dist} del local al cliente</p>}
+
+          <div className="grid grid-cols-4 gap-2 mt-4">
+            {target.maps ? (
+              <a href={target.maps} target="_blank" rel="noreferrer" className="col-span-2 py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-1.5" style={{ background: color }}>
+                <Navigation className="w-4 h-4" /> Navegar
+              </a>
+            ) : (
+              <button onClick={props.onMap} className="col-span-2 py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-1.5" style={{ background: color }}>
+                <MapIcon className="w-4 h-4" /> Ver mapa
+              </button>
+            )}
+            {target.phone ? (
+              <a href={`tel:${target.phone}`} className="py-2.5 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center" aria-label="Llamar">
+                <Phone className="w-4 h-4" />
+              </a>
+            ) : <span />}
+            {target.phone ? (
+              <a href={waLink(target.phone)} target="_blank" rel="noreferrer" className="py-2.5 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center" aria-label="WhatsApp">
+                <MessageCircle className="w-4 h-4" />
+              </a>
+            ) : <span />}
+          </div>
+          <button onClick={props.onMap} className="mt-2 w-full py-2 text-sm font-semibold text-slate-600 flex items-center justify-center gap-1.5 hover:text-slate-900">
+            <Eye className="w-4 h-4" /> Ver ruta completa en el mapa
+          </button>
+        </section>
+
+        {/* Código para retirar en el local */}
+        {['REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'REPARTIDOR_ASIGNADO'].includes(order.estado) && !laundry && pickupCode && (
+          <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4 flex items-center gap-4">
+            <div className="flex-1">
+              <p className="font-semibold text-slate-900 text-sm">Código de retiro</p>
+              <p className="text-xs text-slate-500">Dilo en el local para que te entreguen el pedido.</p>
+            </div>
+            <span className="font-mono text-2xl font-bold tracking-widest px-3 py-1.5 rounded-xl bg-slate-100 text-slate-900">{pickupCode}</span>
+          </section>
+        )}
+
+        {/* Código del repartidor: lo ingresa quien le entrega (cliente en el retiro, local en la entrega) */}
+        {laundry && driverCode && ['REPARTIDOR_EN_CAMINO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL'].includes(order.estado) && (
+          <section className="bg-white rounded-2xl ring-2 p-4" style={{ ['--tw-ring-color' as any]: color }}>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <p className="font-semibold text-slate-900">Tu código</p>
+                <p className="text-xs text-slate-500">
+                  {retiro
+                    ? `Muéstraselo al cliente: él lo ingresa en su teléfono para entregarte ${w.tusCosas.replace('tus ', 'sus ')}.`
+                    : `Dáselo al local: lo ingresa al entregarte ${w.lasCosas}.`}
+                </p>
+              </div>
+              <span className="font-mono text-3xl font-bold tracking-widest px-3 py-2 rounded-xl text-white" style={{ background: color }}>{driverCode}</span>
+            </div>
+            {retiro && (
+              <button onClick={() => props.onResend('RETIRO')} className="mt-3 text-sm font-semibold text-emerald-600 flex items-center gap-1.5">
+                <MessageCircle className="w-4 h-4" /> Reenviar enlace al cliente
+              </button>
+            )}
+          </section>
+        )}
+
+        {/* PIN de entrega */}
+        {waitingClient && (
+          <section className="bg-white rounded-2xl ring-2 p-4" style={{ ['--tw-ring-color' as any]: color }}>
+            <p className="font-semibold text-slate-900">Pide el código al cliente</p>
+            <p className="text-xs text-slate-500">Lo tiene en su WhatsApp o en la pantalla de su pedido.</p>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={4}
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="····"
+              className="mt-3 w-full text-center text-3xl font-bold tracking-[0.6em] pl-[0.6em] py-3 rounded-xl bg-slate-50 ring-1 ring-slate-200 outline-none focus:ring-2"
+            />
+            <button onClick={() => props.onResend('ENTREGA')} className="mt-3 text-sm font-semibold text-emerald-600 flex items-center gap-1.5">
+              <MessageCircle className="w-4 h-4" /> Reenviar código al cliente
+            </button>
+          </section>
+        )}
+
+        {/* Detalle del pedido */}
+        <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4">
+          <p className="font-semibold text-slate-900 text-sm mb-2">{laundry ? 'Artículos' : 'Pedido'}</p>
+          <div className="space-y-1.5">
+            {(order.items || []).length ? (
+              order.items.map((it, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-700">
+                    <b className="text-slate-900">{it.cantidad}×</b> {it.nombreProducto}
+                  </span>
+                  {!laundry && <span className="text-slate-500">{money(Number(it.precioUnitario) * it.cantidad)}</span>}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-slate-500">{ex?.servicioNombre || 'Sin detalle de artículos'}</p>
+            )}
+          </div>
+          {(ex?.instruccionesRetiro || ex?.notas) && (
+            <p className="mt-3 p-2.5 rounded-xl bg-amber-50 text-xs text-amber-900">
+              <b>Nota del cliente:</b> {ex.instruccionesRetiro || ex.notas}
+            </p>
+          )}
+          {!laundry && (
+            <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between text-sm">
+              <span className="text-slate-500">Total del pedido</span>
+              <span className="font-semibold text-slate-900">{money(order.total)}</span>
+            </div>
+          )}
+        </section>
+
+        {/* Avisar al cliente */}
+        {!waitingClient && order.estado !== 'REPARTIDOR_EN_CAMINO' && (
+          <button onClick={() => props.onResend()} className="w-full py-3 rounded-2xl bg-white ring-1 ring-slate-100 text-sm font-semibold text-slate-700 flex items-center justify-center gap-2">
+            <MessageCircle className="w-4 h-4 text-emerald-600" /> Avisar al cliente por WhatsApp
+          </button>
+        )}
+      </div>
+
+      {/* Barra inferior */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-100 pb-[env(safe-area-inset-bottom)]">
+        <div className="max-w-xl mx-auto p-3 space-y-2">
+          {primary?.hint && <p className="text-xs text-center text-slate-500">{primary.hint}</p>}
+          <div className="flex gap-2">
+            {canCancel ? (
+              <button onClick={props.onCancel} className="w-14 shrink-0 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center" aria-label="Cancelar misión" title="Cancelar misión">
+                <AlertTriangle className="w-5 h-5" />
+              </button>
+            ) : (
+              <span className="w-14 shrink-0 rounded-2xl bg-slate-50 text-slate-300 flex items-center justify-center" title="Ya retiraste los artículos">
+                <Lock className="w-5 h-5" />
+              </span>
+            )}
+            {primary ? (
+              <button
+                onClick={primary.onClick}
+                disabled={busy || primary.disabled}
+                className="flex-1 py-4 rounded-2xl text-white font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-40 transition"
+                style={{ background: primary.disabled ? '#94a3b8' : color }}
+              >
+                {busy ? <RefreshCw className="w-5 h-5 animate-spin" /> : primary.disabled ? <Clock className="w-5 h-5" /> : <Check className="w-5 h-5" />}
+                {primary.label}
+              </button>
+            ) : (
+              <button onClick={props.onMap} className="flex-1 py-4 rounded-2xl text-white font-semibold" style={{ background: color }}>
+                Ver detalle
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

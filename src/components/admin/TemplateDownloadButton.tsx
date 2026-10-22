@@ -159,11 +159,11 @@ export default function TemplateDownloadButton({
                     <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div>
                             <span className="text-xs font-bold text-slate-900 dark:text-white block">Plantillas por Tipo de Negocio</span>
-                            <span className="text-[10px] text-slate-400">Selecciona la industria que mejor describa tus productos:</span>
+                            <span className="text-xs text-slate-400">Selecciona la industria que mejor describa tus productos:</span>
                         </div>
 
                         {/* Selector de formato .xlsx vs .csv */}
-                        <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[10px] font-bold">
+                        <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-bold">
                             <button
                                 type="button"
                                 onClick={() => setFormat('xlsx')}
@@ -204,12 +204,12 @@ export default function TemplateDownloadButton({
                                                 {b.label}
                                             </span>
                                             {isSelected && (
-                                                <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
+                                                <span className="text-xs font-bold text-emerald-600 flex items-center gap-0.5">
                                                     <Check size={12} /> Tu Negocio
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                                        <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
                                             {b.description}
                                         </p>
                                     </div>

@@ -16,6 +16,7 @@ export interface WarehouseItem {
   code?: string | null;
   branchId?: string | null;
   type?: string | null;
+  isVirtual?: boolean;
   isDefault: boolean;
   active: boolean;
   branch?: BranchItem | null;

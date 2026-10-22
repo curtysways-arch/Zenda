@@ -166,15 +166,15 @@ export default function AdminPaymentsPanel() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'CONFIRMADO':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">CONFIRMADO</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Confirmado</span>;
             case 'COMPROBANTE_ENVIADO':
             case 'EN_REVISION':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse">COMPROBANTE EN REVISIÓN</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse">Comprobante en revisión</span>;
             case 'RECHAZADO':
-                return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">RECHAZADO</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">Rechazado</span>;
             case 'PENDIENTE':
             default:
-                return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">PENDIENTE DE PAGO</span>;
+                return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">Pendiente de pago</span>;
         }
     };
 
@@ -259,7 +259,7 @@ export default function AdminPaymentsPanel() {
                         >
                             <div className="space-y-1.5">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-lg font-black text-white">Pedido #{p.pedido.numeroPedido}</span>
+                                    <span className="text-lg font-bold text-white">Pedido #{p.pedido.numeroPedido}</span>
                                     {getStatusBadge(p.estado)}
                                     <span className="text-xs font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">{p.codigoPago || p.id.slice(0, 8)}</span>
                                 </div>

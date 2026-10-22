@@ -46,7 +46,7 @@ export default function PlanRestriction({ children, feature }: PlanRestrictionPr
 
     if (status && !status.allowed) {
         return (
-            <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 text-center animate-in fade-in zoom-in duration-300">
+            <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 text-center animate-in fade-in zoom-in duration-300">
                 <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 relative">
                     <Trophy size={40} className="text-amber-500" />
                     <div className="absolute -bottom-2 -right-2 bg-red-500 text-white p-1.5 rounded-full border-4 border-white">
@@ -54,8 +54,8 @@ export default function PlanRestriction({ children, feature }: PlanRestrictionPr
                     </div>
                 </div>
 
-                <h2 className="text-2xl font-black text-slate-900 mb-3">Módulo No Disponible</h2>
-                <p className="text-slate-500 mb-8 font-medium italic">
+                <h2 className="text-2xl font-bold text-slate-900 mb-3">Módulo No Disponible</h2>
+                <p className="text-slate-500 mb-8 font-medium ">
                     {status.message || "Tu plan actual no incluye el acceso a esta funcionalidad."}
                 </p>
 

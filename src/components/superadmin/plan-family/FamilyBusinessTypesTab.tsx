@@ -20,7 +20,7 @@ export default function FamilyBusinessTypesTab({
         <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-6 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
-                    <h4 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    <h4 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                         <Layers size={18} className="text-indigo-600" />
                         Tipos de Negocio Asociados ({businessTypes.length})
                     </h4>
@@ -53,10 +53,10 @@ export default function FamilyBusinessTypesTab({
                             className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-indigo-200 hover:shadow-md transition-all flex items-center justify-between"
                         >
                             <div className="space-y-0.5">
-                                <span className="text-xs font-black text-slate-900 block">{bt.name}</span>
-                                <span className="text-[11px] font-mono text-slate-400 block">{bt.slug}</span>
+                                <span className="text-xs font-bold text-slate-900 block">{bt.name}</span>
+                                <span className="text-xs font-mono text-slate-400 block">{bt.slug}</span>
                             </div>
-                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1">
                                 <CheckCircle2 size={10} /> Vinculado
                             </span>
                         </div>

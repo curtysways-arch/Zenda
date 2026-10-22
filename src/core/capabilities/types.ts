@@ -37,6 +37,15 @@ export const CAPABILITY_REGISTRY = {
   TRAINERS: 'trainers',
   WORKOUTS: 'workouts',
   PROGRESS: 'progress',
+  POS: 'pos',
+  CASH_REGISTER: 'cash_register',
+  RECIPES: 'recipes',
+  PRODUCTION: 'production',
+  PURCHASES: 'purchases',
+  COSTING: 'costing',
+  ELECTRONIC_BILLING: 'electronic_billing',
+  PAYROLL: 'payroll',
+  MULTI_WAREHOUSE: 'multi_warehouse',
 } as const;
 
 export type CapabilityKey = typeof CAPABILITY_REGISTRY[keyof typeof CAPABILITY_REGISTRY];
@@ -77,4 +86,13 @@ export interface BusinessCapabilities {
   dental_treatment_plan?: boolean;
   dental_diagnosis?: boolean;
   dental_documents?: boolean;
+  pos?: boolean;
+  cash_register?: boolean;
+  recipes?: boolean;
+  production?: boolean;
+  purchases?: boolean;
+  costing?: boolean;
+  electronic_billing?: boolean;
+  payroll?: boolean;
+  multi_warehouse?: boolean;
 }

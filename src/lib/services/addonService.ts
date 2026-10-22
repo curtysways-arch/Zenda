@@ -7,6 +7,44 @@
 import prisma from '@/lib/prisma';
 import { Addon, SubscriptionAddon, SubscriptionAddonStatus, SubscriptionAddonAction } from '@prisma/client';
 import { LegacyCompatibilityResolver } from '@/core/modules/LegacyCompatibilityResolver';
+import { SYSTEM_ADDONS } from '@/core/entitlements/AddonRegistry';
+import { hasModule } from '@/lib/business/BusinessModuleResolver';
+
+/**
+ * El catálogo de add-ons vive en la tabla Addon, pero si una base nueva no lo tiene
+ * cargado nadie podía contratar nada. Creamos solo los que falten (no se tocan los
+ * que el superadmin ya editó: precio, familias, activo…).
+ */
+let catalogChecked = false;
+async function ensureSystemAddons() {
+  if (catalogChecked) return;
+  try {
+    const existing = await prisma.addon.findMany({ select: { code: true } });
+    const have = new Set(existing.map((a) => a.code));
+    let order = existing.length;
+    for (const def of SYSTEM_ADDONS) {
+      if (have.has(def.id)) continue;
+      await prisma.addon.create({
+        data: {
+          code: def.id,
+          name: def.name,
+          description: def.description,
+          type: def.type as any,
+          targetKey: def.targetKey,
+          amount: def.amount ?? null,
+          stackable: def.stackable,
+          maxQuantity: def.maxQuantity ?? null,
+          priceMonthly: def.priceMonthly,
+          active: def.active,
+          sortOrder: order++,
+        },
+      });
+    }
+    catalogChecked = true;
+  } catch (e) {
+    console.warn('[addonService] No se pudo sincronizar el catálogo de add-ons:', e);
+  }
+}
 
 export interface AddonAvailabilityDTO {
   addon: Addon;
@@ -92,6 +130,7 @@ export const addonService = {
    * Obtiene todos los add-ons del catálogo (para Superadmin o vista global).
    */
   async getAllAddons(includeInactive = false) {
+    await ensureSystemAddons();
     return prisma.addon.findMany({
       where: includeInactive ? {} : { active: true },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }]
@@ -102,6 +141,7 @@ export const addonService = {
    * Obtiene el catálogo de add-ons evaluando disponibilidad para un negocio específico.
    */
   async getAddonsForBusiness(businessId: string): Promise<AddonAvailabilityDTO[]> {
+    await ensureSystemAddons();
     const business = await prisma.negocio.findUnique({
       where: { id: businessId },
       include: {
@@ -190,6 +230,13 @@ export const addonService = {
         }
       }
 
+      // 2b. Restaurantes, tiendas y lavanderías ya venden online y tienen delivery por su tipo
+      if (available && addon.type === 'CAPABILITY' && ['ECOMMERCE', 'DELIVERY'].includes(addon.targetKey)
+          && hasModule(business.tipoNegocio, addon.targetKey === 'ECOMMERCE' ? 'ORDERS' : 'DELIVERY')) {
+        available = false;
+        ineligibilityReason = 'Ya incluido en tu tipo de negocio';
+      }
+
       // 3. Validar dependencias requeridas
       if (available && addon.type === 'CAPABILITY') {
         const requiredDeps = dependencies.filter(d => d.moduleCode === addon.targetKey);
@@ -244,6 +291,7 @@ export const addonService = {
     requestedQuantityArg = 1,
     performedByArg = 'ADMIN'
   ) {
+    await ensureSystemAddons();
     const params: PurchaseAddonParams = typeof businessIdOrParams === 'object'
       ? businessIdOrParams
       : {

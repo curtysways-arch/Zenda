@@ -37,7 +37,7 @@ export function PaymentCard({ total, payment, onRegisterPayment }: PaymentCardPr
       <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 text-xs">
         <div className="flex justify-between items-center">
           <span className="text-slate-500 font-semibold">Total Cobrar:</span>
-          <span className="text-xl font-black text-slate-900 font-mono">${total.toFixed(2)}</span>
+          <span className="text-xl font-bold text-slate-900 font-mono">${total.toFixed(2)}</span>
         </div>
 
         <div className="grid grid-cols-2 gap-3 pt-2 border-t">

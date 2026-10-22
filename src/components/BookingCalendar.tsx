@@ -38,6 +38,8 @@ interface CalendarProps {
     diasAtencion?: number[];
     darkMode?: boolean;
     primaryColor?: string;
+    tipoNegocio?: string;
+    isCourt?: boolean;
 }
 
 const DURACIONES = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8];
@@ -53,8 +55,11 @@ export default function BookingCalendar({
     automaticDiscount,
     diasAtencion,
     darkMode = true,
-    primaryColor = '#ec4899'
+    primaryColor = '#ec4899',
+    tipoNegocio,
+    isCourt
 }: CalendarProps) {
+    const isCourtMode = isCourt ?? (tipoNegocio === 'SPORTS_COURTS' || tipoNegocio === 'CANCHAS');
     const [clientToday, setClientToday] = useState<Date | null>(null);
     const [currentWeek, setCurrentWeek] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -62,8 +67,13 @@ export default function BookingCalendar({
     useEffect(() => {
         const hoy = new Date();
         setClientToday(hoy);
-        setCurrentWeek(hoy);
-        setSelectedDate(hoy);
+        // Si ya pasó la hora de cierre (o queda menos de 30 min), empezamos en mañana:
+        // así el cliente no ve un día lleno de horarios tachados como "pasado".
+        const [closeH, closeM] = (horarioCierre || '23:00').split(':').map(Number);
+        const minutosAhora = hoy.getHours() * 60 + hoy.getMinutes();
+        const inicial = minutosAhora >= (closeH * 60 + (closeM || 0)) - 30 ? addDays(hoy, 1) : hoy;
+        setCurrentWeek(inicial);
+        setSelectedDate(inicial);
     }, []);
 
     const [selectedHour, setSelectedHour] = useState<string | null>(null);
@@ -313,7 +323,7 @@ export default function BookingCalendar({
         if (!isRangeAvailable(hour)) return;
         setSelectedHour(hour);
         
-        if (staffId && selectedDate) {
+        if (selectedDate) {
             const currentService = canchas.find(c => c.id === selectedCanchaId) || canchas[0];
             const promo = resolveSlotPromotion(hour, selectedDate, currentService, automaticDiscount);
             onSelectSlot(selectedDate, hour, selectedCanchaId, selectedDuracion, promo.discountPercent);
@@ -331,7 +341,7 @@ export default function BookingCalendar({
     const selectedCancha = canchas.find(c => c.id === selectedCanchaId) || canchas[0];
     const precioUnitario = Number(selectedCancha?.precioHora || (selectedCancha as any)?.precio || 0);
     const totalPrecio = selectedCancha 
-        ? (staffId ? precioUnitario : precioUnitario * selectedDuracion)
+        ? (!isCourtMode || staffId ? precioUnitario : precioUnitario * selectedDuracion)
         : 0;
 
     const isPastWeek = startOfWeek(currentWeek, { weekStartsOn: 1 }) <= startOfWeek(clientToday || new Date(), { weekStartsOn: 1 });
@@ -347,10 +357,12 @@ export default function BookingCalendar({
     if (darkMode) {
         return (
             <div className="animate-in fade-in duration-700 w-full max-w-xl mx-auto space-y-6 text-left">
-                {/* Cancha Selector */}
+                {/* Cancha / Servicio Selector */}
                 {canchas.length > 1 && !staffId && (
                     <div className="flex flex-col space-y-4">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">SELECCIONAR CANCHA</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+                            {isCourtMode ? 'SELECCIONAR CANCHA' : 'SELECCIONAR SERVICIO'}
+                        </label>
                         <div className="flex gap-2 p-1.5 bg-[#1a1d24] rounded-2xl overflow-x-auto hide-scrollbar">
                             {canchas.map((cancha) => (
                                 <button
@@ -359,7 +371,7 @@ export default function BookingCalendar({
                                     onClick={() => handleCanchaSelect(cancha.id)}
                                     style={selectedCanchaId === cancha.id ? { backgroundColor: primaryColor } : undefined}
                                     className={cn(
-                                        "flex-shrink-0 px-6 py-3 rounded-xl text-xs font-black whitespace-nowrap transition-all duration-300 cursor-pointer",
+                                        "flex-shrink-0 px-6 py-3 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300 cursor-pointer",
                                         selectedCanchaId === cancha.id
                                             ? "text-white shadow-xl"
                                             : "text-slate-500 hover:text-white"
@@ -374,12 +386,12 @@ export default function BookingCalendar({
                 )}
 
                 {/* Date Selection Grid - Dark Card Container */}
-                <div className="bg-[#0c1322] border border-white/5 rounded-[2rem] p-4 sm:p-5 text-white shadow-xl space-y-4">
+                <div className="bg-[#0c1322] border border-white/5 rounded-3xl p-4 sm:p-5 text-white shadow-xl space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Calendar size={18} strokeWidth={2.5} className="text-white/80" />
-                            <label className="text-[11px] font-black text-white/90 uppercase tracking-[0.2em]">
-                                {staffId ? 'FECHA DE RESERVA' : 'FECHA DE JUEGO'}
+                            <label className="text-xs font-bold text-white/90 uppercase tracking-wide">
+                                {isCourtMode ? (staffId ? 'FECHA DE RESERVA' : 'FECHA DE JUEGO') : 'FECHA DE CITA'}
                             </label>
                         </div>
                         <div className="flex gap-2">
@@ -426,10 +438,10 @@ export default function BookingCalendar({
                                                 : "bg-[#182234] border-transparent hover:border-slate-500/50 hover:bg-[#1f2c42]"
                                     )}
                                 >
-                                    <span className={cn("text-[10px] font-black uppercase mb-1 tracking-wider", isSelected ? "text-white" : "text-slate-400")}>
+                                    <span className={cn("text-xs font-bold uppercase mb-1 tracking-wider", isSelected ? "text-white" : "text-slate-400")}>
                                          {format(day, 'eee', { locale: es }).substring(0, 3)}
                                     </span>
-                                    <span className={cn("text-[19px] sm:text-[22px] font-black leading-none", isSelected ? "text-white" : "text-white")}>
+                                    <span className={cn("text-[19px] sm:text-[22px] font-bold leading-none", isSelected ? "text-white" : "text-white")}>
                                         {format(day, 'd')}
                                     </span>
                                 </button>
@@ -441,7 +453,9 @@ export default function BookingCalendar({
                 {/* Duración Selector */}
                 {duracionFija === undefined && (
                     <div className="flex flex-col space-y-4">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">TIEMPO DE JUEGO</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+                            {isCourtMode ? 'TIEMPO DE JUEGO' : 'DURACIÓN ESTIMADA'}
+                        </label>
                         <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
                             {DURACIONES.map((d) => (
                                 <button
@@ -450,7 +464,7 @@ export default function BookingCalendar({
                                     onClick={() => handleDuracionSelect(d)}
                                     style={selectedDuracion === d ? { backgroundColor: primaryColor } : undefined}
                                     className={cn(
-                                        "flex-shrink-0 w-20 h-14 rounded-2xl text-[15px] font-black transition-all flex items-center justify-center cursor-pointer shadow-sm",
+                                        "flex-shrink-0 w-20 h-14 rounded-2xl text-[15px] font-bold transition-all flex items-center justify-center cursor-pointer shadow-sm",
                                         selectedDuracion === d
                                             ? "text-white shadow-lg"
                                             : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
@@ -467,30 +481,36 @@ export default function BookingCalendar({
                 <div className="flex flex-col space-y-4">
                     <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-2">
-                            <Clock size={18} strokeWidth={2.5} className="text-slate-900" />
-                            <label className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wider">
-                                HORARIOS DISPONIBLES
+                            <Clock size={18} strokeWidth={2.5} style={{ color: '#0f172a' }} />
+                            <label className="text-sm sm:text-base font-bold" style={{ color: '#0f172a' }}>
+                                Horarios disponibles
                             </label>
                         </div>
                         {maxDiscount > 0 ? (
                             <div className="flex items-center gap-1.5">
                                 <span 
-                                    className="px-2 py-0.5 rounded-full text-[10px] font-black text-white flex items-center gap-0.5 shadow-sm"
+                                    className="px-2 py-0.5 rounded-full text-xs font-bold text-white flex items-center gap-0.5 shadow-sm"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     ⚡ -{maxDiscount}%
                                 </span>
-                                <span className="text-[11px] font-bold" style={{ color: primaryColor }}>
+                                <span className="text-xs font-bold" style={{ color: primaryColor }}>
                                     Precio con descuento
                                 </span>
                             </div>
                         ) : loadingBusy ? (
                             <div className="flex items-center gap-1.5">
                                 <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: primaryColor }} />
-                                <span className="text-[10px] font-bold italic" style={{ color: primaryColor }}>Actualizando...</span>
+                                <span className="text-xs font-bold " style={{ color: primaryColor }}>Actualizando...</span>
                             </div>
                         ) : null}
                     </div>
+
+                    {selectedDate && !loadingBusy && hoursToRender.length > 0 && hoursToRender.every(h => !isRangeAvailable(h)) && (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                            {isSameDay(selectedDate, new Date()) ? 'Hoy ya no quedan horarios.' : 'Este día no tiene horarios libres.'} Elige otro día arriba.
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-2.5">
                         {hoursToRender.map((hour) => {
@@ -512,7 +532,7 @@ export default function BookingCalendar({
                                     onClick={() => handleHourSelect(hour)}
                                     style={isSelected ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}
                                     className={cn(
-                                        "relative h-11 sm:h-12 rounded-xl text-xs sm:text-[13px] font-black tracking-wider transition-all border flex flex-col items-center justify-center overflow-hidden cursor-pointer",
+                                        "relative h-11 sm:h-12 rounded-xl text-xs sm:text-sm font-bold tracking-wider transition-all border flex flex-col items-center justify-center overflow-hidden cursor-pointer",
                                         isSelected
                                             ? "text-white shadow-md border-2"
                                             : inRange
@@ -527,7 +547,7 @@ export default function BookingCalendar({
                                     {promo.hasPromotion && available && (
                                         <div 
                                             className={cn(
-                                                "absolute top-0 right-0 text-[7px] font-black px-1 py-0.5 rounded-bl-[6px] z-10 uppercase tracking-tighter leading-none",
+                                                "absolute top-0 right-0 text-xs font-bold px-1 py-0.5 rounded-bl-[6px] z-10 uppercase tracking-tight leading-none",
                                                 isSelected ? "bg-white text-slate-900" : "text-white"
                                             )}
                                             style={!isSelected ? { backgroundColor: primaryColor } : undefined}
@@ -539,8 +559,8 @@ export default function BookingCalendar({
                                     <div className="flex items-center gap-1">
                                         {isSelected && <Check size={12} strokeWidth={3.5} className="text-white shrink-0" />}
                                         <span className={cn(
-                                            "leading-tight font-black",
-                                            isPending ? "text-[11px]" : "",
+                                            "leading-tight font-bold",
+                                            isPending ? "text-xs" : "",
                                             isSelected ? "text-white" : !available ? "text-slate-400 line-through" : "text-slate-800"
                                         )}>
                                             {hour}
@@ -548,50 +568,50 @@ export default function BookingCalendar({
                                     </div>
                                     
                                     {isPending && (
-                                        <span className="text-[7px] font-black uppercase tracking-widest animate-pulse text-amber-500 leading-none mt-0.5">PENDIENTE</span>
+                                        <span className="text-xs font-bold uppercase tracking-wide animate-pulse text-amber-500 leading-none mt-0.5">Pendiente</span>
                                     )}
 
                                     {!available && !isPending && !isBlocked && hour < format(new Date(), 'HH:mm') && isSameDay(selectedDate!, new Date()) && (
-                                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-0.5 scale-90">PASADO</span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-none mt-0.5 scale-90">Pasado</span>
                                     )}
                                     
                                     {isBlocked && (
-                                        <span className="text-[7px] font-bold text-rose-500 uppercase tracking-widest leading-none mt-0.5 scale-90">BLOQUEADO</span>
+                                        <span className="text-xs font-bold text-rose-500 uppercase tracking-wide leading-none mt-0.5 scale-90">Bloqueado</span>
                                     )}
                                 </button>
                             );
                         })}
                     </div>
                     {selectedDuracion > 1 && (
-                        <p className="text-[9px] text-slate-500 font-bold ml-1 italic tracking-wide">
+                        <p className="text-xs text-slate-500 font-bold ml-1 tracking-wide">
                             * Mostrando solo bloques de {selectedDuracion}h libres consecutivas
                         </p>
                     )}
                 </div>
 
-                {/* Resumen y Confirmar Card (Para canchas deportivas cuando no hay staffId) */}
-                {!staffId && selectedHour && selectedCancha && (
-                    <div className="mt-8 bg-[#0c1322] border border-white/5 rounded-[2rem] p-5 sm:p-6 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 shadow-2xl">
+                {/* Resumen y Confirmar Card (Solo para canchas deportivas cuando no hay staffId) */}
+                {isCourtMode && !staffId && selectedHour && selectedCancha && (
+                    <div className="mt-8 bg-[#0c1322] border border-white/5 rounded-3xl p-5 sm:p-6 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 shadow-2xl">
                         <div className="flex gap-4 items-center">
                             <div 
-                                className="size-16 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shrink-0"
+                                className="size-16 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0"
                                 style={{ backgroundColor: primaryColor }}
                             >
                                 <Clock size={28} strokeWidth={2.5} />
                             </div>
                             <div className="flex flex-col min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="text-[13px] font-black text-white uppercase tracking-wider truncate">
+                                    <h4 className="text-sm font-bold text-white uppercase tracking-wider truncate">
                                         {selectedCancha.nombre.length > 10 ? selectedCancha.nombre.substring(0, 10) + '...' : selectedCancha.nombre}
                                     </h4>
                                     <span 
-                                        className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex-shrink-0"
+                                        className="px-2 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wide flex-shrink-0"
                                         style={{ color: primaryColor, backgroundColor: `color-mix(in srgb, ${primaryColor} 15%, transparent)` }}
                                     >
                                         {selectedDuracion} HORA{selectedDuracion !== 1 ? 'S' : ''}
                                     </span>
                                 </div>
-                                <p className="text-slate-400 font-bold text-[11px] uppercase tracking-wider leading-snug">
+                                <p className="text-slate-400 font-bold text-xs uppercase tracking-wider leading-snug">
                                     {format(selectedDate!, "EEEE d 'DE' MMMM", { locale: es })} • {selectedHour} HS
                                 </p>
                             </div>
@@ -601,17 +621,17 @@ export default function BookingCalendar({
 
                         <div className="flex items-end justify-between">
                             <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-1">COSTO<br/>TOTAL</span>
+                                <span className="text-xs font-bold text-white/30 uppercase tracking-wide mb-1">Costo<br/>Total</span>
                                 <div className="flex items-baseline gap-2">
                                     {selectedSlotPromo.discountPercent > 0 ? (
                                         <>
                                             <span className="text-sm text-white/20 line-through font-bold">${totalPrecio}</span>
-                                            <span className="text-[38px] font-black text-white leading-none tracking-tighter">
+                                            <span className="text-[38px] font-bold text-white leading-none tracking-tight">
                                                 ${totalPrecio * (1 - selectedSlotPromo.discountPercent / 100)}
                                             </span>
                                         </>
                                     ) : (
-                                        <span className="text-[38px] font-black text-white leading-none tracking-tighter">${totalPrecio}</span>
+                                        <span className="text-[38px] font-bold text-white leading-none tracking-tight">${totalPrecio}</span>
                                     )}
                                 </div>
                             </div>
@@ -619,10 +639,10 @@ export default function BookingCalendar({
                             <button
                                 type="button"
                                 onClick={handleConfirm}
-                                className="text-white h-[60px] px-6 sm:px-8 rounded-2xl font-black text-[10px] tracking-[0.2em] transition-all shadow-xl flex items-center gap-3 uppercase shrink-0 cursor-pointer active:scale-95"
+                                className="text-white h-[60px] px-6 sm:px-8 rounded-2xl font-bold text-xs tracking-wide transition-all shadow-xl flex items-center gap-3 uppercase shrink-0 cursor-pointer active:scale-95"
                                 style={{ backgroundColor: primaryColor }}
                             >
-                                <span className="text-left leading-tight">RESERVAR<br/>AHORA</span>
+                                <span className="text-left leading-tight">Reservar<br/>Ahora</span>
                                 <Check size={16} strokeWidth={3} />
                             </button>
                         </div>
@@ -636,7 +656,7 @@ export default function BookingCalendar({
         <div className="animate-in fade-in duration-700 bg-white rounded-3xl p-4 sm:p-6 w-full max-w-xl mx-auto shadow-sm relative border border-gray-100 space-y-6 text-left">
             {canchas.length > 1 && !staffId && (
                 <div className="flex flex-col space-y-3">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Sede / Ubicación</label>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide px-1">Sede / Ubicación</label>
                     <div className="flex gap-2 pb-2 overflow-x-auto hide-scrollbar">
                         {canchas.map((cancha) => (
                             <button
@@ -644,7 +664,7 @@ export default function BookingCalendar({
                                 key={cancha.id}
                                 onClick={() => handleCanchaSelect(cancha.id)}
                                 className={cn(
-                                    "flex-shrink-0 px-5 py-2.5 rounded-2xl text-[11px] font-black whitespace-nowrap transition-all duration-300 cursor-pointer",
+                                    "flex-shrink-0 px-5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all duration-300 cursor-pointer",
                                     selectedCanchaId === cancha.id
                                         ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
                                         : "bg-gray-50 text-gray-500 hover:bg-gray-100"
@@ -659,7 +679,7 @@ export default function BookingCalendar({
 
             <div className="flex flex-col space-y-4">
                 <div className="flex items-center justify-between px-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">FECHA DE CITA</label>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Fecha de cita</label>
                     <div className="flex gap-2">
                         <button
                             type="button"
@@ -703,10 +723,10 @@ export default function BookingCalendar({
                                             : "bg-white border-gray-100 hover:border-emerald-500/30 hover:bg-gray-50"
                                 )}
                             >
-                                <span className={cn("text-[8px] sm:text-[9px] font-black uppercase tracking-widest", isSelected ? "text-emerald-600" : "text-gray-400")}>
+                                <span className={cn("text-xs sm:text-xs font-bold uppercase tracking-wide", isSelected ? "text-emerald-600" : "text-gray-400")}>
                                      {format(day, 'eee', { locale: es }).substring(0, 3)}
                                 </span>
-                                <span className={cn("text-[18px] sm:text-[20px] font-black leading-none mt-1", isSelected ? "text-emerald-600" : "text-gray-800")}>
+                                <span className={cn("text-[18px] sm:text-[20px] font-bold leading-none mt-1", isSelected ? "text-emerald-600" : "text-gray-800")}>
                                     {format(day, 'd')}
                                 </span>
                             </button>
@@ -717,7 +737,7 @@ export default function BookingCalendar({
 
             {duracionFija === undefined && (
                 <div className="flex flex-col space-y-4 pt-2 border-t border-gray-100">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">DURACIÓN TENTATIVA</label>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide px-1">Duración tentativa</label>
                     <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar px-1">
                         {DURACIONES.map((d) => (
                             <button
@@ -725,7 +745,7 @@ export default function BookingCalendar({
                                 key={d}
                                 onClick={() => handleDuracionSelect(d)}
                                 className={cn(
-                                    "flex-shrink-0 w-16 h-12 rounded-[1rem] text-[13px] font-black transition-all flex items-center justify-center shadow-sm cursor-pointer",
+                                    "flex-shrink-0 w-16 h-12 rounded-[1rem] text-sm font-bold transition-all flex items-center justify-center shadow-sm cursor-pointer",
                                     selectedDuracion === d
                                         ? "bg-emerald-600 text-white shadow-emerald-600/20"
                                         : "bg-white border border-gray-100 text-gray-500 hover:border-gray-200 hover:bg-gray-50"
@@ -740,14 +760,20 @@ export default function BookingCalendar({
 
             <div className="flex flex-col space-y-4 pt-2 border-t border-gray-100">
                 <div className="flex items-center justify-between px-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">HORARIOS DISPONIBLES</label>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide">Horarios disponibles</label>
                     {loadingBusy && (
                         <div className="flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[9px] font-bold text-emerald-600 italic">Buscando...</span>
+                            <span className="text-xs font-bold text-emerald-600 ">Buscando...</span>
                         </div>
                     )}
                 </div>
+
+                {selectedDate && !loadingBusy && hoursToRender.length > 0 && hoursToRender.every(h => !isRangeAvailable(h)) && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        {isSameDay(selectedDate, new Date()) ? 'Hoy ya no quedan horarios.' : 'Este día no tiene horarios libres.'} Elige otro día arriba.
+                    </div>
+                )}
 
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                     {hoursToRender.map((hour) => {
@@ -767,7 +793,7 @@ export default function BookingCalendar({
                                 disabled={!available}
                                 onClick={() => handleHourSelect(hour)}
                                 className={cn(
-                                    "relative h-12 rounded-[1rem] text-[13px] font-black tracking-wider transition-all border flex flex-col items-center justify-center overflow-hidden cursor-pointer",
+                                    "relative h-12 rounded-[1rem] text-sm font-bold tracking-wider transition-all border flex flex-col items-center justify-center overflow-hidden cursor-pointer",
                                     isSelected
                                         ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20 ring-2 ring-emerald-500/30"
                                         : inRange
@@ -780,20 +806,20 @@ export default function BookingCalendar({
                                 )}
                             >
                                 {promo.hasPromotion && available && (
-                                    <div className="absolute top-0 right-0 bg-pink-500 text-white text-[7px] px-1.5 py-0.5 rounded-bl-[8px] z-20 font-black tracking-tighter uppercase">
+                                    <div className="absolute top-0 right-0 bg-pink-500 text-white text-xs px-1.5 py-0.5 rounded-bl-[8px] z-20 font-bold tracking-tight uppercase">
                                         {promo.labelText}
                                     </div>
                                 )}
                                 
                                 <span className={cn(
-                                    isPending ? "text-[11px]" : "", 
+                                    isPending ? "text-xs" : "", 
                                     !available ? "line-through opacity-70" : ""
                                 )}>
                                     {hour}
                                 </span>
 
                                 {!available && (
-                                    <span className="text-[7px] font-bold text-slate-400/80 uppercase tracking-widest leading-none mt-0.5 scale-90">
+                                    <span className="text-xs font-bold text-slate-400/80 uppercase tracking-wide leading-none mt-0.5 scale-90">
                                         Ocupado
                                     </span>
                                 )}

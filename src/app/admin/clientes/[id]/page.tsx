@@ -136,7 +136,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
         return (
             <div className="min-h-[500px] flex flex-col items-center justify-center space-y-4">
                 <Loader2 className="animate-spin text-indigo-600" size={36} />
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Cargando Ficha del Cliente...</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Cargando Ficha del Cliente...</p>
             </div>
         );
     }
@@ -149,7 +149,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                 </div>
                 <Link
                     href="/admin/clientes"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-wide"
                 >
                     <ArrowLeft size={16} /> Volver a Lista de Clientes
                 </Link>
@@ -175,37 +175,37 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
             <div className="flex items-center justify-between">
                 <Link
                     href="/admin/clientes"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-95"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95"
                 >
                     <ArrowLeft size={16} /> Volver a Clientes
                 </Link>
                 <Link 
                     href={`/admin/usuarios/nuevo?phone=${cliente.telefono}&name=${encodeURIComponent(cliente.nombre)}`}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-95"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95"
                 >
                     <Users size={14} /> Promover a Personal / Administrador
                 </Link>
             </div>
 
             {/* Banner de Cabecera del Cliente */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden space-y-6">
+            <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-xl shadow-slate-200/40 relative overflow-hidden space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-center gap-5">
                         <div 
-                            className="size-20 rounded-3xl bg-indigo-600 text-white font-black text-3xl flex items-center justify-center shadow-lg shadow-indigo-600/30 uppercase shrink-0"
+                            className="size-20 rounded-3xl bg-indigo-600 text-white font-bold text-3xl flex items-center justify-center shadow-lg shadow-indigo-600/30 shrink-0"
                             style={{ backgroundColor: primaryColor }}
                         >
                             {cliente.nombre.charAt(0)}
                         </div>
                         <div className="space-y-1">
-                            <h1 className="text-2xl md:text-3xl font-black text-slate-900 uppercase tracking-tight">
+                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                                 {cliente.nombre}
                             </h1>
                             <p className="text-xs text-slate-500 font-bold flex items-center gap-2">
                                 <Phone size={14} className="text-indigo-600" />
                                 {cliente.telefono}
                             </p>
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest pt-1">
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wide pt-1">
                                 Miembro desde: {format(new Date(cliente.createdAt), "dd 'de' MMMM, yyyy", { locale: es })}
                             </p>
                         </div>
@@ -219,13 +219,13 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                     href={`https://wa.me/${(cliente.telefono || '').replace(/\D/g, '')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-5 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
+                                    className="px-5 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
                                 >
                                     <MessageCircle size={16} /> WhatsApp
                                 </a>
                                 <a
                                     href={`tel:${cliente.telefono}`}
-                                    className="px-5 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md active:scale-95 transition-all"
+                                    className="px-5 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-md active:scale-95 transition-all"
                                 >
                                     <Phone size={16} /> Llamar
                                 </a>
@@ -237,31 +237,31 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                 {/* Grid KPI de Estadísticas del Cliente */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Reservas Totales</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-1">Reservas Totales</span>
                         <div className="flex items-center gap-2">
                             <Calendar size={16} className="text-indigo-600" />
-                            <span className="text-2xl font-black text-slate-900">{citas.length}</span>
+                            <span className="text-2xl font-bold text-slate-900">{citas.length}</span>
                         </div>
                     </div>
                     <div className="p-4 bg-purple-50/60 rounded-2xl border border-purple-100">
-                        <span className="text-[9px] font-black text-purple-600 uppercase tracking-widest block mb-1">Inversión Total</span>
+                        <span className="text-xs font-bold text-purple-600 uppercase tracking-wide block mb-1">Inversión Total</span>
                         <div className="flex items-center gap-2">
                             <DollarSign size={16} className="text-purple-600" />
-                            <span className="text-2xl font-black text-purple-900">${totalInversion.toFixed(2)}</span>
+                            <span className="text-2xl font-bold text-purple-900">${totalInversion.toFixed(2)}</span>
                         </div>
                     </div>
                     <div className="p-4 bg-cyan-50/60 rounded-2xl border border-cyan-100">
-                        <span className="text-[9px] font-black text-cyan-600 uppercase tracking-widest block mb-1">Diamantes / Puntos</span>
+                        <span className="text-xs font-bold text-cyan-600 uppercase tracking-wide block mb-1">Diamantes / Puntos</span>
                         <div className="flex items-center gap-2">
                             <Gem size={16} className="text-cyan-600" />
-                            <span className="text-2xl font-black text-cyan-900">{loyalty.points || 0}</span>
+                            <span className="text-2xl font-bold text-cyan-900">{loyalty.points || 0}</span>
                         </div>
                     </div>
                     <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-100">
-                        <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest block mb-1">Saldo Cashback</span>
+                        <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide block mb-1">Saldo Cashback</span>
                         <div className="flex items-center gap-2">
                             <Wallet size={16} className="text-emerald-600" />
-                            <span className="text-2xl font-black text-emerald-900">${parseFloat(loyalty.cashback || 0).toFixed(2)}</span>
+                            <span className="text-2xl font-bold text-emerald-900">${parseFloat(loyalty.cashback || 0).toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
@@ -283,7 +283,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={clsx(
-                                "flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all active:scale-95",
+                                "flex items-center gap-2.5 px-6 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all active:scale-95",
                                 isActive
                                     ? "bg-slate-900 text-white shadow-md"
                                     : "bg-slate-50 text-slate-500 hover:bg-slate-100"
@@ -293,7 +293,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                             {tab.label}
                             {tab.count !== undefined && tab.count > 0 && (
                                 <span className={clsx(
-                                    "px-2 py-0.5 rounded-full text-[10px] font-black",
+                                    "px-2 py-0.5 rounded-full text-xs font-bold",
                                     isActive ? "bg-indigo-500 text-white" : "bg-slate-200 text-slate-700"
                                 )}>
                                     {tab.count}
@@ -305,18 +305,18 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
             </div>
 
             {/* Contenido de la Pestaña Activa */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm min-h-[350px]">
+            <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm min-h-[350px]">
                 {/* 1. CITAS / RESERVAS */}
                 {activeTab === 'citas' && (
                     <div className="space-y-4">
-                        <h3 className="text-base font-black text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
+                        <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
                             <Calendar size={18} className="text-indigo-600" />
                             Historial Completo de Reservas ({citas.length})
                         </h3>
                         {citas.length === 0 ? (
                             <div className="py-20 text-center space-y-3 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                                 <Calendar size={40} className="mx-auto text-slate-300" />
-                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Este cliente no ha registrado reservas aún</p>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Este cliente no ha registrado reservas aún</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -341,7 +341,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                                         <Calendar size={20} className="text-emerald-500" />
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-black text-slate-900 uppercase text-sm leading-tight">
+                                                        <h4 className="font-bold text-slate-900 uppercase text-sm leading-tight">
                                                             {cita.service?.nombre || 'Cancha'}
                                                         </h4>
                                                         {hasStaff && (
@@ -352,7 +352,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                                         )}
                                                     </div>
                                                 </div>
-                                                <span className={clsx("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider", badge.bg)}>
+                                                <span className={clsx("px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider", badge.bg)}>
                                                     {badge.label}
                                                 </span>
                                             </div>
@@ -367,7 +367,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
 
                                             {cita.total > 0 && (
                                                 <div className="pt-2 flex justify-end">
-                                                    <span className="text-sm font-black text-slate-900">
+                                                    <span className="text-sm font-bold text-slate-900">
                                                         Total: ${cita.total.toFixed(2)}
                                                     </span>
                                                 </div>
@@ -383,24 +383,24 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                 {/* 2. FIDELIDAD */}
                 {activeTab === 'fidelidad' && (
                     <div className="space-y-6">
-                        <div className={clsx("p-8 rounded-[2.5rem] bg-gradient-to-br border flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm", levelStyle.bg)}>
+                        <div className={clsx("p-8 rounded-2xl bg-gradient-to-br border flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm", levelStyle.bg)}>
                             <div className="flex items-center gap-5">
                                 <div className="p-4 rounded-3xl bg-white shadow-md">
                                     <Award size={36} style={{ color: levelStyle.iconColor }} />
                                 </div>
                                 <div>
-                                    <span className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-1">Nivel de Fidelidad</span>
-                                    <h3 className="text-3xl font-black uppercase italic tracking-tight text-slate-900">{levelStyle.label}</h3>
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-400 block mb-1">Nivel de Fidelidad</span>
+                                    <h3 className="text-3xl font-bold tracking-tight text-slate-900">{levelStyle.label}</h3>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className="px-6 py-3 bg-white rounded-2xl shadow-sm text-center border border-slate-100">
-                                    <span className="text-[10px] font-black uppercase text-slate-400 block">Puntos Acumulados</span>
-                                    <span className="text-xl font-black text-slate-900">{loyalty.points} Pts</span>
+                                    <span className="text-xs font-bold uppercase text-slate-400 block">Puntos Acumulados</span>
+                                    <span className="text-xl font-bold text-slate-900">{loyalty.points} Pts</span>
                                 </div>
                                 <div className="px-6 py-3 bg-white rounded-2xl shadow-sm text-center border border-slate-100">
-                                    <span className="text-[10px] font-black uppercase text-slate-400 block">Saldo Cashback</span>
-                                    <span className="text-xl font-black text-emerald-600">${parseFloat(loyalty.cashback || 0).toFixed(2)}</span>
+                                    <span className="text-xs font-bold uppercase text-slate-400 block">Saldo Cashback</span>
+                                    <span className="text-xl font-bold text-emerald-600">${parseFloat(loyalty.cashback || 0).toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -414,14 +414,14 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                 {/* 3. CUPONES */}
                 {activeTab === 'cupones' && (
                     <div className="space-y-4">
-                        <h3 className="text-base font-black text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
+                        <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
                             <Tag size={18} className="text-pink-600" />
                             Cupones de Descuento
                         </h3>
                         {loyalty.cupones?.length === 0 ? (
                             <div className="py-20 text-center space-y-3 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                                 <Tag size={40} className="mx-auto text-slate-300" />
-                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No tiene cupones asignados</p>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">No tiene cupones asignados</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -429,19 +429,19 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                     <div key={cc.id} className="bg-slate-50 border border-slate-200/80 rounded-3xl p-6 flex justify-between items-center">
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-2">
-                                                <h4 className="font-black text-slate-900 text-sm uppercase">{cc.nombre || 'Cupón Especial'}</h4>
-                                                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-100 text-emerald-700">
+                                                <h4 className="font-bold text-slate-900 text-sm uppercase">{cc.nombre || 'Cupón Especial'}</h4>
+                                                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-emerald-100 text-emerald-700">
                                                     {cc.estado}
                                                 </span>
                                             </div>
                                             <p className="text-xs text-slate-500 font-medium">{cc.descripcion || 'Sin descripción.'}</p>
-                                            <p className="text-xs font-black text-slate-800">CÓDIGO: <span className="bg-white px-2 py-1 rounded-lg border border-slate-200">{cc.codigo}</span></p>
+                                            <p className="text-xs font-bold text-slate-800">Código: <span className="bg-white px-2 py-1 rounded-lg border border-slate-200">{cc.codigo}</span></p>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-2xl font-black text-pink-600">
+                                            <span className="text-2xl font-bold text-pink-600">
                                                 {cc.tipo === 'PORCENTAJE' ? `${cc.descuento}%` : `$${cc.descuento}`}
                                             </span>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase block">Descuento</span>
+                                            <span className="text-xs font-bold text-slate-400 uppercase block">Descuento</span>
                                         </div>
                                     </div>
                                 ))}
@@ -453,14 +453,14 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                 {/* 4. MISIONES */}
                 {activeTab === 'misiones' && (
                     <div className="space-y-4">
-                        <h3 className="text-base font-black text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
+                        <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
                             <Trophy size={18} className="text-amber-500" />
                             Misiones y Desafíos de Lealtad
                         </h3>
                         {loyalty.misiones?.length === 0 ? (
                             <div className="py-20 text-center space-y-3 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                                 <Trophy size={40} className="mx-auto text-slate-300" />
-                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No está participando en misiones actualmente</p>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">No está participando en misiones actualmente</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -474,16 +474,16 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                         <div key={mp.id} className="bg-slate-50 border border-slate-200/80 rounded-3xl p-6 space-y-3">
                                             <div className="flex justify-between items-start gap-4">
                                                 <div>
-                                                    <h4 className="font-black text-slate-900 text-sm uppercase">{mp.Quest?.nombre || 'Misión'}</h4>
+                                                    <h4 className="font-bold text-slate-900 text-sm uppercase">{mp.Quest?.nombre || 'Misión'}</h4>
                                                     <p className="text-xs text-slate-500 font-medium">{mp.Quest?.descripcion}</p>
                                                 </div>
                                                 {completada ? (
-                                                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase flex items-center gap-1 shadow-sm">
+                                                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold uppercase flex items-center gap-1 shadow-sm">
                                                         <CheckCircle2 size={12} /> {mp.estado === 'RECLAMADA' || mp.estado === 'RECOMPENSADA' ? 'Recompensada' : 'Completada'}
                                                     </span>
                                                 ) : (
                                                     <span className={clsx(
-                                                        "px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1 shadow-sm",
+                                                        "px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center gap-1 shadow-sm",
                                                         actual > 0 ? "bg-amber-100 text-amber-800 border border-amber-200" : "bg-slate-200/70 text-slate-600"
                                                     )}>
                                                         <Clock size={12} /> {actual > 0 ? 'En progreso' : 'Disponible'}
@@ -493,7 +493,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                             <div className="space-y-1">
                                                 <div className="flex justify-between text-xs font-bold text-slate-500">
                                                     <span>Progreso</span>
-                                                    <span className="font-black text-slate-800">{actual} / {meta} ({pct}%)</span>
+                                                    <span className="font-bold text-slate-800">{actual} / {meta} ({pct}%)</span>
                                                 </div>
                                                 <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
                                                     <div 
@@ -516,14 +516,14 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                 {/* 5. REGALOS */}
                 {activeTab === 'regalos' && (
                     <div className="space-y-4">
-                        <h3 className="text-base font-black text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
+                        <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
                             <Gift size={18} className="text-emerald-600" />
                             Premios & Canjes Realizados
                         </h3>
                         {loyalty.regalos?.length === 0 ? (
                             <div className="py-20 text-center space-y-3 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                                 <Gift size={40} className="mx-auto text-slate-300" />
-                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No ha realizado canjes de premios aún</p>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">No ha realizado canjes de premios aún</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -532,15 +532,15 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                     return (
                                         <div key={red.id} className="bg-slate-50 border border-slate-200/80 rounded-3xl p-6 flex justify-between items-center">
                                             <div>
-                                                <h4 className="font-black text-slate-900 text-sm uppercase">{red.Reward?.nombre || 'Premio'}</h4>
+                                                <h4 className="font-bold text-slate-900 text-sm uppercase">{red.Reward?.nombre || 'Premio'}</h4>
                                                 <p className="text-xs text-slate-400 font-bold mt-1">Canjeado el {format(new Date(red.createdAt), "dd MMM yyyy", { locale: es })}</p>
-                                                <span className={clsx("inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase mt-2", entregado ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
+                                                <span className={clsx("inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase mt-2", entregado ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
                                                     {entregado ? 'Entregado' : 'Pendiente de Entrega'}
                                                 </span>
                                             </div>
                                             <div className="text-right">
-                                                <span className="text-xs font-black text-slate-400 uppercase block">Costo</span>
-                                                <span className="text-lg font-black text-slate-900">{red.Reward?.costoPuntos || 0} Pts</span>
+                                                <span className="text-xs font-bold text-slate-400 uppercase block">Costo</span>
+                                                <span className="text-lg font-bold text-slate-900">{red.Reward?.costoPuntos || 0} Pts</span>
                                             </div>
                                         </div>
                                     );

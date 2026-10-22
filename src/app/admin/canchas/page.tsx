@@ -57,7 +57,7 @@ export default function CanchasAdminPage() {
         return (
             <div className="h-96 flex flex-col items-center justify-center text-slate-400 gap-4">
                 <Loader2 className="animate-spin text-emerald-500" size={40} />
-                <p className="font-bold text-xs uppercase tracking-widest animate-pulse">Cargando tus canchas...</p>
+                <p className="font-bold text-xs uppercase tracking-wide animate-pulse">Cargando tus canchas...</p>
             </div>
         );
     }
@@ -75,15 +75,15 @@ export default function CanchasAdminPage() {
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-slate-200 pb-6">
                 <div>
-                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1">
+                    <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide block mb-1">
                         Gestión de Infraestructura
                     </span>
-                    <h1 className="text-3xl font-black text-slate-900 uppercase italic tracking-tight">Mis Canchas</h1>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Mis Canchas</h1>
                     <p className="text-slate-500 font-bold text-xs">Administra tus escenarios deportivos y tarifas.</p>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg shadow-emerald-500/20 active:scale-95"
+                    className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wide transition-all duration-300 shadow-lg shadow-emerald-500/20 active:scale-95"
                 >
                     <Plus size={18} />
                     NUEVA CANCHA
@@ -91,17 +91,17 @@ export default function CanchasAdminPage() {
             </div>
 
             {canchas.length === 0 ? (
-                <div className="bg-white rounded-[2.5rem] p-16 border-2 border-dashed border-slate-200 flex flex-col items-center text-center space-y-4">
+                <div className="bg-white rounded-2xl p-16 border-2 border-dashed border-slate-200 flex flex-col items-center text-center space-y-4">
                     <div className="size-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-300 border border-slate-100">
                         <Dribbble size={40} />
                     </div>
                     <div className="space-y-1">
-                        <h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tight">No tienes canchas registradas</h3>
+                        <h3 className="text-xl font-bold text-slate-900 tracking-tight">No tienes canchas registradas</h3>
                         <p className="text-slate-500 text-xs font-bold max-w-xs mx-auto">Comienza agregando tu primera cancha para recibir reservas.</p>
                     </div>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition shadow-md"
+                        className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-black transition shadow-md"
                     >
                         Registrar Primera Cancha
                     </button>
@@ -109,7 +109,7 @@ export default function CanchasAdminPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {canchas.map((cancha) => (
-                        <div key={cancha.id} className="group bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col justify-between">
+                        <div key={cancha.id} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col justify-between">
                             <div className="h-44 bg-slate-900 flex items-center justify-center relative overflow-hidden">
                                 {cancha.imagenes && cancha.imagenes.length > 0 ? (
                                     <img
@@ -120,15 +120,15 @@ export default function CanchasAdminPage() {
                                 ) : (
                                     <Dribbble size={64} className="text-slate-700 group-hover:text-emerald-500 group-hover:scale-110 transition-all duration-700" />
                                 )}
-                                <div className="absolute top-4 right-4 flex items-center gap-1.5 text-emerald-400 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black border border-emerald-500/30 uppercase tracking-widest">
-                                    <div className="size-2 bg-emerald-400 rounded-full animate-pulse" />
-                                    ACTIVA
+                                <div className={`absolute top-4 right-4 flex items-center gap-1.5 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold border ${cancha.estaActiva === false ? 'text-slate-300 border-slate-600' : 'text-emerald-400 border-emerald-500/30'}`}>
+                                    <div className={`size-2 rounded-full ${cancha.estaActiva === false ? 'bg-slate-400' : 'bg-emerald-400'}`} />
+                                    {cancha.estaActiva === false ? 'Pausada' : 'Activa'}
                                 </div>
                             </div>
                             <div className="p-6 space-y-6 flex-1 flex flex-col justify-between">
                                 <div className="space-y-1">
-                                    <h3 className="font-black text-slate-900 text-xl tracking-tight leading-none group-hover:text-emerald-600 transition-colors uppercase italic">{cancha.nombre}</h3>
-                                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] block">{cancha.tipo}</span>
+                                    <h3 className="font-bold text-slate-900 text-xl tracking-tight leading-none group-hover:text-emerald-600 transition-colors ">{cancha.nombre}</h3>
+                                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wide block">{cancha.tipo}</span>
                                 </div>
 
                                 <div className="flex items-center justify-between border-t border-slate-100 pt-4">
@@ -137,15 +137,15 @@ export default function CanchasAdminPage() {
                                         <span className="text-xs font-bold text-slate-600">{cancha.capacidad || 4} pers.</span>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-lg font-black text-slate-900">${Number(cancha.precioHora || 25000).toLocaleString()}</span>
-                                        <span className="text-[10px] text-slate-400 font-bold block">/ turno</span>
+                                        <span className="text-lg font-bold text-slate-900">${Number(cancha.precioHora || 0).toFixed(2)}</span>
+                                        <span className="text-xs text-slate-400 font-bold block">por hora · turnos de {Number(cancha.duracionMin || 60) === 90 ? '1 h 30' : Number(cancha.duracionMin || 60) === 120 ? '2 h' : '1 h'}</span>
                                     </div>
                                 </div>
 
                                 <div className="pt-4 border-t border-slate-100 flex gap-3">
                                     <button
                                         onClick={() => handleEdit(cancha)}
-                                        className="flex-1 bg-slate-900 hover:bg-emerald-600 text-white font-black py-3.5 rounded-2xl text-xs uppercase tracking-widest transition-all duration-300 shadow-md"
+                                        className="flex-1 bg-slate-900 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl text-xs uppercase tracking-wide transition-all duration-300 shadow-md"
                                     >
                                         Editar Cancha
                                     </button>

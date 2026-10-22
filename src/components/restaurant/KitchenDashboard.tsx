@@ -81,7 +81,7 @@ export default function KitchenDashboard({ negocioIdOrSlug, slug }: KitchenDashb
             <ChefHat className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black text-white tracking-tight italic flex items-center gap-2">
+            <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
               Kitchen Display System (KDS)
             </h1>
             <p className="text-xs text-slate-400">Tablero interactivo de comandas en tiempo real</p>
@@ -130,7 +130,7 @@ export default function KitchenDashboard({ negocioIdOrSlug, slug }: KitchenDashb
               {/* Header Columna */}
               <div className={`px-3 py-2 rounded-xl border ${col.color} flex items-center justify-between mb-4 font-bold text-xs`}>
                 <span>{col.title}</span>
-                <span className="w-5 h-5 rounded-full bg-slate-900/80 flex items-center justify-center text-[10px]">
+                <span className="w-5 h-5 rounded-full bg-slate-900/80 flex items-center justify-center text-xs">
                   {colOrders.length}
                 </span>
               </div>
@@ -153,13 +153,13 @@ export default function KitchenDashboard({ negocioIdOrSlug, slug }: KitchenDashb
                         {/* Cabecera Ticket */}
                         <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-amber-400 text-sm">#{order.numeroPedido}</span>
-                            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                            <span className="font-bold text-amber-400 text-sm">#{order.numeroPedido}</span>
+                            <span className="text-xs uppercase font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
                               {channel === 'TABLE' ? `Mesa: ${tableCode}` : channel}
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-1 text-[11px] text-slate-400 font-medium">
+                          <div className="flex items-center gap-1 text-xs text-slate-400 font-medium">
                             <Clock className="w-3 h-3 text-amber-500" />
                             <span>{elapsedTime} min</span>
                           </div>
@@ -175,7 +175,7 @@ export default function KitchenDashboard({ negocioIdOrSlug, slug }: KitchenDashb
                           {order.items?.map((item: any) => (
                             <div key={item.id} className="flex items-start justify-between text-xs">
                               <div className="flex items-start gap-2">
-                                <span className="font-black text-white bg-slate-800 px-1.5 py-0.5 rounded text-[11px]">
+                                <span className="font-bold text-white bg-slate-800 px-1.5 py-0.5 rounded text-xs">
                                   {item.cantidad}x
                                 </span>
                                 <span className="text-slate-200 leading-tight">{item.nombreProducto}</span>

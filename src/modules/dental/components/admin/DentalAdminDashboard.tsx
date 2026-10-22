@@ -1,293 +1,268 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { 
-  Users, Calendar, Activity, Clock, Smile, Stethoscope, 
-  PlusCircle, FileText, ChevronRight, CheckCircle2, ArrowUpRight, 
-  ShieldAlert, AlertCircle, Sparkles, Folder
+import {
+  CalendarDays, Users, ClipboardList, Clock, UserPlus, CalendarPlus, ChevronRight,
+  MessageCircle, Stethoscope, FolderOpen, CheckCircle2, AlertTriangle,
 } from 'lucide-react';
+import { api } from '../../lib/api';
+import { apptState, money, relativeApptDay, whatsappLink, initials } from '../../lib/format';
+import { Page, Card, CardHeader, StatCard, Badge, Spinner, ErrorBox, ButtonLink, Avatar, EmptyState, cx } from './ui';
 
 interface DentalAdminDashboardProps {
-  initialStats?: {
-    citasHoy: number;
-    pacientesTotal: number;
-    consultasPendientes: number;
-    tratamientosEnProceso: number;
-  };
-  proximasCitas?: any[];
   negocioNombre?: string;
   primaryColor?: string;
 }
 
-export default function DentalAdminDashboard({
-  initialStats,
-  proximasCitas: initialCitas = [],
-  negocioNombre = 'Clínica Dental',
-  primaryColor = '#0284c7'
-}: DentalAdminDashboardProps) {
-  const [stats, setStats] = useState(initialStats || {
-    citasHoy: 0,
-    pacientesTotal: 0,
-    consultasPendientes: 0,
-    tratamientosEnProceso: 0
-  });
-  const [citas, setCitas] = useState<any[]>(initialCitas);
-  const [loading, setLoading] = useState(!initialStats);
+type Stats = {
+  citasHoy: number;
+  atendidasHoy: number;
+  porConfirmar: number;
+  proximos7Dias: number;
+  pacientesTotal: number;
+  pacientesNuevosMes: number;
+  tratamientosEnProceso: number;
+  presupuestoPendiente: number;
+};
+
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+}
+
+export default function DentalAdminDashboard({ negocioNombre }: DentalAdminDashboardProps) {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [agenda, setAgenda] = useState<any[]>([]);
+  const [proximas, setProximas] = useState<any[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setError('');
+    try {
+      const data = await api<any>('/api/admin/dental/dashboard-stats');
+      setStats(data.stats);
+      setAgenda(data.agendaHoy || []);
+      setProximas(data.proximasCitas || []);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function loadDashboardData() {
-      try {
-        const res = await fetch('/api/admin/dental/dashboard-stats');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.stats) setStats(data.stats);
-          if (data.proximasCitas) setCitas(data.proximasCitas);
-        }
-      } catch (e) {
-        console.error('Error fetching dental dashboard data:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
+    load();
+    // Refrescar cada 2 minutos para ver nuevas reservas sin recargar.
+    const t = setInterval(load, 120000);
+    return () => clearInterval(t);
+  }, [load]);
 
-    if (!initialStats) {
-      loadDashboardData();
-    }
-  }, [initialStats]);
+  const todayLabel = new Date().toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' });
+  const pendientesHoy = agenda.filter((c) => !['completed', 'finalizada'].includes(c.estado));
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto p-4 sm:p-6">
-      
-      {/* ─── BANNER DE BIENVENIDA CLÍNICA ───────────────────────────── */}
-      <div 
-        className="rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6"
-        style={{
-          background: `linear-gradient(135deg, ${primaryColor} 0%, #0369a1 100%)`
-        }}
-      >
-        <div className="space-y-2 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
-            <Stethoscope className="w-3.5 h-3.5" />
-            Panel Odontológico Especializado
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Buenos días, {negocioNombre}
+    <Page>
+      {/* Encabezado */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-medium first-letter:uppercase text-slate-500">{todayLabel}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            {greeting()}{negocioNombre ? <span className="text-slate-400"> · {negocioNombre}</span> : null}
           </h1>
-          <p className="text-white/80 text-sm leading-relaxed">
-            Resumen operativo y clínico de tu consultorio. Monitorea pacientes, historias clínicas y tratamientos en curso.
-          </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href="/admin/pacientes"
-            className="px-5 py-3 rounded-2xl bg-white text-slate-900 font-extrabold text-xs sm:text-sm shadow-md hover:bg-slate-100 transition-all flex items-center gap-2 active:scale-95"
-          >
-            <Users className="w-4 h-4 text-sky-600" />
-            <span>Ver Pacientes</span>
-          </Link>
-          <Link
-            href="/admin/citas"
-            className="px-5 py-3 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-extrabold text-xs sm:text-sm border border-white/20 transition-all flex items-center gap-2 active:scale-95"
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Agenda del Día</span>
-          </Link>
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <ButtonLink href="/admin/pacientes?nuevo=1" variant="secondary" icon={<UserPlus className="h-4 w-4" />}>
+            Nuevo paciente
+          </ButtonLink>
+          <ButtonLink href="/admin/citas/nueva" icon={<CalendarPlus className="h-4 w-4" />}>
+            Agendar cita
+          </ButtonLink>
         </div>
       </div>
 
-      {/* ─── KPI CARDS CLÍNICOS ─────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Citas de Hoy</span>
-            <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
-              <Calendar className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900 mb-1">
-            {stats.citasHoy}
-          </div>
-          <span className="text-xs text-slate-400 font-medium">Turnos programados</span>
-        </div>
+      {error && <ErrorBox message={error} onRetry={load} />}
 
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pacientes</span>
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Users className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900 mb-1">
-            {stats.pacientesTotal}
-          </div>
-          <span className="text-xs text-slate-400 font-medium">Fichas activas en sistema</span>
-        </div>
-
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tratamientos</span>
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Activity className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900 mb-1">
-            {stats.tratamientosEnProceso}
-          </div>
-          <span className="text-xs text-slate-400 font-medium">En proceso de atención</span>
-        </div>
-
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Consultas Pendientes</span>
-            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Clock className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900 mb-1">
-            {stats.consultasPendientes}
-          </div>
-          <span className="text-xs text-slate-400 font-medium">Por registrar evolución</span>
-        </div>
-
-      </div>
-
-      {/* ─── ACCESOS DIRECTOS & PRÓXIMAS CITAS ──────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* Próximas Citas del Día */}
-        <div className="lg:col-span-8 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-black text-slate-900">Próximas Citas Odontológicas</h3>
-              <p className="text-xs text-slate-500">Pacientes agendados para valoración y tratamientos hoy.</p>
-            </div>
-            <Link
+      {loading ? (
+        <Spinner label="Cargando el resumen del día…" />
+      ) : stats && (
+        <>
+          {/* Indicadores */}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatCard
+              label="Citas de hoy"
+              value={stats.citasHoy}
+              hint={stats.citasHoy ? `${stats.atendidasHoy} atendida${stats.atendidasHoy === 1 ? '' : 's'}` : 'Agenda libre'}
+              icon={<CalendarDays className="h-5 w-5" />}
               href="/admin/citas"
-              className="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1"
-            >
-              <span>Ver agenda completa</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
+            />
+            <StatCard
+              label="Por confirmar"
+              value={stats.porConfirmar}
+              hint={stats.porConfirmar ? 'Revisa y confirma' : 'Todo confirmado'}
+              icon={<Clock className="h-5 w-5" />}
+              tone={stats.porConfirmar ? 'amber' : 'emerald'}
+              href="/admin/citas"
+            />
+            <StatCard
+              label="Pacientes"
+              value={stats.pacientesTotal}
+              hint={`${stats.pacientesNuevosMes} nuevo${stats.pacientesNuevosMes === 1 ? '' : 's'} este mes`}
+              icon={<Users className="h-5 w-5" />}
+              tone="violet"
+              href="/admin/pacientes"
+            />
+            <StatCard
+              label="Tratamientos abiertos"
+              value={stats.tratamientosEnProceso}
+              hint={stats.presupuestoPendiente ? `${money(stats.presupuestoPendiente)} por realizar` : 'Sin presupuestos pendientes'}
+              icon={<ClipboardList className="h-5 w-5" />}
+              tone="emerald"
+              href="/admin/tratamientos"
+            />
           </div>
 
-          {citas.length === 0 ? (
-            <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-2xl">
-              <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm font-bold text-slate-600">No hay más citas programadas para hoy</p>
-              <p className="text-xs text-slate-400 mt-1">Los nuevos turnos agendados en el landing aparecerán aquí.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {citas.map((cita: any) => (
-                <div key={cita.id} className="py-3.5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="px-3 py-1.5 rounded-xl bg-sky-50 text-sky-700 font-black text-xs shrink-0">
-                      {cita.horaInicio || '09:00'}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-extrabold text-slate-900">
-                        {cita.cliente?.nombre || 'Paciente'}
-                      </h4>
-                      <p className="text-xs text-slate-500">
-                        {cita.service?.nombre || 'Consulta Odontológica'} • {cita.staff?.name || 'Doctor de turno'}
-                      </p>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            {/* Agenda de hoy */}
+            <Card className="lg:col-span-2">
+              <CardHeader
+                title="Agenda de hoy"
+                subtitle={agenda.length ? `${pendientesHoy.length} por atender de ${agenda.length}` : undefined}
+                icon={<CalendarDays className="h-5 w-5" />}
+                action={
+                  <Link href="/admin/citas" className="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700">
+                    Ver agenda <ChevronRight className="h-4 w-4" />
+                  </Link>
+                }
+              />
+              {agenda.length === 0 ? (
+                <EmptyState
+                  icon={<CalendarDays className="h-10 w-10" />}
+                  title="No hay citas para hoy"
+                  description="Las citas que agendes o que tus pacientes reserven en tu página aparecerán aquí."
+                  action={<ButtonLink href="/admin/citas/nueva" size="sm" icon={<CalendarPlus className="h-4 w-4" />}>Agendar cita</ButtonLink>}
+                />
+              ) : (
+                <ul className="divide-y divide-slate-100">
+                  {agenda.map((c) => {
+                    const st = apptState(c.estado);
+                    const done = ['completed', 'finalizada'].includes(c.estado);
+                    const wa = whatsappLink(c.cliente?.telefono, `Hola ${c.cliente?.nombre?.split(' ')[0] || ''}, te recordamos tu cita de hoy a las ${c.horaInicio}.`);
+                    return (
+                      <li key={c.id} className={cx('flex flex-col gap-3 py-3 sm:flex-row sm:items-center', done && 'opacity-60')}>
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <div className="w-14 shrink-0 text-center">
+                            <p className="text-base font-bold text-slate-900">{c.horaInicio}</p>
+                            <p className="text-xs text-slate-400">{c.horaFin}</p>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="truncate font-semibold text-slate-900">{c.cliente?.nombre || 'Paciente'}</p>
+                              <Badge tone={st.tone}>{st.label}</Badge>
+                              {c.tieneEvolucion && (
+                                <Badge tone="emerald"><CheckCircle2 className="h-3 w-3" /> Con evolución</Badge>
+                              )}
+                            </div>
+                            <p className="truncate text-sm text-slate-500">
+                              {c.service?.nombre || 'Consulta'}{c.staff?.name ? ` · ${c.staff.name}` : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 sm:shrink-0">
+                          {wa && !done && (
+                            <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-xl p-2 text-emerald-600 ring-1 ring-inset ring-slate-200 hover:bg-emerald-50" title="Escribir por WhatsApp">
+                              <MessageCircle className="h-4 w-4" />
+                            </a>
+                          )}
+                          {c.clienteId && (
+                            <>
+                              <ButtonLink href={`/admin/pacientes/${c.clienteId}`} size="sm" variant="secondary" className="flex-1 sm:flex-none">
+                                Ficha
+                              </ButtonLink>
+                              {!c.tieneEvolucion && (
+                                <ButtonLink
+                                  href={`/admin/pacientes/${c.clienteId}?tab=consultas&nueva=1&cita=${c.id}`}
+                                  size="sm"
+                                  className="flex-1 sm:flex-none"
+                                  icon={<Stethoscope className="h-4 w-4" />}
+                                >
+                                  Atender
+                                </ButtonLink>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Card>
 
-                  <div className="flex items-center gap-2">
-                    {cita.clienteId && (
-                      <Link
-                        href={`/admin/pacientes/${cita.clienteId}`}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
-                      >
-                        Ficha Clínica
-                      </Link>
-                    )}
-                  </div>
+            <div className="space-y-5">
+              {/* Próximos días */}
+              <Card>
+                <CardHeader title="Próximos 7 días" icon={<Clock className="h-5 w-5" />} />
+                {proximas.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-slate-500">Sin citas en los próximos días.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {proximas.map((c) => (
+                      <li key={c.id}>
+                        <Link href={`/admin/pacientes/${c.clienteId}`} className="flex items-center gap-3 rounded-xl p-2 hover:bg-slate-50">
+                          <Avatar text={initials(c.cliente?.nombre)} size="sm" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-slate-900">{c.cliente?.nombre || 'Paciente'}</p>
+                            <p className="truncate text-xs text-slate-500">{c.service?.nombre || 'Consulta'}</p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="text-xs font-semibold first-letter:uppercase text-slate-700">{relativeApptDay(c.fecha)}</p>
+                            <p className="text-xs text-slate-500">{c.horaInicio}</p>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+
+              {/* Accesos */}
+              <Card>
+                <CardHeader title="Accesos rápidos" />
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { href: '/admin/pacientes', label: 'Pacientes', desc: 'Fichas, historia clínica y odontograma', icon: Users, tone: 'bg-sky-50 text-sky-600' },
+                    { href: '/admin/tratamientos', label: 'Planes de tratamiento', desc: 'Pendientes y presupuestos', icon: ClipboardList, tone: 'bg-emerald-50 text-emerald-600' },
+                    { href: '/admin/documentos', label: 'Radiografías y archivos', desc: 'Todos los archivos clínicos', icon: FolderOpen, tone: 'bg-amber-50 text-amber-600' },
+                  ].map((a) => (
+                    <Link key={a.href} href={a.href} className="group flex items-center gap-3 rounded-xl p-2.5 hover:bg-slate-50">
+                      <span className={cx('flex h-10 w-10 items-center justify-center rounded-xl', a.tone)}>
+                        <a.icon className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-slate-900">{a.label}</p>
+                        <p className="truncate text-xs text-slate-500">{a.desc}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500" />
+                    </Link>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </Card>
 
-        {/* Acciones Rápidas Clínicas */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
-            <h3 className="text-base font-black text-slate-900">Acciones Clínicas</h3>
-
-            <div className="space-y-2">
-              <Link
-                href="/admin/pacientes"
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-sky-50 border border-slate-100 hover:border-sky-200 text-slate-700 hover:text-sky-900 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs font-extrabold text-slate-900 group-hover:text-sky-700">Gestionar Pacientes</p>
-                    <p className="text-[11px] text-slate-400">Listado, datos y fichas</p>
-                  </div>
+              {stats.porConfirmar > 0 && (
+                <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>
+                    Tienes <strong>{stats.porConfirmar}</strong> cita{stats.porConfirmar === 1 ? '' : 's'} por confirmar.{' '}
+                    <Link href="/admin/citas" className="font-semibold underline">Revisarlas</Link>
+                  </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-sky-600" />
-              </Link>
-
-              <Link
-                href="/admin/historia-clinica"
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-purple-50 border border-slate-100 hover:border-purple-200 text-slate-700 hover:text-purple-900 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
-                    <FileText className="w-5 h-5" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs font-extrabold text-slate-900 group-hover:text-purple-700">Historias Clínicas</p>
-                    <p className="text-[11px] text-slate-400">Antecedentes y evoluciones</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600" />
-              </Link>
-
-              <Link
-                href="/admin/tratamientos"
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-emerald-50 border border-slate-100 hover:border-emerald-200 text-slate-700 hover:text-emerald-900 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                    <Activity className="w-5 h-5" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs font-extrabold text-slate-900 group-hover:text-emerald-700">Planes de Tratamiento</p>
-                    <p className="text-[11px] text-slate-400">Control por pieza dental</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600" />
-              </Link>
-
-              <Link
-                href="/admin/documentos"
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-amber-50 border border-slate-100 hover:border-amber-200 text-slate-700 hover:text-amber-900 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
-                    <Folder className="w-5 h-5" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs font-extrabold text-slate-900 group-hover:text-amber-700">Radiografías & Archivos</p>
-                    <p className="text-[11px] text-slate-400">Documentos por paciente</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-600" />
-              </Link>
+              )}
             </div>
           </div>
-        </div>
-
-      </div>
-
-    </div>
+        </>
+      )}
+    </Page>
   );
 }

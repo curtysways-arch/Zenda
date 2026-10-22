@@ -1,31 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTeamContext } from "@/lib/admin/teamGuard";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
 import { notificationService } from "@/lib/notifications";
 import { NotificationService } from "@/lib/notifications/notificationService";
 import { getBusinessTimeZone, getSubscriptionDates } from "@/lib/dateUtils";
+import { nextPeriodStart, addMonths } from "@/lib/subscription/lifecycle";
 
 async function isSuperAdmin() {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) return false;
-    
-    const user = session.user as any;
-    // IMPORTANTE: Se han agregado roles de administrador normal (ADMIN, ADMIN_NEGOCIO)
-    // para permitir que puedas probar el flujo en entorno de desarrollo.
-    // En producción, deberías remover ADMIN y ADMIN_NEGOCIO de este array.
-    const allowedRoles = ['SUPER_ADMIN', 'SUPERADMIN', 'ADMIN_SISTEMA', 'ROOT', 'ADMIN', 'ADMIN_NEGOCIO'];
-    
-    let rolesToCheck = [];
-    if (user.roles && Array.isArray(user.roles) && user.roles.length > 0) {
-        rolesToCheck = user.roles;
-    } else if (user.role) {
-        rolesToCheck = [user.role];
-    }
-    
-    return rolesToCheck.some((r: string) => 
-        r && allowedRoles.includes(r.toUpperCase())
-    );
+    // Usuario del equipo Citiox; el permiso de cada acción lo valida el middleware (lib/admin/teamAccessMap)
+    return Boolean(await getTeamContext());
 }
 
 export async function PATCH(
@@ -44,11 +28,14 @@ export async function PATCH(
 
         const sub = await (prisma.suscripcion as any).findUnique({
             where: { id },
-            include: { negocio: true, plan: true }
+            include: { Negocio: true, Plan: true }
         });
 
         if (!sub) return NextResponse.json({ error: "Suscripción no encontrada" }, { status: 404 });
         if (!sub.pagoPendiente) return NextResponse.json({ error: "No tiene solicitud pendiente" }, { status: 400 });
+
+        const negocio = sub.Negocio;
+        const nombreNegocio = negocio?.nombre || "Negocio";
 
         if (action === 'APPROVE') {
             // Obtener el plan solicitado
@@ -60,12 +47,9 @@ export async function PATCH(
             const isAnnual = sub.metodoPago?.toUpperCase().includes('ANNUAL') || 
                              sub.metodoPago?.toUpperCase().includes('ANUAL');
 
-            // Calcular nueva fecha de inicio y vencimiento
-            const timeZone = getBusinessTimeZone(sub.negocio?.configuracion);
-            const { startDate, endDate } = getSubscriptionDates(
-                timeZone,
-                isAnnual ? { durationMonths: 12 } : { durationMonths: 1 }
-            );
+            // Nuevo período: si aún le quedaban días (prueba o plan vigente) se suman, no se pierden
+            const startDate = nextPeriodStart(sub.fechaFin);
+            const endDate = addMonths(startDate, isAnnual ? 12 : 1);
 
             // Actualizar la suscripción: activar el nuevo plan
             await (prisma.suscripcion as any).update({
@@ -80,6 +64,23 @@ export async function PATCH(
                     fechaFin: endDate,
                 }
             });
+
+            // Socio Fundador: si su tipo de negocio tiene cupos, este primer pago confirma el cupo
+            // y el precio de por vida (el mismo flujo que el cobro desde el panel del negocio).
+            try {
+                const { planService } = await import('@/lib/services/planService');
+                await planService.activateFounderOnPayment(sub.negocioId, Number(body?.pagoMonto || 0), 'SUPERADMIN', { keepDates: true });
+            } catch (founderErr) {
+                console.warn('No se pudo confirmar Socio Fundador:', founderErr);
+            }
+
+            // Precio negociado temporal: este pago consume un ciclo (al terminar vuelve a $29.99 o al de fundador)
+            try {
+                const { pricingService } = await import('@/lib/services/pricingService');
+                await pricingService.advanceSubscriptionCycle(id);
+            } catch (cycleErr) {
+                console.warn('No se pudo avanzar el ciclo de precio negociado:', cycleErr);
+            }
 
             // Si había Add-ons pendientes de pago (Combo), activarlos
             try {
@@ -117,10 +118,29 @@ export async function PATCH(
                 console.error('Error activando add-ons pendientes en solicitud:', addonErr);
             }
 
-            // Registrar el Pago en el historial
+            // Sincronizar o registrar el Pago en el historial
             try {
                 const { pagoReferencia, pagoMonto, pagoNotas } = body;
-                if (pagoMonto) {
+                const pendingPayments = await prisma.payment.findMany({
+                    where: {
+                        negocio_id: sub.negocioId,
+                        estado_pago: { in: ['pending', 'PENDING'] }
+                    }
+                });
+
+                if (pendingPayments.length > 0) {
+                    await prisma.payment.updateMany({
+                        where: {
+                            negocio_id: sub.negocioId,
+                            estado_pago: { in: ['pending', 'PENDING'] }
+                        },
+                        data: {
+                            estado_pago: 'approved',
+                            referencia: pagoReferencia || undefined,
+                            monto: pagoMonto ? parseFloat(pagoMonto) : undefined
+                        }
+                    });
+                } else if (pagoMonto) {
                     await (prisma.payment as any).create({
                         data: {
                             negocio_id: sub.negocioId,
@@ -128,13 +148,13 @@ export async function PATCH(
                             monto: parseFloat(pagoMonto),
                             metodo_pago: sub.metodoPago || 'TRANSFERENCIA',
                             referencia: pagoReferencia || 'APROBACIÓN_SISTEMA',
-                            estado_pago: 'COMPLETADO',
+                            estado_pago: 'approved',
                             fecha_pago: startDate
                         }
                     });
                 }
             } catch (e) {
-                console.error('Error registrando pago en aprobación:', e);
+                console.error('Error registrando o sincronizando pago en aprobación:', e);
             }
 
             // Registrar en el historial de suscripciones
@@ -184,12 +204,12 @@ export async function PATCH(
                     });
                 }
 
-                // NUEVO: Notificar por WhatsApp al administrador del negocio
-                if (sub.negocio.whatsapp) {
+                // Notificar por WhatsApp al administrador del negocio
+                if (negocio?.whatsapp) {
                     await notificationService.sendSubscriptionApprovalNotification(
                         sub.negocioId,
-                        sub.negocio.whatsapp.replace(/\D/g, ''),
-                        sub.negocio.nombre,
+                        negocio.whatsapp.replace(/\D/g, ''),
+                        nombreNegocio,
                         nuevoPlan?.name || 'Nuevo Plan',
                         endDate,
                         isAnnual
@@ -201,7 +221,7 @@ export async function PATCH(
                     const { notifyAdminPlanEvent } = await import('@/lib/adminNotificationHelper');
                     await notifyAdminPlanEvent({
                         eventType: 'ACTIVADO',
-                        businessName: sub.negocio.nombre,
+                        businessName: nombreNegocio,
                         planName: nuevoPlan?.name || 'Plan',
                         period: isAnnual ? 'Anual' : 'Mensual',
                         paymentMethod: sub.metodoPago || 'TRANSFERENCIA',
@@ -217,7 +237,7 @@ export async function PATCH(
 
             return NextResponse.json({
                 success: true,
-                message: `Plan ${nuevoPlan?.name || ''} aprobado para ${sub.negocio.nombre}`
+                message: `Plan ${nuevoPlan?.name || ''} aprobado para ${nombreNegocio}`
             });
 
         } else if (action === 'REJECT') {
@@ -228,7 +248,6 @@ export async function PATCH(
                     pagoPendiente: false,
                     solicitudPlanId: null,
                     metodoPago: null,
-                    // Estado vuelve al anterior (trial o el que estaba)
                 }
             });
 
@@ -276,7 +295,7 @@ export async function PATCH(
 
             return NextResponse.json({
                 success: true,
-                message: `Solicitud rechazada para ${sub.negocio.nombre}`
+                message: `Solicitud rechazada para ${nombreNegocio}`
             });
 
         } else {

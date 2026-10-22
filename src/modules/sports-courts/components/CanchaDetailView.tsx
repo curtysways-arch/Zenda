@@ -30,12 +30,22 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
   const negocioImages = negocio.imagenes?.map((img: any) => img.url) || [];
   const imagesToUse = canchaImages.length > 0 ? canchaImages : negocioImages.length > 0 ? negocioImages : [defaultBanner];
 
-  const canchaNombre = cancha.nombre || cancha.name || 'CANCHA ELITE';
-  const canchaTipo = cancha.tipo || (cancha.extraInfo as any)?.tipo || 'FÚTBOL 7';
+  const canchaNombre = cancha.nombre || cancha.name || 'Cancha';
+  const canchaTipo = cancha.tipo || (cancha.extraInfo as any)?.tipo || 'Cancha';
   const precioHora = Number(cancha.precio || cancha.precioHora || negocio.precioHora || 25);
   const capacidad = (cancha.extraInfo as any)?.capacidad || cancha.capacidad || 10;
 
   const ubicacion = cancha.ubicacion || (negocio.ubicaciones && negocio.ubicaciones[0]);
+  const features: string[] = Array.isArray((cancha.extraInfo as any)?.features) ? (cancha.extraInfo as any).features.map((f: any) => (typeof f === 'string' ? f : String(f?.title || f?.content || '')).trim()).filter(Boolean) : [];
+  const openNow = (() => {
+    const toM = (t: string) => { const m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? Number(m[1]) * 60 + Number(m[2]) : NaN; };
+    const a = toM(negocio.horarioApertura || '08:00');
+    const c = toM(negocio.horarioCierre || '23:00');
+    if (isNaN(a) || isNaN(c)) return null;
+    const d = new Date();
+    const n = d.getHours() * 60 + d.getMinutes();
+    return c > a ? n >= a && n < c : n >= a || n < c;
+  })();
 
   const getGoogleMapsUrls = (sede: any, neg: any) => {
     let rawUrl = (sede?.mapUrl || '').trim();
@@ -146,8 +156,8 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
               <ChevronLeft size={20} strokeWidth={2.5} />
             </Link>
             <div className="flex flex-col text-left">
-              <span className="text-[7px] font-black text-emerald-500 uppercase tracking-widest italic leading-none mb-0.5">{negocio.nombre || 'CANCHA LOS CAMPEONES'}</span>
-              <h1 className="font-black text-[13px] uppercase italic tracking-tighter leading-none">{canchaNombre}</h1>
+              <span className="text-xs font-bold text-emerald-500 uppercase tracking-wide leading-none mb-0.5">{negocio.nombre}</span>
+              <h1 className="font-bold text-sm uppercase tracking-tight leading-none">{canchaNombre}</h1>
             </div>
           </div>
           
@@ -165,21 +175,21 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
         
         {/* HERO CAROUSEL - COMPACT & PREMIUM */}
         <div className="px-4 pt-4">
-          <div className="relative aspect-[16/10] rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl">
+          <div className="relative aspect-[16/10] rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
             <HeroCarousel images={imagesToUse} opacityActive="opacity-100" />
             
             {/* Status Label Overlay */}
             <div className="absolute top-4 left-4 z-20">
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
                 <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[8px] font-black text-white italic uppercase tracking-widest">DISPONIBLE</span>
+                <span className="text-xs font-bold text-white uppercase tracking-wide">Disponible</span>
               </div>
             </div>
 
             {/* Type Label Overlay */}
             <div className="absolute bottom-4 left-4 z-20">
               <div className="px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/10">
-                <span className="text-[9px] font-black text-white italic uppercase tracking-widest">{canchaTipo}</span>
+                <span className="text-xs font-bold text-white uppercase tracking-wide">{canchaTipo}</span>
               </div>
             </div>
           </div>
@@ -191,66 +201,52 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
             {/* Price Píldora */}
             <div className="col-span-1 bg-[#11141d] border border-white/5 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
               <div className="absolute -top-4 -right-4 size-16 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic">PRECIO HORA</span>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ">Precio hora</span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-black text-white italic tracking-tighter">${precioHora}</span>
+                <span className="text-3xl font-bold text-white tracking-tight">${precioHora}</span>
               </div>
             </div>
 
             {/* Capacity Píldora */}
             <div className="col-span-1 bg-[#11141d] border border-white/5 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
               <div className="absolute -top-4 -right-4 size-16 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic">CAPACIDAD</span>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide ">Capacidad</span>
               <div className="flex items-center gap-2">
                 <Users size={18} className="text-blue-500" />
-                <span className="text-2xl font-black text-white italic tracking-tighter uppercase">{capacidad} JUG.</span>
+                <span className="text-2xl font-bold text-white tracking-tight ">{capacidad} JUG.</span>
               </div>
             </div>
 
             {/* Schedule Píldora - Full Width */}
-            <div className="col-span-2 bg-[#11141d] border border-white/5 rounded-[1.8rem] p-4 flex items-center justify-between px-6">
+            <div className="col-span-2 bg-[#11141d] border border-white/5 rounded-2xl p-4 flex items-center justify-between px-6">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-2xl bg-white/5 flex items-center justify-center text-emerald-500">
                   <Clock size={20} />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[7px] font-black text-slate-500 uppercase italic tracking-widest">HORARIO DE ATENCIÓN</span>
-                  <span className="text-[11px] font-black text-white italic uppercase">{negocio.horarioApertura || '08:00'} - {negocio.horarioCierre || '23:00'}</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Horario de atención</span>
+                  <span className="text-xs font-bold text-white uppercase">{negocio.horarioApertura || '08:00'} - {negocio.horarioCierre || '23:00'}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 px-3 py-1 bg-emerald-500/10 rounded-lg text-emerald-400 text-[8px] font-black uppercase italic tracking-tighter">
-                ABIERTO AHORA
-              </div>
+              {openNow !== null && (
+                <div className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-tight ${openNow ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-slate-400'}`}>
+                  {openNow ? 'Abierto ahora' : 'Cerrado ahora'}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* KEY FEATURES - CLEAN LIST */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] italic">ESPECIFICACIONES</h3>
-              <Zap size={14} className="text-emerald-500" />
-            </div>
-            <div className="grid grid-cols-1 gap-2.5">
-              <div className="flex items-center gap-4 bg-[#11141d]/50 border border-white/5 p-4 rounded-2xl">
-                <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
-                  <Trophy size={18} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] font-black text-white uppercase italic">Sintético Premium Pro</span>
-                  <span className="text-[9px] font-bold text-slate-500">Certificado FIFA Quality</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 bg-[#11141d]/50 border border-white/5 p-4 rounded-2xl">
-                <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
-                  <Zap size={18} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] font-black text-white uppercase italic">Iluminación LED 4K</span>
-                  <span className="text-[9px] font-bold text-slate-500">Cero sombras en juego nocturno</span>
-                </div>
+          {/* Características reales de la cancha (las que cargó el negocio) */}
+          {features.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold text-emerald-500 uppercase tracking-wide px-1">Características</h3>
+              <div className="flex flex-wrap gap-2">
+                {features.map((f: string) => (
+                  <span key={f} className="px-3 py-1.5 rounded-xl bg-[#11141d] border border-white/5 text-xs font-semibold text-slate-200">{f}</span>
+                ))}
               </div>
             </div>
-          </div>
+          )}
 
           {/* BOOKING CALENDAR DIRECT FOR COURTS - NO PROFESSIONALS REQUIRED */}
           <section id="reservar" className="space-y-6 pt-2">
@@ -272,8 +268,8 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
           {/* UBICACION - NATIVE MAP PREVIEW */}
           {ubicacion && (
             <section className="space-y-4 pt-4">
-              <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic px-1">CÓMO LLEGAR</h3>
-              <div className="bg-[#11141d] border border-white/5 rounded-[2rem] overflow-hidden group">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Cómo llegar</h3>
+              <div className="bg-[#11141d] border border-white/5 rounded-3xl overflow-hidden group">
                 <div className="h-40 relative">
                   <iframe
                     src={embedSrc || ''}
@@ -284,8 +280,8 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#11141d] to-transparent" />
                   <div className="absolute bottom-5 left-6">
-                    <h4 className="text-sm font-black text-white italic uppercase tracking-tighter">{ubicacion.nombre || negocio.nombre}</h4>
-                    <p className="text-[10px] font-bold text-slate-500 italic uppercase">{ubicacion.direccion || negocio.direccion || 'Quito, Ecuador'}</p>
+                    <h4 className="text-sm font-bold text-white uppercase tracking-tight">{ubicacion.nombre || negocio.nombre}</h4>
+                    <p className="text-xs font-bold text-slate-500 uppercase">{ubicacion.direccion || negocio.direccion || 'Quito, Ecuador'}</p>
                   </div>
                 </div>
                 <div className="px-6 pb-6 pt-2">
@@ -294,7 +290,7 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
                       href={navUrl} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="w-full h-14 bg-white/5 active:bg-white/10 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black text-white italic uppercase tracking-widest transition-all"
+                      className="w-full h-14 bg-white/5 active:bg-white/10 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-xs font-bold text-white uppercase tracking-wide transition-all"
                     >
                       <MapPin size={16} className="text-emerald-500" /> GOOGLE MAPS
                     </a>

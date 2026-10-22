@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { AccessPolicyService } from '@/core/security/AccessPolicyService';
 
 export const dynamic = 'force-dynamic';
 
 async function getAuthNegocioId() {
-  const session = await getServerSession(authOptions);
+  const session = await getEffectiveAdminSession();
   if (!session?.user) return null;
   const user = session.user as any;
   return user.negocioId || user.businessId || null;
@@ -15,7 +14,7 @@ async function getAuthNegocioId() {
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -168,7 +167,7 @@ export async function GET(req: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     if (!session?.user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }

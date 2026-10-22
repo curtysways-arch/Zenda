@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import ImageUploader from '@/components/ui/ImageUploader';
+import MapSelectionModal from '@/components/public/MapSelectionModal';
 
 interface BranchItem {
   id: string;
@@ -21,6 +22,8 @@ interface BranchItem {
   phone?: string | null;
   email?: string | null;
   mapUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   imagenUrl?: string | null;
   horario?: string | null;
   tieneParqueadero?: boolean;
@@ -52,6 +55,7 @@ export default function SucursalesAdminPage() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<BranchItem | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -61,6 +65,8 @@ export default function SucursalesAdminPage() {
     phone: '',
     email: '',
     mapUrl: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
     horario: '',
     imagenUrl: '',
     tieneParqueadero: false,
@@ -106,6 +112,8 @@ export default function SucursalesAdminPage() {
       phone: '',
       email: '',
       mapUrl: '',
+      latitude: null,
+      longitude: null,
       horario: '',
       imagenUrl: '',
       tieneParqueadero: false,
@@ -128,6 +136,8 @@ export default function SucursalesAdminPage() {
       phone: b.phone || '',
       email: b.email || settings.email || '',
       mapUrl: b.mapUrl || settings.mapUrl || '',
+      latitude: b.latitude !== undefined && b.latitude !== null ? Number(b.latitude) : (settings.latitude ? Number(settings.latitude) : null),
+      longitude: b.longitude !== undefined && b.longitude !== null ? Number(b.longitude) : (settings.longitude ? Number(settings.longitude) : null),
       horario: b.horario || settings.horario || '',
       imagenUrl: b.imagenUrl || settings.imagenUrl || '',
       tieneParqueadero: b.tieneParqueadero ?? settings.tieneParqueadero ?? false,
@@ -212,7 +222,7 @@ export default function SucursalesAdminPage() {
         <div>
           <div className="flex items-center gap-2">
             <Store className="w-7 h-7 text-indigo-600" />
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Gestión de Sucursales
             </h1>
           </div>
@@ -262,8 +272,8 @@ export default function SucursalesAdminPage() {
                 )}
               </div>
               <p className="text-sm font-semibold text-slate-800">
-                Uso actual: <span className="font-black text-indigo-600">{limits.active}</span> de{' '}
-                <span className="font-black">{limits.limit === -1 || limits.limit >= 999 ? 'Ilimitadas' : limits.limit}</span> sucursales activas utilizadas.
+                Uso actual: <span className="font-bold text-indigo-600">{limits.active}</span> de{' '}
+                <span className="font-bold">{limits.limit === -1 || limits.limit >= 999 ? 'Ilimitadas' : limits.limit}</span> sucursales activas utilizadas.
               </p>
             </div>
 
@@ -344,7 +354,7 @@ export default function SucursalesAdminPage() {
                     className="w-full h-full object-cover"
                   />
                   {b.isDefault && (
-                    <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-indigo-600/90 backdrop-blur-xs text-white font-black text-[10px] shadow-sm">
+                    <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-indigo-600/90 backdrop-blur-xs text-white font-bold text-xs shadow-sm">
                       Matriz
                     </span>
                   )}
@@ -360,21 +370,21 @@ export default function SucursalesAdminPage() {
                           {b.name}
                         </h3>
                         {!b.imagenUrl && b.isDefault && (
-                          <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-extrabold text-[10px] border border-indigo-200">
+                          <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-extrabold text-xs border border-indigo-200">
                             Matriz
                           </span>
                         )}
                       </div>
                       {b.code && (
-                        <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                        <p className="text-xs font-mono text-slate-400 mt-0.5">
                           CÓDIGO: {b.code}
                         </p>
                       )}
                     </div>
 
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      b.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'
-                    }`}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+ b.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'
+ }`}>
                       {b.active ? 'Activa' : 'Inactiva'}
                     </span>
                   </div>
@@ -404,16 +414,36 @@ export default function SucursalesAdminPage() {
                         <span className="truncate">{b.email}</span>
                       </div>
                     )}
-                    {b.mapUrl && (
+                    {b.latitude && b.longitude ? (
+                      <div className="pt-0.5 flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                          <MapPin size={10} className="text-emerald-600" /> GPS Fijado
+                        </span>
+                        <a 
+                          href={b.mapUrl || `https://www.google.com/maps?q=${b.latitude},${b.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
+                        >
+                          <ExternalLink size={11} /> Ver en Mapa
+                        </a>
+                      </div>
+                    ) : b.mapUrl ? (
                       <div className="pt-0.5">
                         <a 
                           href={b.mapUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold"
+                          className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
                         >
                           <ExternalLink size={11} /> Ver en Google Maps
                         </a>
+                      </div>
+                    ) : (
+                      <div className="pt-0.5">
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 font-medium">
+                          ⚠️ Sin coordenadas de mapa fijadas
+                        </span>
                       </div>
                     )}
                   </div>
@@ -422,22 +452,22 @@ export default function SucursalesAdminPage() {
                   {(b.tieneParqueadero || b.tieneTransporte || b.tieneZonaSegura || b.tieneAccesoFacil) && (
                     <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100">
                       {b.tieneParqueadero && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 text-[10px] font-bold">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 text-xs font-bold">
                           <Car size={10} /> Parqueadero
                         </span>
                       )}
                       {b.tieneTransporte && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold">
                           <Bus size={10} /> Transporte
                         </span>
                       )}
                       {b.tieneZonaSegura && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold">
                           <ShieldCheck size={10} /> Segura
                         </span>
                       )}
                       {b.tieneAccesoFacil && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[10px] font-bold">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-xs font-bold">
                           <Accessibility size={10} /> Acceso Fácil
                         </span>
                       )}
@@ -446,12 +476,12 @@ export default function SucursalesAdminPage() {
 
                   {b.cashRegisters && b.cashRegisters.length > 0 && (
                     <div className="pt-2 border-t border-slate-100">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
                         Puntos de Cobro / Cajas
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {b.cashRegisters.map((cr) => (
-                          <span key={cr.id} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium">
+                          <span key={cr.id} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-medium">
                             {cr.name}
                           </span>
                         ))}
@@ -563,6 +593,57 @@ export default function SucursalesAdminPage() {
                 />
               </div>
 
+              {/* SELECTOR INTERACTIVO DE MAPA */}
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 shrink-0">
+                      <MapPin size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-slate-800 block">
+                        Ubicación en el Mapa (Coordenadas GPS)
+                      </span>
+                      <span className="text-xs text-slate-500 block truncate">
+                        {formData.latitude && formData.longitude
+                          ? `Lat: ${Number(formData.latitude).toFixed(6)}, Lng: ${Number(formData.longitude).toFixed(6)}`
+                          : 'No has seleccionado la ubicación exacta en el mapa'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsMapModalOpen(true)}
+                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-xs active:scale-95 shrink-0 cursor-pointer"
+                  >
+                    <MapPin size={14} />
+                    <span>{formData.latitude && formData.longitude ? 'Cambiar en Mapa' : 'Abrir Mapa'}</span>
+                  </button>
+                </div>
+
+                {formData.latitude && formData.longitude ? (
+                  <div className="flex items-center justify-between px-3 py-2 bg-white rounded-xl border border-emerald-200 text-xs">
+                    <span className="text-emerald-700 font-medium flex items-center gap-1.5">
+                      <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                      Ubicación fijada para repartidores y clientes
+                    </span>
+                    <a
+                      href={`https://www.google.com/maps?q=${formData.latitude},${formData.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1 shrink-0"
+                    >
+                      <span>Ver mapa</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    💡 <strong className="text-slate-700">Recomendado:</strong> Haz clic en <strong>Abrir Mapa</strong> para fijar la entrada de tu negocio. Esto permite calcular las distancias y rutas de los repartidores con precisión.
+                  </p>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -634,7 +715,7 @@ export default function SucursalesAdminPage() {
 
               {/* CARACTERÍSTICAS DE LA UBICACIÓN */}
               <div className="space-y-3 pt-2">
-                <label className="text-[11px] font-black text-slate-700 uppercase tracking-wider block">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                   Características de la Ubicación
                 </label>
                 
@@ -647,7 +728,7 @@ export default function SucursalesAdminPage() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-800">Parqueadero Disponible</p>
-                        <p className="text-[10px] text-slate-400 font-medium">Estacionamiento propio o convenio</p>
+                        <p className="text-xs text-slate-400 font-medium">Estacionamiento propio o convenio</p>
                       </div>
                     </div>
                     <button
@@ -667,7 +748,7 @@ export default function SucursalesAdminPage() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-800">Transporte Cercano</p>
-                        <p className="text-[10px] text-slate-400 font-medium">Paradas de bus o metro a pocos metros</p>
+                        <p className="text-xs text-slate-400 font-medium">Paradas de bus o metro a pocos metros</p>
                       </div>
                     </div>
                     <button
@@ -687,7 +768,7 @@ export default function SucursalesAdminPage() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-800">Zona Segura</p>
-                        <p className="text-[10px] text-slate-400 font-medium">Sector vigilado, seguro y bien iluminado</p>
+                        <p className="text-xs text-slate-400 font-medium">Sector vigilado, seguro y bien iluminado</p>
                       </div>
                     </div>
                     <button
@@ -707,7 +788,7 @@ export default function SucursalesAdminPage() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-800">Acceso Fácil</p>
-                        <p className="text-[10px] text-slate-400 font-medium">Rampas de acceso, planta baja o ascensor</p>
+                        <p className="text-xs text-slate-400 font-medium">Rampas de acceso, planta baja o ascensor</p>
                       </div>
                     </div>
                     <button
@@ -754,6 +835,30 @@ export default function SucursalesAdminPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal Selector de Mapa para Sucursales */}
+      {isMapModalOpen && (
+        <MapSelectionModal
+          isOpen={isMapModalOpen}
+          onClose={() => setIsMapModalOpen(false)}
+          initialLat={formData.latitude}
+          initialLng={formData.longitude}
+          requireReference={false}
+          title={formData.name ? `Ubicación: ${formData.name}` : 'Ubicación de la Sucursal'}
+          subtitle="Mueve el mapa y ubica el pin en la entrada de tu local o negocio"
+          pinLabel={formData.name || 'Sucursal'}
+          onConfirmLocation={(lat, lng, addressName) => {
+            setFormData(prev => ({
+              ...prev,
+              latitude: lat,
+              longitude: lng,
+              address: prev.address?.trim() ? prev.address : (addressName || prev.address),
+              mapUrl: prev.mapUrl?.trim() ? prev.mapUrl : `https://www.google.com/maps?q=${lat},${lng}`
+            }));
+            setIsMapModalOpen(false);
+          }}
+        />
       )}
     </div>
   );

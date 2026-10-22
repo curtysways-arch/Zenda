@@ -40,6 +40,8 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isResolving, setIsResolving] = useState(false);
   const [pendingQueueCount, setPendingQueueCount] = useState(0);
+  // Si es negocio de mesas/restaurante (único que usa mesas/requests y pedidos de mesa)
+  const [isRestaurantBiz, setIsRestaurantBiz] = useState<boolean | null>(null);
 
   const acknowledgedIdsRef = useRef<Set<string>>(new Set());
   const activeAlertRef = useRef<ActiveAlertItem | null>(null);
@@ -50,6 +52,22 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
   useEffect(() => {
     activeAlertRef.current = activeAlert;
   }, [activeAlert]);
+
+  // Detectar si el negocio es restaurante para habilitar polling de mesas/pedidos
+  useEffect(() => {
+    fetch('/api/negocio').then(r => r.ok ? r.json() : null).then(data => {
+      if (!data) { setIsRestaurantBiz(false); return; }
+      const tipo = (data.tipoNegocio || data.tipo || '').toUpperCase();
+      const slug = (data.slug || '').toUpperCase();
+      const nombre = (data.nombre || '').toUpperCase();
+      // Solo restaurantes, pinchos y negocios de mesas usan este polling
+      const isResto = tipo === 'RESTAURANTE' || tipo === 'GASTRONOMIA' || tipo === 'RESTAURANT' || tipo === 'BAR' ||
+        tipo === 'PINCHOS' || slug === 'PINCHOS' ||
+        nombre.includes('RESTAURANTE') || nombre.includes('PARRILLA') || nombre.includes('BURGER') ||
+        nombre.includes('PIZZA') || nombre.includes('TACO');
+      setIsRestaurantBiz(isResto);
+    }).catch(() => setIsRestaurantBiz(false));
+  }, []);
 
   // Cargar IDs reconocidos de localStorage al montar
   useEffect(() => {
@@ -218,7 +236,13 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
   };
 
   // Polling unificado: Consulta llamadas de mesero, pedidos de mesa y pedidos online
+  // Solo se activa cuando se confirma que el negocio es restaurante
   useEffect(() => {
+    // Esperar a que se determine el tipo de negocio; null = aún cargando
+    if (isRestaurantBiz === null) return;
+    // Si no es restaurante, no hacer polling de mesas/pedidos
+    if (!isRestaurantBiz) return;
+
     const checkIncomingEvents = async () => {
       try {
         const [resPedidos, resMesas] = await Promise.all([
@@ -357,7 +381,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
     const interval = setInterval(checkIncomingEvents, 3500);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isRestaurantBiz]);
 
   // Bucle de sonido mientras haya una alerta visible y activa
   useEffect(() => {
@@ -467,11 +491,11 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
               <ShoppingBag className="w-5 h-5 text-white animate-pulse" />
             )}
             <div>
-              <span className="font-black text-xs uppercase tracking-wider block leading-tight">
+              <span className="font-bold text-xs uppercase tracking-wider block leading-tight">
                 {activeAlert.title}
               </span>
               {pendingQueueCount > 1 && (
-                <span className="text-[10px] font-bold bg-black/25 px-2 py-0.5 rounded-full inline-block mt-0.5">
+                <span className="text-xs font-bold bg-black/25 px-2 py-0.5 rounded-full inline-block mt-0.5">
                   1 de {pendingQueueCount} notificaciones activas
                 </span>
               )}
@@ -482,7 +506,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
             <button
               type="button"
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-bold"
+              className="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold"
               title={soundEnabled ? "Silenciar Alarma" : "Activar Alarma"}
             >
               {soundEnabled ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5 text-rose-200" />}
@@ -519,10 +543,10 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
               </div>
 
               <div>
-                <span className="text-xs font-black uppercase text-slate-400 tracking-wider block">
+                <span className="text-xs font-bold uppercase text-slate-400 tracking-wider block">
                   Ubicación en Salón
                 </span>
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight mt-0.5">
+                <h2 className="text-3xl font-bold text-slate-900 tracking-tight mt-0.5">
                   {activeAlert.mesaNombre}
                 </h2>
                 <div className="inline-block mt-2 px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-extrabold text-slate-700">
@@ -543,7 +567,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
                   type="button"
                   disabled={isResolving}
                   onClick={handleResolveWaiterCall}
-                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase rounded-2xl shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase rounded-2xl shadow-lg shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                 >
                   <Check className="w-4 h-4" />
                   <span>{isResolving ? 'Atendiendo...' : 'Atendido / Resolver'}</span>
@@ -552,7 +576,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
                 <button
                   type="button"
                   onClick={handleGoToMesas}
-                  className="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                  className="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span>Ver en Mesas</span>
@@ -569,10 +593,10 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
               </div>
 
               <div>
-                <span className="text-xs font-black uppercase text-slate-400 tracking-wider block">
+                <span className="text-xs font-bold uppercase text-slate-400 tracking-wider block">
                   Servicio en Mesa
                 </span>
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight mt-0.5">
+                <h2 className="text-3xl font-bold text-slate-900 tracking-tight mt-0.5">
                   {activeAlert.mesaNombre}
                 </h2>
                 <p className="text-xs font-extrabold text-emerald-600 mt-1">
@@ -585,13 +609,13 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
                   <ShoppingBag className="w-4 h-4 text-emerald-500" />
                   <span>{activeAlert.itemsCount || 0} producto(s) en orden</span>
                 </div>
-                <span className="text-lg font-black text-emerald-600">
+                <span className="text-lg font-bold text-emerald-600">
                   ${(activeAlert.total || 0).toFixed(2)}
                 </span>
               </div>
 
               {activeAlert.notas && (
-                <p className="text-xs text-slate-500 italic bg-amber-50 p-2.5 rounded-xl border border-amber-100">
+                <p className="text-xs text-slate-500 bg-amber-50 p-2.5 rounded-xl border border-amber-100">
                   &ldquo;{activeAlert.notas}&rdquo;
                 </p>
               )}
@@ -600,7 +624,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
                 <button
                   type="button"
                   onClick={handleDismissAlert}
-                  className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase rounded-2xl transition-all cursor-pointer"
+                  className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase rounded-2xl transition-all cursor-pointer"
                 >
                   Silenciar
                 </button>
@@ -608,7 +632,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
                 <button
                   type="button"
                   onClick={handleGoToMesas}
-                  className="py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs uppercase rounded-2xl shadow-lg shadow-emerald-500/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                  className="py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs uppercase rounded-2xl shadow-lg shadow-emerald-500/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span>Revisar en Mesas</span>
@@ -625,10 +649,10 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
               </div>
 
               <div>
-                <span className="text-xs font-black uppercase text-slate-400 tracking-wider block">
+                <span className="text-xs font-bold uppercase text-slate-400 tracking-wider block">
                   Código de Pedido
                 </span>
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight mt-0.5">
+                <h2 className="text-3xl font-bold text-slate-900 tracking-tight mt-0.5">
                   #{activeAlert.codigoPedido}
                 </h2>
                 <p className="text-xs font-extrabold text-orange-600 mt-1">
@@ -641,7 +665,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
                   <ShoppingBag className="w-4 h-4 text-orange-500" />
                   <span>{activeAlert.itemsCount || 0} producto(s) • {activeAlert.subtitle}</span>
                 </div>
-                <span className="text-lg font-black text-emerald-600">
+                <span className="text-lg font-bold text-emerald-600">
                   ${(activeAlert.total || 0).toFixed(2)}
                 </span>
               </div>
@@ -650,7 +674,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
                 <button
                   type="button"
                   onClick={handleDismissAlert}
-                  className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase rounded-2xl transition-all cursor-pointer"
+                  className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase rounded-2xl transition-all cursor-pointer"
                 >
                   Silenciar
                 </button>
@@ -658,7 +682,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
                 <button
                   type="button"
                   onClick={handleGoToOnlineOrders}
-                  className="py-3 px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-lg shadow-orange-500/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                  className="py-3 px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-bold text-xs uppercase rounded-2xl shadow-lg shadow-orange-500/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <Check className="w-4 h-4" />
                   <span>Atender Pedido Ahora</span>

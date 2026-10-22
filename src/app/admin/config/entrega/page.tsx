@@ -141,7 +141,7 @@ export default function ConfigEntregaPage() {
             <ArrowLeft className="size-5 text-slate-600" />
           </Link>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Configuración de Entrega y Empaque</h1>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Configuración de Entrega y Empaque</h1>
             <p className="text-sm text-slate-500">Tarifas por distancia y empaque para llevar (Take Away)</p>
           </div>
         </div>

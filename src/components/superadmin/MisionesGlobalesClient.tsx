@@ -255,11 +255,11 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
         <div className="space-y-6">
             {/* TOAST PANEL */}
             {toast && (
-                <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-xl border text-xs font-black transition-all uppercase tracking-widest ${
-                    toast.type === 'success' 
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
-                        : 'bg-rose-50 text-rose-800 border-rose-200'
-                }`}>
+                <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-xl border text-xs font-bold transition-all uppercase tracking-wide ${
+ toast.type === 'success' 
+ ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+ : 'bg-rose-50 text-rose-800 border-rose-200'
+ }`}>
                     {toast.type === 'success' ? <CheckCircle2 size={16} /> : <X size={16} />}
                     {toast.msg}
                 </div>
@@ -273,7 +273,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
                 </div>
                 <button 
                     onClick={handleOpenCreate}
-                    className="inline-flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
                 >
                     <Plus size={16} /> Nueva Misión
                 </button>
@@ -283,13 +283,13 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
             {missions.length === 0 ? (
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-3xl p-16 text-center shadow-sm">
                     <Trophy className="mx-auto text-slate-300 mb-4" size={48} />
-                    <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight mb-2">No hay misiones globales configuradas</h3>
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight mb-2">No hay misiones globales configuradas</h3>
                     <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
                         Comienza agregando retos de plataforma como "Registrar tus primeras 10 reservas" con recompensas automatizadas.
                     </p>
                     <button 
                         onClick={handleOpenCreate}
-                        className="px-6 py-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-250 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all cursor-pointer"
+                        className="px-6 py-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-250 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-bold text-xs uppercase tracking-wide rounded-xl transition-all cursor-pointer"
                     >
                         Agregar Misión
                     </button>
@@ -319,28 +319,28 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
                                             {renderIcon(m.icono || 'Trophy', m.color || '#3b82f6')}
                                         </div>
                                         <div className="flex gap-2">
-                                            <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${m.activa ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${m.activa ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
                                                 {m.activa ? 'Activa' : 'Pausada'}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <h3 className="text-base font-black text-slate-900 dark:text-white mb-1 uppercase tracking-tight">{m.titulo}</h3>
-                                    <p className="text-[11px] text-slate-400 font-medium line-clamp-3 min-h-[48px] mb-4">{m.descripcion}</p>
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1 uppercase tracking-tight">{m.titulo}</h3>
+                                    <p className="text-xs text-slate-400 font-medium line-clamp-3 min-h-[48px] mb-4">{m.descripcion}</p>
 
                                     <div className="space-y-2 mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
-                                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                        <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wider">
                                             <span>Misión</span>
                                             <span className="text-slate-800 dark:text-slate-350">{m.tipo} (Meta: {m.objetivo})</span>
                                         </div>
-                                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                        <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wider">
                                             <span>Premio</span>
-                                            <span className="text-indigo-600 dark:text-indigo-400 font-black flex items-center gap-1">
+                                            <span className="text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
                                                 <Sparkles size={12} /> {rewardText}
                                             </span>
                                         </div>
                                         {m.fechaFin && (
-                                            <div className="flex justify-between items-center text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                                            <div className="flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-wider">
                                                 <span>Expiración</span>
                                                 <span>{new Date(m.fechaFin).toLocaleDateString()}</span>
                                             </div>
@@ -352,7 +352,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
                                     <div className="flex items-center gap-2">
                                         <button 
                                             onClick={() => handleToggleActive(m)}
-                                            className="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-600 dark:text-slate-300 font-black text-[9px] uppercase tracking-widest rounded-xl border border-slate-200 dark:border-white/5 cursor-pointer active:scale-95 transition-all"
+                                            className="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-wide rounded-xl border border-slate-200 dark:border-white/5 cursor-pointer active:scale-95 transition-all"
                                         >
                                             {m.activa ? 'Pausar' : 'Activar'}
                                         </button>
@@ -383,9 +383,9 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
             {/* CREATION/EDITION SLIDE/MODAL */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-white/5 rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-200">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-white/5 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-200">
                         <div className="px-8 py-6 bg-slate-50 dark:bg-slate-900/80 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-                            <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-wider flex items-center gap-2">
                                 <Trophy className="text-emerald-500" /> {editingMission ? 'Editar Misión Global' : 'Nueva Misión Global'}
                             </h3>
                             <button 
@@ -400,7 +400,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* TITULO */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Título</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Título</label>
                                     <input 
                                         type="text" 
                                         required
@@ -413,7 +413,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
 
                                 {/* DESCRIPCION */}
                                 <div className="space-y-1 md:col-span-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Descripción</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Descripción</label>
                                     <textarea 
                                         required
                                         value={descripcion}
@@ -426,7 +426,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
 
                                 {/* TIPO DE MISION */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Tipo de Misión</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Tipo de Misión</label>
                                     <select 
                                         value={tipo}
                                         onChange={(e) => setTipo(e.target.value as GlobalMissionType)}
@@ -447,7 +447,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
 
                                 {/* META / OBJETIVO */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Objetivo (Meta Numérica)</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Objetivo (Meta Numérica)</label>
                                     <input 
                                         type="number" 
                                         required
@@ -461,7 +461,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
 
                                 {/* TIPO DE RECOMPENSA */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Tipo de Recompensa</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Tipo de Recompensa</label>
                                     <select 
                                         value={recompensaTipo}
                                         onChange={(e) => setRecompensaTipo(e.target.value as GlobalRewardType)}
@@ -478,7 +478,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
 
                                 {/* VALOR DE LA RECOMPENSA */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Valor del Premio</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Valor del Premio</label>
                                     <input 
                                         type="text" 
                                         required
@@ -497,7 +497,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
 
                                 {/* ICONO */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Icono de la Misión</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Icono de la Misión</label>
                                     <select 
                                         value={icono}
                                         onChange={(e) => setIcono(e.target.value)}
@@ -519,7 +519,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
 
                                 {/* COLOR */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Color Temático (Hex / Tailwind)</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Color Temático (Hex / Tailwind)</label>
                                     <div className="flex gap-2">
                                         <input 
                                             type="color" 
@@ -539,7 +539,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
 
                                 {/* PRIORIDAD / ORDEN */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Prioridad de Visualización</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Prioridad de Visualización</label>
                                     <input 
                                         type="number" 
                                         value={prioridad}
@@ -550,7 +550,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
 
                                 {/* FECHAS */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Fecha Inicio (Opcional)</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Fecha Inicio (Opcional)</label>
                                     <input 
                                         type="date" 
                                         value={fechaInicio}
@@ -560,7 +560,7 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Fecha Fin (Opcional)</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide block">Fecha Fin (Opcional)</label>
                                     <input 
                                         type="date" 
                                         value={fechaFin}
@@ -587,14 +587,14 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
                                 <button 
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="px-6 py-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all cursor-pointer"
+                                    className="px-6 py-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wide rounded-2xl transition-all cursor-pointer"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit"
                                     disabled={submitting}
-                                    className="inline-flex items-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-indigo-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                                    className="inline-flex items-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wide rounded-2xl shadow-lg shadow-indigo-500/20 disabled:opacity-50 transition-all cursor-pointer"
                                 >
                                     <Save size={16} /> {submitting ? 'Procesando...' : editingMission ? 'Guardar Cambios' : 'Crear Misión'}
                                 </button>
