@@ -3,6 +3,7 @@
 //   node scripts/vps-actualizar.mjs bot            → instala lo que le falta al bot de WhatsApp y lo reinicia
 //   node scripts/vps-actualizar.mjs codigo         → baja el último código de GitHub, compila y reinicia la app
 //   node scripts/vps-actualizar.mjs paginas-demo   → muestra y luego crea las páginas de ejemplo en los demos
+//   node scripts/vps-actualizar.mjs reparar        → vuelve a compilar con más memoria y reinicia (si una compilación falló)
 //   node scripts/vps-actualizar.mjs datos          → marca los 3 demos y pasa Bubble Wash a lavandería (tipo, rubro y plan)
 //   node scripts/vps-actualizar.mjs demos          → marca demo-canchas, tienda y parrilla como demo y muestra datos de Bubble Wash
 // Todo lo que pasa queda en _vps_actualizar.log
@@ -50,7 +51,24 @@ function run(title, cmd, { allowFail = false } = {}) {
   });
 }
 
+// Compila con más memoria (según la RAM del servidor) y, solo si sale bien, reinicia la app.
+async function compilarYReiniciar() {
+  await run('Memoria del servidor', 'free -m');
+  const build = `cd ${DIR} && TOTAL=$(free -m | awk '/^Mem:/{print $2}'); SWAP=$(free -m | awk '/^Swap:/{print $2}'); `
+    + `HEAP=$(( (TOTAL + SWAP) * 70 / 100 )); [ $HEAP -gt 6144 ] && HEAP=6144; [ $HEAP -lt 2048 ] && HEAP=2048; `
+    + `echo "Usando $HEAP MB para compilar"; NODE_OPTIONS="--max-old-space-size=$HEAP" npm run build 2>&1 | tail -40; exit \${PIPESTATUS[0]}`;
+  await run('Compilar con más memoria (tarda unos minutos)', build);
+  await run('Reiniciar la app', 'pm2 restart zenda-app && sleep 10 && pm2 save');
+  await run('Comprobar respuestas', `for u in / /register /login /superadmin /demo-spa /demo-spa/paginas /bubblewashuio; do echo "$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 http://localhost:3000$u)  $u"; done`, { allowFail: true });
+}
+
 const plans = {
+  // Vuelve a compilar el código que ya está en el servidor y reinicia (sin bajar nada de GitHub).
+  async reparar() {
+    console.log('Esto vuelve a compilar el código que ya está en el servidor, con más memoria, y reinicia la app. No toca la base de datos.');
+    if ((await ask('¿Continuar? escribe "si": ')) !== 'si') return;
+    await compilarYReiniciar();
+  },
   async bot() {
     console.log('Esto instalará las dependencias del bot de WhatsApp (bot/whatsapp-bot) y reiniciará solo el bot.\nNo toca la base de datos ni la página.');
     if ((await ask('¿Continuar? escribe "si": ')) !== 'si') return;
@@ -71,8 +89,7 @@ const plans = {
     await run('Revisar que llegó el módulo de páginas', `cd ${DIR} && ls src/lib/customPages.ts src/lib/pageTemplates.ts scripts/crear-paginas-demo.ts`);
     await run('Instalar dependencias (solo si cambiaron)', `cd ${DIR} && if git diff --quiet HEAD@{1} HEAD -- package-lock.json; then echo 'Sin cambios en dependencias.'; else npm ci --no-audit --no-fund; fi`);
     await run('Generar cliente de Prisma', `cd ${DIR} && npx prisma generate`);
-    await run('Compilar (tarda unos minutos)', `cd ${DIR} && npm run build 2>&1 | tail -40; exit \${PIPESTATUS[0]}`);
-    await run('Reiniciar la app', 'pm2 restart zenda-app && sleep 10 && pm2 save');
+    await compilarYReiniciar();
     await run('Comprobar respuestas', `for u in / /demo-spa /demo-spa/paginas /dental-chip /vortex-fitness; do echo "$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 http://localhost:3000$u)  $u"; done`, { allowFail: true });
   },
 
@@ -154,7 +171,7 @@ const plans = {
 };
 
 if (!plans[mode]) {
-  console.log('Uso: node scripts/vps-actualizar.mjs bot | codigo | paginas-demo | demos | datos');
+  console.log('Uso: node scripts/vps-actualizar.mjs bot | codigo | paginas-demo | demos | datos | reparar');
   process.exit(1);
 }
 

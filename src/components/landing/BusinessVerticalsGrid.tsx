@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import DemoViewer from './DemoViewer';
 import Link from 'next/link';
 import { 
     Scissors, 
@@ -10,9 +11,6 @@ import {
     Shirt, 
     Dumbbell, 
     Eye, 
-    ExternalLink, 
-    X, 
-    CheckCircle2, 
     ArrowRight,
     Sparkles
 } from 'lucide-react';
@@ -54,7 +52,7 @@ export const VERTICALS: VerticalItem[] = [
         createLabel: 'Crear app de servicios',
         createHref: '/register?tipo=servicios',
         demoUrl: '/symechas-peluquera',
-        demoTitle: 'Symechas Salón & Spa',
+        demoTitle: 'Symechas Peluquería',
         demoTag: 'Belleza & Estética',
         demoDescription: 'App completa para salones y spas con agendamiento de citas 24/7, catálogo de servicios, selección de especialista y recordatorios por WhatsApp.',
         demoFeatures: [
@@ -98,7 +96,7 @@ export const VERTICALS: VerticalItem[] = [
         createLabel: 'Crear tienda app',
         createHref: '/register?tipo=tienda',
         demoUrl: '/tienda',
-        demoTitle: 'Citiox Store',
+        demoTitle: 'Citiox Urban Store',
         demoTag: 'Moda & Retail',
         demoDescription: 'Tu propia tienda online y app móvil con carrito de compras, variantes de tallas y colores, cálculo de envíos y pagos integrados.',
         demoFeatures: [
@@ -120,7 +118,7 @@ export const VERTICALS: VerticalItem[] = [
         createLabel: 'Crear app de canchas',
         createHref: '/register?tipo=canchas',
         demoUrl: '/demo-canchas',
-        demoTitle: 'Complejo El Dorado',
+        demoTitle: 'Cancha Los Campeones',
         demoTag: 'Pádel & Fútbol',
         demoDescription: 'Sistema de reservas en tiempo real para complejos deportivos de pádel, fútbol y tenis. Disponibilidad en vivo y cobro de señas.',
         demoFeatures: [
@@ -186,7 +184,7 @@ export const VERTICALS: VerticalItem[] = [
         createLabel: 'Crear app para mi clínica',
         createHref: '/register?tipo=dentista',
         demoUrl: '/dental-chip',
-        demoTitle: 'Dental Chip Clínica',
+        demoTitle: 'Dental Chip',
         demoTag: 'Salud & Odontología',
         demoDescription: 'Presencia digital para clínicas odontológicas y médicas con agenda de consultas, catálogo de especialidades y ficha del paciente.',
         demoFeatures: [
@@ -201,6 +199,31 @@ export const VERTICALS: VerticalItem[] = [
 export default function BusinessVerticalsGrid() {
     const [selectedDemo, setSelectedDemo] = useState<VerticalItem | null>(null);
 
+    // Abrir un ejemplo agrega una entrada al historial: el botón "atrás" del celular lo cierra
+    // y la dirección (#ejemplo-restaurante) se puede compartir.
+    const showDemo = useCallback((v: VerticalItem) => {
+        setSelectedDemo(v);
+        const hash = `#ejemplo-${v.id}`;
+        if (window.history.state?.citioxDemo) window.history.replaceState({ citioxDemo: true }, '', hash);
+        else window.history.pushState({ citioxDemo: true }, '', hash);
+    }, []);
+
+    const closeDemo = useCallback(() => {
+        if (window.history.state?.citioxDemo) window.history.back();
+        else setSelectedDemo(null);
+    }, []);
+
+    useEffect(() => {
+        const sync = () => {
+            const m = window.location.hash.match(/^#ejemplo-(.+)$/);
+            const found = m ? VERTICALS.find((v) => v.id === m[1]) : null;
+            setSelectedDemo(found || null);
+        };
+        sync(); // abrir directo si la dirección ya trae #ejemplo-...
+        window.addEventListener('popstate', sync);
+        return () => window.removeEventListener('popstate', sync);
+    }, []);
+
     return (
         <>
             {/* Tarjetas de tipos de negocio */}
@@ -214,7 +237,7 @@ export default function BusinessVerticalsGrid() {
                         >
                             <button
                                 type="button"
-                                onClick={() => setSelectedDemo(v)}
+                                onClick={() => showDemo(v)}
                                 className="relative h-40 overflow-hidden cursor-pointer text-left"
                                 aria-label={`Ver ejemplo de app para ${v.title}`}
                             >
@@ -244,7 +267,7 @@ export default function BusinessVerticalsGrid() {
                                 <div className="mt-auto pt-5 flex items-center gap-2">
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedDemo(v)}
+                                        onClick={() => showDemo(v)}
                                         className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold transition-colors cursor-pointer"
                                     >
                                         <Eye size={15} /> Ver ejemplo
@@ -280,172 +303,8 @@ export default function BusinessVerticalsGrid() {
                 </article>
             </div>
 
-            {/* MODAL INTERACTIVO DE DEMO EN VIVO */}
             {selectedDemo && (
-                <div 
-                    className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
-                    onClick={() => setSelectedDemo(null)}
-                >
-                    <div 
-                        className="bg-white border border-slate-200 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] relative"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Cabecera del Modal */}
-                        <div className="px-5 sm:px-7 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
-                            <div className="flex items-center gap-3">
-                                <div className={`size-10 rounded-2xl ${selectedDemo.iconBg} flex items-center justify-center font-bold`}>
-                                    <selectedDemo.icon size={20} />
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                                            {selectedDemo.demoTitle}
-                                        </h3>
-                                        <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-[#0066FF] border border-blue-200">
-                                            {selectedDemo.demoTag}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-slate-500 font-medium hidden sm:block">
-                                        Así lo verían tus clientes. Puedes tocar y navegar.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <a
-                                    href={selectedDemo.demoUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
-                                    title="Abrir demo en pestaña completa"
-                                >
-                                    <ExternalLink size={13} />
-                                    <span>Pantalla completa</span>
-                                </a>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedDemo(null)}
-                                    className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
-                                    title="Cerrar modal"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Selector rápido de otras verticales dentro del modal */}
-                        <div className="px-4 sm:px-7 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
-                            <span className="text-xs font-semibold text-slate-500 mr-1 shrink-0">
-                                Ver otro:
-                            </span>
-                            {VERTICALS.map(v => (
-                                <button
-                                    key={v.id}
-                                    type="button"
-                                    onClick={() => setSelectedDemo(v)}
-                                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                                        selectedDemo.id === v.id
-                                            ? 'bg-[#0066FF] text-white shadow-xs'
-                                            : 'bg-white hover:bg-slate-200/70 text-slate-600 border border-slate-200/70'
-                                    }`}
-                                >
-                                    {v.title}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Contenido: Mockup Teléfono (Iframe) + Panel Informativo */}
-                        <div className="flex-1 overflow-y-auto p-4 sm:p-7 bg-slate-100/60">
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                                
-                                {/* Columna Izquierda: Teléfono Móvil con Iframe Interactivo */}
-                                <div className="md:col-span-6 flex justify-center items-center py-2">
-                                    <div className="w-[280px] sm:w-[310px] h-[540px] sm:h-[580px] bg-slate-950 rounded-3xl p-2.5 shadow-2xl border-[6px] border-slate-900 relative shrink-0">
-                                        {/* Barra superior / Isla Dinámica */}
-                                        <div className="relative flex items-center justify-between px-3 mb-1.5 pt-1">
-                                            <div className="w-16 h-3.5 bg-slate-900 rounded-full mx-auto flex items-center justify-center">
-                                                <div className="size-1.5 rounded-full bg-slate-800 ml-auto mr-1" />
-                                            </div>
-                                            <a 
-                                                href={selectedDemo.demoUrl} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="absolute right-2 top-0.5 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs hover:bg-[#0066FF] transition-colors"
-                                                title="Abrir en pestaña nueva"
-                                            >
-                                                <ExternalLink size={10} />
-                                            </a>
-                                        </div>
-
-                                        {/* Iframe con escala correcta */}
-                                        <div className="h-[calc(100%-24px)] bg-white rounded-3xl overflow-hidden relative border border-slate-800 shadow-inner">
-                                            <iframe
-                                                key={selectedDemo.demoUrl}
-                                                src={selectedDemo.demoUrl}
-                                                title={selectedDemo.demoTitle}
-                                                className="w-[390px] h-[780px] origin-top-left scale-[0.67] sm:scale-[0.74] border-0 select-none pointer-events-auto"
-                                                loading="eager"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Columna Derecha: Información y Llamado a la Acción */}
-                                <div className="md:col-span-6 space-y-5 text-left">
-                                    <div>
-                                        <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-[#0066FF] text-xs font-bold uppercase tracking-wider mb-2">
-                                            {selectedDemo.demoTag}
-                                        </span>
-                                        <h4 className="text-2xl font-bold text-slate-950 tracking-tight leading-tight">
-                                            {selectedDemo.demoTitle}
-                                        </h4>
-                                        <p className="text-[15px] text-slate-600 mt-2 leading-relaxed">
-                                            {selectedDemo.demoDescription}
-                                        </p>
-                                    </div>
-
-                                    {/* Lista de Funcionalidades Clave */}
-                                    <div className="space-y-2 bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs">
-                                        <h5 className="text-sm font-bold text-slate-900">
-                                            Qué incluye
-                                        </h5>
-                                        <ul className="space-y-2 text-sm text-slate-700">
-                                            {selectedDemo.demoFeatures.map((feat, idx) => (
-                                                <li key={idx} className="flex items-start gap-2">
-                                                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0 mt-0.5" />
-                                                    <span>{feat}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-
-                                    {/* Botones de acción */}
-                                    <div className="space-y-2.5 pt-2">
-                                        <Link
-                                            href={selectedDemo.createHref}
-                                            className="w-full py-3.5 px-6 rounded-2xl bg-[#0066FF] hover:bg-[#0052cc] text-white font-extrabold text-sm text-center transition-all shadow-lg shadow-blue-500/25 active:scale-95 flex items-center justify-center gap-2"
-                                        >
-                                            <Sparkles size={16} />
-                                            <span>{selectedDemo.createLabel} gratis</span>
-                                            <ArrowRight size={15} />
-                                        </Link>
-
-                                        <a
-                                            href={selectedDemo.demoUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="w-full py-3 px-5 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs text-center transition-all flex items-center justify-center gap-2 shadow-2xs"
-                                        >
-                                            <ExternalLink size={14} className="text-slate-400" />
-                                            <span>Abrir el ejemplo en pantalla completa</span>
-                                        </a>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <DemoViewer items={VERTICALS} current={selectedDemo} onChange={showDemo} onClose={closeDemo} />
             )}
         </>
     );
