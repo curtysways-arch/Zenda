@@ -1,94 +1,76 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
-import slugify from 'slugify';
-import DOMPurify from 'isomorphic-dompurify';
+import { getPagesAccess, readPageInput, uniquePageSlug, newPageId, pageError } from '@/lib/customPagesServer';
 
-export async function GET(req: Request) {
-    try {
-        const session = await getEffectiveAdminSession();
-        if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
+export const dynamic = 'force-dynamic';
 
-        const businessId = (session.user as any).negocioId;
-        if (!businessId) return new NextResponse('No business ID', { status: 400 });
+/** Lista las páginas del negocio (la respuesta sigue siendo un arreglo, como antes). */
+export async function GET() {
+  try {
+    const access = await getPagesAccess();
+    if (!access.ok) return access.response;
 
-        const pages = (await prisma.$queryRawUnsafe(
-            `SELECT id, businessId, title, slug, status, featuredImage, imageMediaId, posicion, orden, updatedAt FROM Page WHERE businessId = '${businessId}' ORDER BY orden ASC, updatedAt DESC`
-        )) as any[];
+    const pages = await prisma.page.findMany({
+      where: { businessId: access.businessId },
+      select: {
+        id: true, businessId: true, title: true, slug: true, status: true, featuredImage: true,
+        imageMediaId: true, posicion: true, orden: true, buttonText: true, createdAt: true, updatedAt: true,
+        imageMedia: true,
+      },
+      orderBy: [{ orden: 'asc' }, { updatedAt: 'desc' }],
+    });
 
-        // Para cada página, si tiene imageMediaId, obtener el objeto Media y adjuntarlo
-        const mediaIds = pages.filter(p => p.imageMediaId).map(p => p.imageMediaId);
-        const medias = mediaIds.length > 0 
-            ? await prisma.media.findMany({ where: { id: { in: mediaIds } } })
-            : [];
-        const mediaMap = new Map(medias.map(m => [m.id, m]));
-
-        const result = pages.map(p => ({
-            ...p,
-            posicion: p.posicion || (p.slug === 'como-funciona' ? 'top' : 'bottom'),
-            orden: p.orden ?? 1,
-            imageMedia: p.imageMediaId ? mediaMap.get(p.imageMediaId) : null
-        }));
-
-        return NextResponse.json(result);
-    } catch (error) {
-        console.error('[GET_PAGES_ERROR]', error);
-        return new NextResponse('Internal Error', { status: 500 });
-    }
+    return NextResponse.json(
+      pages.map((p) => ({
+        ...p,
+        status: String(p.status || 'draft').toLowerCase() === 'published' ? 'published' : 'draft',
+        posicion: p.posicion || (p.slug === 'como-funciona' ? 'top' : 'bottom'),
+        orden: p.orden ?? 1,
+      }))
+    );
+  } catch (error) {
+    console.error('[GET_PAGES_ERROR]', error);
+    return pageError('No se pudieron cargar las páginas.', 500);
+  }
 }
 
 export async function POST(req: Request) {
-    try {
-        const session = await getEffectiveAdminSession();
-        if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
+  try {
+    const access = await getPagesAccess();
+    if (!access.ok) return access.response;
+    const { businessId } = access;
 
-        const businessId = (session.user as any).negocioId;
-        if (!businessId) return new NextResponse('No business ID', { status: 400 });
+    const body = await req.json().catch(() => ({}));
+    const { data, error } = await readPageInput(body, businessId, false);
+    if (error) return pageError(error);
 
-        const { title, contentHtml, status, featuredImage, buttonText, buttonUrl, imageMediaId, posicion, orden } = await req.json();
+    const slug = await uniquePageSlug(businessId, data.slug || data.title!);
+    const id = newPageId();
+    const now = new Date();
 
-        if (!title || !contentHtml) {
-            return NextResponse.json({ error: 'Título y contenido son requeridos' }, { status: 400 });
-        }
+    await prisma.page.create({
+      data: {
+        id,
+        businessId,
+        title: data.title!,
+        slug,
+        contentHtml: data.contentHtml!,
+        featuredImage: data.featuredImage ?? null,
+        imageMediaId: data.imageMediaId ?? null,
+        buttonText: data.buttonText ?? null,
+        buttonUrl: data.buttonUrl ?? null,
+        status: data.status || 'draft',
+        posicion: data.posicion || 'bottom',
+        orden: data.orden ?? 1,
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
 
-        const baseSlug = slugify(title, { lower: true, strict: true });
-
-        // Sanitizar el HTML antes de guardar
-        const cleanHtml = DOMPurify.sanitize(contentHtml);
-        const id = `cm${Math.random().toString(36).substring(2, 23)}`; // Generar un ID simple compatible
-
-        // Utilizar Prisma ORM pasando explícitamente createdAt y updatedAt
-        await prisma.page.create({
-            data: {
-                id,
-                businessId,
-                title,
-                slug: baseSlug,
-                contentHtml: cleanHtml,
-                featuredImage: featuredImage || null,
-                imageMediaId: imageMediaId || null,
-                buttonText: buttonText || null,
-                buttonUrl: buttonUrl || null,
-                status: status || 'draft',
-                posicion: posicion || 'top',
-                orden: Number(orden) || 1,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            }
-        });
-
-        return NextResponse.json({ id, title, slug: baseSlug });
-    } catch (error: any) {
-        console.error('[POST_PAGES_ERROR]', error);
-
-        if (error.message?.includes('Unique constraint') || error.code === 'P2002') {
-            return NextResponse.json({ error: 'Ya existe una página con un título similar' }, { status: 400 });
-        }
-
-        return NextResponse.json({
-            error: 'Error al crear la página',
-            details: error.message,
-            code: error.code
-        }, { status: 500 });
-    }
+    return NextResponse.json({ success: true, id, title: data.title, slug, status: data.status }, { status: 201 });
+  } catch (error: any) {
+    console.error('[POST_PAGES_ERROR]', error);
+    if (error?.code === 'P2002') return pageError('Ya existe una página con esa dirección. Cambia el título o la dirección.', 409);
+    return pageError('No se pudo crear la página.', 500);
+  }
 }

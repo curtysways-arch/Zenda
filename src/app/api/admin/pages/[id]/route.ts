@@ -1,98 +1,120 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
-import slugify from 'slugify';
-import DOMPurify from 'isomorphic-dompurify';
+import {
+  getPagesAccess, findOwnedPage, readPageInput, uniquePageSlug, newPageId, pageError, MASTER_PAGE_SLUGS,
+} from '@/lib/customPagesServer';
+import { slugifyPageTitle } from '@/lib/customPages';
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-    try {
-        const session = await getEffectiveAdminSession();
-        if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
+export const dynamic = 'force-dynamic';
 
-        const { id: rawId } = await params;
-        const id = rawId.trim();
+type Ctx = { params: Promise<{ id: string }> };
 
-        // Buscar usando Prisma ORM estándar
-        const page = await prisma.page.findUnique({
-            where: { id },
-            include: {
-                imageMedia: true
-            }
-        });
-
-        if (!page) return new NextResponse('Not Found', { status: 404 });
-
-        return NextResponse.json(page);
-    } catch (error) {
-        console.error('[GET_PAGE_ID_ERROR]', error);
-        return new NextResponse('Internal Error', { status: 500 });
-    }
+export async function GET(_req: Request, { params }: Ctx) {
+  try {
+    const access = await getPagesAccess();
+    if (!access.ok) return access.response;
+    const { id } = await params;
+    const page = await findOwnedPage(id, access.businessId);
+    if (!page) return pageError('Página no encontrada.', 404);
+    return NextResponse.json({
+      ...page,
+      status: String(page.status || '').toLowerCase() === 'published' ? 'published' : 'draft',
+    });
+  } catch (error) {
+    console.error('[GET_PAGE_ID_ERROR]', error);
+    return pageError('No se pudo cargar la página.', 500);
+  }
 }
 
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
-    try {
-        const session = await getEffectiveAdminSession();
-        if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
+/** Guarda cambios. PUT y PATCH aceptan solo los campos que se envían. */
+async function update(req: Request, { params }: Ctx) {
+  try {
+    const access = await getPagesAccess();
+    if (!access.ok) return access.response;
+    const { businessId } = access;
+    const { id } = await params;
+    const page = await findOwnedPage(id, businessId);
+    if (!page) return pageError('Página no encontrada.', 404);
 
-        const { id: rawId } = await params;
-        const id = rawId.trim();
-        const { title, contentHtml, status, featuredImage, buttonText, buttonUrl, imageMediaId, posicion, orden } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { data, error } = await readPageInput(body, businessId, true);
+    if (error) return pageError(error);
 
-        const cleanHtml = DOMPurify.sanitize(contentHtml);
-        let slug = slugify(title, { lower: true, strict: true });
-        
-        // Preservar slugs maestros para inyección directa en el landing
-        if (id.includes('por_que_elegirnos') || title.toLowerCase().includes('elegirnos') || title.toLowerCase().includes('resultados')) {
-            slug = 'por-que-elegirnos';
-        } else if (id.includes('como_funciona') || title.toLowerCase().includes('funciona')) {
-            slug = 'como-funciona';
-        }
-
-        // Actualizar usando Prisma ORM estándar
-        const updatedPage = await prisma.page.update({
-            where: { id },
-            data: {
-                title,
-                slug,
-                contentHtml: cleanHtml,
-                featuredImage: featuredImage || null,
-                imageMediaId: imageMediaId || null,
-                buttonText: buttonText || null,
-                buttonUrl: buttonUrl || null,
-                status: status || 'draft',
-                ...(posicion !== undefined ? { posicion } : {}),
-                ...(orden !== undefined ? { orden: Number(orden) || 1 } : {}),
-                updatedAt: new Date()
-            }
-        });
-
-        return NextResponse.json({ success: true, id: updatedPage.id });
-    } catch (error: any) {
-        console.error('[UPDATE_PAGE_ERROR]', error);
-        return NextResponse.json({
-            error: 'Error al actualizar la página',
-            details: error.message,
-            code: error.code
-        }, { status: 500 });
+    // La dirección (slug) no cambia al renombrar, para no romper enlaces ya compartidos.
+    // Solo cambia si se envía una nueva explícitamente. Las secciones fijas conservan la suya.
+    let slug = page.slug;
+    if (data.slug !== undefined && !MASTER_PAGE_SLUGS.includes(page.slug)) {
+      const wanted = slugifyPageTitle(data.slug || data.title || page.title);
+      if (wanted && wanted !== page.slug) slug = await uniquePageSlug(businessId, wanted, page.id);
     }
+    const { slug: _ignored, ...rest } = data;
+
+    const updated = await prisma.page.update({
+      where: { id: page.id },
+      data: { ...rest, slug, updatedAt: new Date() },
+      select: { id: true, slug: true, status: true, title: true },
+    });
+    return NextResponse.json({ success: true, ...updated });
+  } catch (error: any) {
+    console.error('[UPDATE_PAGE_ERROR]', error);
+    if (error?.code === 'P2002') return pageError('Ya existe otra página con esa dirección.', 409);
+    return pageError('No se pudieron guardar los cambios.', 500);
+  }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
-    try {
-        const session = await getEffectiveAdminSession();
-        if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
+export const PUT = update;
+export const PATCH = update;
 
-        const { id: rawId } = await params;
-        const id = rawId.trim();
+/** POST /api/admin/pages/:id → duplica la página como borrador. */
+export async function POST(_req: Request, { params }: Ctx) {
+  try {
+    const access = await getPagesAccess();
+    if (!access.ok) return access.response;
+    const { businessId } = access;
+    const { id } = await params;
+    const page = await findOwnedPage(id, businessId);
+    if (!page) return pageError('Página no encontrada.', 404);
 
-        // Eliminar usando Prisma ORM estándar
-        await prisma.page.delete({
-            where: { id }
-        });
+    const title = `${page.title} (copia)`.slice(0, 140);
+    const slug = await uniquePageSlug(businessId, `${page.slug}-copia`);
+    const newId = newPageId();
+    const now = new Date();
+    await prisma.page.create({
+      data: {
+        id: newId,
+        businessId,
+        title,
+        slug,
+        contentHtml: page.contentHtml,
+        featuredImage: page.featuredImage,
+        imageMediaId: page.imageMediaId,
+        buttonText: page.buttonText,
+        buttonUrl: page.buttonUrl,
+        status: 'draft',
+        posicion: page.posicion || 'bottom',
+        orden: (page.orden ?? 1) + 1,
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
+    return NextResponse.json({ success: true, id: newId, slug, title }, { status: 201 });
+  } catch (error) {
+    console.error('[DUPLICATE_PAGE_ERROR]', error);
+    return pageError('No se pudo duplicar la página.', 500);
+  }
+}
 
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error('[DELETE_PAGE_ERROR]', error);
-        return new NextResponse('Internal Error', { status: 500 });
-    }
+export async function DELETE(_req: Request, { params }: Ctx) {
+  try {
+    const access = await getPagesAccess();
+    if (!access.ok) return access.response;
+    const { id } = await params;
+    const page = await findOwnedPage(id, access.businessId);
+    if (!page) return pageError('Página no encontrada.', 404);
+    await prisma.page.delete({ where: { id: page.id } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[DELETE_PAGE_ERROR]', error);
+    return pageError('No se pudo eliminar la página.', 500);
+  }
 }

@@ -25,6 +25,7 @@ import { ModuleResolver } from '@/lib/modules/ModuleResolver';
 import { resolveLandingContent } from '@/lib/landingContentResolver';
 import UniversalHeroCarousel from '@/components/public/UniversalHeroCarousel';
 import type { Metadata } from 'next';
+import { pageExcerpt, pageImage } from '@/lib/customPages';
 
 /** Convierte Decimal → number y Date → ISO para pasar datos de Prisma a Client Components. */
 function toPlain<T>(value: T): T {
@@ -263,7 +264,8 @@ export default async function PublicNegocioPage({
                 }),
                 prisma.page.findMany({
                     where: { businessId: negocio.id, status: { in: ['published', 'PUBLISHED'] } },
-                    orderBy: { orden: 'asc' }
+                    include: { imageMedia: true },
+                    orderBy: [{ orden: 'asc' }, { createdAt: 'asc' }]
                 }),
                 (prisma as any).promotion.findMany({
                     where: { businessId: negocio.id },
@@ -487,8 +489,8 @@ export default async function PublicNegocioPage({
         // Consulta de páginas con Prisma ORM directo
         try {
             const dbPages = await prisma.page.findMany({
-                where: { businessId: negocio.id },
-                orderBy: { updatedAt: 'desc' }
+                where: { businessId: negocio.id, status: { in: ['published', 'PUBLISHED'] } },
+                orderBy: [{ orden: 'asc' }, { createdAt: 'asc' }]
             });
             paginas = dbPages.map((p: any) => ({
                 id: p.id,
@@ -549,8 +551,8 @@ export default async function PublicNegocioPage({
         let paginasCanchas: any[] = [];
         try {
             const dbPages = await prisma.page.findMany({
-                where: { businessId: negocio.id, status: 'published' },
-                orderBy: { updatedAt: 'desc' }
+                where: { businessId: negocio.id, status: { in: ['published', 'PUBLISHED'] } },
+                orderBy: [{ orden: 'asc' }, { createdAt: 'asc' }]
             });
             paginasCanchas = dbPages.map((p: any) => ({
                 id: p.id,
@@ -964,11 +966,12 @@ export default async function PublicNegocioPage({
     const businessImage = displayImages[0];
     
     const paginasPersonalizadas = await prisma.page.findMany({
+        include: { imageMedia: true },
         where: { 
             businessId: negocio.id, 
             status: { in: ['published', 'PUBLISHED'] } 
         },
-        orderBy: { createdAt: 'asc' }
+        orderBy: [{ orden: 'asc' }, { createdAt: 'asc' }]
     });
     
     // DEFINICIÃ“N DE COLORES DESDE ADMIN
@@ -1612,7 +1615,7 @@ export default async function PublicNegocioPage({
                                 <div className="flex flex-col md:flex-row">
                                     <div className="md:w-2/5 aspect-[16/10] md:aspect-square relative overflow-hidden">
                                         <img 
-                                            src={page.featuredImage || businessImage} 
+                                            src={pageImage(page) || businessImage} 
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s] ease-out"
                                             alt={page.title}
                                         />
@@ -1631,7 +1634,7 @@ export default async function PublicNegocioPage({
                                             {page.title}
                                         </h4>
                                         <p className="text-xs font-semibold text-slate-400 leading-relaxed mb-4 max-w-md line-clamp-2">
-                                            {page.contentHtml ? page.contentHtml.replace(/<[^>]*>?/gm, '').slice(0, 150) : (isGymModule ? 'Conoce más sobre nuestro centro de entrenamiento, áreas y comunidad.' : 'Sumérgete en los detalles y rituales exclusivos que nos hacen únicos.')}
+                                            {page.contentHtml ? pageExcerpt(page.contentHtml, 150) : (isGymModule ? 'Conoce más sobre nuestro centro de entrenamiento, áreas y comunidad.' : 'Sumérgete en los detalles y rituales exclusivos que nos hacen únicos.')}
                                         </p>
                                         
                                         <div className="flex items-center gap-3">

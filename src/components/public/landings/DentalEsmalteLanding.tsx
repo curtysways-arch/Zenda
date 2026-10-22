@@ -3,6 +3,7 @@ import { Geist, Instrument_Serif } from 'next/font/google';
 import { ArrowRight, ArrowUpRight, Clock, MapPin, Phone, MessageCircle, Eye, Instagram, Facebook } from 'lucide-react';
 import { getServicePrimaryImage } from '@/lib/serviceImageHelper';
 import DynamicFavicon from '@/components/DynamicFavicon';
+import { htmlToText, pageExcerpt, resolvePageButtonUrl } from '@/lib/customPages';
 
 const sans = Geist({ subsets: ['latin'], variable: '--font-esm-sans', display: 'swap' });
 const serif = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], variable: '--font-esm-serif', display: 'swap' });
@@ -277,7 +278,7 @@ export default function DentalEsmalteLanding({
         .esm-rule{border-color:var(--esm-line)}
         .group:hover .esm-go{background:var(--esm-accent);color:#fff;--tw-ring-color:var(--esm-accent)}
         .esm-html h2,.esm-html h3{font-weight:500;letter-spacing:-0.02em;margin:1.2em 0 .4em}
-        .esm-html p{margin:.6em 0;color:var(--esm-muted)} .esm-html ul{list-style:disc;padding-left:1.2em;color:var(--esm-muted)}
+        .esm-html p{margin:.6em 0;color:var(--esm-muted)} .esm-html ul,.esm-html ol{list-style:disc;padding-left:1.2em;color:var(--esm-muted)} .esm-html ol{list-style:decimal} .esm-html ol>li[data-list=bullet]{list-style:disc} .esm-html li>.ql-ui{display:none} .esm-html .ql-align-center{text-align:center} .esm-html img{max-width:100%;border-radius:16px}
         @media (prefers-reduced-motion: no-preference){
           .esm-rise{animation:esmRise .8s cubic-bezier(.2,.7,.2,1) both}
           .esm-rise-2{animation-delay:.08s}.esm-rise-3{animation-delay:.16s}
@@ -423,7 +424,7 @@ export default function DentalEsmalteLanding({
       )}
 
       {/* ── Páginas del negocio (arriba) ── */}
-      {topPages.map((pg: any) => <CustomPage key={pg.id} page={pg} accent={accent} whatsapp={whatsapp} />)}
+      {topPages.map((pg: any) => <CustomPage key={pg.id} page={pg} accent={accent} whatsapp={whatsapp} slug={slug} />)}
 
       {/* ── Tratamientos ── */}
       {featured.length > 0 && (
@@ -563,7 +564,7 @@ export default function DentalEsmalteLanding({
       )}
 
       {/* ── Páginas del negocio (abajo) ── */}
-      {bottomPages.map((pg: any) => <CustomPage key={pg.id} page={pg} accent={accent} whatsapp={whatsapp} />)}
+      {bottomPages.map((pg: any) => <CustomPage key={pg.id} page={pg} accent={accent} whatsapp={whatsapp} slug={slug} />)}
 
       {/* ── Visítanos + cierre ── */}
       <section id="visitanos" className="scroll-mt-20" style={{ backgroundColor: 'var(--esm-deep)', color: '#EEF2EF' }}>
@@ -660,17 +661,29 @@ export default function DentalEsmalteLanding({
   );
 }
 
-function CustomPage({ page, accent, whatsapp }: { page: any; accent: string; whatsapp: string | null }) {
+function CustomPage({ page, accent, whatsapp, slug }: { page: any; accent: string; whatsapp: string | null; slug: string }) {
   const img = page.imageMedia?.url || page.featuredImage;
+  // Las páginas largas se resumen aquí y se leen completas en su propia dirección.
+  const long = htmlToText(page.contentHtml).length > 700;
+  const href = page.buttonUrl ? resolvePageButtonUrl(page.buttonUrl, slug, whatsapp) : whatsapp || '#tratamientos';
   return (
     <section id={page.slug} className="scroll-mt-20 border-t esm-rule">
       <div className={`mx-auto grid max-w-6xl gap-10 px-5 py-16 md:py-20 ${img ? 'md:grid-cols-2 md:items-center' : ''}`}>
         <div>
           <h2 className="esm-h text-3xl sm:text-4xl">{page.title}</h2>
-          {page.contentHtml && <div className="esm-html mt-4 text-[17px] leading-relaxed" dangerouslySetInnerHTML={{ __html: cleanHtml(page.contentHtml) }} />}
+          {page.contentHtml && (long ? (
+            <p className="mt-4 text-[17px] leading-relaxed" style={{ color: 'var(--esm-muted)' }}>{pageExcerpt(page.contentHtml, 320)}</p>
+          ) : (
+            <div className="esm-html mt-4 text-[17px] leading-relaxed" dangerouslySetInnerHTML={{ __html: cleanHtml(page.contentHtml) }} />
+          ))}
+          {long && (
+            <Link href={`/${slug}/pagina/${page.slug}`} className="mt-4 inline-flex items-center gap-1.5 text-[15px] font-medium" style={{ color: accent }}>
+              Seguir leyendo <ArrowRight size={16} />
+            </Link>
+          )}
           {page.buttonText && (
             <a
-              href={page.buttonUrl || whatsapp || '#tratamientos'}
+              href={href}
               className="mt-6 inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-medium text-white"
               style={{ backgroundColor: accent }}
             >

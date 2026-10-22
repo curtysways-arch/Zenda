@@ -50,3 +50,7 @@ users_output.txt
 # Documentos privados de repartidores (no se suben al repositorio)
 storage/
 public/uploads/drivers/
+
+# Diagnósticos del servidor (no subir)
+_diagnostico_vps.txt
+_vps_actualizar.log

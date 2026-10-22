@@ -1,118 +1,83 @@
-import { getNegocioBySlug } from '@/lib/services';
-import prisma from '@/lib/prisma';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, ArrowRight, FileText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, FileText } from 'lucide-react';
+import prisma from '@/lib/prisma';
+import { getNegocioBySlug } from '@/lib/services';
+import { pageExcerpt } from '@/lib/customPages';
 
-export default async function PublicPagesListPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export const dynamic = 'force-dynamic';
+
+function accentOf(negocio: any) {
+  const c = String(negocio?.colorPrimario || '').trim();
+  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c) ? c : '#0f766e';
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const negocio = await getNegocioBySlug(slug);
+  const negocio: any = await getNegocioBySlug(slug).catch(() => null);
+  if (!negocio) return { title: 'Página no encontrada' };
+  return { title: `Más sobre ${negocio.nombre}`, description: `Información, guías y preguntas frecuentes de ${negocio.nombre}.` };
+}
 
-  if (!negocio) {
-    notFound();
-  }
+export default async function PublicPagesListPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const negocio: any = await getNegocioBySlug(slug);
+  if (!negocio) notFound();
 
   const pages = await prisma.page.findMany({
-    where: {
-      businessId: negocio.id,
-      status: 'published',
-    },
-    orderBy: { orden: 'asc' },
+    where: { businessId: negocio.id, status: { in: ['published', 'PUBLISHED'] } },
+    include: { imageMedia: true },
+    orderBy: [{ orden: 'asc' }, { createdAt: 'asc' }],
   });
 
-  const primaryColor = (negocio as any).colorPrimario || '#00c7b1';
-  const businessImage = negocio.logoUrl || '/icon.png';
+  const accent = accentOf(negocio);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100 py-4 px-6">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <Link
-            href={`/${slug}`}
-            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            <ChevronLeft size={18} />
-            <span>Volver a {negocio.nombre}</span>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4 sm:px-6">
+          <Link href={`/${slug}`} className="flex min-w-0 items-center gap-2.5">
+            {negocio.logoUrl && <img src={negocio.logoUrl} alt="" className="size-9 shrink-0 rounded-full object-cover ring-1 ring-black/5" />}
+            <span className="truncate font-semibold">{negocio.nombre}</span>
           </Link>
-
-          <span
-            className="text-xs font-extrabold px-3 py-1 rounded-full text-white uppercase tracking-wider"
-            style={{ backgroundColor: primaryColor }}
-          >
-            Páginas &amp; Guías
-          </span>
+          <Link href={`/${slug}`} className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+            <ArrowLeft size={16} /> Inicio
+          </Link>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 pt-12 space-y-8">
-        <div className="space-y-3">
-          <span
-            className="text-xs font-bold uppercase tracking-wide block"
-            style={{ color: primaryColor }}
-          >
-            Contenido Informativo
-          </span>
-          <h1 className="text-3xl sm:text-5xl font-bold text-slate-900 tracking-tight">
-            Artículos, Guías y Recomendaciones
-          </h1>
-          <p className="text-base text-slate-500 max-w-2xl">
-            Conoce a fondo nuestros tratamientos, preguntas frecuentes y cuidados especiales recomendados por nuestros especialistas.
-          </p>
-        </div>
+      <main className="mx-auto max-w-5xl px-5 pb-20 pt-10 sm:px-6 sm:pt-14">
+        <p className="text-sm font-medium" style={{ color: accent }}>{negocio.nombre}</p>
+        <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">Conoce más</h1>
+        <p className="mt-3 max-w-2xl text-slate-500">Todo lo que necesitas saber antes y después de visitarnos.</p>
 
         {pages.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-sm space-y-3">
-            <FileText className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-700">No hay páginas publicadas</h3>
-            <p className="text-xs text-slate-400">Pronto publicaremos nuevo contenido aquí.</p>
+          <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-12 text-center">
+            <FileText className="mx-auto text-slate-300" size={40} />
+            <p className="mt-3 font-semibold text-slate-700">Pronto publicaremos contenido aquí.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {pages.map((p) => {
-              const snippet = p.contentHtml
-                ? p.contentHtml.replace(/<[^>]*>?/gm, '').slice(0, 160) + '...'
-                : 'Descubre todos los detalles y recomendaciones de nuestros profesionales.';
-              const imgUrl = p.featuredImage || businessImage;
-
+          <div className="mt-10 grid gap-5 sm:grid-cols-2">
+            {pages.map((p: any) => {
+              const img = p.imageMedia?.url || p.featuredImage;
               return (
-                <Link
-                  key={p.id}
-                  href={`/${slug}/pagina/${p.slug}`}
-                  className="group bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-300 flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="relative w-full h-52 overflow-hidden bg-slate-100">
-                      <img
-                        src={imgUrl}
-                        alt={p.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wider">
-                        Guía
-                      </div>
-                    </div>
-
-                    <div className="p-6 space-y-2">
-                      <h2 className="text-xl font-bold text-slate-900 group-hover:text-sky-600 transition-colors leading-snug">
-                        {p.title}
-                      </h2>
-                      <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
-                        {snippet}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div
-                    className="p-6 pt-0 flex items-center justify-between text-xs font-bold"
-                    style={{ color: primaryColor }}
-                  >
-                    <span className="uppercase tracking-wider">Leer artículo</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
+                <Link key={p.id} href={`/${slug}/pagina/${p.slug}`}
+                  className="group flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-lg">
+                  {img ? (
+                    <img src={img} alt="" className="aspect-[16/9] w-full object-cover" />
+                  ) : (
+                    <span className="flex aspect-[16/9] w-full items-end p-6" style={{ background: `linear-gradient(135deg, ${accent}26, ${accent}0a)` }}>
+                      <span className="text-3xl font-bold leading-tight tracking-tight" style={{ color: accent }}>{p.title}</span>
+                    </span>
+                  )}
+                  <span className="flex flex-1 flex-col p-6">
+                    <span className="text-xl font-bold leading-snug">{p.title}</span>
+                    <span className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-500">{pageExcerpt(p.contentHtml, 170)}</span>
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: accent }}>
+                      Leer <ArrowRight size={15} className="transition group-hover:translate-x-0.5" />
+                    </span>
+                  </span>
                 </Link>
               );
             })}
