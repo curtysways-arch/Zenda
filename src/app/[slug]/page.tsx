@@ -25,7 +25,7 @@ import { ModuleResolver } from '@/lib/modules/ModuleResolver';
 import { resolveLandingContent } from '@/lib/landingContentResolver';
 import UniversalHeroCarousel from '@/components/public/UniversalHeroCarousel';
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import type { ReactNode, CSSProperties } from 'react';
 import { pageExcerpt, pageImage } from '@/lib/customPages';
 
 /** Convierte Decimal → number y Date → ISO para pasar datos de Prisma a Client Components. */
@@ -1271,12 +1271,16 @@ export default async function PublicNegocioPage({
         <main className="min-h-screen font-sans pb-32 md:pb-16 relative overflow-x-hidden" style={{ backgroundColor: neutralColor }}>
             {/* Contenedor y ritmo de secciones (CSS normal: no depende de clases generadas) */}
             <style>{`
-                .cx{max-width:1200px;margin-left:auto;margin-right:auto;padding-left:24px;padding-right:24px}
+                .cx{max-width:1200px;margin-left:auto;margin-right:auto;padding-left:12px;padding-right:12px}
                 @media (min-width:768px){.cx{padding-left:32px;padding-right:32px}}
-                .cx-sec{margin-top:48px;scroll-margin-top:96px}
+                .cx-sec{margin-top:32px;scroll-margin-top:96px}
                 @media (min-width:768px){.cx-sec{margin-top:80px}}
-                .cx-bleed{margin-left:-24px;margin-right:-24px}
-                .cx-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+                .cx-bleed{margin-left:-12px;margin-right:-12px}
+                @media (max-width:767px){.cx-bleed .px-6,.cx-bleed .px-4{padding-left:12px !important;padding-right:12px !important}}
+                @media (min-width:768px){.cx-bleed{margin-left:-24px;margin-right:-24px}}
+                .cx-summary{width:calc(100% - 12px)}
+                @media (min-width:768px){.cx-summary{width:calc(100% - 64px)}}
+                .cx-stats{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:2px}
                 @media (min-width:768px){.cx-stats{display:flex;flex-wrap:wrap;gap:4px}}
                 .cx-flush > section{padding-left:0 !important;padding-right:0 !important;margin-bottom:0 !important}
                 .cx-row{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none}
@@ -1318,7 +1322,7 @@ export default async function PublicNegocioPage({
             </header>
 
             {/* Espaciador superior (solo celular, por la cabecera fija) */}
-            <div className="h-[84px] md:h-6" />
+            <div className="h-[76px] md:h-6" />
 
             <div className="cx">
                 {/* PRÓXIMA CITA */}
@@ -1339,59 +1343,60 @@ export default async function PublicNegocioPage({
                 </section>
 
                 {/* 2. BARRA DE CONFIANZA + ACCIONES */}
-                <section aria-label="Resumen" className="relative z-10 mx-auto -mt-6 w-[calc(100%-24px)] md:-mt-10 md:w-[calc(100%-64px)]">
-                    <div className="cx-actions gap-4 rounded-3xl bg-white p-4 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-900/5 md:p-5">
-                        <div className="cx-stats">
-                            {totalOpiniones > 0 && (
-                                <button id="btn-opiniones" className="flex shrink-0 items-center gap-3 rounded-2xl px-3 py-2 text-left transition hover:bg-slate-50 active:scale-95 bg-transparent border-0 cursor-pointer">
-                                    <span className="flex size-10 items-center justify-center rounded-xl" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 12%, white)`, color: primaryColor }}><Star size={18} fill="currentColor" /></span>
-                                    <span>
-                                        <span className="block text-lg font-bold leading-none text-slate-900">{promedioOpiniones.toFixed(1)}</span>
-                                        <span className="mt-1 block text-xs text-slate-500">{compactNum(totalOpiniones)} {totalOpiniones === 1 ? 'opinión' : 'opiniones'}</span>
-                                    </span>
-                                </button>
-                            )}
-                            {totalClientes > 0 && (
-                                <button id="btn-fidelizacion" className="flex shrink-0 items-center gap-3 rounded-2xl px-3 py-2 text-left transition hover:bg-slate-50 active:scale-95 bg-transparent border-0 cursor-pointer">
-                                    <span className="flex size-10 items-center justify-center rounded-xl" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 12%, white)`, color: primaryColor }}><Users size={18} /></span>
-                                    <span>
-                                        <span className="block text-lg font-bold leading-none text-slate-900">{compactNum(totalClientes)}</span>
-                                        <span className="mt-1 block text-xs text-slate-500">{isGymModule ? 'Socios' : 'Clientes'}</span>
-                                    </span>
-                                </button>
-                            )}
-                            {(isGymModule ? membershipPlans.length : filteredCanchas.length) > 0 && (
-                                <a href={mainCtaHref} className="flex shrink-0 items-center gap-3 rounded-2xl px-3 py-2 no-underline transition hover:bg-slate-50">
-                                    <span className="flex size-10 items-center justify-center rounded-xl" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 12%, white)`, color: primaryColor }}><Sparkles size={18} /></span>
-                                    <span>
-                                        <span className="block text-lg font-bold leading-none text-slate-900">{isGymModule ? membershipPlans.length : filteredCanchas.length}</span>
-                                        <span className="mt-1 block text-xs text-slate-500">{isGymModule ? 'Planes' : 'Servicios'}</span>
-                                    </span>
-                                </a>
-                            )}
-                            {(negocio.ciudad || horarioGeneral) && (
-                                <a href="#ubicacion" className="flex shrink-0 items-center gap-3 rounded-2xl px-3 py-2 no-underline transition hover:bg-slate-50">
-                                    <span className="flex size-10 items-center justify-center rounded-xl" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 12%, white)`, color: primaryColor }}><Clock size={18} /></span>
-                                    <span>
-                                        <span className={`block text-sm font-bold leading-none ${isCurrentlyOpen ? 'text-emerald-600' : 'text-slate-500'}`}>{isCurrentlyOpen ? 'Abierto ahora' : 'Cerrado ahora'}</span>
-                                        <span className="mt-1 block text-xs text-slate-500">{horarioGeneral || negocio.ciudad}</span>
-                                    </span>
-                                </a>
-                            )}
-                        </div>
+                <section aria-label="Resumen" className="cx-summary relative z-10 mx-auto -mt-5 md:-mt-10">
+                    <div className="cx-actions gap-3 rounded-3xl bg-white p-3 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-900/5 md:gap-4 md:p-5">
+                        {(() => {
+                            const tint = { backgroundColor: `color-mix(in srgb, ${primaryColor} 12%, white)`, color: primaryColor };
+                            const itemCls = 'flex min-w-0 flex-col items-center gap-1 rounded-2xl px-1 py-1.5 text-center no-underline transition hover:bg-slate-50 active:scale-95 bg-transparent border-0 cursor-pointer md:flex-row md:gap-3 md:px-3 md:py-2 md:text-left';
+                            const iconCls = 'flex size-8 shrink-0 items-center justify-center rounded-xl md:size-10';
+                            const value = 'block truncate text-[15px] font-bold leading-none text-slate-900 md:text-lg';
+                            const label = 'mt-1 block truncate text-[11px] leading-tight text-slate-500 md:text-xs';
+                            const nItems = isGymModule ? membershipPlans.length : filteredCanchas.length;
+                            const stats = [
+                                totalOpiniones > 0 && (
+                                    <button key="op" id="btn-opiniones" className={itemCls}>
+                                        <span className={iconCls} style={tint}><Star size={16} fill="currentColor" /></span>
+                                        <span className="min-w-0"><span className={value}>{promedioOpiniones.toFixed(1)}</span><span className={label}>{compactNum(totalOpiniones)} {totalOpiniones === 1 ? 'opinión' : 'opiniones'}</span></span>
+                                    </button>
+                                ),
+                                totalClientes > 0 && (
+                                    <button key="cl" id="btn-fidelizacion" className={itemCls}>
+                                        <span className={iconCls} style={tint}><Users size={16} /></span>
+                                        <span className="min-w-0"><span className={value}>{compactNum(totalClientes)}</span><span className={label}>{isGymModule ? 'Socios' : 'Clientes'}</span></span>
+                                    </button>
+                                ),
+                                nItems > 0 && (
+                                    <a key="sv" href={mainCtaHref} className={itemCls}>
+                                        <span className={iconCls} style={tint}><Sparkles size={16} /></span>
+                                        <span className="min-w-0"><span className={value}>{nItems}</span><span className={label}>{isGymModule ? 'Planes' : 'Servicios'}</span></span>
+                                    </a>
+                                ),
+                                (negocio.ciudad || horarioGeneral) && (
+                                    <a key="hr" href="#ubicacion" className={itemCls}>
+                                        <span className={iconCls} style={tint}><Clock size={16} /></span>
+                                        <span className="min-w-0">
+                                            <span className={`block truncate text-[15px] font-bold leading-none md:text-base ${isCurrentlyOpen ? 'text-emerald-600' : 'text-slate-500'}`}>{isCurrentlyOpen ? 'Abierto' : 'Cerrado'}</span>
+                                            <span className={label}>{horarioGeneral || negocio.ciudad}</span>
+                                        </span>
+                                    </a>
+                                ),
+                            ].filter(Boolean);
+                            if (!stats.length) return null;
+                            return <div className="cx-stats" style={{ ['--n' as string]: stats.length } as CSSProperties}>{stats}</div>;
+                        })()}
                         <div className="flex gap-2">
-                            <a href={mainCtaHref} className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold no-underline shadow-sm transition hover:brightness-110 active:scale-[0.98] md:flex-none" style={{ backgroundColor: primaryColor, color: primaryInk }}>
+                            <a href={mainCtaHref} className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold no-underline shadow-sm md:py-3.5 transition hover:brightness-110 active:scale-[0.98] md:flex-none" style={{ backgroundColor: primaryColor, color: primaryInk }}>
                                 <Calendar size={17} /> {mainCtaText}
                             </a>
                             {mainWhatsapp && (
-                                <a href={mainWhatsapp} target="_blank" rel="noopener noreferrer" aria-label="Escribir por WhatsApp" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-bold text-slate-800 no-underline transition hover:bg-slate-50">
+                                <a href={mainWhatsapp} target="_blank" rel="noopener noreferrer" aria-label="Escribir por WhatsApp" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 md:py-3.5 no-underline transition hover:bg-slate-50">
                                     <MessageCircle size={17} className="text-emerald-600" /> <span className="hidden sm:inline">WhatsApp</span>
                                 </a>
                             )}
                         </div>
                     </div>
                     {negocio.mensajeBienvenida && (
-                        <p className="mx-auto mt-5 max-w-xl text-center font-serif text-[15px] italic leading-relaxed text-slate-500">“{negocio.mensajeBienvenida}”</p>
+                        <p className="mx-auto mt-4 max-w-xl px-4 text-center font-serif text-sm italic leading-relaxed text-slate-500 md:mt-5 md:text-[15px]">“{negocio.mensajeBienvenida}”</p>
                     )}
                 </section>
 
@@ -1537,7 +1542,7 @@ export default async function PublicNegocioPage({
                                 const isGallery = item.type === 'GALLERY';
                                 return (
                                     <Link key={item.id} href={`/${slug}/portafolio#trabajo-${item.id}`}
-                                        className="group relative block aspect-[4/5] w-[72%] overflow-hidden rounded-3xl bg-slate-100 sm:w-[45%] md:w-auto">
+                                        className="group relative block aspect-square w-[62%] overflow-hidden rounded-3xl bg-slate-100 sm:w-[42%] md:aspect-[4/5] md:w-auto">
                                         {!isGallery ? (
                                             <span className="flex h-full">
                                                 <img src={item.beforeImage} className="h-full w-1/2 object-cover" alt="Antes" loading="lazy" />
@@ -1649,7 +1654,7 @@ export default async function PublicNegocioPage({
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex flex-col gap-5 p-6 md:p-8">
+                                        <div className="flex flex-col gap-4 p-5 md:gap-5 md:p-8">
                                             {sede.nombre && <h4 className="text-xl font-bold text-slate-900">{sede.nombre}</h4>}
                                             {sede.direccion && (
                                                 <p className="flex gap-3 text-[15px] leading-relaxed text-slate-700"><MapPin size={19} className="mt-0.5 shrink-0" style={{ color: primaryColor }} />{sede.direccion}</p>
@@ -1771,8 +1776,8 @@ export default async function PublicNegocioPage({
                 )}
 
                 {/* 11. CIERRE */}
-                <section className="cx-sec mb-4">
-                    <div className="relative overflow-hidden rounded-[32px] px-6 py-12 text-center md:px-12 md:py-16" style={{ backgroundColor: primaryColor, color: primaryInk }}>
+                <section className="cx-sec mb-2 md:mb-4">
+                    <div className="relative overflow-hidden rounded-[28px] px-5 py-10 text-center md:rounded-[32px] md:px-12 md:py-16" style={{ backgroundColor: primaryColor, color: primaryInk }}>
                         <div className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-white/10" aria-hidden />
                         <div className="pointer-events-none absolute -bottom-20 -left-10 size-56 rounded-full bg-black/10" aria-hidden />
                         <p className="relative text-sm font-semibold uppercase tracking-[0.18em] opacity-75">{negocio.nombre}</p>
@@ -2082,10 +2087,10 @@ export default async function PublicNegocioPage({
 /** Encabezado de sección común de la landing clásica: antetítulo, título y una acción opcional. */
 function SectionHead({ eyebrow, title, color, action, aside }: { eyebrow: string; title: string; color: string; action?: { href: string; label: string }; aside?: ReactNode }) {
     return (
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-3 md:mb-7">
+        <div className="mb-3.5 flex flex-wrap items-end justify-between gap-2 md:mb-7 md:gap-3">
             <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color }}>{eyebrow}</p>
-                <h2 className="mt-1.5 text-2xl font-bold leading-tight tracking-tight text-slate-900 md:text-[2rem]">{title}</h2>
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] md:text-xs" style={{ color }}>{eyebrow}</p>
+                <h2 className="mt-1 text-[22px] font-bold leading-tight tracking-tight text-slate-900 md:mt-1.5 md:text-[2rem]">{title}</h2>
             </div>
             {aside}
             {action && (

@@ -58,19 +58,19 @@ export default function HomeServicesClient({
     return (
         <div id="servicios">
             <style>{`
-                .hs-row{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none}
+                .hs-row{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none}
                 .hs-row::-webkit-scrollbar{display:none}
-                .hs-row > *{scroll-snap-align:start;flex-shrink:0;width:78%}
+                .hs-row > *{scroll-snap-align:start;flex-shrink:0;width:70%}
                 @media (min-width:640px){.hs-row > *{width:46%}}
-                @media (min-width:768px){.hs-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}.hs-row > *{width:auto}}
+                @media (min-width:768px){.hs-row{gap:16px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}.hs-row > *{width:auto}}
             `}</style>
 
-            <div className="mb-5 flex flex-wrap items-end justify-between gap-3 md:mb-7">
+            <div className="mb-3.5 flex flex-wrap items-end justify-between gap-2 md:mb-7 md:gap-3">
                 <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: primaryColor }}>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] md:text-xs" style={{ color: primaryColor }}>
                         {showPrices && desde > 0 ? `Servicios desde ${money(desde)}` : 'Servicios'}
                     </p>
-                    <h2 className="mt-1.5 text-2xl font-bold leading-tight tracking-tight text-slate-900 md:text-[2rem]">Elige tu servicio</h2>
+                    <h2 className="mt-1 text-[22px] font-bold leading-tight tracking-tight text-slate-900 md:mt-1.5 md:text-[2rem]">Elige tu servicio</h2>
                 </div>
                 {filteredCanchas.length > 0 && (
                     <Link href={`/${slug}/servicios`} className="inline-flex items-center gap-1 text-sm font-semibold" style={{ color: primaryColor }}>
@@ -101,12 +101,12 @@ export default function HomeServicesClient({
                                         <Heart size={16} fill={isFavorite ? primaryColor : 'none'} strokeWidth={2.4} />
                                     </button>
                                 </span>
-                                <span className="flex flex-1 flex-col p-4">
+                                <span className="flex flex-1 flex-col p-3.5 md:p-4">
                                     <span className="line-clamp-2 text-[16px] font-bold leading-snug text-slate-900">{service.nombre}</span>
                                     {duracion ? (
                                         <span className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-slate-500"><Clock size={12} /> {duracion} min</span>
                                     ) : null}
-                                    <span className="mt-auto flex items-center justify-between gap-2 pt-4">
+                                    <span className="mt-auto flex items-center justify-between gap-2 pt-3 md:pt-4">
                                         {showPrices ? (
                                             <span className="text-xl font-bold tabular-nums text-slate-900">{precio > 0 ? money(precio) : 'Consultar'}</span>
                                         ) : <span />}
