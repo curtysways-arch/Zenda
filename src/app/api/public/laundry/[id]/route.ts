@@ -10,6 +10,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { NotificationService } from '@/lib/notifications/notificationService';
+import { guardarPedido } from '@/lib/orders/orderLock';
+import { avisarChat } from '@/lib/orders/chatBus';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +57,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       const code = String(body?.code || '').replace(/\D/g, '');
       if (code !== String(extra.driverCode)) {
         extra.pickupAttempts = attempts + 1;
-        await prisma.pedido.update({ where: { id }, data: { extraInfo: extra } });
+        await guardarPedido(id, { extraInfo: extra });
         return NextResponse.json({
           error: `El código no coincide. Verifica el que te muestra el repartidor (${MAX_ATTEMPTS - attempts - 1} intentos restantes).`,
         }, { status: 400 });
@@ -65,7 +67,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       extra.stateUpdatedAt = nowIso;
       log('El cliente entregó sus artículos al repartidor (código verificado)');
       extra.timeline = timeline;
-      const updated = await prisma.pedido.update({ where: { id }, data: { estado: 'RECOGIDO', extraInfo: extra } });
+      const updated = await guardarPedido(id, { estado: 'RECOGIDO', extraInfo: extra });
+      avisarChat(id, { tipo: 'estado' }); // la app del repartidor pasa sola a «Llevar al local»
       try {
         const { sseEmitter } = require('@/lib/notifications/notificationService');
         sseEmitter.emit('realtime_event', { negocioId: pedido.negocioId, type: 'ESTADO_CAMBIADO', pedidoId: id, estado: 'RECOGIDO' });
@@ -85,7 +88,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         extra.stateUpdatedAt = nowIso;
         log(`El cliente aprobó el precio final de $${Number(pedido.subtotal || 0).toFixed(2)}`);
         extra.timeline = timeline;
-        await prisma.pedido.update({ where: { id }, data: { estado: 'ACEPTADO', extraInfo: extra } });
+        await guardarPedido(id, { estado: 'ACEPTADO', extraInfo: extra });
         notifyBusiness(`Precio aprobado · #${pedido.numeroPedido}`, `${pedido.nombreCliente} aceptó $${Number(pedido.total || 0).toFixed(2)}. Ya puedes empezar.`);
         return NextResponse.json({ ok: true, estado: 'ACEPTADO' });
       }
@@ -98,10 +101,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       log('El cliente no aceptó el precio: se devuelve sin procesar');
       extra.timeline = timeline;
       const envio = Number(pedido.costoEnvio || 0);
-      await prisma.pedido.update({
-        where: { id },
-        data: { estado: 'LISTO', subtotal: 0, total: envio, extraInfo: extra },
-      });
+      await guardarPedido(id, { estado: 'LISTO', subtotal: 0, total: envio, extraInfo: extra });
       notifyBusiness(`Precio rechazado · #${pedido.numeroPedido}`, `${pedido.nombreCliente} no aceptó el precio. Devuélvele sus artículos.`);
       return NextResponse.json({ ok: true, estado: 'LISTO' });
     }

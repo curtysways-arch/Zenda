@@ -157,5 +157,5 @@ export default async function OrderDetailPage({ params }: Props) {
   const { default: RestaurantOrderTrackingClient } = await import(
     '@/modules/restaurant/components/RestaurantOrderTrackingClient'
   );
-  return <RestaurantOrderTrackingClient order={order} negocio={negocio} storeSlug={slug} />;
+  return <RestaurantOrderTrackingClient order={order} negocio={negocio} storeSlug={slug} chatEnabled={order.id === id} />;
 }

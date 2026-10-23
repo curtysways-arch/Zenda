@@ -31,6 +31,11 @@ import {
 } from '@/lib/logistics/driverSession';
 import { phoneKey } from '@/lib/logistics/driverNetwork';
 import { normalizeDocUrl } from '@/lib/logistics/driverDocs';
+import { ventanaRetiro, textoVentana, esParaMasTarde } from '@/lib/laundry/pickupWindow';
+import { agregarMensaje, archivarChat, chatActivo, limpiarTexto, marcarLeido, mensajesDe } from '@/lib/orders/orderChat';
+import { avisarChat } from '@/lib/orders/chatBus';
+import { guardarPedido, actualizarExtra, ConflictoPedido } from '@/lib/orders/orderLock';
+import { registerDriverPushToken } from '@/lib/logistics/driverPush';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +76,8 @@ async function loadAuth(): Promise<{ driver: DriverCtx | null; admin: AdminCtx |
 const ADMIN_ONLY_ACTIONS = new Set(['SETTLE_DRIVER_COLLECTION', 'PAY_DRIVER_COMPENSATION', 'SETTLE_NET_COLLECTION']);
 const PUBLIC_ACTIONS = new Set(['REQUEST_OTP', 'VERIFY_OTP', 'LOGOUT']);
 const ASSIGNED_ONLY_ACTIONS = new Set(['MARK_ARRIVED', 'UPDATE_DELIVERY_STATE', 'RESEND_CUSTOMER_NOTIFICATION', 'CANCEL_TASK', 'CANCEL_ASSIGNED_MISSION']);
+/** Acciones que exigen que la misión sea del repartidor de la sesión (no basta con que nadie la tenga). */
+const MINE_ONLY_ACTIONS = new Set(['START_PICKUP', 'ARRIVED_AT_CLIENT', 'CHAT_SEND', 'CHAT_READ']);
 
 /** ¿La petición viene de la app del repartidor? (decide el modo cuando hay sesión de admin y de repartidor a la vez) */
 function fromDriverApp(request: Request) {
@@ -490,7 +497,10 @@ export async function GET(
         // solo lo ve el repartidor asignado (lo muestra al cliente o al local)
         const ownIds: string[] = (auth.driver as any)?.ownIds || (driverId ? [driverId] : []);
         const isMine = Boolean(extra.assignedDriverId && ownIds.includes(extra.assignedDriverId));
-        const safeExtra = stripCodes(extra, isLaundry, isMine);
+        const safeExtra: any = stripCodes(extra, isLaundry, isMine);
+        delete safeExtra.chatHistorial;
+        delete safeExtra.chatAvisoClienteAt;
+        if (!isMine) { delete safeExtra.chat; delete safeExtra.chatLeido; }
 
         return {
           ...ord,
@@ -665,6 +675,10 @@ export async function POST(
               const ex = parseExtra(ord.extraInfo);
               const assigned = ex.assignedDriverId || ex.repartidorId;
               if (assigned && !d.ownIds.includes(assigned)) return deny('Esta misión está asignada a otro repartidor.');
+            }
+            if (MINE_ONLY_ACTIONS.has(action)) {
+              const ex = parseExtra(ord.extraInfo);
+              if (!ex.assignedDriverId || !d.ownIds.includes(ex.assignedDriverId)) return deny('Esta misión no es tuya.');
             }
           } else if (!auth.admin!.superadmin && ord.negocioId !== auth.admin!.negocioId) {
             return deny('Este pedido no pertenece a tu negocio.');
@@ -1001,9 +1015,15 @@ export async function POST(
 
       const assignedDriverPhone = phone || currentExtra.assignedDriverPhone || '0991234567';
 
-      const updatedOrder = await (prisma as any).pedido.update({
-        where: { id: targetId },
-        data: {
+      // Retiro: si es para otro día (o para más tarde hoy) queda AGENDADO y no ocupa al repartidor;
+      // si es para ahora, empieza de una vez. Llegar donde el cliente es un paso aparte.
+      const ventana = ventanaRetiro(currentExtra, currentOrder.createdAt);
+      const agendado = isLaundry && tipoMisionAsignacion === 'RETIRO' && esParaMasTarde(ventana);
+      const ahoraIso = new Date().toISOString();
+      // Un repartidor nuevo empieza con la conversación vacía
+      currentExtra = archivarChat(currentExtra, 'reasignado');
+
+      const updatedOrder = await guardarPedido(targetId, {
           estado: nuevoEstado,
           extraInfo: {
             ...currentExtra,
@@ -1013,6 +1033,8 @@ export async function POST(
             assignedDriver: driverName,
             assignedDriverPhone: assignedDriverPhone,
             driverAcceptedAt: new Date().toISOString(),
+            retiroIniciadoAt: isLaundry && tipoMisionAsignacion === 'RETIRO' ? (agendado ? null : ahoraIso) : null,
+            llegoClienteAt: null,
             pickupCode,
             deliveryCode,
             ...(isLaundry ? {
@@ -1023,9 +1045,14 @@ export async function POST(
               isHandedOver: currentExtra.isHandedOver,
             } : {})
           }
-        }
-      });
+        }, (actual) => {
+          // Se revisa en el turno del pedido: si dos repartidores aceptan a la vez, solo uno lo obtiene
+          const otro = actual.extra?.assignedDriverId;
+          return otro && otro !== driverId ? 'Otro repartidor ya tomó este pedido.' : null;
+        }).catch((e: any) => { if (e instanceof ConflictoPedido) return null; throw e; });
+      if (!updatedOrder) return NextResponse.json({ error: 'Otro repartidor ya tomó este pedido.' }, { status: 409 });
 
+      avisarChat(targetId, { tipo: 'estado' });
       // Crear/actualizar asignación logística para vincular con panel admin
       try {
         const orderNegocioId = currentOrder.negocioId || negocio.id;
@@ -1080,7 +1107,7 @@ export async function POST(
           const driverPhoneDisplay = phone || assignedDriverPhone || '';
 
           if (tipoMisionAsignacion === 'RETIRO') {
-            const fechaRetiroStr = currentExtra.fechaHoraRetiro || currentExtra.fechaRetiro || 'Inmediato / En camino (30-45 min)';
+            const fechaRetiroStr = ventana.fecha ? textoVentana(ventana) : (currentExtra.fechaHoraRetiro || currentExtra.fechaRetiro || 'En los próximos 30-45 min');
             const w = wordsFor(currentOrder.negocio);
             const privateLink = `${APP_URL()}/${currentOrder.negocio?.slug || negocio?.slug}/pedidos/${currentOrder.id}`;
             const msgRetiro = [
@@ -1093,6 +1120,8 @@ export async function POST(
               ``,
               `🔐 Al llegar, el repartidor te mostrará un código. *Ingrésalo aquí* para entregarle ${w.tusCosas}:`,
               privateLink,
+              ``,
+              `💬 Si necesitas decirle algo, escríbele desde ese mismo enlace.`,
             ].filter(Boolean).join('\n');
 
             sendWhatsAppMessage(cleanPhone, msgRetiro, 'driver_accept_pickup').catch(e => console.error('[WA_ACCEPT_RETIRO_ERR]', e));
@@ -1120,7 +1149,12 @@ export async function POST(
         console.warn('[DRIVER_ACCEPT_WA_WARN]', waErr);
       }
 
-      return NextResponse.json({ success: true, order: { ...updatedOrder, extraInfo: stripCodes(parseExtra(updatedOrder.extraInfo), isLaundry, true) } });
+      return NextResponse.json({
+        success: true,
+        agendado,
+        ventanaTexto: ventana.fecha ? textoVentana(ventana) : null,
+        order: { ...updatedOrder, extraInfo: stripCodes(parseExtra(updatedOrder.extraInfo), isLaundry, true) },
+      });
     }
 
     // 3.B. Cancelar pedido por repartidor antes de retirar el producto
@@ -1200,7 +1234,9 @@ export async function POST(
 
       // Liberar al repartidor de la orden
       const updatedExtra = {
-        ...currentExtra,
+        ...archivarChat(currentExtra, 'cancelado por el repartidor'),
+        retiroIniciadoAt: null,
+        llegoClienteAt: null,
         assignedDriverId: null,
         assignedDriverName: null,
         assignedDriver: null,
@@ -1210,14 +1246,12 @@ export async function POST(
         cancellations: cancellationHistory
       };
 
-      const updatedOrder = await (prisma as any).pedido.update({
-        where: { id: targetId },
-        data: {
+      const updatedOrder = await guardarPedido(targetId, {
           estado: estadoRegreso,
           extraInfo: updatedExtra
-        }
-      });
+        });
 
+      avisarChat(targetId, { tipo: 'estado' });
       // Actualizar asignación logística
       try {
         await (prisma as any).deliveryAssignment.updateMany({
@@ -1293,10 +1327,7 @@ export async function POST(
       canonical.recaudacion.liquidadoAt = new Date().toISOString();
       canonical.recaudacion.liquidadoPor = body.liquidatedBy || 'Administración';
       extra.canonicalLogistics = canonical;
-      await (prisma as any).pedido.update({
-        where: { id: targetId },
-        data: { extraInfo: extra }
-      });
+      await guardarPedido(targetId, { extraInfo: extra });
       return NextResponse.json({ success: true, message: 'Recaudación liquidada en caja exitosamente.', canonicalLogistics: canonical });
     }
 
@@ -1318,10 +1349,7 @@ export async function POST(
         canonical.deliveryDriver.pagadoPor = body.paidBy || 'Administración';
       }
       extra.canonicalLogistics = canonical;
-      await (prisma as any).pedido.update({
-        where: { id: targetId },
-        data: { extraInfo: extra }
-      });
+      await guardarPedido(targetId, { extraInfo: extra });
       return NextResponse.json({ success: true, message: 'Compensación de repartidor pagada exitosamente.', canonicalLogistics: canonical });
     }
 
@@ -1341,10 +1369,7 @@ export async function POST(
         canonical.deliveryDriver.pagadoPor = body.liquidatedBy || 'Administración';
       }
       extra.canonicalLogistics = canonical;
-      await (prisma as any).pedido.update({
-        where: { id: targetId },
-        data: { extraInfo: extra }
-      });
+      await guardarPedido(targetId, { extraInfo: extra });
       return NextResponse.json({ success: true, message: 'Liquidación neta completada.', canonicalLogistics: canonical });
     }
 
@@ -1362,9 +1387,7 @@ export async function POST(
 
       const driverName = name || (currentExtra as any)?.assignedDriver || 'Marco Proaño';
 
-      const updatedOrder = await (prisma as any).pedido.update({
-        where: { id: targetId },
-        data: {
+      const updatedOrder = await guardarPedido(targetId, {
           estado: 'REPARTIDOR_EN_LOCAL',
           extraInfo: {
             ...currentExtra,
@@ -1372,8 +1395,7 @@ export async function POST(
             assignedDriver: driverName,
             driverArrivedAt: new Date().toISOString()
           }
-        }
-      });
+        });
 
       return NextResponse.json({ success: true, order: updatedOrder });
     }
@@ -1518,17 +1540,18 @@ export async function POST(
         }
       }
       currentExtra.canonicalLogistics = canonical;
+      if (dbState === 'ENTREGADO' || dbState === 'RECIBIDO') {
+        currentExtra = archivarChat(currentExtra, dbState === 'RECIBIDO' ? 'retiro terminado' : 'entrega terminada');
+        if (dbState === 'RECIBIDO') { currentExtra.retiroIniciadoAt = null; currentExtra.llegoClienteAt = null; }
+      }
 
-      const updatedOrder = await (prisma as any).pedido.update({
-        where: { id: targetId },
-        data: {
+      const updatedOrder = await guardarPedido(targetId, {
           estado: dbState,
           extraInfo: {
             ...currentExtra,
             stateUpdatedAt: new Date().toISOString()
           }
-        }
-      });
+        });
 
       if (dbState === 'ENTREGADO' || dbState === 'RECIBIDO') {
         try {
@@ -1616,6 +1639,7 @@ export async function POST(
         console.warn('[DRIVER_WHATSAPP_NOTIF_WARN]', waErr);
       }
 
+      avisarChat(targetId, { tipo: 'estado' });
       // Emitir evento en tiempo real para actualización instantánea en el cliente y admin
       try {
         const { sseEmitter } = require('@/lib/notifications/notificationService');
@@ -1672,7 +1696,7 @@ export async function POST(
       const hadCodes = Boolean(extra.pickupCode && extra.deliveryCode);
       const codes = ensureCodes(extra);
       if (!hadCodes) {
-        try { await (prisma as any).pedido.update({ where: { id: targetId }, data: { extraInfo: extra } }); } catch {}
+        try { await guardarPedido(targetId, { extraInfo: extra }); } catch {}
       }
 
       let msg = '';
@@ -1704,6 +1728,122 @@ export async function POST(
 
       const waRes = await sendWhatsAppMessage(cleanPhone, msg, isRetiroPhase ? 'resend_pin_retiro' : 'resend_pin_entrega');
       return NextResponse.json({ success: true, waResult: waRes, isRetiro: isRetiroPhase });
+    }
+
+    // ── Notificaciones push del repartidor (recordatorios de retiros agendados) ──
+    if (action === 'REGISTER_PUSH') {
+      if (mode !== 'driver') return deny('Solo el repartidor puede activar sus notificaciones.');
+      const ok = await registerDriverPushToken(auth.driver!.session.phoneKey, String(body.token || ''));
+      return NextResponse.json({ success: ok });
+    }
+
+    // ── Retiro en casa del cliente: salir hacia el cliente y avisar que llegó ──
+    if (action === 'START_PICKUP' || action === 'ARRIVED_AT_CLIENT') {
+      if (mode !== 'driver') return deny('Solo el repartidor puede hacer esto.');
+      const targetId = orderId || taskId;
+      if (!targetId) return NextResponse.json({ error: 'orderId es requerido.' }, { status: 400 });
+      const llego = action === 'ARRIVED_AT_CLIENT';
+      let fallo: string | null = null;
+      // Se lee y guarda en el turno del pedido (no pisa mensajes ni otros cambios simultáneos)
+      const r = await actualizarExtra<'nuevo' | 'ya'>(targetId, (ex, ped) => {
+        if (ped.estado !== 'REPARTIDOR_EN_CAMINO') { fallo = 'Este retiro ya no está pendiente.'; return null; }
+        const ahora = new Date().toISOString();
+        if (llego && ex.llegoClienteAt) return null;
+        if (!llego && ex.enCaminoAt) {
+          // Ya había salido: solo se asegura de que la misión esté activa
+          return ex.retiroIniciadoAt === null ? { extra: { ...ex, retiroIniciadoAt: ahora }, resultado: 'ya' } : null;
+        }
+        let nuevo = { ...ex, retiroIniciadoAt: ex.retiroIniciadoAt || ahora, ...(llego ? { llegoClienteAt: ahora } : { enCaminoAt: ahora }) };
+        nuevo = agregarMensaje(nuevo, 'SISTEMA', llego ? 'El repartidor llegó a tu dirección.' : 'El repartidor salió hacia tu dirección.').extra;
+        return { extra: nuevo, resultado: 'nuevo' };
+      });
+      if (fallo) return NextResponse.json({ error: fallo }, { status: 409 });
+      if (!r.pedido) return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
+      if (!r.ok || r.resultado !== 'nuevo') return NextResponse.json({ success: true, yaRegistrado: true });
+      avisarChat(targetId, { tipo: 'estado' });
+
+      const ord = await (prisma as any).pedido.findUnique({ where: { id: targetId }, include: { negocio: true } });
+      const ex: any = parseExtra(ord?.extraInfo);
+      try {
+        if (ord?.telefonoCliente) {
+          const w = wordsFor(ord.negocio);
+          const privateLink = `${APP_URL()}/${ord.negocio?.slug || negocio?.slug}/pedidos/${ord.id}`;
+          const nombre = (ex.assignedDriverName || 'Tu repartidor').split(' ')[0];
+          const msg = llego
+            ? [
+                `🛵 *${nombre} llegó a tu dirección* para retirar ${w.tusCosas} (orden #${ord.numeroPedido}).`,
+                ``,
+                `Pídele su código e *ingrésalo aquí* para entregarle ${w.tusCosas}:`,
+                privateLink,
+              ].join('\n')
+            : [
+                `🛵 *${nombre} va en camino* a retirar ${w.tusCosas} (orden #${ord.numeroPedido}).`,
+                ``,
+                `Te avisamos cuando llegue. Si necesitas decirle algo, escríbele aquí:`,
+                privateLink,
+              ].join('\n');
+          sendWhatsAppMessage(normalizePhone(ord.telefonoCliente), msg, llego ? 'driver_arrived_pickup' : 'driver_start_pickup').catch(() => {});
+        }
+      } catch {}
+      try {
+        const { sseEmitter } = require('@/lib/notifications/notificationService');
+        sseEmitter.emit('realtime_event', { negocioId: ord?.negocioId, type: llego ? 'REPARTIDOR_LLEGO_CLIENTE' : 'REPARTIDOR_SALIO_RETIRO', pedidoId: targetId, estado: ord?.estado });
+      } catch {}
+      return NextResponse.json({ success: true });
+    }
+
+    // ── Chat interno con el cliente ──
+    if (action === 'CHAT_SEND' || action === 'CHAT_READ') {
+      if (mode !== 'driver') return deny('Solo el repartidor puede escribir aquí.');
+      const targetId = orderId || taskId;
+      if (!targetId) return NextResponse.json({ error: 'orderId es requerido.' }, { status: 400 });
+
+      if (action === 'CHAT_READ') {
+        await actualizarExtra(targetId, (ex) => ({ extra: marcarLeido(ex, 'REPARTIDOR') }));
+        avisarChat(targetId, { tipo: 'leido', de: 'REPARTIDOR' });
+        return NextResponse.json({ success: true });
+      }
+
+      const texto = limpiarTexto(body.texto ?? body.text);
+      if (!texto) return NextResponse.json({ error: 'Escribe un mensaje.' }, { status: 400 });
+      let fallo: { msg: string; status: number } | null = null;
+      let avisar = false;
+      const r = await actualizarExtra<any>(targetId, (ex, ped) => {
+        if (!chatActivo(ped.estado, ex)) { fallo = { msg: 'El chat se cerró: esta misión ya terminó.', status: 409 }; return null; }
+        const ultimo = mensajesDe(ex).filter((m) => m.de === 'REPARTIDOR').at(-1);
+        if (ultimo && Date.now() - Date.parse(ultimo.at) < 800) { fallo = { msg: 'Espera un momento antes de enviar otro mensaje.', status: 429 }; return null; }
+        const m = agregarMensaje(ex, 'REPARTIDOR', texto, driverId);
+        const nuevo: any = m.extra;
+        // Si el cliente no tiene abierta la página, le avisamos por WhatsApp (como máximo cada 10 minutos)
+        const vistoCliente = nuevo.chatLeido?.CLIENTE ? Date.parse(nuevo.chatLeido.CLIENTE) : 0;
+        const ultimoAviso = nuevo.chatAvisoClienteAt ? Date.parse(nuevo.chatAvisoClienteAt) : 0;
+        avisar = Boolean(ped.telefonoCliente) && Date.now() - vistoCliente > 60000 && Date.now() - ultimoAviso > 10 * 60000;
+        if (avisar) nuevo.chatAvisoClienteAt = new Date().toISOString();
+        return { extra: nuevo, resultado: m.mensaje };
+      });
+      if (!r.ok) {
+        const f = fallo as { msg: string; status: number } | null;
+        return NextResponse.json({ error: f?.msg || 'Orden no encontrada' }, { status: f?.status || 404 });
+      }
+      avisarChat(targetId, { tipo: 'mensaje', de: 'REPARTIDOR' });
+
+      if (avisar) {
+        try {
+          const ord = await (prisma as any).pedido.findUnique({ where: { id: targetId }, include: { negocio: true } });
+          const ex: any = parseExtra(ord?.extraInfo);
+          const privateLink = `${APP_URL()}/${ord.negocio?.slug || negocio?.slug}/pedidos/${ord.id}`;
+          const nombre = (ex.assignedDriverName || 'Tu repartidor').split(' ')[0];
+          const msg = [
+            `💬 *${nombre}*, tu repartidor de *${ord.negocio?.nombre || 'Citiox'}*, te escribió:`,
+            `“${texto.length > 160 ? texto.slice(0, 157) + '…' : texto}”`,
+            ``,
+            `Respóndele aquí: ${privateLink}`,
+          ].join('\n');
+          sendWhatsAppMessage(normalizePhone(ord.telefonoCliente), msg, 'driver_chat').catch(() => {});
+        } catch {}
+      }
+      const m = r.resultado;
+      return NextResponse.json({ success: true, mensaje: m ? { id: m.id, de: m.de, texto: m.texto, at: m.at } : null });
     }
 
     if (action === 'REJECT_TASK') {

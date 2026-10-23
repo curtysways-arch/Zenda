@@ -7,6 +7,8 @@ import {
   Package, Truck, Store, KeyRound, Copy, Check, Receipt,
 } from 'lucide-react';
 import { wordsFor, type LaundryWords } from '@/lib/laundry/wording';
+import { ventanaRetiro, textoVentana } from '@/lib/laundry/pickupWindow';
+import OrderDriverChat from '@/components/public/OrderDriverChat';
 
 interface OrderItem {
   id: string;
@@ -77,6 +79,16 @@ function headline(st: string, domicilio: boolean, w: LaundryWords, extra: any): 
     FINALIZADA: ['Orden entregada', '¡Gracias por tu confianza!'],
     CANCELADO: ['Orden cancelada', 'Escríbenos si tienes dudas.'],
   };
+  // Retiro agendado: el repartidor ya está asignado pero pasa en el horario elegido
+  if (st === 'REPARTIDOR_EN_CAMINO') {
+    const nombre = String(extra?.assignedDriverName || 'Tu repartidor').split(' ')[0];
+    if (extra?.llegoClienteAt) {
+      m.REPARTIDOR_EN_CAMINO = [`${nombre} llegó a tu dirección`, `Pídele su código y escríbelo abajo para entregarle ${w.tusCosas}.`];
+    } else if (!extra?.retiroIniciadoAt && extra?.driverAcceptedAt) {
+      const v = ventanaRetiro(extra);
+      m.REPARTIDOR_EN_CAMINO = ['Retiro agendado', `${nombre} pasará ${v.fecha ? textoVentana(v).replace(/^Hoy/, 'hoy').replace(/^Mañana/, 'mañana') : 'en el horario que elegiste'} a retirar ${w.tusCosas}.`];
+    }
+  }
   const r = m[st] || ['En proceso', `Estamos trabajando en ${w.tusCosas}.`];
   void T;
   return { title: r[0], sub: r[1] };
@@ -120,7 +132,9 @@ export default function ServiceOrderTrackingClient({ order, negocio, showCodes =
   // Se actualiza solo mientras la orden sigue abierta
   useEffect(() => {
     if (['ENTREGADO', 'FINALIZADA', 'CANCELADO'].includes(st)) return;
-    const t = setInterval(() => router.refresh(), 30000);
+    // Con un repartidor en camino se actualiza más seguido (llegada, códigos)
+    const enRuta = ['REPARTIDOR_EN_CAMINO', 'RECOGIDO', ...DELIVERY_PHASE].includes(st);
+    const t = setInterval(() => router.refresh(), enRuta ? 10000 : 30000);
     return () => clearInterval(t);
   }, [st, router]);
 
@@ -231,6 +245,9 @@ export default function ServiceOrderTrackingClient({ order, negocio, showCodes =
             </div>
           )}
         </section>
+
+        {/* Chat con el repartidor (solo con el enlace privado del pedido) */}
+        {showCodes && <OrderDriverChat slug={negocio.slug} orderId={order.id} color={brand} inline onEstado={() => router.refresh()} />}
 
         {msg && (
           <p className={`text-sm px-4 py-3 rounded-2xl ${msg.err ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>{msg.t}</p>

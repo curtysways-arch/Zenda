@@ -6,6 +6,7 @@ import {
   Store, Building2, MapPin, ExternalLink, CheckCircle, X, Navigation,
   PackageCheck, Clock, ShieldAlert, Crosshair, Route, ArrowLeft, Check, Sparkles, Phone, MessageCircle
 } from 'lucide-react';
+import { ventanaRetiro, textoVentana, esParaMasTarde } from '@/lib/laundry/pickupWindow';
 
 interface DbOrder {
   id: string;
@@ -647,6 +648,23 @@ export default function DriverOrderMapModal({
             ))}
           </div>
         </section>
+
+        {/* Horario del retiro: si es para más tarde, aceptar lo deja agendado */}
+        {isRetiro && (() => {
+          const v = ventanaRetiro(extra, (order as any).createdAt);
+          if (!v.fecha) return null;
+          const luego = esParaMasTarde(v);
+          return (
+            <section className={`rounded-2xl p-4 flex gap-3 ${luego ? 'bg-sky-50 ring-1 ring-sky-200' : 'bg-white ring-1 ring-slate-100'}`}>
+              <Clock className={`w-5 h-5 shrink-0 ${luego ? 'text-sky-600' : 'text-slate-400'}`} />
+              <div className="min-w-0">
+                <p className={`text-xs ${luego ? 'text-sky-800' : 'text-slate-500'}`}>Retiro</p>
+                <p className="font-semibold text-slate-900">{textoVentana(v)}</p>
+                {luego && !isAlreadyAssigned && <p className="text-xs text-sky-800 mt-0.5">Si lo aceptas queda agendado: puedes seguir tomando pedidos hasta esa hora.</p>}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* Dinero */}
         <section className="grid grid-cols-2 gap-3">

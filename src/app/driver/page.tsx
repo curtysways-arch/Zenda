@@ -20,8 +20,10 @@ import {
   Truck, Check, X, Navigation, Phone, Clock, PackageCheck, AlertCircle, RefreshCw,
   Power, Store, Lock, MessageCircle, AlertTriangle, History, User, LogOut,
   ChevronRight, ShieldCheck, ArrowRight, Search, Coffee, Wallet, Map as MapIcon, Bike, Eye, Star,
+  CalendarClock, Send, Bell,
 } from 'lucide-react';
 import { wordsFor } from '@/lib/laundry/wording';
+import { ventanaRetiro, textoVentana, esParaMasTarde } from '@/lib/laundry/pickupWindow';
 import DriverOrderMapModal from '@/components/driver/DriverOrderMapModal';
 
 /* ─────────────────────────────── Tipos ─────────────────────────────── */
@@ -111,14 +113,56 @@ function waLink(phone?: string) {
   return d ? `https://wa.me/${d}` : '';
 }
 
+/** Punto del cliente para los mapas: coordenadas si las hay, si no la dirección. */
+function clientPoint(o: DbOrder) {
+  if (o.latitud && o.longitud) return `${o.latitud},${o.longitud}`;
+  return o.direccionCliente || '';
+}
+function businessPoint(o: DbOrder) {
+  const b: any = o.negocio || {};
+  const u = Array.isArray(b.Ubicacion) ? b.Ubicacion[0] : b.Ubicacion;
+  if (u?.latitud && u?.longitud) return `${u.latitud},${u.longitud}`;
+  return b.direccion || '';
+}
+
+type NavApp = 'google' | 'waze';
+const NAV_KEY = 'citiox_driver_nav_app';
+function getNavApp(): NavApp | null {
+  try { const v = localStorage.getItem(NAV_KEY); return v === 'google' || v === 'waze' ? v : null; } catch { return null; }
+}
+function setNavApp(v: NavApp | null) {
+  try { if (v) localStorage.setItem(NAV_KEY, v); else localStorage.removeItem(NAV_KEY); } catch {}
+}
+
+/** Abre la navegación ya iniciada hacia el cliente o hacia el local, en la app elegida. */
+function navLink(o: DbOrder, toBusiness: boolean, app: NavApp) {
+  const p = toBusiness ? businessPoint(o) : clientPoint(o);
+  if (!p) return '';
+  const isCoords = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(p);
+  if (app === 'waze') return isCoords ? `https://waze.com/ul?ll=${p}&navigate=yes` : `https://waze.com/ul?q=${encodeURIComponent(p)}&navigate=yes`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p)}&travelmode=driving&dir_action=navigate`;
+}
+
+/** Compatibilidad: enlace de Google Maps (lo usan otras partes). */
 function mapsLink(o: DbOrder, toBusiness = false) {
-  if (toBusiness) {
-    const addr = o.negocio?.direccion;
-    return addr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}` : '';
-  }
-  if (o.latitud && o.longitud) return `https://www.google.com/maps/dir/?api=1&destination=${o.latitud},${o.longitud}`;
-  if (o.direccionCliente) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.direccionCliente)}`;
-  return '';
+  return navLink(o, toBusiness, 'google');
+}
+
+/** Retiro aceptado para más adelante: no ocupa al repartidor hasta su horario (o hasta que lo empiece). */
+function isScheduled(o: DbOrder) {
+  if (o.estado !== 'REPARTIDOR_EN_CAMINO') return false;
+  const ex = parseExtra(o.extraInfo);
+  if (ex.retiroIniciadoAt !== null) return false; // pedidos anteriores (sin el campo) siguen como antes
+  return esParaMasTarde(ventanaRetiro(ex, o.createdAt));
+}
+function pickupWindowText(o: DbOrder) {
+  const v = ventanaRetiro(parseExtra(o.extraInfo), o.createdAt);
+  return v.fecha ? textoVentana(v) : '';
+}
+function unreadChat(o: DbOrder) {
+  const ex = parseExtra(o.extraInfo);
+  const seen = ex.chatLeido?.REPARTIDOR ? Date.parse(ex.chatLeido.REPARTIDOR) : 0;
+  return (Array.isArray(ex.chat) ? ex.chat : []).filter((m: any) => m.de === 'CLIENTE' && Date.parse(m.at) > seen).length;
 }
 
 function distanceOf(o: DbOrder): string | null {
@@ -150,8 +194,9 @@ function isRetiroOrder(o: DbOrder) {
 /** Pasos de la misión según el tipo, para la barra de progreso. */
 function missionSteps(o: DbOrder, laundry: boolean, retiro: boolean): { steps: string[]; current: number } {
   if (laundry && retiro) {
-    const map: Record<string, number> = { REPARTIDOR_ASIGNADO: 0, REPARTIDOR_EN_CAMINO: 0, RECOGIDO: 1 };
-    return { steps: ['Ir donde el cliente', 'Retiro confirmado', 'Entregar en el local'], current: map[o.estado] ?? 0 };
+    const ex = parseExtra(o.extraInfo);
+    const current = o.estado === 'RECOGIDO' ? 2 : ex.llegoClienteAt ? 1 : 0;
+    return { steps: ['Ir donde el cliente', 'Recibir del cliente', 'Llevar al local'], current };
   }
   if (laundry) {
     // Entrega de lavandería: el repartidor recoge las prendas listas en el local y las lleva al cliente
@@ -481,7 +526,9 @@ export default function DriverAppPage() {
       const { ok, data } = await post({ action: 'ACCEPT_TASK', orderId, driverId, name: driverName, phone: driverPhone });
       if (!ok) notify(data.error || 'No se pudo aceptar el pedido.', 'err');
       else {
-        notify('¡Pedido aceptado! Ve a retirarlo.');
+        notify(data.agendado
+          ? `Retiro agendado para ${String(data.ventanaTexto || 'su horario').replace(/^Hoy/, 'hoy').replace(/^Mañana/, 'mañana')}. Mientras tanto puedes tomar otros pedidos.`
+          : '¡Pedido aceptado! Ve a retirarlo.');
         setDetailOrder(null);
         setActiveIdx(0);
       }
@@ -529,6 +576,31 @@ export default function DriverAppPage() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  /** Retiro: salir hacia el cliente (empieza la misión y le avisa) o avisar que ya llegó. */
+  const pickupStep = async (orderId: string, action: 'START_PICKUP' | 'ARRIVED_AT_CLIENT') => {
+    setActionLoading(orderId);
+    try {
+      const { ok, data } = await post({ action, orderId });
+      if (!ok) notify(data.error || 'No se pudo registrar.', 'err');
+      else notify(action === 'START_PICKUP' ? 'Le avisamos al cliente que vas en camino.' : 'Le avisamos al cliente que llegaste. Muéstrale tu código.');
+      if (ok && action === 'START_PICKUP') setActiveIdx(0);
+      fetchDriverData();
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const sendChat = async (orderId: string, texto: string) => {
+    const { ok, data } = await post({ action: 'CHAT_SEND', orderId, texto });
+    if (!ok) notify(data.error || 'No se pudo enviar el mensaje.', 'err');
+    else fetchDriverData();
+    return ok;
+  };
+  const readChat = async (orderId: string) => {
+    await post({ action: 'CHAT_READ', orderId }).catch(() => {});
+    fetchDriverData();
   };
 
   const resendNotice = async (orderId: string, missionType?: 'RETIRO' | 'ENTREGA') => {
@@ -629,13 +701,46 @@ export default function DriverAppPage() {
   const approvedBiz = businesses.filter((b) => b.isApproved);
   const pendingBiz = businesses.filter((b) => !b.isApproved);
   const isBlocked = Boolean(profile?.isGlobalBlocked);
-  const hasActiveOrder = myAssignedOrders.length > 0;
-  const activeOrder = hasActiveOrder ? myAssignedOrders[Math.min(activeIdx, myAssignedOrders.length - 1)] : null;
+  // Los retiros agendados para más tarde no ocupan al repartidor: puede seguir tomando pedidos
+  const scheduledOrders = myAssignedOrders.filter(isScheduled);
+  const activeMissions = myAssignedOrders.filter((o) => !isScheduled(o));
+  const hasActiveOrder = activeMissions.length > 0;
+  const activeOrder = hasActiveOrder ? activeMissions[Math.min(activeIdx, activeMissions.length - 1)] : null;
 
   const filteredOpen = bizFilter === 'ALL' ? openOrders : openOrders.filter((o) => o.negocio?.id === bizFilter);
   const countByBiz = (id: string) => openOrders.filter((o) => o.negocio?.id === id).length;
 
   const firstName = driverName.split(' ')[0] || 'Repartidor';
+
+  // Con una misión en curso solo se ve esa misión hasta terminarla
+  useEffect(() => {
+    if (activeOrder) setTab('PEDIDOS');
+  }, [activeOrder?.id]);
+
+  // Notificaciones push: recordatorios de retiros agendados y mensajes del cliente
+  const [pushState, setPushState] = useState<'unsupported' | 'default' | 'granted' | 'denied'>('unsupported');
+  const registerPush = async (ask: boolean) => {
+    try {
+      if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) return;
+      if (ask && Notification.permission === 'default') await Notification.requestPermission();
+      setPushState(Notification.permission as any);
+      if (Notification.permission !== 'granted') return;
+      const { getFcmToken } = await import('@/lib/firebase');
+      const token = await getFcmToken();
+      if (token) await post({ action: 'REGISTER_PUSH', token });
+      if (ask) notify('Listo: te avisaremos cuando sea hora de tus retiros.');
+    } catch {
+      if (ask) notify('No se pudieron activar las notificaciones en este teléfono.', 'err');
+    }
+  };
+  useEffect(() => {
+    if (!driverId) return;
+    try { if ('Notification' in window) setPushState(Notification.permission as any); } catch {}
+    registerPush(false); // si ya dio permiso, se renueva el token en silencio
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [driverId]);
+  const [navApp, setNavAppState] = useState<NavApp | null>(null);
+  useEffect(() => { setNavAppState(getNavApp()); }, [tab]);
 
   /* ─────────────────────────── Render: cargando ─────────────────────────── */
 
@@ -837,8 +942,8 @@ export default function DriverAppPage() {
           key={activeOrder.id}
           order={activeOrder}
           driverId={driverId}
-          all={myAssignedOrders}
-          activeIdx={Math.min(activeIdx, myAssignedOrders.length - 1)}
+          all={activeMissions}
+          activeIdx={Math.min(activeIdx, activeMissions.length - 1)}
           setActiveIdx={setActiveIdx}
           nowTime={nowTime}
           pin={inputPins[activeOrder.id] || ''}
@@ -849,6 +954,12 @@ export default function DriverAppPage() {
           onState={(s, pin) => updateState(activeOrder.id, s, pin)}
           onCancel={() => openCancel(activeOrder)}
           onResend={(m) => resendNotice(activeOrder.id, m)}
+          onStartPickup={() => pickupStep(activeOrder.id, 'START_PICKUP')}
+          onArrivedClient={() => pickupStep(activeOrder.id, 'ARRIVED_AT_CLIENT')}
+          onChatSend={(t) => sendChat(activeOrder.id, t)}
+          onChatRead={() => readChat(activeOrder.id)}
+          onRefresh={fetchDriverData}
+          scheduledCount={scheduledOrders.length}
         />
       )}
 
@@ -885,6 +996,32 @@ export default function DriverAppPage() {
                     ? `${pendingBiz.map((b) => b.nombre).join(', ')} está revisando tus documentos. Te avisarán por WhatsApp.`
                     : 'Cuando un negocio te apruebe verás aquí sus pedidos.'}
                 </p>
+              </div>
+            </section>
+          )}
+
+          {pushState === 'default' && (
+            <section className="p-4 rounded-2xl bg-white ring-1 ring-slate-200 flex items-center gap-3">
+              <Bell className="w-5 h-5 text-[#0066FF] shrink-0" />
+              <p className="flex-1 text-sm text-slate-700">Activa las notificaciones para que te avisemos cuando sea hora de un retiro agendado.</p>
+              <button onClick={() => registerPush(true)} className="px-3 py-2 rounded-xl bg-[#0066FF] text-white text-sm font-semibold shrink-0">Activar</button>
+            </section>
+          )}
+          {pushState === 'denied' && scheduledOrders.length > 0 && (
+            <p className="text-xs text-amber-800 bg-amber-50 rounded-xl px-3 py-2">Tienes las notificaciones bloqueadas: te avisaremos solo por WhatsApp. Puedes activarlas en los ajustes del navegador.</p>
+          )}
+          {scheduledOrders.length > 0 && (
+            <section>
+              <h2 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <CalendarClock className="w-4 h-4 text-sky-600" /> Agendados <span className="text-slate-400 font-semibold">{scheduledOrders.length}</span>
+              </h2>
+              <div className="space-y-2">
+                {scheduledOrders.map((o) => (
+                  <ScheduledCard key={o.id} order={o} busy={actionLoading === o.id}
+                    onStart={() => pickupStep(o.id, 'START_PICKUP')}
+                    onOpen={() => setDetailOrder(o)}
+                    onCancel={() => openCancel(o)} />
+                ))}
               </div>
             </section>
           )}
@@ -1089,6 +1226,26 @@ export default function DriverAppPage() {
             >
               <span className={`block w-6 h-6 rounded-full bg-white shadow transition-transform ${profile?.disponibleNuevosNegocios !== false ? 'translate-x-5' : ''}`} />
             </button>
+          </section>
+
+          <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4 flex items-center gap-3">
+            <Navigation className="w-5 h-5 text-slate-500" />
+            <div className="flex-1">
+              <p className="font-semibold text-sm text-slate-900">App para navegar</p>
+              <p className="text-xs text-slate-500">{navApp === 'google' ? 'Google Maps' : navApp === 'waze' ? 'Waze' : 'Te preguntaremos la próxima vez'}</p>
+            </div>
+            {navApp && (
+              <button onClick={() => { setNavApp(null); setNavAppState(null); notify('La próxima vez te preguntaremos qué app usar.'); }} className="text-sm font-semibold text-[#0066FF]">Cambiar</button>
+            )}
+          </section>
+
+          <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4 flex items-center gap-3">
+            <Bell className={`w-5 h-5 ${pushState === 'granted' ? 'text-emerald-500' : 'text-slate-400'}`} />
+            <div className="flex-1">
+              <p className="font-semibold text-sm text-slate-900">Notificaciones</p>
+              <p className="text-xs text-slate-500">{pushState === 'granted' ? 'Activadas: te avisamos de tus retiros y mensajes.' : pushState === 'denied' ? 'Bloqueadas en este navegador. Actívalas en sus ajustes.' : pushState === 'unsupported' ? 'Este navegador no las admite. Te avisaremos por WhatsApp.' : 'Desactivadas.'}</p>
+            </div>
+            {pushState === 'default' && <button onClick={() => registerPush(true)} className="text-sm font-semibold text-[#0066FF]">Activar</button>}
           </section>
 
           <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4 flex items-center gap-3">
@@ -1298,6 +1455,11 @@ function PoolCard({ order, onOpen, disabled }: { order: DbOrder; onOpen: () => v
               {ready ? 'Listo para retirar' : 'En preparación'}
             </span>
           )}
+          {retiro && pickupWindowText(order) && (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-50 text-sky-800 inline-flex items-center gap-1">
+              <Clock className="w-3 h-3" /> {pickupWindowText(order)}
+            </span>
+          )}
           {comp.puedeCobrarCliente && comp.montoRecaudarCliente > 0 ? (
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Cobras {money(comp.montoRecaudarCliente)} en efectivo</span>
           ) : (
@@ -1331,6 +1493,35 @@ function PoolCard({ order, onOpen, disabled }: { order: DbOrder; onOpen: () => v
         </div>
       </div>
     </button>
+  );
+}
+
+/* ─────────────────────────────── Retiro agendado ─────────────────────────────── */
+
+function ScheduledCard({ order, busy, onStart, onOpen, onCancel }: { order: DbOrder; busy: boolean; onStart: () => void; onOpen: () => void; onCancel: () => void }) {
+  const color = safeColor(order.negocio?.colorPrimario);
+  const unread = unreadChat(order);
+  return (
+    <div className="bg-white rounded-2xl ring-1 ring-sky-200 overflow-hidden">
+      <div className="px-4 py-2 bg-sky-50 text-sky-900 text-sm font-semibold flex items-center gap-2">
+        <CalendarClock className="w-4 h-4" /> {pickupWindowText(order) || 'Horario a coordinar'}
+      </div>
+      <button onClick={onOpen} className="w-full text-left p-4 flex items-center gap-3">
+        <BizLogo biz={order.negocio} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-slate-900 truncate">Retirar donde {order.nombreCliente || 'el cliente'}</p>
+          <p className="text-xs text-slate-500 truncate">{order.direccionCliente || 'Sin dirección'}</p>
+          <p className="text-xs text-slate-400 truncate">{order.negocio?.nombre} · #{orderCode(order)}{unread ? ` · ${unread} ${unread === 1 ? 'mensaje' : 'mensajes'} nuevo${unread === 1 ? '' : 's'}` : ''}</p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-slate-300" />
+      </button>
+      <div className="px-4 pb-4 flex gap-2">
+        <button onClick={onCancel} className="px-3 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-semibold">Soltar</button>
+        <button onClick={onStart} disabled={busy} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-50" style={{ background: color }}>
+          {busy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />} Salir ahora hacia el cliente
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -1436,8 +1627,25 @@ function ActiveMission(props: {
   onState: (s: 'ON_ROUTE' | 'DELIVERED' | 'PICKED_UP' | 'DELIVERED_TO_WORKSHOP' | 'WAITING_CLIENT', pin?: string) => void;
   onCancel: () => void;
   onResend: (m?: 'RETIRO' | 'ENTREGA') => void;
+  onStartPickup: () => void;
+  onArrivedClient: () => void;
+  onChatSend: (texto: string) => Promise<boolean>;
+  onChatRead: () => void;
+  onRefresh: () => void;
+  scheduledCount?: number;
 }) {
   const { order, driverId, nowTime, pin, setPin, busy } = props;
+  const [chatOpen, setChatOpen] = useState(false);
+  // Avisos en vivo del pedido (mensajes del cliente, cambios de estado)
+  useEffect(() => {
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource(`${API}/chat-stream?orderId=${encodeURIComponent(order.id)}`);
+      es.addEventListener('chat', () => props.onRefresh());
+    } catch { es = null; }
+    return () => { try { es?.close(); } catch {} };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order.id]);
   const ex = parseExtra(order.extraInfo);
   const comp = getActiveDriverCompensation(order, driverId);
   const laundry = isLaundryOrder(order);
@@ -1453,13 +1661,31 @@ function ActiveMission(props: {
   const canCancel = !['RECOGIDO', 'RECIBIDO', 'EN_PROCESO', 'ENTREGADO'].includes(order.estado);
   const waitingClient = ['ESPERANDO_CLIENTE', 'WAITING_CLIENT'].includes(order.estado);
   const dist = distanceOf(order);
+  // Retiro: primero sale hacia el cliente, avisa que llegó y recién ahí muestra su código
+  const atClient = retiro && Boolean(ex.llegoClienteAt);
+  const unread = unreadChat(order);
+  const chatMsgs: any[] = Array.isArray(ex.chat) ? ex.chat : [];
 
   // Hacia dónde va ahora el repartidor
   const goingToBusiness = (!laundry || !retiro) && ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR'].includes(order.estado) && !handedOver;
   const goingToWorkshop = laundry && retiro && order.estado === 'RECOGIDO';
-  const target = goingToBusiness || goingToWorkshop
+  const toClient = !(goingToBusiness || goingToWorkshop);
+  const target = !toClient
     ? { title: goingToWorkshop ? `Lleva ${w.lasCosas} a` : 'Recoge el pedido en', name: order.negocio?.nombre || 'Local', addr: order.negocio?.direccion || '', phone: order.negocio?.whatsapp || '', maps: mapsLink(order, true) }
     : { title: retiro ? `Retira ${w.lasCosas} donde` : 'Entrega a', name: order.nombreCliente || 'Cliente', addr: order.direccionCliente || '', ref: order.referenciaCliente, phone: order.telefonoCliente, maps: mapsLink(order) };
+  // Navegar: la primera vez pregunta Google Maps o Waze y lo recuerda. En el retiro, ir hacia el cliente
+  // avisa que va en camino; después de recoger, el mismo botón lleva al local.
+  const [navPicker, setNavPicker] = useState(false);
+  const openNav = (app: NavApp) => {
+    const link = navLink(order, !toClient, app);
+    if (!link) { props.onMap(); return; }
+    window.open(link, '_blank', 'noopener');
+    if (retiro && toClient && order.estado === 'REPARTIDOR_EN_CAMINO' && !ex.enCaminoAt) props.onStartPickup();
+  };
+  const navigate = () => {
+    const app = getNavApp();
+    if (app) openNav(app); else setNavPicker(true);
+  };
 
   const readyAt = ex?.estimatedReadyAt ? new Date(ex.estimatedReadyAt).getTime() : null;
   const secsLeft = readyAt ? Math.max(0, Math.floor((readyAt - nowTime) / 1000)) : null;
@@ -1468,13 +1694,17 @@ function ActiveMission(props: {
   let primary: { label: string; onClick: () => void; disabled?: boolean; hint?: string } | null = null;
   switch (order.estado) {
     case 'REPARTIDOR_EN_CAMINO':
-      // El retiro lo confirma el cliente (quien entrega) ingresando el código del repartidor
-      primary = {
-        label: 'Esperando al cliente',
-        onClick: () => {},
-        disabled: true,
-        hint: `Muéstrale tu código al cliente. Cuando lo ingrese en su teléfono, se confirma el retiro de ${w.lasCosas}.`,
-      };
+      if (!atClient) {
+        primary = { label: 'Llegué donde el cliente', onClick: props.onArrivedClient, hint: 'Toca «Navegar» para ir. Al llegar, toca aquí: le avisamos al cliente y te mostramos tu código.' };
+      } else {
+        // El retiro lo confirma el cliente (quien entrega) ingresando el código del repartidor
+        primary = {
+          label: 'Esperando al cliente',
+          onClick: () => {},
+          disabled: true,
+          hint: `Muéstrale tu código al cliente. Cuando lo ingrese en su teléfono, se confirma el retiro de ${w.lasCosas}.`,
+        };
+      }
       break;
     case 'RECOGIDO':
       primary = { label: 'Entregué en el local', onClick: () => props.onState('DELIVERED_TO_WORKSHOP') };
@@ -1566,6 +1796,15 @@ function ActiveMission(props: {
           <p className="text-xs text-slate-500 mt-0.5">Paso {current + 1} de {steps.length}</p>
         </section>
 
+        {retiro && order.estado === 'REPARTIDOR_EN_CAMINO' && pickupWindowText(order) && (
+          <section className="rounded-2xl bg-sky-50 ring-1 ring-sky-200 px-4 py-3 text-sm text-sky-900 flex items-center gap-2">
+            <Clock className="w-4 h-4 shrink-0" /> Retiro: <b className="font-semibold">{pickupWindowText(order)}</b>
+          </section>
+        )}
+        {!!props.scheduledCount && (
+          <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5"><CalendarClock className="w-3.5 h-3.5" /> Además tienes {props.scheduledCount} {props.scheduledCount === 1 ? 'retiro agendado' : 'retiros agendados'} para más tarde.</p>
+        )}
+
         {/* Dinero */}
         {comp.puedeCobrarCliente && comp.montoRecaudarCliente > 0 ? (
           <section className="rounded-2xl bg-amber-50 ring-1 ring-amber-200 p-4 flex items-center gap-3">
@@ -1602,29 +1841,25 @@ function ActiveMission(props: {
           {dist && <p className="text-xs text-slate-400 mt-1">{dist} del local al cliente</p>}
 
           <div className="grid grid-cols-4 gap-2 mt-4">
-            {target.maps ? (
-              <a href={target.maps} target="_blank" rel="noreferrer" className="col-span-2 py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-1.5" style={{ background: color }}>
-                <Navigation className="w-4 h-4" /> Navegar
-              </a>
-            ) : (
-              <button onClick={props.onMap} className="col-span-2 py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-1.5" style={{ background: color }}>
-                <MapIcon className="w-4 h-4" /> Ver mapa
-              </button>
-            )}
+            <button onClick={navigate} className="col-span-2 py-3 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-1.5" style={{ background: color }}>
+              <Navigation className="w-4 h-4" /> Navegar
+            </button>
             {target.phone ? (
-              <a href={`tel:${target.phone}`} className="py-2.5 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center" aria-label="Llamar">
+              <a href={`tel:${target.phone}`} className="py-3 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center" aria-label="Llamar">
                 <Phone className="w-4 h-4" />
               </a>
             ) : <span />}
-            {target.phone ? (
-              <a href={waLink(target.phone)} target="_blank" rel="noreferrer" className="py-2.5 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center" aria-label="WhatsApp">
+            {toClient ? (
+              <button onClick={() => { setChatOpen(true); props.onChatRead(); }} className="relative py-3 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center" aria-label="Chat con el cliente">
+                <MessageCircle className="w-4 h-4" />
+                {unread > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">{unread}</span>}
+              </button>
+            ) : target.phone ? (
+              <a href={waLink(target.phone)} target="_blank" rel="noreferrer" className="py-3 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center" aria-label="WhatsApp del local">
                 <MessageCircle className="w-4 h-4" />
               </a>
             ) : <span />}
           </div>
-          <button onClick={props.onMap} className="mt-2 w-full py-2 text-sm font-semibold text-slate-600 flex items-center justify-center gap-1.5 hover:text-slate-900">
-            <Eye className="w-4 h-4" /> Ver ruta completa en el mapa
-          </button>
         </section>
 
         {/* Código para retirar en el local */}
@@ -1639,7 +1874,7 @@ function ActiveMission(props: {
         )}
 
         {/* Código del repartidor: lo ingresa quien le entrega (cliente en el retiro, local en la entrega) */}
-        {laundry && driverCode && ['REPARTIDOR_EN_CAMINO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL'].includes(order.estado) && (
+        {laundry && driverCode && ['REPARTIDOR_EN_CAMINO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL'].includes(order.estado) && (!retiro || atClient) && (
           <section className="bg-white rounded-2xl ring-2 p-4" style={{ ['--tw-ring-color' as any]: color }}>
             <div className="flex items-center gap-4">
               <div className="flex-1">
@@ -1719,6 +1954,29 @@ function ActiveMission(props: {
         )}
       </div>
 
+      {navPicker && (
+        <Sheet title="¿Con qué app quieres navegar?" onClose={() => setNavPicker(false)}>
+          <p className="text-sm text-slate-600 mb-3">La recordaremos para tus próximos viajes. Puedes cambiarla en tu perfil.</p>
+          <div className="grid grid-cols-2 gap-2">
+            {([['google', 'Google Maps'], ['waze', 'Waze']] as const).map(([k, l]) => (
+              <button key={k} onClick={() => { setNavApp(k); setNavPicker(false); openNav(k); }} className="py-4 rounded-2xl ring-1 ring-slate-200 font-semibold text-slate-900 flex flex-col items-center gap-1 hover:bg-slate-50">
+                <Navigation className="w-5 h-5" style={{ color }} /> {l}
+              </button>
+            ))}
+          </div>
+        </Sheet>
+      )}
+
+      {chatOpen && (
+        <DriverChatSheet
+          clientName={order.nombreCliente || 'Cliente'}
+          messages={chatMsgs}
+          color={color}
+          onClose={() => { setChatOpen(false); props.onChatRead(); }}
+          onSend={props.onChatSend}
+        />
+      )}
+
       {/* Barra inferior */}
       <div className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-100 pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-xl mx-auto p-3 space-y-2">
@@ -1750,6 +2008,70 @@ function ActiveMission(props: {
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────── Chat con el cliente ─────────────────────────────── */
+
+const QUICK_REPLIES = ['Estoy afuera', 'Llego en 5 minutos', 'No encuentro la dirección, ¿me das una referencia?', 'Voy en camino'];
+
+function DriverChatSheet({ clientName, messages, color, onClose, onSend }: {
+  clientName: string; messages: any[]; color: string; onClose: () => void; onSend: (t: string) => Promise<boolean>;
+}) {
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const endRef = React.useRef<HTMLDivElement>(null);
+  useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [messages.length]);
+  const send = async (t: string) => {
+    const v = t.trim();
+    if (!v || sending) return;
+    setSending(true);
+    const ok = await onSend(v);
+    setSending(false);
+    if (ok) setText('');
+  };
+  const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
+  return (
+    <div className="fixed inset-0 z-[320] flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label={`Chat con ${clientName}`}>
+      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
+      <div className="relative w-full sm:max-w-md h-[85dvh] sm:h-[640px] bg-white rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600">{initials(clientName)}</div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-slate-900 truncate">{clientName}</p>
+            <p className="text-xs text-slate-500">Chat dentro de Citiox · solo durante esta entrega</p>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Cerrar"><X className="w-4 h-4" /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto bg-slate-50 px-3 py-4 space-y-2">
+          {messages.length === 0 && <p className="text-center text-sm text-slate-500 py-8 px-6">Escríbele al cliente si necesitas una indicación. Si no tiene la página abierta, le avisamos por WhatsApp.</p>}
+          {messages.map((m) => m.de === 'SISTEMA' ? (
+            <p key={m.id} className="text-center text-xs text-slate-500 py-1">{m.texto} · {hhmm(m.at)}</p>
+          ) : (
+            <div key={m.id} className={`flex ${m.de === 'REPARTIDOR' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-[15px] leading-snug ${m.de === 'REPARTIDOR' ? 'text-white rounded-br-md' : 'bg-white ring-1 ring-slate-200 text-slate-900 rounded-bl-md'}`} style={m.de === 'REPARTIDOR' ? { background: color } : undefined}>
+                <p className="whitespace-pre-wrap break-words">{m.texto}</p>
+                <p className={`text-[11px] mt-0.5 text-right ${m.de === 'REPARTIDOR' ? 'text-white/75' : 'text-slate-400'}`}>{hhmm(m.at)}</p>
+              </div>
+            </div>
+          ))}
+          <div ref={endRef} />
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto px-3 pt-2" style={{ scrollbarWidth: 'none' }}>
+          {QUICK_REPLIES.map((q) => (
+            <button key={q} onClick={() => send(q)} disabled={sending} className="shrink-0 px-3 py-1.5 rounded-full ring-1 ring-slate-200 text-xs font-semibold text-slate-700 bg-white">{q}</button>
+          ))}
+        </div>
+        <form onSubmit={(e) => { e.preventDefault(); send(text); }} className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex gap-2 items-end">
+          <textarea value={text} onChange={(e) => setText(e.target.value.slice(0, 500))} rows={1} placeholder="Escribe un mensaje"
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(text); } }}
+            className="flex-1 min-h-11 max-h-28 resize-none rounded-2xl bg-slate-100 px-4 py-2.5 text-base outline-none focus:bg-white focus:ring-2 focus:ring-slate-200" />
+          <button type="submit" disabled={!text.trim() || sending} className="w-11 h-11 shrink-0 rounded-full text-white flex items-center justify-center disabled:opacity-40" style={{ background: color }} aria-label="Enviar">
+            {sending ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+          </button>
+        </form>
       </div>
     </div>
   );

@@ -18,4 +18,11 @@ export async function register() {
     } catch (err) {
         console.error('[instrumentation] No se pudo iniciar los avisos de suscripción:', err);
     }
+    try {
+        // Retiros agendados: arrancan solos a su hora y avisan al repartidor (push + WhatsApp)
+        const { startPickupReminderScheduler } = await import('./lib/logistics/pickupReminders');
+        startPickupReminderScheduler();
+    } catch (err) {
+        console.error('[instrumentation] No se pudo iniciar los recordatorios de retiros:', err);
+    }
 }

@@ -7,6 +7,7 @@ import { calculateDeliveryCost, calculateDeliveryCostAsync, getRoadDistanceKm } 
 import { extractCoordsFromMapUrl } from '@/core/branch/BranchService';
 import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { requireBusinessAccess } from '@/lib/auth/requireBusinessAccess';
+import { ventanaRetiro, textoAbsoluto } from '@/lib/laundry/pickupWindow';
 
 export const dynamic = 'force-dynamic';
 
@@ -192,13 +193,23 @@ export async function POST(req: Request) {
 
     const fechaEntregaFinal = fechaEstimadaEntrega ? new Date(fechaEstimadaEntrega) : new Date(Date.now() + 86400000 * 2);
 
+    const ventana = fechaHoraRetiro ? ventanaRetiro({ fechaHoraRetiro }, new Date()) : { fecha: null, desde: null, hasta: null };
+    const retiroAbsoluto = {
+      fechaHoraRetiro: ventana.fecha ? textoAbsoluto(ventana) : (fechaHoraRetiro || null),
+      fechaHoraRetiroOriginal: fechaHoraRetiro || null,
+      retiroFecha: ventana.fecha,
+      retiroDesde: ventana.desde,
+      retiroHasta: ventana.hasta,
+    };
+
     const extraInfo = {
       modoIngreso: modo || (esDomicilio ? 'DOMICILIO' : 'LOCAL'),
       cantidadPares: numPares,
       servicioNombre: servicioNombre || 'Lavado Completo',
       articulos: rawArticulos,
       requiereConfirmacionPrecio: Boolean(body.requiereConfirmacionPrecio),
-      fechaHoraRetiro: fechaHoraRetiro || null,
+      // Fecha exacta del retiro: "Mañana" deja de ser cierto al día siguiente, así que se guarda el día real
+      ...retiroAbsoluto,
       fechaEstimadaEntrega: fechaEntregaFinal.toISOString(),
       fotosRecepcion: Array.isArray(fotosRecepcion) ? fotosRecepcion : [],
       fotosProceso: [],
@@ -363,7 +374,7 @@ export async function POST(req: Request) {
         latitud: latitud ? parseFloat(latitud.toString()) : null,
         longitud: longitud ? parseFloat(longitud.toString()) : null,
         fechaEntrega: fechaEntregaFinal,
-        franjaHoraria: fechaHoraRetiro || '10:00 - 18:00',
+        franjaHoraria: retiroAbsoluto.fechaHoraRetiro || '10:00 - 18:00',
         subtotal: totalCalculado,
         costoEnvio: costoEnvioCalculado,
         total: totalCalculado + costoEnvioCalculado,
@@ -420,7 +431,7 @@ export async function POST(req: Request) {
           `📍 *Dirección:* ${direccionCliente || 'Recepción en local'}`,
           referenciaCliente ? `📝 *Referencia:* ${referenciaCliente}` : null,
           `🚚 *Modalidad:* ${esDomicilio ? 'Retiro a Domicilio' : 'Recepción en Local'}`,
-          `⏰ *Horario:* ${fechaHoraRetiro || 'A coordinar'}`,
+          `⏰ *Horario:* ${retiroAbsoluto.fechaHoraRetiro || 'A coordinar'}`,
           `📦 *Prendas:*`,
           articulosTexto,
           observaciones || notas ? `💬 *Observaciones:* ${observaciones || notas}` : null,
@@ -443,7 +454,7 @@ export async function POST(req: Request) {
           `📦 *Artículos:*`,
           articulosTexto,
           `🚚 *Modalidad:* ${esDomicilio ? 'Retiro a Domicilio' : 'Recepción en Local'}`,
-          `⏰ *Horario solicitado:* ${fechaHoraRetiro || 'A coordinar'}`,
+          `⏰ *Horario solicitado:* ${retiroAbsoluto.fechaHoraRetiro || 'A coordinar'}`,
           `📍 *Dirección:* ${direccionCliente || 'En local'}`,
           `💵 *Total Estimado: $${totalEstimadoFinal} USD*`,
           ``,

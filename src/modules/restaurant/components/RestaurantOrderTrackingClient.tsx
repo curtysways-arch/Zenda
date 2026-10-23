@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, Clock, ChefHat, Bike, Package, Home, RefreshCw, Phone, MapPin, Utensils, AlertTriangle, ShieldCheck, ArrowLeft, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import OrderDriverChat from '@/components/public/OrderDriverChat';
 
 interface OrderItem {
     id: string;
@@ -78,7 +79,7 @@ function normalizeState(rawState?: string, extraInfo?: any): string {
     return 'PENDING';
 }
 
-export default function RestaurantOrderTrackingClient({ order: initialOrder, negocio, storeSlug }: Props) {
+export default function RestaurantOrderTrackingClient({ order: initialOrder, negocio, storeSlug, chatEnabled = false }: Props & { chatEnabled?: boolean }) {
     const [order, setOrder] = useState<Order>(initialOrder);
     const [refreshing, setRefreshing] = useState(false);
     const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -694,6 +695,8 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                 )}
 
                 <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+                {/* Chat con el repartidor: solo con el enlace privado del pedido */}
+                {chatEnabled && <OrderDriverChat slug={storeSlug} orderId={order.id} color={cp} />}
             </div>
         </div>
     );

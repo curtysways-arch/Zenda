@@ -13,8 +13,11 @@ module.exports = {
       script: 'npm',
       args: 'run start:next',
       cwd: './',
-      instances: 1,             // Aumentar a 'max' si hay múltiples CPUs y sin bot WA
-      exec_mode: 'fork',        // 'cluster' si instances > 1 y sin estado de sesión WA
+      // IMPORTANTE: dejar en 1 proceso. El chat en vivo repartidor ↔ cliente y los recordatorios
+      // de retiros agendados viven en la memoria de este proceso; con varios procesos el chat
+      // dejaría de ser instantáneo y los recordatorios se revisarían en paralelo.
+      instances: 1,
+      exec_mode: 'fork',
       watch: false,
       max_memory_restart: '1G',
 
