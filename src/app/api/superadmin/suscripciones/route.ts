@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTeamContext } from "@/lib/admin/teamGuard";
+import { getTeamContext, canAccessBusinessId, outsidePortfolio } from "@/lib/admin/teamGuard";
+import { plansForBusiness } from "@/lib/superadmin/plansForBusiness";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -24,6 +25,10 @@ export async function POST(req: NextRequest) {
         if (!negocioId) {
             return NextResponse.json({ error: "Faltan campos obligatorios (negocioId)" }, { status: 400 });
         }
+        // Vendedores con cartera: solo sus negocios
+        const ctx = await getTeamContext();
+        if (!ctx || !(await canAccessBusinessId(ctx, negocioId))) return outsidePortfolio();
+        const autor = adminId || ctx.userId || (ctx.isOwner ? 'SUPERADMIN' : 'SISTEMA');
 
         const currentSub = await (prisma as any).suscripcion.findUnique({
             where: { negocioId },
@@ -50,6 +55,14 @@ export async function POST(req: NextRequest) {
 
         const newPlan = await prisma.plan.findUnique({ where: { id: finalPlanId } });
         if (!newPlan) return NextResponse.json({ error: "Plan no encontrado" }, { status: 404 });
+
+        // Al cambiar de plan, solo se permiten los planes que corresponden al tipo de negocio
+        if (action === 'CHANGE_PLAN') {
+            const { plans } = await plansForBusiness(negocioId);
+            if (!plans.some((p: any) => p.id === newPlan.id)) {
+                return NextResponse.json({ error: "Ese plan no corresponde al tipo de este negocio." }, { status: 400 });
+            }
+        }
 
         let fechaFin = currentSub?.fechaFin ? new Date(currentSub.fechaFin) : new Date();
         if (fechaFin < new Date()) fechaFin = new Date();
@@ -148,7 +161,7 @@ export async function POST(req: NextRequest) {
                 plan_anterior_id: currentSub?.planId || null,
                 plan_nuevo_id: finalPlanId,
                 tipo_cambio: tipoCambio,
-                admin_id: adminId || 'SISTEMA'
+                admin_id: autor
             }
         });
 

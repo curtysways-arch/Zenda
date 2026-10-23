@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getTeamContext, canAccessBusinessId, outsidePortfolio } from "@/lib/admin/teamGuard";
 
 async function isSuperAdmin() {
-    // const session = await getServerSession(authOptions);
-    // return (session?.user as any)?.role === 'SUPER_ADMIN';
-    return true; // DEBUG
+    // Usuario del equipo Citiox; el permiso de cada acción lo valida el middleware (lib/admin/teamAccessMap)
+    return Boolean(await getTeamContext());
 }
 
 export async function POST(req: NextRequest) {
@@ -21,12 +19,18 @@ export async function POST(req: NextRequest) {
         if (!negocioId || !monto) {
             return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
         }
+        const ctx = await getTeamContext();
+        if (!ctx || !(await canAccessBusinessId(ctx, negocioId))) return outsidePortfolio();
+        const montoNum = parseFloat(String(monto).replace(',', '.'));
+        if (!Number.isFinite(montoNum) || montoNum <= 0) {
+            return NextResponse.json({ error: "El monto debe ser mayor que cero" }, { status: 400 });
+        }
 
         const payment = await (prisma as any).payment.create({
             data: {
                 negocio_id: negocioId,
                 plan_id: planId || '',
-                monto: parseFloat(monto),
+                monto: montoNum,
                 metodo_pago: metodoPago,
                 referencia: referencia,
                 comprobante: comprobante,
