@@ -25,7 +25,11 @@ export async function PATCH(
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const { estado, montoCobrado } = await req.json();
+        const body = await req.json();
+        const estado = body.estado;
+        // El monto puede llegar como texto desde los formularios: se normaliza a número.
+        const montoCobrado = body.montoCobrado === undefined || body.montoCobrado === null || body.montoCobrado === '' ? undefined : Number(body.montoCobrado);
+        const metodoCobro = ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA'].includes(String(body.metodoPago || '').toUpperCase()) ? String(body.metodoPago).toUpperCase() : 'EFECTIVO';
         const { id: rawId } = await params;
         const id = rawId.trim();
 
@@ -100,7 +104,7 @@ export async function PATCH(
         }
 
         // Registrar/actualizar pago de la reserva si se finaliza y se pasa el monto
-        if (estado === 'completed' && typeof montoCobrado === 'number' && montoCobrado > 0) {
+        if (estado === 'completed' && typeof montoCobrado === 'number' && Number.isFinite(montoCobrado) && montoCobrado > 0) {
             const pagoExistente = await prisma.pagoReserva.findFirst({
                 where: { appointmentId: appointment.id }
             });
@@ -119,7 +123,7 @@ export async function PATCH(
                         id: crypto.randomUUID(),
                         appointmentId: appointment.id,
                         monto: montoCobrado,
-                        metodo: 'EFECTIVO',
+                        metodo: metodoCobro,
                         fecha: new Date(),
                         notas: 'Registrado automáticamente al finalizar cita'
                     }

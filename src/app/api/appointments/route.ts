@@ -18,9 +18,13 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { slug, fecha, horaInicio, duracion, serviceId, clienteNombre, clienteTelefono, comentarios } = body;
 
-        const dur = parseInt(duracion) || 1;
+        // Duración: por defecto en horas (canchas). Si llega duracionMinutos (servicios con cita), se usa en minutos
+        // y el precio es el del servicio (no por hora).
+        const minutos = Math.max(0, Math.min(12 * 60, parseInt(body.duracionMinutos) || 0));
+        const dur = minutos > 0 ? 1 : (parseInt(duracion) || 1);
         const [h, m] = horaInicio.split(':').map(Number);
-        const horaFin = `${(h + dur).toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        const finMin = h * 60 + (m || 0) + (minutos > 0 ? minutos : dur * 60);
+        const horaFin = `${Math.floor(finMin / 60).toString().padStart(2, '0')}:${(finMin % 60).toString().padStart(2, '0')}`;
 
         // 1. Buscar el negocio y la cancha
         const negocio = await prisma.negocio.findUnique({
@@ -53,6 +57,13 @@ export async function POST(req: Request) {
         }
 
         const service = negocio.Service[0];
+
+        // Profesional elegido (solo si pertenece a este negocio)
+        let staffIdValido: string | null = null;
+        if (body.staffId) {
+            const st = await prisma.staff.findFirst({ where: { id: String(body.staffId), businessId: negocio.id }, select: { id: true } });
+            staffIdValido = st?.id || null;
+        }
 
         const reservationReceived = new Date(fecha);
         if (isNaN(reservationReceived.getTime())) {
@@ -267,6 +278,7 @@ export async function POST(req: Request) {
                 clienteId: cliente.id,
                 negocioId: negocio.id,
                 serviceId: service.id,
+                ...(staffIdValido ? { staffId: staffIdValido } : {}),
                 comentarios: comentarios || '',
                 estado: estadoInicial,
                 created_by_business: isBusiness,

@@ -72,10 +72,25 @@ export default function ServicesAdminPage() {
     return (
         <>
             {/* VISTA MÓVIL */}
-            <div className="md:hidden -mx-5 -mt-5">
+            <div className="md:hidden -mx-4 -mt-4">
                 <MobileServices 
                     services={services}
                     primaryColor={primaryColor}
+                    isLaundry={isLaundry}
+                    onToggle={async (svc, activo) => {
+                        try {
+                            const res = await fetch(`/api/services/${svc.id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ estaActivo: activo }),
+                            });
+                            if (!res.ok) return false;
+                            setServices((prev) => prev.map((x) => (x.id === svc.id ? { ...x, estaActivo: activo } : x)));
+                            return true;
+                        } catch {
+                            return false;
+                        }
+                    }}
                     onNew={() => {
                         setSelectedService(null);
                         setIsModalOpen(true);

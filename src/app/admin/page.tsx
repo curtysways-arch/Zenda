@@ -277,7 +277,8 @@ export default async function AdminDashboard() {
         },
         include: {
             cliente: true,
-            service: true
+            service: true,
+            staff: { select: { id: true, name: true } }
         },
         take: 30,
         orderBy: [
@@ -311,7 +312,17 @@ export default async function AdminDashboard() {
         return endTime.getTime() > nowTime.getTime() - (30 * 60 * 1000);
     });
 
-    const proximasCitas = validProximas.slice(0, 5);
+    const proximasCitas = validProximas.slice(0, 8);
+
+    // Citas que ya terminaron pero siguen abiertas (para recordar cerrarlas en la agenda)
+    const citasSinCerrarAntes = await prisma.appointment.count({
+        where: {
+            ...commonFilter,
+            fecha: { gte: new Date(startToday.getTime() - 60 * 24 * 60 * 60 * 1000), lt: startToday },
+            estado: { in: ['pending', 'confirmed', 'approved', 'client_checked_in', 'in_progress'] }
+        }
+    }).catch(() => 0);
+    const citasSinCerrar = citasSinCerrarAntes + (rawProximasCitas.length - validProximas.length);
 
     const headersList = await headers();
     const host = headersList.get('host') || 'localhost:3000';
@@ -380,6 +391,8 @@ export default async function AdminDashboard() {
                     isStaff={isStaff}
                     designName={designName}
                     shortcuts={!isStaff ? shortcuts.map(({ href, label }) => ({ href, label })) : []}
+                    todayLabel={todayLabel}
+                    sinCerrar={citasSinCerrar}
                 />
             </div>
 

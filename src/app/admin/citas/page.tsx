@@ -87,6 +87,7 @@ function CitasAdminPageContent() {
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
     const [slug, setSlug] = useState('');
     const [negocioTipo, setNegocioTipo] = useState('');
+    const [negocioInfo, setNegocioInfo] = useState<any>(null);
 
     const fetchCitas = async () => {
         setLoading(true);
@@ -102,6 +103,7 @@ function CitasAdminPageContent() {
                 const nData = await resNegocio.json();
                 setSlug(nData?.slug || '');
                 setNegocioTipo(nData?.tipoNegocio || nData?.tipo || '');
+                setNegocioInfo(nData ? { nombre: nData.nombre, horarioApertura: nData.horarioApertura, horarioCierre: nData.horarioCierre } : null);
             }
             
             // Trigger auto-expiration in the background (non-blocking) to prevent SQLite db lock
@@ -368,8 +370,13 @@ function CitasAdminPageContent() {
     return (
         <>
             {/* VISTA MÓVIL (AGENDA NATIVA) */}
-            <div className="md:hidden -mx-5 -mt-5">
+            <div className="md:hidden -mx-4 -mt-4">
                 <MobileAgenda 
+                    negocio={negocioInfo}
+                    onCitaChange={(id, patch) => setCitas(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c))}
+                    onReload={() => {
+                        fetch('/api/appointments/list').then(r => r.ok ? r.json() : null).then(d => { if (Array.isArray(d)) setCitas(d); }).catch(() => {});
+                    }}
                     citas={citas} 
                     primaryColor={primaryColor} 
                     onConfirm={handleConfirm}

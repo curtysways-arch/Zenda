@@ -105,8 +105,9 @@ export async function PATCH(
         const { id } = await params;
         const body = await req.json();
         const { estado, pagoEstado } = body || {};
+        const reprogramar = Boolean(body?.fecha || body?.horaInicio || body?.staffId !== undefined);
 
-        if (!estado && !pagoEstado) {
+        if (!estado && !pagoEstado && !reprogramar) {
             return NextResponse.json({ error: "Nada para actualizar" }, { status: 400 });
         }
 
@@ -121,6 +122,55 @@ export async function PATCH(
         if (!access.ok) return access.response;
 
         const data: any = { updatedAt: new Date() };
+
+        // ── Reprogramar: nueva fecha/hora y/o profesional, con las mismas validaciones que al crear ──
+        if (reprogramar) {
+            if (['completed', 'cancelled', 'no_show'].includes(String(appointment.estado))) {
+                return NextResponse.json({ error: "Esta cita ya está cerrada; no se puede reprogramar." }, { status: 400 });
+            }
+            const toMin = (t: string) => { const [hh, mm] = String(t || '0:0').split(':').map(Number); return (hh || 0) * 60 + (mm || 0); };
+            const toHora = (n: number) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+            const duracionMin = Math.max(15, toMin(appointment.horaFin || '') - toMin(appointment.horaInicio || '') || 60);
+
+            let nuevaFecha = appointment.fecha;
+            if (body.fecha) {
+                const f = new Date(String(body.fecha));
+                if (isNaN(f.getTime())) return NextResponse.json({ error: "Fecha inválida" }, { status: 400 });
+                nuevaFecha = new Date(Date.UTC(f.getUTCFullYear(), f.getUTCMonth(), f.getUTCDate(), 0, 0, 0, 0));
+            }
+            const horaInicio = body.horaInicio && /^\d{1,2}:\d{2}$/.test(String(body.horaInicio)) ? toHora(toMin(String(body.horaInicio))) : appointment.horaInicio;
+            const horaFin = toHora(toMin(horaInicio) + duracionMin);
+
+            const choque = await prisma.appointment.findFirst({
+                where: {
+                    id: { not: appointment.id },
+                    serviceId: appointment.serviceId,
+                    fecha: nuevaFecha,
+                    estado: { notIn: ['rejected', 'RECHAZADA', 'cancelled', 'CANCELADA', 'expired', 'EXPIRADA', 'no_show'] },
+                    AND: [{ horaInicio: { lt: horaFin } }, { horaFin: { gt: horaInicio } }],
+                },
+                select: { id: true, horaInicio: true },
+            });
+            if (choque) return NextResponse.json({ error: `Ese horario se cruza con otra cita (${choque.horaInicio}).` }, { status: 409 });
+
+            const bloqueo = await (prisma as any).bloqueo.findFirst({
+                where: { serviceId: appointment.serviceId, fecha: nuevaFecha, AND: [{ horaInicio: { lt: horaFin } }, { horaFin: { gt: horaInicio } }] },
+            });
+            if (bloqueo) return NextResponse.json({ error: `Ese horario está bloqueado${bloqueo.motivo ? `: ${bloqueo.motivo}` : ''}.` }, { status: 409 });
+
+            data.fecha = nuevaFecha;
+            data.horaInicio = horaInicio;
+            data.horaFin = horaFin;
+            if (body.staffId !== undefined) {
+                if (body.staffId) {
+                    const st = await prisma.staff.findFirst({ where: { id: String(body.staffId), businessId: appointment.negocioId }, select: { id: true } });
+                    if (!st) return NextResponse.json({ error: "Ese profesional no es de este negocio." }, { status: 400 });
+                    data.staffId = st.id;
+                } else {
+                    data.staffId = null;
+                }
+            }
+        }
         if (estado) {
             data.estado = estado;
             if (estado === 'confirmed' || estado === 'cancelled') data.expiresAt = null;
@@ -142,7 +192,7 @@ export async function PATCH(
             }
         }
 
-        return NextResponse.json({ success: true, estado: data.estado, pagoEstado: data.pagoEstado });
+        return NextResponse.json({ success: true, estado: data.estado, pagoEstado: data.pagoEstado, fecha: data.fecha, horaInicio: data.horaInicio, horaFin: data.horaFin, staffId: data.staffId });
     } catch (error: any) {
         console.error("CRITICAL ERROR in PATCH appointment:", error);
         return NextResponse.json({ error: "Error al actualizar reserva" }, { status: 500 });

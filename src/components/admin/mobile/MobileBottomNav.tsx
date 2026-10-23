@@ -157,7 +157,7 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
     }, [isStore, isRestaurant, isShoeCare]);
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-2xl border-t border-slate-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-safe-area-inset-bottom">
+        <div className="fixed bottom-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-2xl border-t border-slate-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
             <nav className="flex items-center justify-around h-16 px-1.5 max-w-md mx-auto">
                 {navItems.map((item) => {
                     if (item.isAction) {
@@ -187,7 +187,9 @@ export default function MobileBottomNav({ primaryColor, initialBusiness }: Botto
                     const isActive = pathname === item.href || 
                         (item.href === '/admin/pedidos-online' && pathname === '/admin/pedidos') ||
                         (item.href === '/admin/pacientes' && pathname.startsWith('/admin/pacientes')) ||
-                        (item.href === '/admin/citas' && pathname.startsWith('/admin/citas'));
+                        (item.href === '/admin/citas' && pathname.startsWith('/admin/citas')) ||
+                        (item.href === '/admin/servicios' && pathname.startsWith('/admin/servicios')) ||
+                        (item.href === '/admin/clientes' && pathname.startsWith('/admin/clientes'));
 
                     return (
                         <Link 

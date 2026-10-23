@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
-import MobileAppointmentDetail from '@/components/admin/mobile/MobileAppointmentDetail';
+import AppointmentPageMobile from '@/components/admin/agenda/AppointmentPageMobile';
 import CourtAppointmentDetail from '@/components/admin/canchas/CourtAppointmentDetail';
 import { useConfirm } from '@/components/admin/ConfirmContext';
 import RatingModal from '@/components/RatingModal';
@@ -245,13 +245,7 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
         <div className="min-h-screen bg-slate-50 md:pb-20 md:pt-10 md:px-4">
             {/* VISTA MÓVIL */}
             <div className="md:hidden">
-                <MobileAppointmentDetail 
-                    reserva={reserva}
-                    primaryColor={primaryColor}
-                    onStatusUpdate={handleStatusUpdate}
-                    onAddPayment={() => setIsPaymentModalOpen(true)}
-                    sendWhatsApp={sendWhatsApp}
-                />
+                <AppointmentPageMobile reserva={reserva} onRefresh={fetchReserva} />
             </div>
 
             {/* VISTA ESCRITORIO */}

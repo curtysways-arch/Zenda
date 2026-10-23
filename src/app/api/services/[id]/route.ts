@@ -1,9 +1,22 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import { checkDemoRestriction } from '@/lib/demo-protection';
 import { storageService } from '@/lib/storage/storageService';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
+
+/** El servicio debe ser del negocio de la sesión (o superadmin sin delegación). */
+async function servicioPropio(id: string) {
+    const session = await getEffectiveAdminSession();
+    const u = (session?.user as any) || null;
+    if (!u) return { error: NextResponse.json({ error: 'No autorizado' }, { status: 401 }) };
+    const svc = await prisma.service.findUnique({ where: { id }, select: { negocioId: true } });
+    if (!svc) return { error: NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 }) };
+    const isSuperAdmin = (u.role === 'SUPERADMIN' || u.role === 'SUPER_ADMIN' || u.roles?.includes('SUPERADMIN')) && u.isDelegated !== true;
+    if (!isSuperAdmin && svc.negocioId !== u.negocioId) {
+        return { error: NextResponse.json({ error: 'No autorizado' }, { status: 403 }) };
+    }
+    return { negocioId: svc.negocioId as string };
+}
 
 export async function PATCH(
     req: Request,
@@ -11,8 +24,8 @@ export async function PATCH(
 ) {
     try {
         const { id } = await params;
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const own = await servicioPropio(id);
+        if ('error' in own) return own.error;
 
         // PROTECCIÓN MODO DEMO
         const demoCheck = await checkDemoRestriction();
@@ -56,7 +69,8 @@ export async function PATCH(
                     tipo: tipo !== undefined ? (tipo || null) : existingExtra.tipo
                 },
                 Staff: staffIds && Array.isArray(staffIds) ? {
-                    set: staffIds.map((id: string) => ({ id }))
+                    // Solo profesionales del mismo negocio
+                    set: (await prisma.staff.findMany({ where: { id: { in: staffIds.map(String) }, businessId: own.negocioId }, select: { id: true } }))
                 } : undefined
             },
         });
@@ -83,8 +97,8 @@ export async function DELETE(
 ) {
     try {
         const { id } = await params;
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const own = await servicioPropio(id);
+        if ('error' in own) return own.error;
 
         // PROTECCIÓN MODO DEMO
         const demoCheck = await checkDemoRestriction();
