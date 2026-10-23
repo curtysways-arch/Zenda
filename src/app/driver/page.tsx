@@ -10,7 +10,7 @@
  * para quién está trabajando.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getCanonicalLogistics,
   getActiveDriverCompensation,
@@ -739,6 +739,77 @@ export default function DriverAppPage() {
     registerPush(false); // si ya dio permiso, se renueva el token en silencio
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driverId]);
+
+  // iPhone: los avisos solo funcionan con la app agregada a la pantalla de inicio
+  const [iosSinInstalar, setIosSinInstalar] = useState(false);
+  useEffect(() => {
+    try {
+      const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const instalada = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
+      setIosSinInstalar(ios && !instalada);
+    } catch {}
+  }, []);
+
+  // Con la app abierta, Firebase no muestra el aviso del sistema: se muestra aquí y se actualizan los pedidos
+  const fetchRef = useRef(fetchDriverData);
+  fetchRef.current = fetchDriverData;
+  useEffect(() => {
+    if (!driverId || pushState !== 'granted') return;
+    let quitar: (() => void) | null = null;
+    let vivo = true;
+    import('@/lib/firebase').then(({ onMessageListener }) => onMessageListener(async (payload: any) => {
+      const titulo = payload?.notification?.title || payload?.data?.title || 'Nuevo aviso';
+      const cuerpo = payload?.notification?.body || payload?.data?.body || '';
+      notify(cuerpo ? `${titulo}: ${cuerpo}` : titulo);
+      try { navigator.vibrate?.([200, 100, 200]); } catch {}
+      fetchRef.current();
+      // Si la pantalla no está a la vista (otra app encima), se muestra también como aviso del sistema
+      if (document.visibilityState !== 'visible') {
+        try {
+          const reg = (await navigator.serviceWorker.getRegistration('/firebase-cloud-messaging-push-scope')) || (await navigator.serviceWorker.ready);
+          await reg?.showNotification(titulo, { body: cuerpo, icon: '/icons/icon-192x192.png', data: { link: payload?.data?.link || '/driver' } });
+        } catch {}
+      }
+    })).then((unsub: any) => {
+      if (!vivo) { try { unsub?.(); } catch {} } else quitar = typeof unsub === 'function' ? unsub : null;
+    }).catch(() => {});
+    return () => { vivo = false; try { quitar?.(); } catch {} };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [driverId, pushState]);
+
+  // Prueba: envía un aviso real a este teléfono y explica qué falló, si algo falla
+  const [probandoPush, setProbandoPush] = useState(false);
+  const [resultadoPrueba, setResultadoPrueba] = useState<{ ok: boolean; mensaje: string } | null>(null);
+  const probarPush = async () => {
+    setProbandoPush(true); setResultadoPrueba(null);
+    try {
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        setResultadoPrueba({ ok: false, mensaje: iosSinInstalar ? 'En iPhone primero agrega la app a la pantalla de inicio y ábrela desde ahí.' : 'Este navegador no admite notificaciones.' });
+        return;
+      }
+      if (Notification.permission === 'default') await Notification.requestPermission();
+      setPushState(Notification.permission as any);
+      if (Notification.permission !== 'granted') {
+        setResultadoPrueba({ ok: false, mensaje: 'Las notificaciones están bloqueadas. Actívalas en los ajustes del navegador para este sitio.' });
+        return;
+      }
+      let token: string | null = null;
+      try {
+        const { getFcmToken } = await import('@/lib/firebase');
+        token = (await getFcmToken()) || null;
+      } catch (e: any) {
+        setResultadoPrueba({ ok: false, mensaje: `Este teléfono no pudo registrarse para recibir avisos (${String(e?.message || e).slice(0, 120)}).` });
+        return;
+      }
+      if (!token) { setResultadoPrueba({ ok: false, mensaje: 'Este teléfono no entregó un registro para avisos. Intenta de nuevo en unos segundos.' }); return; }
+      const r = await post({ action: 'TEST_PUSH', token });
+      setResultadoPrueba({ ok: r.ok, mensaje: r.data?.mensaje || (r.ok ? 'Aviso enviado.' : 'No se pudo enviar el aviso.') });
+    } catch {
+      setResultadoPrueba({ ok: false, mensaje: 'No se pudo hacer la prueba. Revisa tu conexión.' });
+    } finally {
+      setProbandoPush(false);
+    }
+  };
   const [navApp, setNavAppState] = useState<NavApp | null>(null);
   useEffect(() => { setNavAppState(getNavApp()); }, [tab]);
 
@@ -1007,6 +1078,9 @@ export default function DriverAppPage() {
               <button onClick={() => registerPush(true)} className="px-3 py-2 rounded-xl bg-[#0066FF] text-white text-sm font-semibold shrink-0">Activar</button>
             </section>
           )}
+          {iosSinInstalar && (
+            <p className="text-xs text-slate-700 bg-white ring-1 ring-slate-200 rounded-xl px-3 py-2">Para recibir avisos en iPhone, agrega la app a tu pantalla de inicio (Compartir → Agregar a pantalla de inicio) y ábrela desde ahí.</p>
+          )}
           {pushState === 'denied' && scheduledOrders.length > 0 && (
             <p className="text-xs text-amber-800 bg-amber-50 rounded-xl px-3 py-2">Tienes las notificaciones bloqueadas: te avisaremos solo por WhatsApp. Puedes activarlas en los ajustes del navegador.</p>
           )}
@@ -1239,13 +1313,26 @@ export default function DriverAppPage() {
             )}
           </section>
 
-          <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4 flex items-center gap-3">
-            <Bell className={`w-5 h-5 ${pushState === 'granted' ? 'text-emerald-500' : 'text-slate-400'}`} />
-            <div className="flex-1">
-              <p className="font-semibold text-sm text-slate-900">Notificaciones</p>
-              <p className="text-xs text-slate-500">{pushState === 'granted' ? 'Activadas: te avisamos de tus retiros y mensajes.' : pushState === 'denied' ? 'Bloqueadas en este navegador. Actívalas en sus ajustes.' : pushState === 'unsupported' ? 'Este navegador no las admite. Te avisaremos por WhatsApp.' : 'Desactivadas.'}</p>
+          <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4">
+            <div className="flex items-center gap-3">
+              <Bell className={`w-5 h-5 shrink-0 ${pushState === 'granted' ? 'text-emerald-500' : 'text-slate-400'}`} />
+              <div className="flex-1">
+                <p className="font-semibold text-sm text-slate-900">Notificaciones</p>
+                <p className="text-xs text-slate-500">{pushState === 'granted' ? 'Activadas: te avisamos de tus retiros y mensajes.' : pushState === 'denied' ? 'Bloqueadas en este navegador. Actívalas en sus ajustes.' : iosSinInstalar ? 'En iPhone necesitas agregar la app a la pantalla de inicio.' : pushState === 'unsupported' ? 'Este navegador no las admite. Te avisaremos por WhatsApp.' : 'Desactivadas.'}</p>
+              </div>
+              {pushState === 'default' && <button onClick={() => registerPush(true)} className="text-sm font-semibold text-[#0066FF]">Activar</button>}
             </div>
-            {pushState === 'default' && <button onClick={() => registerPush(true)} className="text-sm font-semibold text-[#0066FF]">Activar</button>}
+            {iosSinInstalar && (
+              <p className="mt-3 text-xs text-slate-600 bg-slate-50 rounded-xl px-3 py-2">En Safari toca <b>Compartir</b> → <b>Agregar a pantalla de inicio</b>, abre Citiox Driver desde ese ícono e inicia sesión. Ahí podrás activar los avisos.</p>
+            )}
+            {!iosSinInstalar && pushState !== 'unsupported' && (
+              <button onClick={probarPush} disabled={probandoPush} className="mt-3 w-full py-2.5 rounded-xl bg-slate-100 text-sm font-semibold text-slate-800 disabled:opacity-60">
+                {probandoPush ? 'Enviando prueba…' : 'Probar notificación'}
+              </button>
+            )}
+            {resultadoPrueba && (
+              <p role="status" className={`mt-2 text-xs rounded-xl px-3 py-2 ${resultadoPrueba.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`}>{resultadoPrueba.mensaje}</p>
+            )}
           </section>
 
           <section className="bg-white rounded-2xl ring-1 ring-slate-100 p-4 flex items-center gap-3">

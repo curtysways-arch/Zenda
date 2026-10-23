@@ -35,7 +35,7 @@ import { ventanaRetiro, textoVentana, esParaMasTarde } from '@/lib/laundry/picku
 import { agregarMensaje, archivarChat, chatActivo, limpiarTexto, marcarLeido, mensajesDe } from '@/lib/orders/orderChat';
 import { avisarChat } from '@/lib/orders/chatBus';
 import { guardarPedido, actualizarExtra, ConflictoPedido } from '@/lib/orders/orderLock';
-import { registerDriverPushToken } from '@/lib/logistics/driverPush';
+import { registerDriverPushToken, sendPushToDriver, explicarPrueba } from '@/lib/logistics/driverPush';
 
 export const dynamic = 'force-dynamic';
 
@@ -1735,6 +1735,16 @@ export async function POST(
       if (mode !== 'driver') return deny('Solo el repartidor puede activar sus notificaciones.');
       const ok = await registerDriverPushToken(auth.driver!.session.phoneKey, String(body.token || ''));
       return NextResponse.json({ success: ok });
+    }
+
+    // Prueba de notificación: envía un aviso a este teléfono y explica en palabras simples qué falló
+    if (action === 'TEST_PUSH') {
+      if (mode !== 'driver') return deny('Solo el repartidor puede probar sus notificaciones.');
+      const pk = auth.driver!.session.phoneKey;
+      if (body.token) await registerDriverPushToken(pk, String(body.token)).catch(() => false);
+      const r = await sendPushToDriver(pk, '🔔 Prueba de aviso', 'Si ves esto, los avisos de pedidos te van a llegar.', '/driver');
+      const e = explicarPrueba(r);
+      return NextResponse.json({ success: e.ok, mensaje: e.mensaje, detalle: { tokens: r.tokens, enviados: r.enviados, errores: r.errores } });
     }
 
     // ── Retiro en casa del cliente: salir hacia el cliente y avisar que llegó ──

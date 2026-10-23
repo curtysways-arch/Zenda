@@ -176,7 +176,12 @@ export const getFcmToken = async () => {
                 .catch(err => console.warn("[FCM Client] Error no crítico al registrar sw.js PWA:", err));
 
             // 2. Registrar el Service Worker dedicado y ultra-liviano para Firebase Messaging en un scope aislado
-            const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+            // La configuración va en la URL: el worker la necesita al instante, sin pedirla al servidor
+            const swParams = new URLSearchParams();
+            const swConf: Record<string, string | undefined> = { apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId };
+            for (const [k, v] of Object.entries(swConf)) if (v && !isExample(v)) swParams.set(k, v);
+            const swUrl = `/firebase-messaging-sw.js${swParams.toString() ? `?${swParams}` : ''}`;
+            const reg = await navigator.serviceWorker.register(swUrl, {
                 scope: '/firebase-cloud-messaging-push-scope'
             });
             console.log("[FCM Client] Service Worker dedicado de Firebase registrado en scope aislado.");
@@ -200,7 +205,7 @@ export const getFcmToken = async () => {
             console.log("[FCM Client] Service Worker de Firebase listo y activo.");
 
             // 4. Actualizar versión local
-            const CURRENT_SW_VERSION = 'v5';
+            const CURRENT_SW_VERSION = 'v6';
             localStorage.setItem('fcm_sw_version', CURRENT_SW_VERSION);
 
         } catch (swError) {

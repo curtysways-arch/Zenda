@@ -22,10 +22,17 @@ async function getGlobalConfig(clave: string): Promise<string | null> {
 
 // Variable to track initialization promise
 let firebaseInitPromise: Promise<void> | null = null;
+let firebaseInitFalloAt = 0;
 
 export async function initFirebaseAdmin() {
     if (!adminModule) return;
     if (adminModule.apps && adminModule.apps.length > 0) return;
+    // Si un intento anterior falló (por ejemplo, aún no se habían cargado las credenciales en el superadmin),
+    // se vuelve a intentar al minuto, sin tener que reiniciar el servidor.
+    if (firebaseInitPromise && firebaseInitFalloAt && Date.now() - firebaseInitFalloAt > 60_000) {
+        firebaseInitPromise = null;
+        firebaseInitFalloAt = 0;
+    }
     if (firebaseInitPromise) return firebaseInitPromise;
 
     firebaseInitPromise = (async () => {
@@ -97,6 +104,7 @@ export async function initFirebaseAdmin() {
         } catch (error) {
             console.error('Firebase Admin initialization error:', error);
         }
+        if (!adminModule.apps?.length) firebaseInitFalloAt = Date.now();
     })();
     return firebaseInitPromise;
 }
@@ -144,10 +152,34 @@ export class WebhookNotificationProvider implements INotificationProvider {
     }
 }
 
+/** El token ya no sirve (app desinstalada, permiso quitado, token de otro proyecto): se borra. */
+export function tokenInvalido(code?: string) {
+    return Boolean(code) && /registration-token-not-registered|invalid-registration-token|mismatched-credential|sender-id-mismatch/i.test(String(code));
+}
+
+/** ¿Firebase Admin quedó listo para enviar? (si faltan credenciales, ningún push sale) */
+export async function firebasePushListo(): Promise<boolean> {
+    await initFirebaseAdmin();
+    return Boolean(adminModule?.apps?.length);
+}
+
+/** Firebase exige que el enlace de la notificación sea una URL https completa (no "/admin/citas"). */
+function enlaceAbsoluto(link?: string) {
+    const base = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://citiox.com').replace(/\/$/, '');
+    const l = link || '/admin/citas';
+    if (/^https:\/\//i.test(l)) return l;
+    const abs = `${base}${l.startsWith('/') ? '' : '/'}${l}`;
+    return abs.replace(/^http:\/\//i, 'https://');
+}
+
 export class FirebasePushProvider implements INotificationProvider {
-    async sendMessage(payload: NotificationPayload): Promise<{ success: boolean; messageId?: string }> {
+    async sendMessage(payload: NotificationPayload): Promise<{ success: boolean; messageId?: string; error?: string; code?: string }> {
         await initFirebaseAdmin();
+        if (!adminModule?.apps?.length) {
+            return { success: false, code: 'firebase/no-inicializado', error: 'Firebase Admin no está configurado en el servidor (faltan credenciales).' };
+        }
         try {
+            const link = enlaceAbsoluto(payload.variables?.link);
             // Enviamos mensaje con AMBOS: notification (para SW background) + data (para onMessage foreground)
             // El webpush.headers.Urgency = 'high' garantiza entrega inmediata
             const message: any = {
@@ -158,7 +190,8 @@ export class FirebasePushProvider implements INotificationProvider {
                 webpush: {
                     headers: {
                         Urgency: 'high',
-                        TTL: '60',
+                        // Antes era 60 s: si el teléfono estaba dormido o sin señal más de un minuto, el aviso se perdía
+                        TTL: '3600',
                     },
                     notification: {
                         title: payload.template || 'Nueva notificación',
@@ -171,18 +204,18 @@ export class FirebasePushProvider implements INotificationProvider {
                         // Datos adicionales accesibles en notificationclick
                         data: {
                             ...(payload.variables || {}),
-                            link: payload.variables?.link || '/admin/citas',
+                            link,
                         },
                     },
                     fcmOptions: {
-                        link: payload.variables?.link || '/admin/citas',
+                        link,
                     },
                 },
                 data: {
                     title: payload.template || 'Nueva notificación',
                     body: payload.message,
                     icon: payload.variables?.icon || '/icons/icon-192x192.png',
-                    link: payload.variables?.link || '/admin/citas',
+                    link,
                     reservaId: payload.variables?.reservaId || '',
                 },
                 token: payload.to,
@@ -190,9 +223,9 @@ export class FirebasePushProvider implements INotificationProvider {
 
             const response = await adminModule.messaging().send(message);
             return { success: true, messageId: response };
-        } catch (error) {
-            console.error('Firebase Push error:', error);
-            return { success: false };
+        } catch (error: any) {
+            console.error('Firebase Push error:', error?.code || '', error?.message || error);
+            return { success: false, code: error?.code || 'desconocido', error: error?.message || String(error) };
         }
     }
 }
@@ -399,12 +432,13 @@ export class NotificationService {
 
             const promises = tokens.map(async t => {
                 try {
-                    await this.pushProvider.sendMessage({
+                    const r: any = await this.pushProvider.sendMessage({
                         to: t.token,
                         message: body,
                         template: title,
                         variables: data
                     });
+                    if (tokenInvalido(r?.code)) await prisma.pushToken.delete({ where: { token: t.token } }).catch(() => {});
                 } catch (err: any) {
                     console.warn(`[PUSH] Error enviando a token de usuario ${t.token.substring(0, 10)}... :`, err.message);
                     // Si el token no está registrado o es inválido, lo removemos para limpiar la base de datos
@@ -431,12 +465,13 @@ export class NotificationService {
 
             const promises = tokens.map(async t => {
                 try {
-                    await this.pushProvider.sendMessage({
+                    const r: any = await this.pushProvider.sendMessage({
                         to: t.token,
                         message: body,
                         template: title,
                         variables: data
                     });
+                    if (tokenInvalido(r?.code)) await prisma.pushToken.delete({ where: { token: t.token } }).catch(() => {});
                 } catch (err: any) {
                     console.warn(`[PUSH] Error enviando a token de negocio ${t.token.substring(0, 10)}... :`, err.message);
                     // Si el token no está registrado o es inválido, lo removemos para limpiar la base de datos

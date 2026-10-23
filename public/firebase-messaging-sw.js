@@ -1,101 +1,57 @@
-// Importar scripts de Firebase (versión actual)
+// Service worker de notificaciones (Firebase Cloud Messaging).
+//
+// IMPORTANTE: Firebase debe iniciarse de inmediato, al cargar este archivo (sin esperar un fetch).
+// El navegador despierta este worker justo cuando llega un aviso; si el manejador de "push" se registra
+// después (por ejemplo, tras pedir la configuración al servidor), el aviso llega antes y se pierde.
+// Por eso la configuración viene en la URL con la que la app registra este archivo, con valores por defecto.
 importScripts("https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging-compat.js");
 
-// Obtener parámetros de la URL del Service Worker (query string si los hay)
-const urlParams = new URLSearchParams(self.location.search);
-let urlApiKey = urlParams.get('apiKey');
-let urlAuthDomain = urlParams.get('authDomain');
-let urlProjectId = urlParams.get('projectId');
-let urlStorageBucket = urlParams.get('storageBucket');
-let urlMessagingSenderId = urlParams.get('messagingSenderId');
-let urlAppId = urlParams.get('appId');
+const params = new URLSearchParams(self.location.search);
+const config = {
+    apiKey: params.get('apiKey') || "AIzaSyCNZYSiXnzpuz7BMarfIQ-SwWE-Toj6TU8",
+    authDomain: params.get('authDomain') || "spa-citas-c5c3d.firebaseapp.com",
+    projectId: params.get('projectId') || "spa-citas-c5c3d",
+    storageBucket: params.get('storageBucket') || "spa-citas-c5c3d.firebasestorage.app",
+    messagingSenderId: params.get('messagingSenderId') || "1071729504920",
+    appId: params.get('appId') || "1:1071729504920:web:933b5060cc87428f8a96ed",
+};
 
-function initFirebase(config) {
-    try {
-        firebase.initializeApp(config);
-        const messaging = firebase.messaging();
-        
-        // El SDK de Firebase muestra las notificaciones del bloque 'notification' automáticamente.
-        // onBackgroundMessage se encarga de manejar mensajes cuando el app está cerrada (segundo plano).
-        messaging.onBackgroundMessage((payload) => {
-            console.log('[SW-AUDIT][PASO 1] onBackgroundMessage disparado. Payload:', JSON.stringify(payload));
-            const notificationTitle = payload.notification?.title || payload.data?.title || 'Nueva notificación';
-            const notificationOptions = {
-                body: payload.notification?.body || payload.data?.body || '',
-                icon: payload.data?.icon || payload.notification?.image || '/logo-citiox.png',
-                badge: '/logo-citiox.png',
-                data: payload.data || {},
-                vibrate: [200, 100, 200],
-                requireInteraction: false
-            };
-            console.log('[SW-AUDIT][PASO 2] Llamando a showNotification desde onBackgroundMessage:', notificationTitle, JSON.stringify(notificationOptions));
-            self.registration.showNotification(notificationTitle, notificationOptions)
-                .then(() => console.log('[SW-AUDIT][PASO 3] showNotification completado con éxito (onBackgroundMessage)'))
-                .catch(err => console.error('[SW-AUDIT][ERROR] error en showNotification (onBackgroundMessage):', err));
-        });
-        console.log('[SW] Firebase Messaging inicializado correctamente.');
-    } catch (e) {
-        console.error('[SW] Error al inicializar Firebase en SW:', e);
-    }
-}
+try {
+    firebase.initializeApp(config);
+    const messaging = firebase.messaging();
 
-// Intentar inicialización asíncrona mediante fetch a la API de configuración dinámica
-fetch('/api/config/firebase')
-    .then(res => {
-        if (!res.ok) throw new Error('API config no disponible');
-        return res.json();
-    })
-    .then(config => {
-        const getVal = (key, envVal) => {
-            const dbVal = config[key];
-            return dbVal || envVal;
-        };
-        const fConfig = {
-            apiKey: getVal('NEXT_PUBLIC_FIREBASE_API_KEY', urlApiKey) || "AIzaSyCNZYSiXnzpuz7BMarfIQ-SwWE-Toj6TU8",
-            authDomain: getVal('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', urlAuthDomain) || "spa-citas-c5c3d.firebaseapp.com",
-            projectId: getVal('NEXT_PUBLIC_FIREBASE_PROJECT_ID', urlProjectId) || "spa-citas-c5c3d",
-            storageBucket: getVal('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', urlStorageBucket) || "spa-citas-c5c3d.firebasestorage.app",
-            messagingSenderId: getVal('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', urlMessagingSenderId) || "1071729504920",
-            appId: getVal('NEXT_PUBLIC_FIREBASE_APP_ID', urlAppId) || "1:1071729504920:web:933b5060cc87428f8a96ed"
-        };
-        initFirebase(fConfig);
-    })
-    .catch(() => {
-        // Fallback síncrono si el fetch falla (offline o fase inicial)
-        initFirebase({
-            apiKey: urlApiKey || "AIzaSyCNZYSiXnzpuz7BMarfIQ-SwWE-Toj6TU8",
-            authDomain: urlAuthDomain || "spa-citas-c5c3d.firebaseapp.com",
-            projectId: urlProjectId || "spa-citas-c5c3d",
-            storageBucket: urlStorageBucket || "spa-citas-c5c3d.firebasestorage.app",
-            messagingSenderId: urlMessagingSenderId || "1071729504920",
-            appId: urlAppId || "1:1071729504920:web:933b5060cc87428f8a96ed"
+    // Si el aviso trae "notification", Firebase ya lo muestra solo: volver a mostrarlo lo duplicaba.
+    // Aquí solo se muestran los avisos que vienen únicamente con datos.
+    messaging.onBackgroundMessage((payload) => {
+        if (payload.notification) return;
+        const d = payload.data || {};
+        return self.registration.showNotification(d.title || 'Nueva notificación', {
+            body: d.body || '',
+            icon: d.icon || '/icons/icon-192x192.png',
+            badge: '/icons/icon-72x72.png',
+            data: d,
+            vibrate: [200, 100, 200],
         });
     });
+} catch (e) {
+    console.error('[SW] Error al iniciar Firebase:', e);
+}
 
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
-
-// Forzar la activación inmediata de este Service Worker al instalarse
-self.addEventListener('install', (event) => {
-    self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
-});
-
-// Manejar click en notificación nativa
+// Al tocar un aviso mostrado por este archivo: abre (o enfoca) la página del enlace.
+// Los avisos que muestra Firebase los abre Firebase con su propio enlace.
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const link = event.notification.data?.link || '/admin/citas';
-    event.waitUntil(
-        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-            if (clients.length > 0) {
-                clients[0].focus();
-                clients[0].navigate(link);
-            } else {
-                self.clients.openWindow(link);
-            }
-        })
-    );
+    const data = event.notification.data || {};
+    const raw = data.link || (data.FCM_MSG && data.FCM_MSG.data && data.FCM_MSG.data.link) || '/';
+    const url = new URL(raw, self.location.origin).href;
+    event.waitUntil((async () => {
+        const ventanas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        const misma = ventanas.find((c) => c.url === url) || ventanas.find((c) => new URL(c.url).pathname === new URL(url).pathname);
+        if (misma) return misma.focus();
+        return self.clients.openWindow(url);
+    })());
 });
