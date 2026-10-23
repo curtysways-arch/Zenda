@@ -152,34 +152,38 @@ export default function NegociosGrid({ initialNegocios }: { initialNegocios: any
                 </div>
             ) : (
                 <>
-                    {/* Escritorio: tabla */}
-                    <div className="hidden lg:block bg-white border border-slate-200 rounded-xl overflow-hidden">
-                        <table className="w-full text-left text-sm">
+                    {/* Escritorio: tabla de ancho fijo — Estado y Acciones siempre a la vista */}
+                    <div className="hidden lg:block bg-white border border-slate-200 rounded-xl">
+                        <table className="w-full table-fixed text-left text-sm">
+                            <colgroup>
+                                <col />
+                                <col className="w-[13rem]" />
+                                <col className="w-[8.5rem]" />
+                                <col className="w-[7rem]" />
+                                <col className="w-[15.5rem]" />
+                            </colgroup>
                             <thead className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500">
                                 <tr>
-                                    <th className="px-4 py-2.5 font-semibold">Negocio</th>
-                                    <th className="px-3 py-2.5 font-semibold">Tipo</th>
+                                    <th className="px-4 py-2.5 font-semibold rounded-tl-xl">Negocio</th>
                                     <th className="px-3 py-2.5 font-semibold">Plan</th>
-                                    <th className="px-3 py-2.5 font-semibold">Ciudad</th>
-                                    <th className="px-3 py-2.5 font-semibold text-right">Servicios</th>
-                                    <th className="px-3 py-2.5 font-semibold text-right">Citas</th>
+                                    <th className="px-3 py-2.5 font-semibold">Uso</th>
                                     <th className="px-3 py-2.5 font-semibold">Estado</th>
-                                    <th className="px-4 py-2.5 font-semibold text-right">Acciones</th>
+                                    <th className="px-4 py-2.5 font-semibold text-right rounded-tr-xl">Gestión</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {list.map((n) => (
-                                    <tr key={n.id} className="hover:bg-slate-50/70">
-                                        <td className="px-4 py-2.5">
-                                            <BusinessCell n={n} />
+                                    <tr key={n.id} className="hover:bg-slate-50/70 align-middle">
+                                        <td className="px-4 py-3 min-w-0">
+                                            <BusinessCell n={n} detalle />
                                         </td>
-                                        <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{prettyTipo(n.tipoNegocio)}</td>
-                                        <td className="px-3 py-2.5"><PlanCell n={n} /></td>
-                                        <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{n.ciudad || <span className="text-slate-400">—</span>}</td>
-                                        <td className="px-3 py-2.5 text-right tabular-nums text-slate-700">{n._count?.Service ?? 0}</td>
-                                        <td className="px-3 py-2.5 text-right tabular-nums text-slate-700">{n._count?.Appointment ?? 0}</td>
-                                        <td className="px-3 py-2.5"><StatusBadge estado={n.estado} /></td>
-                                        <td className="px-4 py-2.5"><NegocioActions negocio={n} onEdit={() => openEdit(n)} /></td>
+                                        <td className="px-3 py-3 min-w-0"><PlanCell n={n} /></td>
+                                        <td className="px-3 py-3 text-xs text-slate-600 tabular-nums leading-relaxed">
+                                            <span className="block"><b className="font-semibold text-slate-900">{n._count?.Service ?? 0}</b> {(n._count?.Service ?? 0) === 1 ? "servicio" : "servicios"}</span>
+                                            <span className="block"><b className="font-semibold text-slate-900">{n._count?.Appointment ?? 0}</b> {(n._count?.Appointment ?? 0) === 1 ? "cita" : "citas"}</span>
+                                        </td>
+                                        <td className="px-3 py-3"><StatusBadge estado={n.estado} /></td>
+                                        <td className="px-4 py-3"><NegocioActions negocio={n} onEdit={() => openEdit(n)} /></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -197,8 +201,8 @@ export default function NegociosGrid({ initialNegocios }: { initialNegocios: any
                                 <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
                                     <span>{prettyTipo(n.tipoNegocio)}</span>
                                     {n.ciudad && <span>{n.ciudad}</span>}
-                                    <span>{n._count?.Service ?? 0} servicios</span>
-                                    <span>{n._count?.Appointment ?? 0} citas</span>
+                                    <span>{n._count?.Service ?? 0} {(n._count?.Service ?? 0) === 1 ? "servicio" : "servicios"}</span>
+                                    <span>{n._count?.Appointment ?? 0} {(n._count?.Appointment ?? 0) === 1 ? "cita" : "citas"}</span>
                                 </div>
                                 <div className="mt-2 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                                     <PlanCell n={n} />
@@ -215,19 +219,20 @@ export default function NegociosGrid({ initialNegocios }: { initialNegocios: any
     );
 }
 
-function BusinessCell({ n }: { n: any }) {
+function BusinessCell({ n, detalle }: { n: any; detalle?: boolean }) {
     const color = n?.colorPrimario || "#0f172a";
+    const extra = [prettyTipo(n?.tipoNegocio), n?.ciudad].filter((x) => x && x !== "—").join(" · ");
     return (
-        <Link href={`/superadmin/negocios/${n.id}`} className="flex items-center gap-2.5 min-w-0 group">
-            <span className="size-8 rounded-lg overflow-hidden shrink-0 flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: color }}>
+        <Link href={`/superadmin/negocios/${n.id}`} className="flex items-center gap-2.5 min-w-0 group" title={n?.ciudad || undefined}>
+            <span className="size-9 rounded-lg overflow-hidden shrink-0 flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: color }}>
                 {n?.logoUrl ? <img src={n.logoUrl} alt="" className="w-full h-full object-cover bg-white" /> : (n?.nombre || "N").charAt(0).toUpperCase()}
             </span>
-            <span className="min-w-0">
-                <span className="flex items-center gap-1.5">
+            <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1.5 min-w-0">
                     <span className="font-semibold text-slate-900 truncate group-hover:text-[#0066FF]">{n?.nombre || "Sin nombre"}</span>
                     {n?.isDemo && <span className="text-[10px] font-semibold px-1.5 py-px rounded bg-violet-50 text-violet-700 shrink-0">Demo</span>}
                 </span>
-                <span className="block text-xs text-slate-400 truncate">/{n?.slug}</span>
+                <span className="block text-xs text-slate-400 truncate">/{n?.slug}{detalle && extra ? ` · ${extra}` : ""}</span>
             </span>
         </Link>
     );

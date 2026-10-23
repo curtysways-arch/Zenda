@@ -28,7 +28,29 @@ export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps)
     const [enteringAdmin, setEnteringAdmin] = useState(false);
     const [isQRModalOpen, setIsQRModalOpen] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [menuPos, setMenuPos] = useState<{ top: number; right: number; up: boolean }>({ top: 0, right: 0, up: false });
     const menuRef = useRef<HTMLDivElement>(null);
+    const btnRef = useRef<HTMLButtonElement>(null);
+
+    // El menú se dibuja con posición fija para que ninguna tabla o tarjeta lo recorte; si no cabe abajo, se abre hacia arriba.
+    const toggleMenu = () => {
+        if (!menuOpen && btnRef.current) {
+            const b = btnRef.current.getBoundingClientRect();
+            const up = window.innerHeight - b.bottom < 280;
+            setMenuPos({ top: up ? b.top - 4 : b.bottom + 4, right: window.innerWidth - b.right, up });
+        }
+        setMenuOpen((v) => !v);
+    };
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const cerrar = () => setMenuOpen(false);
+        const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+        window.addEventListener("scroll", cerrar, true);
+        window.addEventListener("resize", cerrar);
+        window.addEventListener("keydown", onKey);
+        return () => { window.removeEventListener("scroll", cerrar, true); window.removeEventListener("resize", cerrar); window.removeEventListener("keydown", onKey); };
+    }, [menuOpen]);
 
     useEffect(() => {
         if (!menuOpen) return;
@@ -132,16 +154,19 @@ export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps)
 
             <div ref={menuRef} className="relative">
                 <button
+                    ref={btnRef}
                     type="button"
-                    onClick={() => setMenuOpen((v) => !v)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100"
-                    aria-label="Más acciones"
+                    onClick={toggleMenu}
+                    className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold border transition ${menuOpen ? "border-slate-300 bg-slate-100 text-slate-900" : "border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50"}`}
+                    aria-label="Gestionar negocio"
+                    aria-haspopup="menu"
                     aria-expanded={menuOpen}
                 >
-                    <MoreHorizontal size={16} />
+                    Gestionar <MoreHorizontal size={14} />
                 </button>
                 {menuOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-30">
+                    <div role="menu" className="fixed w-52 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-[300]"
+                        style={{ right: menuPos.right, ...(menuPos.up ? { bottom: window.innerHeight - menuPos.top } : { top: menuPos.top }) }}>
                         <Link href={`/superadmin/negocios/${negocio.id}`} className={item} onClick={() => setMenuOpen(false)}>
                             <Eye size={15} className="text-slate-400" /> Ver detalle
                         </Link>
